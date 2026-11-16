@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-002 – Backend project skeleton (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 1 of 211
-- **Application state:** no application code yet. Repository checks in place.
+- **Current task:** FND-003 – Backend linting and formatting (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 2 of 211
+- **Application state:** no runnable application yet. Repository checks and a backend package skeleton with tests are in place.
 
 ## Reports
 
@@ -81,3 +81,42 @@ CI task FND-018.
 Commit: `9acea2a` (squash merge of pull request #1).
 
 Next task: FND-002 – Backend project skeleton.
+
+### FND-002 – Backend project skeleton (2026-11-16)
+
+Implementation: Complete. Pull request #2, built in its own thread.
+
+What was implemented: `backend/` as a uv project (`pyproject.toml`, committed
+`uv.lock`, Python >= 3.12), the `motosphere` package whose `__version__` comes
+from the project metadata, a `py.typed` marker, and four pytest smoke tests.
+README, TESTING.md and CHANGELOG.md updated. Exactly the planned files.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+uv 0.11.32, pytest 9.2.0):
+
+- `uv lock --check`: passed.
+- `uv sync --locked`: passed; installs `motosphere==0.1.0` from the checkout.
+- Backend unit tests, Python 3.13.18: 4/4 passed, no warnings.
+- Backend unit tests, Python 3.12.3: 4/4 passed, no warnings.
+- Repository checks: 9/9 passed.
+- Mutation checks: 5 deliberate defects introduced one at a time (version
+  literal in code, warning raised in a test, unknown pytest marker, malformed
+  version, dependency added without re-locking). All 5 detected.
+- `git status` clean after the full run (environment and caches are ignored).
+- The lock file references only the public Python package index.
+
+Unit tests: 13/13 passed (backend 4, repository 9).
+Integration tests: not applicable.
+Build: locked install passed.
+Type checking: not applicable yet (FND-004).
+Browser verification: not applicable.
+
+Overall applicable tests: 13/13 passed (100%).
+
+Status: PASSED – VERIFIED.
+
+Known limitations: not run on Windows 11; first Windows run is FND-018.
+
+Commit: `6daf3ea` (squash merge of pull request #2).
+
+Next task: FND-003 – Backend linting and formatting.

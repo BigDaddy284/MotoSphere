@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 1 |
+| 1 | Foundation (FND) | 19 | 2 |
 | 2 | Database and API (DB, API) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-002 – Backend project skeleton.
+**Current task:** FND-003 – Backend linting and formatting.
 
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
@@ -61,7 +61,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-001.md`
 
 ### FND-002 – Backend project skeleton
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A Python project that installs reproducibly and runs a test.
 - **Description:** Create `backend/` as a uv project (`pyproject.toml`, committed `uv.lock`, `requires-python >= 3.12`), `src/motosphere/` package exposing `__version__`, pytest configured, smoke tests.
 - **Acceptance criteria:**
@@ -71,22 +71,28 @@ Windows 11. No database and no globe yet.
   4. The lock file is committed and current; no virtualenv or cache is tracked.
   5. README, TESTING.md and CHANGELOG.md describe the new gate.
 - **Tests required:** backend pytest (4 tests); repository checks (9 tests); `uv lock --check`.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #2 (Linux, uv 0.11.32, pytest 9.2.0): `uv lock --check`, `uv sync --locked`, backend pytest on Python 3.13.18 and 3.12.3 (4 tests each, no warnings), repository checks (9 tests). Five deliberate defects (version literal, warning in a test, unknown marker, malformed version, stale lock file) each detected.
+- **Passed / Failed:** 13 / 0 (backend 4, repository 9), plus lock check and locked sync passed
+- **Verification status:** Verified by the planner on 2026-11-16. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `6daf3ea`
 - **Plan:** `docs/plans/FND-002.md`
 
 ### FND-003 – Backend linting and formatting
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Enforce one code style for Python automatically.
-- **Description:** Add ruff (lint + format) as a dev dependency with configuration in `pyproject.toml`.
-- **Acceptance criteria:** `uv run ruff check .` and `uv run ruff format --check .` both pass; a deliberately mis-formatted temporary file is reported (proves the gate bites), then removed.
-- **Tests required:** ruff check, ruff format check, existing pytest and repo checks.
+- **Description:** Add ruff (lint + format) as a locked dev dependency with configuration in `backend/pyproject.toml`, covering `backend/src` and `backend/tests`. Root-level Python (`tests/repo`, later `scripts/`) joins the gate with the check runner in FND-017.
+- **Acceptance criteria:**
+  1. `uv run ruff check .` passes in `backend/` with the planned rule set, including security rules.
+  2. `uv run ruff format --check .` passes in `backend/`.
+  3. Both gates fail on a deliberate violation (demonstrated, then removed).
+  4. The lock file is current; all earlier gates still pass.
+  5. README, TESTING.md and CHANGELOG.md describe the new gates.
+- **Tests required:** ruff check; ruff format check; backend pytest (4); repository checks (9); `uv lock --check`.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-003.md`
 
 ### FND-004 – Backend type checking
 - **Status:** NOT STARTED
@@ -234,7 +240,7 @@ Windows 11. No database and no globe yet.
 ### FND-017 – Unified check runner
 - **Status:** NOT STARTED
 - **Objective:** One command that runs every gate and reports counts.
-- **Description:** `python scripts/check.py` (stdlib only) runs repo checks, backend ruff/mypy/pytest, frontend lint/typecheck/unit/build and browser tests, in order, and prints a per-gate and overall pass/fail summary. Non-zero exit if any gate fails. Options to run a single gate.
+- **Description:** `python scripts/check.py` (stdlib only) runs repo checks, lint and format checks for root-level Python (`tests/repo`, `scripts/`), backend ruff/mypy/pytest, frontend lint/typecheck/unit/build and browser tests, in order, and prints a per-gate and overall pass/fail summary. Non-zero exit if any gate fails. Options to run a single gate.
 - **Acceptance criteria:** all gates run from a clean checkout on Linux and Windows; a failing gate makes the exit code non-zero and is named in the summary; TESTING.md documents the command.
 - **Tests required:** unit tests for the runner's result handling using stub commands; one full real run.
 - **Tests executed:** –
