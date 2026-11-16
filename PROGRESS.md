@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-007 – API application factory and health endpoint (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 6 of 211
-- **Application state:** no runnable application yet. Backend package with validated settings and logging; lint, type-check and test gates in place.
+- **Current task:** FND-008 – Backend run command (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 7 of 211
+- **Application state:** no runnable application yet. The backend has validated settings, logging and an API application with a health endpoint (not yet served by a process); lint, type-check and test gates in place.
 
 ## Reports
 
@@ -308,3 +308,46 @@ does so in FND-008. Not run on Windows 11; first Windows run is FND-018.
 Commit: `de01322` (squash merge of pull request #6).
 
 Next task: FND-007 – API application factory and health endpoint.
+
+### FND-007 – API application factory and health endpoint (2026-11-16)
+
+Implementation: Complete. Pull request #7, built in its own thread.
+
+What was implemented: `motosphere.api` with `create_app(settings)` (a new
+independent FastAPI application per call, settings stored on the application)
+and `GET /api/health` returning status, name and version with
+`Cache-Control: no-store`. Documentation at `/api/docs`, schema at
+`/api/openapi.json`, default documentation paths not served. 10 API tests.
+Dependencies locked: fastapi 0.163.1 (with starlette 1.10.0) and, for the test
+client, httpx2 2.16.2. No suppressions, no deviations.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+uv 0.11.32):
+
+- `uv lock --check`: passed. `uv sync --locked`: passed.
+- Backend tests, Python 3.13.18: 46/46 passed, no warnings.
+  Python 3.12.3: 46/46 passed.
+- Backend type check, both Pythons: passed, 12 source files.
+- Backend lint: passed. Backend format: passed.
+- Repository checks: 9/9 passed.
+- Mutation checks: 7 planted defects (wrong application name, cache header
+  removed, documentation at the default path, given settings ignored,
+  hard-coded version, health accepting POST, schema at the default path) all
+  detected.
+
+Unit and API tests: 55/55 passed (backend 46, repository 9).
+Type checking: passed. Lint: passed. Format: passed.
+Build: locked install passed.
+Browser verification: not applicable.
+
+Overall applicable tests: 55/55 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: exercised through the in-process test client only; no
+server process exists until FND-008, which adds real HTTP verification.
+Not run on Windows 11; first Windows run is FND-018.
+
+Commit: `70a32c3` (squash merge of pull request #7).
+
+Next task: FND-008 – Backend run command.

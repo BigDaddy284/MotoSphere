@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 6 |
+| 1 | Foundation (FND) | 19 | 7 |
 | 2 | Database and API (DB, API) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-007 – API application factory and health endpoint.
+**Current task:** FND-008 – Backend run command.
 
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
@@ -149,7 +149,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-006.md`
 
 ### FND-007 – API application factory and health endpoint
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A FastAPI application that answers a health check.
 - **Description:** `motosphere.api.app.create_app(settings)` builds an independent application each time; `GET /api/health` returns status, application name and version and is never cached. API documentation is served under `/api/docs` and the schema under `/api/openapi.json`.
 - **Acceptance criteria:**
@@ -159,22 +159,28 @@ Windows 11. No database and no globe yet.
   4. `create_app` uses the settings it is given, falls back to `get_settings()`, and returns a new application on each call.
   5. All earlier gates still pass with no suppressions.
 - **Tests required:** backend pytest (46: 10 new API tests + 36 existing); mypy; ruff check; ruff format check; repository checks (9); `uv lock --check`.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #7 (Linux, uv 0.11.32, fastapi 0.163.1, starlette 1.10.0, httpx2 2.16.2): `uv lock --check`, `uv sync --locked`, mypy and backend pytest on Python 3.13.18 and 3.12.3 (46 tests each, no warnings), ruff check, ruff format check, repository checks (9 tests). Seven planted defects all detected.
+- **Passed / Failed:** 55 / 0 tests (backend 46, repository 9); type-check, lint, format and lock gates passed
+- **Verification status:** Verified by the planner on 2026-11-16. Verified through the in-process test client only; the first real HTTP check is FND-008. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `70a32c3`
 - **Plan:** `docs/plans/FND-007.md`
 
 ### FND-008 – Backend run command
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Start the API with one documented command.
-- **Description:** `python -m motosphere` (via `uv run`) starts uvicorn using host/port from settings.
-- **Acceptance criteria:** the command starts a real server; `GET /api/health` over real HTTP returns 200; the process stops cleanly on interrupt; command documented in README.
-- **Tests required:** an integration test that launches the server as a subprocess on a free port, polls health over HTTP, then terminates it. Must work on Windows and Linux.
+- **Description:** `uv run python -m motosphere` loads settings, configures logging and serves the application with uvicorn on the configured host and port. Configuration mistakes produce a one-line message and exit code 2 instead of a traceback.
+- **Acceptance criteria:**
+  1. The command starts a real server that answers `GET /api/health` over real HTTP on the configured port.
+  2. All server output, including uvicorn's own, uses the MotoSphere log format on standard error.
+  3. The server stops cleanly on an interrupt.
+  4. Invalid configuration exits with code 2 and a one-line message naming the setting; a port already in use exits non-zero with an error line.
+  5. README documents how to start and stop the API; all earlier gates still pass with no suppressions.
+- **Tests required:** backend pytest (55: 4 new unit + 5 new integration + 46 existing); mypy; ruff check; ruff format check; repository checks (9); `uv lock --check`.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-008.md`
 
 ### FND-009 – Frontend project skeleton
 - **Status:** NOT STARTED
