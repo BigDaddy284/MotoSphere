@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 4 |
+| 1 | Foundation (FND) | 19 | 5 |
 | 2 | Database and API (DB, API) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-005 – Backend settings module.
+**Current task:** FND-006 – Backend logging configuration.
 
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
@@ -112,7 +112,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-004.md`
 
 ### FND-005 – Backend settings module
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Environment-based configuration with no secrets in source control.
 - **Description:** `motosphere.core.settings` using pydantic-settings: env prefix `MOTOSPHERE_`, optional `backend/.env`, typed immutable fields for environment name, API host, API port and log level. Commit `backend/.env.example` with safe values. Test isolation fixture so a developer's real environment never affects tests. (Allowed origins moved to API-008, where CORS is introduced.)
 - **Acceptance criteria:**
@@ -124,22 +124,29 @@ Windows 11. No database and no globe yet.
   6. Tests are isolated from the developer's real environment and `.env`.
   7. README documents configuration; all earlier gates still pass.
 - **Tests required:** backend pytest (22: 18 new settings tests + 4 existing); mypy; ruff check; ruff format check; repository checks (9); `uv lock --check`.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #5 (Linux, uv 0.11.32, pydantic 2.14.3, pydantic-settings 2.16.3): `uv lock --check`, `uv sync --locked`, mypy and backend pytest on Python 3.13.18 and 3.12.3 (22 tests each, no warnings), ruff check, ruff format check, repository checks (9 tests). Isolation check with a real `backend/.env` and hostile shell variables. Real behaviour from the command line (file value read, environment beats file, misspelt key rejected, out-of-range port rejected). Eleven planted defects all detected.
+- **Passed / Failed:** 31 / 0 tests (backend 22, repository 9); type-check, lint, format and lock gates passed
+- **Verification status:** Verified by the planner on 2026-11-16. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `dfe2687`
 - **Plan:** `docs/plans/FND-005.md`
 
 ### FND-006 – Backend logging configuration
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Consistent, configurable logs for the API and, later, the worker.
-- **Description:** `motosphere.core.logging.configure_logging(settings)`: level from settings, one line format with timestamp, level, logger name, message; idempotent.
-- **Acceptance criteria:** level follows settings; calling twice adds no duplicate handlers; output format verified.
-- **Tests required:** unit tests with captured log output.
+- **Description:** `motosphere.core.logging_config.configure_logging(settings)`: root level from settings; one named handler writing to standard error; one-line format with UTC timestamp, level, logger name and message; line breaks in messages escaped so untrusted text cannot forge log lines; idempotent.
+- **Acceptance criteria:**
+  1. The root log level follows `settings.log_level` for all five levels.
+  2. Exactly one MotoSphere handler is installed, however often the function is called; handlers it did not create are left alone.
+  3. Output lines match the documented format with a UTC timestamp.
+  4. Messages below the configured level are not written.
+  5. Carriage returns and line feeds inside a message are escaped; exception tracebacks are still written in full.
+  6. All earlier gates still pass with no suppressions.
+- **Tests required:** backend pytest (36: 14 new logging tests + 22 existing); mypy; ruff check; ruff format check; repository checks (9); `uv lock --check`.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-006.md`
 
 ### FND-007 – API application factory and health endpoint
 - **Status:** NOT STARTED

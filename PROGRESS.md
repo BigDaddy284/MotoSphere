@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-005 – Backend settings module (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 4 of 211
-- **Application state:** no runnable application yet. Repository checks and a backend package skeleton with tests are in place.
+- **Current task:** FND-006 – Backend logging configuration (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 5 of 211
+- **Application state:** no runnable application yet. Backend package with validated settings; lint, type-check and test gates in place.
 
 ## Reports
 
@@ -206,3 +206,55 @@ Known limitations: not run on Windows 11; first Windows run is FND-018.
 Commit: `ebd84ce` (squash merge of pull request #4).
 
 Next task: FND-005 – Backend settings module.
+
+### FND-005 – Backend settings module (2026-11-16)
+
+Implementation: Complete. Pull request #5, built in its own thread.
+
+What was implemented: `motosphere.core.settings` (`Environment`, `LogLevel`,
+immutable `Settings` with environment, API host, API port and log level, and a
+cached `get_settings()`); `backend/.env.example`; an autouse test fixture that
+isolates tests from the machine's environment and any real `.env`; 14 test
+functions (18 cases); a "Configuration" section in README; CHANGELOG entry.
+Runtime dependencies pydantic 2.14.3 and pydantic-settings 2.16.3 (locked).
+No suppressions.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+uv 0.11.32):
+
+- `uv lock --check`: passed. `uv sync --locked`: passed.
+- Backend unit tests, Python 3.13.18: 22/22 passed, no warnings.
+  Python 3.12.3: 22/22 passed.
+- Backend type check, both Pythons: passed, 6 source files.
+- Backend lint: passed. Backend format: passed.
+- Repository checks: 9/9 passed. Only `backend/.env.example` is tracked.
+- Isolation: with a real `backend/.env` (port 9999) and invalid `MOTOSPHERE_`
+  variables in the shell, the suite still passed 22/22.
+- Real behaviour from the command line: a value in `backend/.env` is read;
+  an environment variable beats the file; a misspelt key in the file stops
+  loading with an error naming it; an out-of-range port is rejected with an
+  error naming `api_port`.
+- Mutation checks: 11 planted defects (changed default, unknown keys allowed,
+  not frozen, no normalisation, port bound removed, example missing a
+  setting, example with a non-default value, cache removed, empty host
+  allowed, `.env` not read, isolation fixture disabled) all detected.
+
+Unit tests: 31/31 passed (backend 22, repository 9).
+Type checking: passed. Lint: passed. Format: passed.
+Build: locked install passed.
+Browser verification: not applicable.
+
+Overall applicable tests: 31/31 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Testing note: when a source file is changed and restored within the same
+second, Python can reuse stale bytecode and report results for the earlier
+version. Mutation checks are therefore run with bytecode caching disabled
+(`PYTHONDONTWRITEBYTECODE=1`, `__pycache__` removed between runs).
+
+Known limitations: not run on Windows 11; first Windows run is FND-018.
+
+Commit: `dfe2687` (squash merge of pull request #5).
+
+Next task: FND-006 – Backend logging configuration.
