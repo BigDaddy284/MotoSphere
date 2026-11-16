@@ -64,3 +64,26 @@ Backend type check (mypy, strict mode), from `backend/`:
 ```
 uv run mypy
 ```
+
+## Configuration
+
+The backend reads its settings from environment variables whose names start
+with `MOTOSPHERE_`, or from a `backend/.env` file. To use a file, copy
+[backend/.env.example](backend/.env.example) to `backend/.env` and change the
+values you need. The example file lists every setting with its default value.
+
+- An environment variable always wins over the same setting in `backend/.env`.
+- Every name in `backend/.env` must be a known setting. An unknown or misspelt
+  name, such as `MOTOSPHERE_API_PROT`, stops the backend with an error naming
+  it, instead of being silently ignored.
+- Never commit `.env`. Git already ignores it.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `MOTOSPHERE_ENVIRONMENT` | `development` | Where MotoSphere is running: development, test or production. |
+| `MOTOSPHERE_API_HOST` | `127.0.0.1` | The network address the API listens on. The default only accepts connections from this computer. |
+| `MOTOSPHERE_API_PORT` | `8000` | The port number the API listens on, from 1 to 65535. |
+| `MOTOSPHERE_LOG_LEVEL` | `INFO` | How much detail is written to the log: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
+
+Values for `MOTOSPHERE_ENVIRONMENT` and `MOTOSPHERE_LOG_LEVEL` are not
+case-sensitive.

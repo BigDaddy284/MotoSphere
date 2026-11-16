@@ -3,7 +3,10 @@ name = "motosphere"
 version = "0.1.0"
 description = "MotoSphere backend: API, data layer and collection workers."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+]
 
 [dependency-groups]
 dev = [
