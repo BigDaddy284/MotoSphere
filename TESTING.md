@@ -17,6 +17,9 @@ test means the task is not complete.
 | Backend format | `cd backend && uv run ruff format --check .` |
 | Backend type check | `cd backend && uv run mypy` |
 
+The backend suite includes integration tests that start the real API server on
+a free local port and call it over HTTP.
+
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.
 

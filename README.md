@@ -10,9 +10,10 @@ directly from the globe.
 
 ## Status
 
-Early development. There is no application to run yet; the repository
-currently holds the project documentation, the repository checks and a backend
-Python package skeleton with its unit tests.
+Early development. The backend API can now be started and answers a health
+check; there is still no user interface. The repository holds the project
+documentation, the repository checks and the backend Python package with its
+tests.
 
 - [TASKS.md](TASKS.md) lists every development task and its status.
 - [PROGRESS.md](PROGRESS.md) holds the test report for each completed task.
@@ -29,6 +30,25 @@ Python package skeleton with its unit tests.
 - [TESTING.md](TESTING.md) – testing strategy, commands and latest results.
 - [CHANGELOG.md](CHANGELOG.md) – significant changes and releases.
 - [docs/WORKFLOW.md](docs/WORKFLOW.md) – how tasks are planned, built, tested and merged.
+
+## Running the API
+
+Prerequisites: Python 3.12 or newer and
+[uv](https://docs.astral.sh/uv/getting-started/installation/).
+
+From the repository root:
+
+```
+cd backend
+uv sync --locked
+uv run python -m motosphere
+```
+
+While it is running, the health check is at
+<http://127.0.0.1:8000/api/health> and the interactive API documentation at
+<http://127.0.0.1:8000/api/docs>. Press Ctrl+C to stop the server. To use a
+different host or port, change the settings described in
+[Configuration](#configuration).
 
 ## Running the checks
 
