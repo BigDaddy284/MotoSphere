@@ -12,6 +12,10 @@ test means the task is not complete.
 | Gate | Command |
 |---|---|
 | Repository checks (`tests/repo`) | `python -m unittest discover -s tests/repo -v` |
+| Backend unit tests (`backend/tests`) | `cd backend && uv run pytest` |
+
+Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
+the locked environment, including the `motosphere` package itself.
 
 The repository checks use the Python standard library only and need nothing
 but Python 3.12 or newer and Git. They verify the required documents, ignore

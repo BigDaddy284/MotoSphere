@@ -11,7 +11,8 @@ directly from the globe.
 ## Status
 
 Early development. There is no application to run yet; the repository
-currently holds the project documentation and the repository checks.
+currently holds the project documentation, the repository checks and a backend
+Python package skeleton with its unit tests.
 
 - [TASKS.md](TASKS.md) lists every development task and its status.
 - [PROGRESS.md](PROGRESS.md) holds the test report for each completed task.
@@ -31,11 +32,20 @@ currently holds the project documentation and the repository checks.
 
 ## Running the checks
 
-Prerequisites: Python 3.12 or newer, and Git. Nothing else needs to be
-installed.
+Prerequisites: Python 3.12 or newer, Git and
+[uv](https://docs.astral.sh/uv/getting-started/installation/).
 
-From the repository root:
+Repository checks, from the repository root:
 
 ```
 python -m unittest discover -s tests/repo -v
+```
+
+Backend unit tests, from the repository root (the first command installs the
+locked environment):
+
+```
+cd backend
+uv sync --locked
+uv run pytest
 ```
