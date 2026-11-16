@@ -14,3 +14,5 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   lock file, `motosphere` package and pytest suite (FND-002).
 - Backend linting and formatting with ruff, including security rules (FND-003).
 - Backend static type checking with mypy in strict mode (FND-004).
+- Backend settings module with environment variable and `.env` configuration
+  (FND-005).
