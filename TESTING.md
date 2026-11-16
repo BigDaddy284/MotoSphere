@@ -15,6 +15,7 @@ test means the task is not complete.
 | Backend unit tests (`backend/tests`) | `cd backend && uv run pytest` |
 | Backend lint | `cd backend && uv run ruff check .` |
 | Backend format | `cd backend && uv run ruff format --check .` |
+| Backend type check | `cd backend && uv run mypy` |
 
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.

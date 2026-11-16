@@ -7,6 +7,7 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+    "mypy>=1.13",
     "pytest>=8.3",
     "ruff>=0.9",
 ]
@@ -52,3 +53,14 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]  # assert is how pytest tests are written
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src", "tests"]
+mypy_path = "src"
+strict = true
+warn_unreachable = true
+warn_return_any = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool", "possibly-undefined"]
+show_error_codes = true
+pretty = true
