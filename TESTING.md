@@ -13,6 +13,8 @@ test means the task is not complete.
 |---|---|
 | Repository checks (`tests/repo`) | `python -m unittest discover -s tests/repo -v` |
 | Backend unit tests (`backend/tests`) | `cd backend && uv run pytest` |
+| Backend lint | `cd backend && uv run ruff check .` |
+| Backend format | `cd backend && uv run ruff format --check .` |
 
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.

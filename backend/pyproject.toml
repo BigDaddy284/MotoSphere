@@ -8,6 +8,7 @@ dependencies = []
 [dependency-groups]
 dev = [
     "pytest>=8.3",
+    "ruff>=0.9",
 ]
 
 [build-system]
@@ -23,3 +24,31 @@ testpaths = ["tests"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
 xfail_strict = true
 filterwarnings = ["error"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # import sorting
+    "N",    # naming
+    "UP",   # modern Python syntax
+    "B",    # likely bugs
+    "C4",   # comprehensions
+    "SIM",  # simplifications
+    "PTH",  # pathlib over os.path
+    "DTZ",  # timezone-aware datetimes
+    "T20",  # no print statements
+    "PT",   # pytest style
+    "RET",  # return statements
+    "S",    # security (bandit)
+    "RUF",  # ruff-specific rules
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # assert is how pytest tests are written

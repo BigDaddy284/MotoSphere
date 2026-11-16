@@ -12,3 +12,4 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   CHANGELOG.md) and the repository check suite in `tests/repo` (FND-001).
 - Backend Python project skeleton (`backend/`): uv project with a committed
   lock file, `motosphere` package and pytest suite (FND-002).
+- Backend linting and formatting with ruff, including security rules (FND-003).
