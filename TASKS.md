@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 3 |
+| 1 | Foundation (FND) | 19 | 4 |
 | 2 | Database and API (DB, API) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-004 – Backend type checking.
+**Current task:** FND-005 – Backend settings module.
 
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
@@ -95,7 +95,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-003.md`
 
 ### FND-004 – Backend type checking
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Make static type checking a mandatory gate.
 - **Description:** Add mypy (locked dev dependency) in strict mode for `backend/src` and `backend/tests`, configured in `backend/pyproject.toml`.
 - **Acceptance criteria:**
@@ -105,22 +105,30 @@ Windows 11. No database and no globe yet.
   4. The lock file is current; all earlier gates still pass.
   5. README, TESTING.md and CHANGELOG.md describe the new gate.
 - **Tests required:** mypy; ruff check; ruff format check; backend pytest (4); repository checks (9); `uv lock --check`.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #4 (Linux, uv 0.11.32, mypy 2.4.1): `uv lock --check`, `uv sync --locked`, mypy on Python 3.13.18 and 3.12.3, ruff check, ruff format check, backend pytest on both Pythons (4 tests each), repository checks (9 tests). Five planted type defects (wrong argument type, unannotated function in `src`, unannotated test, unreachable code, bare `type: ignore`) all reported.
+- **Passed / Failed:** 13 / 0 tests (backend 4, repository 9); type-check, lint, format and lock gates passed
+- **Verification status:** Verified by the planner on 2026-11-16. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `ebd84ce`
 - **Plan:** `docs/plans/FND-004.md`
 
 ### FND-005 – Backend settings module
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Environment-based configuration with no secrets in source control.
-- **Description:** `motosphere.core.settings` using pydantic-settings: env prefix `MOTOSPHERE_`, optional `.env`, typed fields for environment name, API host/port, log level and allowed origins. Commit `.env.example` with safe values.
-- **Acceptance criteria:** defaults load with no environment; environment variables override defaults; `.env` overrides defaults and real environment overrides `.env`; invalid values fail with a clear error; `.env.example` contains every setting and no secret.
-- **Tests required:** unit tests for each criterion; a test that `.env.example` keys match the settings fields.
+- **Description:** `motosphere.core.settings` using pydantic-settings: env prefix `MOTOSPHERE_`, optional `backend/.env`, typed immutable fields for environment name, API host, API port and log level. Commit `backend/.env.example` with safe values. Test isolation fixture so a developer's real environment never affects tests. (Allowed origins moved to API-008, where CORS is introduced.)
+- **Acceptance criteria:**
+  1. Defaults load with no environment and no `.env` file.
+  2. Environment variables override defaults; `.env` overrides defaults; real environment overrides `.env`.
+  3. Invalid values and unknown keys in `.env` fail at load with an error naming the setting.
+  4. Settings are immutable; `get_settings()` is cached.
+  5. `backend/.env.example` lists every setting with its default and no secret, and is proven valid by a test.
+  6. Tests are isolated from the developer's real environment and `.env`.
+  7. README documents configuration; all earlier gates still pass.
+- **Tests required:** backend pytest (22: 18 new settings tests + 4 existing); mypy; ruff check; ruff format check; repository checks (9); `uv lock --check`.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-005.md`
 
 ### FND-006 – Backend logging configuration
 - **Status:** NOT STARTED

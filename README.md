@@ -57,10 +57,10 @@ uv run ruff check .
 uv run ruff format --check .
 ```
 
+`uv run ruff format .` applies the formatting.
+
 Backend type check (mypy, strict mode), from `backend/`:
 
 ```
 uv run mypy
 ```
-
-`uv run ruff format .` applies the formatting.

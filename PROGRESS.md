@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-004 – Backend type checking (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 3 of 211
+- **Current task:** FND-005 – Backend settings module (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 4 of 211
 - **Application state:** no runnable application yet. Repository checks and a backend package skeleton with tests are in place.
 
 ## Reports
@@ -162,3 +162,47 @@ check runner in FND-017. Not run on Windows 11; first Windows run is FND-018.
 Commit: `2e3edaf` (squash merge of pull request #3).
 
 Next task: FND-004 – Backend type checking.
+
+### FND-004 – Backend type checking (2026-11-16)
+
+Implementation: Complete. Pull request #4, built in its own thread.
+
+What was implemented: mypy added to the backend `dev` group and locked at
+2.4.1; `[tool.mypy]` strict configuration over `src` and `tests`; README,
+TESTING.md and CHANGELOG.md updated. No source file needed changing. No
+`# type: ignore`, no overrides.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+uv 0.11.32):
+
+- `uv lock --check`: passed. `uv sync --locked`: passed.
+- Backend type check (`mypy`), Python 3.13.18: passed, 2 source files.
+  Python 3.12.3: passed, 2 source files.
+- Backend lint: passed. Backend format: passed.
+- Backend unit tests, Python 3.13.18: 4/4 passed. Python 3.12.3: 4/4 passed.
+- Repository checks: 9/9 passed.
+- Gate checks: the plan's probe file was reported with an incompatible
+  argument type and a missing annotation (exit non-zero). Further probes were
+  reported for an unannotated test function, unreachable code and a
+  `type: ignore` without an error code. The gate returned to passing after
+  each probe was removed.
+- `git status` clean after the full run.
+
+Unit tests: 13/13 passed (backend 4, repository 9).
+Type checking: passed. Lint: passed. Format: passed.
+Build: locked install passed.
+Browser verification: not applicable.
+
+Overall applicable tests: 13/13 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Review note: the pull request left one README sentence about `ruff format`
+below the new mypy block. The planner moved it back under the ruff commands in
+the follow-up documentation commit; repository checks re-run at 9/9.
+
+Known limitations: not run on Windows 11; first Windows run is FND-018.
+
+Commit: `ebd84ce` (squash merge of pull request #4).
+
+Next task: FND-005 – Backend settings module.
