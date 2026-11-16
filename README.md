@@ -49,3 +49,12 @@ cd backend
 uv sync --locked
 uv run pytest
 ```
+
+Backend lint and format checks, from `backend/`:
+
+```
+uv run ruff check .
+uv run ruff format --check .
+```
+
+`uv run ruff format .` applies the formatting.
