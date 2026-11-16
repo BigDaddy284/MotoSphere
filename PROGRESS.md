@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-003 – Backend linting and formatting (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 2 of 211
+- **Current task:** FND-004 – Backend type checking (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 3 of 211
 - **Application state:** no runnable application yet. Repository checks and a backend package skeleton with tests are in place.
 
 ## Reports
@@ -120,3 +120,45 @@ Known limitations: not run on Windows 11; first Windows run is FND-018.
 Commit: `6daf3ea` (squash merge of pull request #2).
 
 Next task: FND-003 – Backend linting and formatting.
+
+### FND-003 – Backend linting and formatting (2026-11-16)
+
+Implementation: Complete. Pull request #3, built in its own thread.
+
+What was implemented: ruff added to the backend `dev` group and locked at
+0.17.5; `[tool.ruff]` configuration with style, bug, pytest and security
+(bandit) rule sets; README, TESTING.md and CHANGELOG.md updated. No source
+file needed changing. No `# noqa`, no global ignores.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+uv 0.11.32):
+
+- `uv lock --check`: passed. `uv sync --locked`: passed.
+- Backend lint (`ruff check .`): passed.
+- Backend format (`ruff format --check .`): passed, 2 files already formatted.
+- Backend unit tests, Python 3.13.18: 4/4 passed. Python 3.12.3: 4/4 passed.
+- Repository checks: 9/9 passed.
+- Gate checks: the plan's probe file was reported with I001, F401, S602 and
+  S607 and by the format check (both exit non-zero). Two further probes were
+  reported with T201 and DTZ005 (print, naive datetime) and S307 (`eval` in a
+  test file, confirming security rules still apply to tests). Gates returned
+  to passing after each probe was removed.
+- The lock file includes the Windows build of ruff.
+- `git status` clean after the full run.
+
+Unit tests: 13/13 passed (backend 4, repository 9).
+Lint: passed. Format: passed.
+Build: locked install passed.
+Type checking: not applicable yet (FND-004).
+Browser verification: not applicable.
+
+Overall applicable tests: 13/13 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: root-level Python (`tests/repo`) is not linted until the
+check runner in FND-017. Not run on Windows 11; first Windows run is FND-018.
+
+Commit: `2e3edaf` (squash merge of pull request #3).
+
+Next task: FND-004 – Backend type checking.

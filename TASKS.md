@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 2 |
+| 1 | Foundation (FND) | 19 | 3 |
 | 2 | Database and API (DB, API) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-003 – Backend linting and formatting.
+**Current task:** FND-004 – Backend type checking.
 
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
@@ -78,7 +78,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-002.md`
 
 ### FND-003 – Backend linting and formatting
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Enforce one code style for Python automatically.
 - **Description:** Add ruff (lint + format) as a locked dev dependency with configuration in `backend/pyproject.toml`, covering `backend/src` and `backend/tests`. Root-level Python (`tests/repo`, later `scripts/`) joins the gate with the check runner in FND-017.
 - **Acceptance criteria:**
@@ -88,22 +88,28 @@ Windows 11. No database and no globe yet.
   4. The lock file is current; all earlier gates still pass.
   5. README, TESTING.md and CHANGELOG.md describe the new gates.
 - **Tests required:** ruff check; ruff format check; backend pytest (4); repository checks (9); `uv lock --check`.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #3 (Linux, uv 0.11.32, ruff 0.17.5): `uv lock --check`, `uv sync --locked`, ruff check, ruff format check, backend pytest on Python 3.13.18 and 3.12.3 (4 tests each), repository checks (9 tests). Seven planted violations (unsorted imports, unused import, shell call, partial executable path, print, naive datetime, `eval`) all reported by lint; planted mis-formatting reported by the format check.
+- **Passed / Failed:** 13 / 0 tests (backend 4, repository 9); lint, format and lock gates passed
+- **Verification status:** Verified by the planner on 2026-11-16. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `2e3edaf`
 - **Plan:** `docs/plans/FND-003.md`
 
 ### FND-004 – Backend type checking
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Make static type checking a mandatory gate.
-- **Description:** Add mypy in strict mode for `src/` and `tests/`.
-- **Acceptance criteria:** `uv run mypy` passes with strict settings; a deliberate type error in a temporary file is reported, then removed.
-- **Tests required:** mypy, plus all earlier gates.
+- **Description:** Add mypy (locked dev dependency) in strict mode for `backend/src` and `backend/tests`, configured in `backend/pyproject.toml`.
+- **Acceptance criteria:**
+  1. `uv run mypy` passes in `backend/` with strict settings and checks both `src` and `tests`.
+  2. The gate fails on a deliberate type error and on an unannotated function (demonstrated, then removed).
+  3. No `# type: ignore`, no per-module relaxations.
+  4. The lock file is current; all earlier gates still pass.
+  5. README, TESTING.md and CHANGELOG.md describe the new gate.
+- **Tests required:** mypy; ruff check; ruff format check; backend pytest (4); repository checks (9); `uv lock --check`.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-004.md`
 
 ### FND-005 – Backend settings module
 - **Status:** NOT STARTED
