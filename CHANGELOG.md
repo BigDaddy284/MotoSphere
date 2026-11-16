@@ -16,3 +16,5 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Backend static type checking with mypy in strict mode (FND-004).
 - Backend settings module with environment variable and `.env` configuration
   (FND-005).
+- Backend logging configuration: single line format with UTC timestamps and
+  escaped line breaks (FND-006).
