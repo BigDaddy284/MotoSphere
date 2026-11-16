@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-006 – Backend logging configuration (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 5 of 211
-- **Application state:** no runnable application yet. Backend package with validated settings; lint, type-check and test gates in place.
+- **Current task:** FND-007 – API application factory and health endpoint (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 6 of 211
+- **Application state:** no runnable application yet. Backend package with validated settings and logging; lint, type-check and test gates in place.
 
 ## Reports
 
@@ -258,3 +258,53 @@ Known limitations: not run on Windows 11; first Windows run is FND-018.
 Commit: `dfe2687` (squash merge of pull request #5).
 
 Next task: FND-006 – Backend logging configuration.
+
+### FND-006 – Backend logging configuration (2026-11-16)
+
+Implementation: Complete. Pull request #6, built in its own thread.
+
+What was implemented: `motosphere.core.logging_config` with
+`configure_logging(settings)`: root level from settings, one handler named
+`motosphere` on standard error, line format
+`<UTC timestamp> <LEVEL> [<logger>] <message>`, carriage returns and line
+feeds in messages escaped, tracebacks kept intact. 10 test functions
+(14 cases). CHANGELOG entry. No new dependencies, no suppressions.
+
+Deviations from the plan, both accepted (behaviour unchanged):
+`converter = staticmethod(time.gmtime)` because a plain assignment fails
+strict type checking, and `@typing.override` on `formatMessage` so the
+standard-library method name passes the naming rule without a suppression.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+uv 0.11.32):
+
+- `uv lock --check`: passed. `uv sync --locked`: passed.
+- Backend unit tests, Python 3.13.18: 36/36 passed, no warnings.
+  Python 3.12.3: 36/36 passed.
+- Backend type check, both Pythons: passed, 8 source files.
+- Backend lint: passed. Backend format: passed.
+- Repository checks: 9/9 passed.
+- Real behaviour from the command line: configuring twice then logging a
+  message containing a line break writes exactly one line to standard error
+  with the break shown as `\n`, and nothing to standard output; the debug
+  message appears only with `MOTOSPHERE_LOG_LEVEL=debug`; with the machine
+  time zone set to Tokyo the timestamp is still UTC.
+- Mutation checks: 7 planted defects (escaping removed, old handler not
+  removed, local time instead of UTC, level not applied, foreign handlers
+  removed, wrong line format, handler not named) all detected.
+
+Unit tests: 45/45 passed (backend 36, repository 9).
+Type checking: passed. Lint: passed. Format: passed.
+Build: locked install passed.
+Browser verification: not applicable.
+
+Overall applicable tests: 45/45 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: nothing calls `configure_logging` yet; the API entry point
+does so in FND-008. Not run on Windows 11; first Windows run is FND-018.
+
+Commit: `de01322` (squash merge of pull request #6).
+
+Next task: FND-007 – API application factory and health endpoint.

@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 5 |
+| 1 | Foundation (FND) | 19 | 6 |
 | 2 | Database and API (DB, API) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-006 – Backend logging configuration.
+**Current task:** FND-007 – API application factory and health endpoint.
 
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
@@ -131,7 +131,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-005.md`
 
 ### FND-006 – Backend logging configuration
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Consistent, configurable logs for the API and, later, the worker.
 - **Description:** `motosphere.core.logging_config.configure_logging(settings)`: root level from settings; one named handler writing to standard error; one-line format with UTC timestamp, level, logger name and message; line breaks in messages escaped so untrusted text cannot forge log lines; idempotent.
 - **Acceptance criteria:**
@@ -142,22 +142,28 @@ Windows 11. No database and no globe yet.
   5. Carriage returns and line feeds inside a message are escaped; exception tracebacks are still written in full.
   6. All earlier gates still pass with no suppressions.
 - **Tests required:** backend pytest (36: 14 new logging tests + 22 existing); mypy; ruff check; ruff format check; repository checks (9); `uv lock --check`.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #6 (Linux, uv 0.11.32): `uv lock --check`, `uv sync --locked`, mypy and backend pytest on Python 3.13.18 and 3.12.3 (36 tests each, no warnings), ruff check, ruff format check, repository checks (9 tests). Real output from the command line (one escaped line on standard error, nothing on standard output, debug line only at debug level, UTC timestamp under a Tokyo time zone). Seven planted defects all detected.
+- **Passed / Failed:** 45 / 0 tests (backend 36, repository 9); type-check, lint, format and lock gates passed
+- **Verification status:** Verified by the planner on 2026-11-16. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `de01322`
 - **Plan:** `docs/plans/FND-006.md`
 
 ### FND-007 – API application factory and health endpoint
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** A FastAPI application that answers a health check.
-- **Description:** `motosphere.api.app.create_app(settings)`; `GET /api/health` returns status, application name and version. OpenAPI docs available.
-- **Acceptance criteria:** health returns 200 with the documented JSON shape and correct version; unknown paths return 404 JSON; OpenAPI schema lists the endpoint.
-- **Tests required:** API tests with FastAPI's test client.
+- **Description:** `motosphere.api.app.create_app(settings)` builds an independent application each time; `GET /api/health` returns status, application name and version and is never cached. API documentation is served under `/api/docs` and the schema under `/api/openapi.json`.
+- **Acceptance criteria:**
+  1. `GET /api/health` returns 200 and exactly `{"status": "ok", "name": "MotoSphere", "version": <package version>}` with `Cache-Control: no-store`.
+  2. Other methods on the health path return 405; unknown paths return a JSON 404.
+  3. The OpenAPI schema describes the endpoint and its response model; documentation is served only under `/api/`.
+  4. `create_app` uses the settings it is given, falls back to `get_settings()`, and returns a new application on each call.
+  5. All earlier gates still pass with no suppressions.
+- **Tests required:** backend pytest (46: 10 new API tests + 36 existing); mypy; ruff check; ruff format check; repository checks (9); `uv lock --check`.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-007.md`
 
 ### FND-008 – Backend run command
 - **Status:** NOT STARTED
