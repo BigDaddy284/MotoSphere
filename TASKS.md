@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 0 |
+| 1 | Foundation (FND) | 19 | 1 |
 | 2 | Database and API (DB, API) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-001 – Repository hygiene baseline.
+**Current task:** FND-002 – Backend project skeleton.
 
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
@@ -44,7 +44,7 @@ gate wired up, one command that runs all gates, and documented start/stop on
 Windows 11. No database and no globe yet.
 
 ### FND-001 – Repository hygiene baseline
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Keep the repository clean and consistent on Windows and Linux before any code lands.
 - **Description:** Add `.gitignore`, `.gitattributes`, `.editorconfig`, `README.md`, and the remaining required document stubs (`DATA_SOURCES.md`, `DATABASE.md`, `TESTING.md`, `CHANGELOG.md`). Add a dependency-free repository check suite under `tests/repo/`.
 - **Acceptance criteria:**
@@ -54,22 +54,28 @@ Windows 11. No database and no globe yet.
   4. README links to every project document and every relative link resolves.
   5. No secret or environment file is tracked.
 - **Tests required:** `python -m unittest discover -s tests/repo -v` (9 tests, stdlib only).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** Repository checks, 9 tests, on Python 3.13.18 and Python 3.12.3 (Linux, Git 2.43.0), in a clean checkout of pull request #1. Ten deliberate defects (mutation checks) each detected by the suite. Real-file check: `.ps1` checks out CRLF, `.py` checks out LF.
+- **Passed / Failed:** 9 / 0
+- **Verification status:** Verified by the planner on 2026-11-16. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `9acea2a`
 - **Plan:** `docs/plans/FND-001.md`
 
 ### FND-002 – Backend project skeleton
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** A Python project that installs reproducibly and runs a test.
-- **Description:** Create `backend/` as a uv project (`pyproject.toml`, committed `uv.lock`, `requires-python >= 3.12`), `src/motosphere/` package exposing `__version__`, pytest configured, one smoke test.
-- **Acceptance criteria:** `uv sync` succeeds from a clean checkout; `uv run pytest` collects and passes; the package imports and reports a version matching `pyproject.toml`; no virtualenv or cache is tracked.
-- **Tests required:** pytest smoke tests (import, version); repo checks still pass.
+- **Description:** Create `backend/` as a uv project (`pyproject.toml`, committed `uv.lock`, `requires-python >= 3.12`), `src/motosphere/` package exposing `__version__`, pytest configured, smoke tests.
+- **Acceptance criteria:**
+  1. `uv sync --locked` succeeds from a clean checkout and installs the project itself.
+  2. `uv run pytest` collects and passes exactly the four planned tests.
+  3. `motosphere.__version__` equals the version in `pyproject.toml`, which is its only source.
+  4. The lock file is committed and current; no virtualenv or cache is tracked.
+  5. README, TESTING.md and CHANGELOG.md describe the new gate.
+- **Tests required:** backend pytest (4 tests); repository checks (9 tests); `uv lock --check`.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-002.md`
 
 ### FND-003 – Backend linting and formatting
 - **Status:** NOT STARTED
