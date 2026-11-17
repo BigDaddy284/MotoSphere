@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 11 |
+| 1 | Foundation (FND) | 19 | 12 |
 | 2 | Database and API (DB, API) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-012 – Browser test infrastructure.
+**Current task:** FND-013 – Dark theme design tokens.
 
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
@@ -233,7 +233,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-011.md`
 
 ### FND-012 – Browser test infrastructure
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Verify the real built application in a real browser with one command.
 - **Description:** Add Playwright (Chromium, version pinned exactly) under `frontend/e2e/`; `npm run e2e` builds the app, serves the build and opens it headlessly. A shared test fixture fails any browser test in which the page logs an error or warning, throws, or has a failed request.
 - **Acceptance criteria:**
@@ -243,22 +243,27 @@ Windows 11. No database and no globe yet.
   4. Nothing under `frontend/src/` changed; no report or result files are left visible to Git.
   5. README, TESTING.md and CHANGELOG.md describe the new gate; all earlier gates still pass.
 - **Tests required:** browser tests (4); frontend lint, format check, unit tests (5), type check, build; repository checks (9); backend untouched (55 tests).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #12 (Linux, Node 22.23.4, npm 10.9.9, Playwright 1.63.0 with its matching headless Chromium): `npm ci`, lint (10 files), format check, frontend unit tests (5), type check, build, browser tests (4), `npm audit` (0 vulnerabilities), repository checks (9 tests). Eleven planted defects all detected. Backend not re-run: no backend file has changed since its 55/55 run on commit `0914ec5`.
+- **Passed / Failed:** 18 / 0 tests (browser 4, frontend 5, repository 9); frontend lint, format, type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `e806b63`
 - **Plan:** `docs/plans/FND-012.md`
 
 ### FND-013 – Dark theme design tokens
-- **Status:** NOT STARTED
-- **Objective:** One source of truth for colours, type and spacing.
-- **Description:** CSS custom properties for the dark motorsport theme (surfaces, text, one restrained accent, status colours, spacing, radii, type scale) and base styles (reset, fonts, focus rings).
-- **Acceptance criteria:** tokens defined once and used by `App`; text/background contrast meets WCAG AA (≥ 4.5:1) for body text; visible keyboard focus.
-- **Tests required:** unit test computing contrast ratios from the token values; browser test asserting computed background/text colours.
+- **Status:** IN PROGRESS
+- **Objective:** One source of truth for colours, type, spacing, shape and motion, proven readable by tests.
+- **Description:** CSS custom properties for the dark motorsport theme (surfaces, text, one restrained accent, status colours, focus ring, system fonts and type scale, spacing, radii, motion) and base styles (reset, dark colour scheme, typography, keyboard focus ring, reduced motion). No web fonts.
+- **Acceptance criteria:**
+  1. Tokens are defined once, in `tokens.css`; every style sheet takes its colours from them, enforced by tests (no raw colours elsewhere, no unknown token names).
+  2. Contrast: main text ≥ 7:1, all other text and status colours ≥ 4.5:1, focus ring ≥ 3:1, on all three surfaces.
+  3. In the browser the page has the dark background, light text, system font, no page margin, a visible keyboard focus ring, and no motion when reduced motion is requested.
+  4. `npm test` reports 46 passed; `npm run e2e` reports 9 passed; all earlier gates pass.
+- **Tests required:** frontend unit tests (46, of which 41 new: contrast maths 10, tokens and style sheets 31); browser tests (9, of which 5 new); frontend lint, format check, type check, build; repository checks (9); backend untouched (55 tests).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-013.md`
 
 ### FND-014 – Application shell layout
 - **Status:** NOT STARTED

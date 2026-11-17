@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-012 – Browser test infrastructure (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 11 of 211
-- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application name, and has its own unit tests (`npm test`). They are not connected yet; no globe and no database.
+- **Current task:** FND-013 – Dark theme design tokens (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 12 of 211
+- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application name, and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). They are not connected yet; no globe and no database.
 
 ## Reports
 
@@ -572,3 +572,62 @@ are therefore checked by the planner in review, and the check runner
 Commit: `4aa7988` (squash merge of pull request #11).
 
 Next task: FND-012 – Browser test infrastructure.
+
+### FND-012 – Browser test infrastructure (2026-11-17)
+
+TASK: FND-012 – Browser test infrastructure
+
+Implementation: Complete (builder thread, pull request #12). Playwright
+(pinned to 1.63.0, Chromium only): `npm run e2e` builds the frontend, serves
+the build on the loopback address and opens it headlessly. Four browser
+tests: title and language, visible name and tagline, one main landmark, and
+the page icon is really served. A shared fixture fails any browser test in
+which the page logs an error or warning, throws, has a failed request or
+receives an HTTP error status. Browser tests have their own strict type-check
+project. README, TESTING.md and CHANGELOG updated. Exactly the twelve planned
+files, identical to the planner's trial; nothing under `frontend/src/`
+changed; no deviations.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9; Playwright 1.63.0 with its matching headless
+Chromium):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. Lock file references only
+  the public npm registry.
+- Frontend lint: passed (10 files). Format check: passed.
+- Frontend unit tests: 5/5 passed (the unit run does not pick up the browser
+  tests). Type check: passed. Build: passed, bundle unchanged at 219.76 kB.
+- Browser tests: 4/4 passed in about 3 seconds.
+- No skipped or focused tests and no suppressions.
+- Gate checks: 11 planted defects all detected with a non-zero exit code:
+  console error, console warning, uncaught error and failed network request
+  (each fails all 4 tests through the shared fixture); wrong page title;
+  heading demoted; icon file missing; type error in a browser test (type
+  check); focused test (`test.only`); port 4173 already in use (clear
+  message, nothing tested by accident); application that does not build.
+- Repository checks: 9/9 passed.
+- Backend: not touched and not re-run; no backend file has changed since its
+  55/55 run on commit `0914ec5`.
+- `git status` clean after the full run (results folder is ignored).
+
+Browser tests: 4/4 passed. Unit tests: 14/14 passed (frontend 5,
+repository 9).
+Type checking: passed (frontend). Lint and format: passed (frontend).
+Build: passed (frontend).
+Browser verification: passed (automated, headless Chromium, production build).
+
+Overall applicable tests: 18/18 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: Chromium only. A skipped Playwright test is not caught by
+the linter (the check runner in FND-017 must fail on skipped tests; until
+then the planner checks in review). The README instruction for installing
+Chromium on a new machine (`npx playwright install chromium`) has not been
+run by us, because the build environment has Chromium pre-installed; its
+first real run is CI in FND-018. Not run on Windows 11; first Windows run is
+FND-018.
+
+Commit: `e806b63` (squash merge of pull request #12).
+
+Next task: FND-013 – Dark theme design tokens.
