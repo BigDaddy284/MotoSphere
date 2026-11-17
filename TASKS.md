@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 32 | 30 |
+| 1 | Foundation (FND) | 34 | 30 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-022 – GitHub Pages deployment.
+**Current task:** FND-033 – Dependency audit with recorded exceptions.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -47,7 +47,11 @@ a manifest the server does not have. The check runner task was split into
 three: the runner itself (FND-017), test counts and skipped tests (FND-030)
 and the Python files outside the pipeline (FND-031). Continuous integration
 was split into two: Linux (FND-018) and Windows (FND-032). Where an earlier
-entry says the first Windows run is FND-018, that run is now FND-032.
+entry says the first Windows run is FND-018, that run is now FND-032. The
+GitHub Pages task was split into two: the application served from the
+site's path (FND-022) and the deployment itself (FND-034). One task was
+added before them (FND-033), after a security advisory for a build tool
+started failing the dependency audit on 2026-11-17.
 
 Added tasks are listed where they fall in dependency order, so task numbers
 in Phase 1 are not strictly ascending.
@@ -584,12 +588,41 @@ Windows 11. No database and no globe yet.
 - **Commit:** `9e0c57a`
 - **Plan:** `docs/plans/FND-032.md`
 
-### FND-022 – GitHub Pages deployment
+### FND-033 – Dependency audit with recorded exceptions
+- **Status:** IN PROGRESS
+- **Objective:** The dependency audit fails on every security advisory except the ones recorded with a reason and a review date, and fails again by itself when a recorded exception has run out or is no longer needed.
+- **Description:** On 2026-11-17 an advisory was published for `picomatch` (GHSA-fc5q-39xc-vjpf, high, a pattern that is slow to match). The project gets it only through its build and test tools (vite and vitest), every version is affected including the newest (4.0.7), and production dependencies are not affected (`npm audit --omit=dev`: 0). The last gate, `npm audit`, has failed since then on `main` and on every pull request, with nothing changed in the repository. A new script, `python scripts/audit.py` (standard library only), runs `npm audit --json` in `frontend/` and compares the advisories with `frontend/audit-exceptions.json`. An exception names one advisory id and its package, with a reason of at least 40 characters, the day it was accepted and a review day at most 31 days later; every exception in use is printed on every run. The gate `frontend-audit` runs the script. One exception is recorded, for the advisory above, accepted on 2026-11-17 and **to be reviewed by 2026-12-17**: from 2026-12-18 the gate fails again until somebody has looked (a fixed version installed and the exception removed, or the exception renewed with its reason). Rejected: leaving build tools out of the audit, a severity threshold, and going back two major versions of vite and vitest.
+- **Acceptance criteria:**
+  1. `python scripts/check.py` reports 19 of 19 gates and 541 tests, and the audit gate's output shows the recorded exception with its reason and review day.
+  2. With the exception taken out, the audit gate fails and names the picomatch advisory with its address.
+  3. An exception past its review day, one that is no longer needed, one for another package and one dated in the future each fail the check; so do a faulty exceptions file and an answer from npm that is not a report.
+  4. An exception cannot be recorded without a reason of at least 40 characters, for longer than 31 days, or for anything but one advisory id.
+  5. The gate keeps its key, name and place; the gate table in `TESTING.md` matches the script.
+  6. On the pull request both jobs are green (Linux and Windows), each with 19 of 19 gates and 541 tests; after the merge the run for `main` is green again.
+- **Tests required:** script tests (122, of which 49 new: 13 for reading the exceptions, 8 for reading npm's report, 9 for judging, 6 for running the audit command, 9 for the script's result and output, 3 for the repository's own files, 1 in the runner's tests); the full run of all 19 gates; the real audit without the exception, with an expired one, with a wrong one and without a lock file; the workflow run on the pull request on both machines; the run for `main` after the merge.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-033.md`
+
+### FND-022 – The application served from the site's path
+- **Status:** NOT STARTED
+- **Objective:** The application works when it is served from `/MotoSphere/`, the path it will have on GitHub Pages.
+- **Description:** The site's path is written once (`frontend/site.ts`) and used by the build and by the browser tests. The browser tests run against the production build served from that path, write every address relative to it, and check that nothing the page loads comes from the root of the server. The development server uses the same path. Split from the GitHub Pages task (PLAN-006); the planner's trial of it is done (87 browser tests, of which 7 new).
+- **Acceptance criteria:** the application, its icons and its data all load from under `/MotoSphere/` with no console error; the same files are not served at the root; the manifest's address follows the path the build was given, with a unit test that fails for a hard-coded one; the README gives the development address.
+- **Tests required:** browser tests against the build served from the sub-path (87, of which 7 new); frontend unit tests (199, one changed); the full run of all 19 gates; planted defects.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-034 – GitHub Pages deployment
 - **Status:** NOT STARTED
 - **Objective:** Every merge to `main` puts the current application online.
-- **Description:** A configurable base path for the frontend build (the site is served from `/MotoSphere/`), and a GitHub Actions workflow that, after the checks pass on `main`, exports the data, builds the frontend and deploys both to GitHub Pages with the least permissions needed. The browser tests also run against a build served from the sub-path.
-- **Acceptance criteria:** the application works when served from a sub-path (assets, icon and data all load, no console errors); the deployment workflow succeeds; the live address shows the application name and the data date.
-- **Tests required:** browser tests against a sub-path build; the workflow run itself; a browser check of the live address. The owner reported on 2026-11-17 that GitHub Pages is switched on for the repository with GitHub Actions as its source; the first workflow run will confirm it. If that run shows Pages is not available, the task is `BLOCKED – EXTERNAL DEPENDENCY`, not passed.
+- **Description:** A GitHub Actions workflow that, after the checks pass on `main`, exports the data, builds the frontend and deploys both to GitHub Pages with the least permissions needed. Split from FND-022 (PLAN-006).
+- **Acceptance criteria:** the deployment workflow succeeds and only the deployment job may publish; a pull request can never deploy; the live address shows the application name and the data date.
+- **Tests required:** repository checks that pin the deployment workflow's rules; the workflow run itself; a browser check of the live address. The owner reported on 2026-11-17 that GitHub Pages is switched on for the repository with GitHub Actions as its source; the first workflow run will confirm it. If that run shows Pages is not available, the task is `BLOCKED – EXTERNAL DEPENDENCY`, not passed.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
