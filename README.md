@@ -121,6 +121,17 @@ npm run build
 `npm run test:watch` re-runs the frontend tests whenever a file changes while
 you develop.
 
+Frontend browser tests, from `frontend/`:
+
+```
+npm run e2e
+```
+
+This builds the application, opens it in a headless Chromium browser and
+checks the page a user would see. It needs port 4173 to be free. On a machine
+where Playwright's Chromium has never been installed, run
+`npx playwright install chromium` once first.
+
 ## Configuration
 
 The backend reads its settings from environment variables whose names start

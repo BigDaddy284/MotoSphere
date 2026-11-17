@@ -21,12 +21,18 @@ test means the task is not complete.
 | Frontend unit tests (`frontend/src/**/*.test.tsx`) | `cd frontend && npm test` |
 | Frontend type check | `cd frontend && npm run typecheck` |
 | Frontend build | `cd frontend && npm run build` |
+| Browser tests (`frontend/e2e`) | `cd frontend && npm run e2e` |
 
 The backend suite includes integration tests that start the real API server on
 a free local port and call it over HTTP.
 
 Frontend tests sit next to the code they test and query the page by role and
 text, the way a user perceives it.
+
+The browser tests run with Playwright in headless Chromium against the
+production build, served locally. Every browser test also fails if the page
+logs an error or warning, throws an uncaught error, or has a failed request or
+an HTTP error response.
 
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.
