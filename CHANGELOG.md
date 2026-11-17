@@ -67,6 +67,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   a test was skipped (FND-030).
 - Lint, format and type gates for the Python files outside the pipeline
   (`scripts/`, `tests/`), run with the pipeline's locked tools (FND-031).
+- Continuous integration: GitHub runs every gate on Linux for each pull
+  request and each change to `main` (FND-018).
 
 ### Removed
 

@@ -80,6 +80,7 @@ NOT_IGNORED_SAMPLE_PATHS = (
     "scripts/check.py",
     "ruff.toml",
     "mypy.ini",
+    ".github/workflows/checks.yml",
     "docs/plans/FND-001.md",
     "tests/repo/test_repo_hygiene.py",
     "tests/scripts/test_check.py",
@@ -106,7 +107,9 @@ def git(*args: str) -> subprocess.CompletedProcess[str]:
 
 def check_ignore(path: str) -> int:
     """Return the exit code of `git check-ignore -q` for a sample path."""
-    return git("check-ignore", "-q", "--", path).returncode
+    # Without `--no-index`, Git never reports a file it already tracks as
+    # ignored, and a rule that hides the folder of such a file would pass.
+    return git("check-ignore", "-q", "--no-index", "--", path).returncode
 
 
 def check_attr(path: str) -> dict[str, str]:

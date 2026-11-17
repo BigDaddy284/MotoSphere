@@ -1,0 +1,57 @@
+# Runs every gate of the project for each pull request and each change to
+# `main`. The gates themselves are in `scripts/check.py`; this file only
+# prepares a machine and starts them (TESTING.md, "Continuous integration").
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# The job only reads the repository. It is given no secret and cannot write.
+permissions:
+  contents: read
+
+# A newer commit on a pull request replaces a run that is still going. Runs
+# for `main` are never cut short, so every commit there gets its result.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  linux:
+    name: All gates (Linux)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      # Every action is pinned to a commit, with its release beside it.
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.11.32"
+
+      - name: Install Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      # The browser tests need a browser, and the locked Playwright decides
+      # which one, so the frontend's dependencies are installed first.
+      - name: Install the browser for the browser tests
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run every gate
+        run: python scripts/check.py
