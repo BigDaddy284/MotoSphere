@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-026 – Current date in the top bar (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 17 of 218
-- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application's layout (top bar, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. They are not connected yet; no globe and no database. The API server is due to be replaced by a data pipeline command (FND-020) following the GitHub Pages decision.
+- **Current task:** FND-020 – Replace the API server with the pipeline command line (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 18 of 218
+- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. They are not connected yet; no globe and no database. The API server is due to be replaced by a data pipeline command (FND-020) following the GitHub Pages decision.
 
 ## Reports
 
@@ -992,3 +992,79 @@ run is FND-018.
 Commit: `98bf3c3` (squash merge of pull request #17).
 
 Next task: FND-026 – Current date in the top bar.
+
+### FND-026 – Current date in the top bar (2026-11-17)
+
+TASK: FND-026 – Current date in the top bar
+
+Implementation: Complete (builder thread, pull request #18, two commits).
+The top bar shows today's date, written out in the language of the user's
+browser, for the day where the user is, in a `time` element whose `datetime`
+attribute holds the day as `YYYY-MM-DD`. A hook sets one timer for the next
+local midnight, worked out from the calendar, and also checks the day
+whenever the page comes back into view, because a timer does not run while a
+device sleeps. Only `Date` and `Intl.DateTimeFormat` are used. The shell has
+a new `info` slot at the right-hand end of the top bar. Exactly the planned
+files; the day functions, the hook, the component, the shell changes and the
+browser tests are identical to the planner's trial.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. No dependency changed.
+- Frontend lint: passed. Format check: passed.
+- Frontend unit tests: 115/115 passed (8 files), 19 of them new; also
+  115/115 with the machine's time zone set to America/Los_Angeles,
+  Pacific/Kiritimati, Asia/Kolkata, Australia/Lord_Howe and Pacific/Apia.
+  Type check: passed.
+- Build: passed (script bundle 222.72 kB, style sheet 5.10 kB).
+- Browser tests: 35/35 passed, three runs in a row; 5 of them new, with an
+  emulated language, time zone and clock: British English in London,
+  American English in Los Angeles (previous day), German in Tokyo (next
+  day), the change at midnight without a reload, and the position and
+  colour of the date.
+- No skipped or focused tests, no suppressions and no fixed sleeps.
+- Gate checks, first run: 14 of 15 planted defects detected. Not detected:
+  removing a different function from the one that was added as the
+  page-visibility listener, which leaves the real listener attached. The
+  test only counted calls. The task was sent back; the builder changed that
+  one test to compare the functions (second commit, no other change).
+- Second run on the fixed pull request: lint, format check, unit tests
+  (115/115, also in Los Angeles time), type check, build, browser tests
+  (35/35), audit and repository checks all passed again, and the remaining
+  defect is now detected. All 15: day taken from UTC; no timer; timer set
+  once only; no check on coming back into view; timer not cleared; day
+  formatted in the device's time zone; fixed language; date not rendered by
+  the shell; date not pushed to the right-hand end (browser only); fixed
+  24-hour timer; listener not removed; no `datetime` attribute; month off by
+  one; wrong listener removed; short weekday name.
+- Repository checks: 9/9 passed.
+- Backend: not touched and not re-run; no backend file has changed since its
+  55/55 run on commit `0914ec5`.
+- `git status` clean after the full run.
+
+Unit tests: 124/124 passed (frontend 115, repository 9). Browser tests: 35/35
+passed.
+Type checking: passed (frontend). Lint and format: passed (frontend).
+Build: passed (frontend).
+Browser verification: passed (automated, headless Chromium, production
+build), plus a screenshot checked by the planner during the trial.
+
+Overall applicable tests: 159/159 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the wording comes from the browser's own language data,
+so punctuation can differ slightly between browsers (Chromium writes
+"Tuesday, 17 November 2026" for British English). Two defects (day taken
+from UTC, day formatted in the device's time zone) are caught by the browser
+tests on any machine, but by the unit tests only on a machine that is not on
+UTC. Not run on Windows 11; first Windows run is FND-018.
+
+Planning note: the application icon (FND-024) is still waiting for the
+owner's final choice of lettering, so the pipeline command line (FND-020)
+goes next.
+
+Commit: `5e782de` (squash merge of pull request #18).
+
+Next task: FND-020 – Replace the API server with the pipeline command line.

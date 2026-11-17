@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 26 | 17 |
+| 1 | Foundation (FND) | 26 | 18 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-026 – Current date in the top bar.
+**Current task:** FND-020 – Replace the API server with the pipeline command line.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -352,7 +352,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-015.md`
 
 ### FND-026 – Current date in the top bar
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The top bar shows today's date, as DESIGN.md §12.1 suggests.
 - **Description:** Today's date written out in the language of the user's browser, for the day where the user is, in a `time` element at the right-hand end of the top bar. One timer runs to the next local midnight (worked out from the calendar), and the day is also checked whenever the page comes back into view. Only `Date` and `Intl.DateTimeFormat` are used; no date library. The shell gets an `info` slot that the data status will share later.
 - **Acceptance criteria:**
@@ -363,10 +363,10 @@ Windows 11. No database and no globe yet.
   5. Removing the component leaves no timer and no listener behind.
   6. `npm test` reports 115 passed; `npm run e2e` reports 35 passed; all earlier gates pass.
 - **Tests required:** frontend unit tests (115, of which 19 new: 12 for the day functions, 5 for the component with a controlled clock, 1 for the shell slot, 1 for the application), also run in a second time zone; browser tests (35, of which 5 new with emulated language, time zone and clock: London, Los Angeles, Tokyo, midnight change, position and colour); frontend lint, format check, type check, build; `npm audit`; repository checks (9); backend untouched (55 tests).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #18 (Linux, Node 22.23.4, npm 10.9.9): `npm ci`, lint, format check, frontend unit tests (115, run with the machine on UTC and again on five other time zones), type check, build, browser tests (35, three runs in a row), `npm audit` (0 vulnerabilities), repository checks (9 tests). First run: 14 of 15 planted defects detected; the task was sent back for one stronger test, and on the fixed pull request all gates were run again and the remaining defect was detected. Backend not re-run: no backend file has changed since its 55/55 run on commit `0914ec5`.
+- **Passed / Failed:** 159 / 0 tests (frontend unit 115, browser 35, repository 9); frontend lint, format, type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. The wording of the date comes from the browser's own language data, so punctuation can differ slightly between browsers. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `5e782de`
 - **Plan:** `docs/plans/FND-026.md`
 
 ### FND-024 – Application icon in the Sky Classic style
@@ -381,18 +381,20 @@ Windows 11. No database and no globe yet.
 - **Commit:** –
 
 ### FND-020 – Replace the API server with the pipeline command line
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Remove the server that the hosting decision made unnecessary, and give the data pipeline its command line.
-- **Description:** Remove the FastAPI application, the health endpoint, the server start-up in `python -m motosphere`, the `api_host` and `api_port` settings, their tests and the `fastapi`, `uvicorn` and `httpx2` dependencies. `python -m motosphere` becomes a command-line program with sub-commands; the first is `version`. Settings and logging stay and are used by the command line. README, TESTING.md, `.env.example` and CHANGELOG follow.
+- **Description:** Remove the FastAPI application, the health endpoint, the server start-up in `python -m motosphere`, the `api_host` and `api_port` settings, their tests and the `fastapi`, `uvicorn` and `httpx2` dependencies. `python -m motosphere` becomes a command-line program with sub-commands, built on the standard library's `argparse` in a new `motosphere.cli` package; the first command is `version`. Arguments are parsed before the settings are loaded, results go to standard output, and logs and errors go to standard error. Settings and logging stay and are used by the command line. README, TESTING.md, `.env.example` and CHANGELOG follow.
 - **Acceptance criteria:**
-  1. `python -m motosphere version` prints the version and exits 0; with no command or an unknown command it prints help and exits non-zero; an invalid setting still gives the one-line configuration error and exit code 2.
-  2. No server code, server setting or server dependency remains (`uv lock` no longer contains them); nothing listens on a port.
+  1. `python -m motosphere version` prints `motosphere 0.1.0` and exits 0; with no command, an unknown command or an unexpected argument it prints the usage and exits 2; `--help` exits 0 even when a setting is invalid; an invalid setting still gives the one-line configuration error and exit code 2, however many settings are wrong.
+  2. No server code, server setting or server dependency remains (`uv.lock` no longer contains them, and the old settings are rejected as unknown); nothing listens on a port.
   3. README no longer tells the user to start an API; all remaining backend gates pass.
-- **Tests required:** unit tests for the command line (version, no command, unknown command, configuration error); integration test running the real command as a subprocess; lock check, mypy, ruff, pytest; repository checks; frontend untouched.
+  4. `uv run pytest` reports 61 passed.
+- **Tests required:** backend tests (61: 13 unit tests for the command line, 7 integration tests running the real command as a separate process, 18 for the settings, 9 for the package including checks that the server packages are not installed, 14 for logging); lock check, mypy, ruff check, ruff format check; repository checks (9); frontend untouched (115 unit, 35 browser).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-020.md`
 
 ### FND-021 – Data manifest export command
 - **Status:** NOT STARTED
