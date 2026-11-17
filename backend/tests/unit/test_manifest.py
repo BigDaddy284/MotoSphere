@@ -163,3 +163,10 @@ def test_schema_names_every_field_and_allows_no_others() -> None:
     assert sorted(schema["required"]) == sorted(FIELDS)
     assert sorted(schema["properties"]) == sorted(FIELDS)
     assert schema["additionalProperties"] is False
+
+
+def test_json_keeps_text_outside_ascii_as_it_is() -> None:
+    text = manifest_to_json(_manifest(application_version="0.1.0+ernée"))
+
+    assert '"application_version": "0.1.0+ernée"' in text
+    assert "\\u" not in text
