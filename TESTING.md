@@ -32,7 +32,9 @@ text, the way a user perceives it.
 The browser tests run with Playwright in headless Chromium against the
 production build, served locally. Every browser test also fails if the page
 logs an error or warning, throws an uncaught error, or has a failed request or
-an HTTP error response.
+an HTTP error response. A test about a failure names the problems it expects
+with `expectProblem`; it then fails if one of them does not happen, and still
+fails on any other. The rule has tests of its own (`e2e/fixtures.spec.ts`).
 
 Before it builds, the browser tests' server exports the published data with
 the real export command, so the tests check the served manifest with the
@@ -40,8 +42,8 @@ frontend's own reader and check that it was exported for this run. The browser
 tests therefore need uv as well as Node.js.
 
 The data status in the top bar is tested in the browser against that data, and
-with replaced answers for a slow, damaged or newer manifest and for other time
-zones.
+with replaced answers for a slow, damaged or newer manifest, a manifest the
+server does not have, a failed request and other time zones.
 
 The theme's colours are the owner's Graphite theme
 (`docs/design/graphite-theme/`), defined once in

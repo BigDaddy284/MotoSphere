@@ -59,6 +59,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   browser tests run against freshly exported data (FND-027).
 - Data status in the top bar: when the published data was updated, or that it
   is unavailable (FND-028).
+- Browser tests can name the page problems they expect; the data status is
+  tested with a missing manifest and a failed request (FND-029).
 
 ### Removed
 
