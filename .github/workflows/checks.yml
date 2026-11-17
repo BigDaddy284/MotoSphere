@@ -19,10 +19,19 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  linux:
-    name: All gates (Linux)
-    runs-on: ubuntu-24.04
+  gates:
+    name: All gates (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
+    strategy:
+      # Each system gives its own result: one failing does not stop the other.
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-24.04
+          - name: Windows
+            os: windows-2025
     steps:
       # Every action is pinned to a commit, with its release beside it.
       - name: Check out the repository
@@ -46,12 +55,15 @@ jobs:
           node-version: "22"
 
       # The browser tests need a browser, and the locked Playwright decides
-      # which one, so the frontend's dependencies are installed first.
+      # which one, so the frontend's dependencies are installed first. One
+      # command to a step: on Windows a step only fails on its last command.
+      - name: Install the frontend's dependencies
+        working-directory: frontend
+        run: npm ci
+
       - name: Install the browser for the browser tests
         working-directory: frontend
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Run every gate
         run: python scripts/check.py
