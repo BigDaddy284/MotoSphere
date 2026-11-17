@@ -568,15 +568,21 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-018.md`
 
 ### FND-032 – Continuous integration on Windows
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Every pull request and every change to `main` is also checked on Windows.
-- **Description:** A second job in the checks workflow runs `python scripts/check.py` on a Windows machine. This is the first time the project runs on Windows, so the task includes finding and fixing whatever that run exposes in the check runner, the tests or the application, without weakening any test. Split from FND-018.
-- **Acceptance criteria:** the Windows job passes on the task's own pull request with the same number of gates and tests as the Linux job; the Linux job still passes; every fix made for Windows is listed with its cause; no test is skipped or loosened.
-- **Tests required:** the workflow run itself (both jobs green); the repository checks on the workflows, extended to the second job; the full local run.
+- **Description:** The checks workflow runs its one set of steps on two machines, Linux (`ubuntu-24.04`) and Windows (`windows-2025`). Each gives its own result, and one failing does not stop the other. The browser install becomes two steps of one command each, because on Windows a step with several commands only fails on its last one; a repository check forbids such steps. The planner's trial on GitHub (pull request #30, closed without merging) showed that the project passes every gate on Windows as it is, so no fix for Windows is part of the plan. Split from FND-018.
+- **Acceptance criteria:**
+  1. On the task's own pull request both jobs finish green, and each log ends with "19 of 19 gates passed." and "Tests: 492 passed, 0 failed, 0 skipped."
+  2. A failure on one machine only turns that machine's job red and leaves the other green; both run to the end.
+  3. The machines are named images; repository checks pin the two machines, the job names, that one failing does not stop the other, and one command to a step.
+  4. Every rule from FND-018 still holds.
+  5. After the merge, the run for `main` is green on both machines.
+- **Tests required:** repository checks (25, of which 3 new and 1 replaced); the full local run of all 19 gates; the real workflow run on the pull request (both jobs green on the final commit; with a test that fails on Windows only, Windows red and Linux green); the run for `main` after the merge.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-032.md`
 
 ### FND-022 – GitHub Pages deployment
 - **Status:** NOT STARTED
