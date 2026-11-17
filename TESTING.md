@@ -44,7 +44,9 @@ selection colours). White on the accent blue measures 3.89:1, which meets 3:1
 but not 4.5:1, so that pair is limited to bold button labels. The tests also
 reject raw colours or unknown tokens in any style sheet under `frontend/src`.
 Browser tests check the applied theme colours and font stack, the keyboard
-focus ring and reduced motion.
+focus ring and reduced motion. The browser tests also check the icon files as
+served: the page's links, the content types, the sizes of the images, the
+colours of chosen pixels, and that the designs hold nothing that runs or loads.
 
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.

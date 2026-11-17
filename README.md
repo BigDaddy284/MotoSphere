@@ -82,6 +82,10 @@ application's sections, and one can be chosen with the mouse or the keyboard;
 there is no globe or data yet. The Sections and Details buttons in the top bar
 close and open the side panels. Press Ctrl+C to stop the development server.
 
+The icon files in `frontend/public/` (`favicon.svg`, `favicon.ico` and
+`apple-touch-icon.png`) are generated from the designs in `docs/design/icon/`
+with `npm run icons`, and committed. Run it only when a design changes.
+
 ## Running the checks
 
 Prerequisites: Python 3.12 or newer, Git and
