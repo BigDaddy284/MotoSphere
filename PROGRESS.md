@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-034 – GitHub Pages deployment (`NOT STARTED`, the planner is writing its plan)
-- **Tasks verified:** 32 of 226
+- **Current task:** FND-034 – GitHub Pages deployment (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 32 of 227
 - **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (548 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; one advisory, for a build tool, is accepted until 2026-12-17 in `frontend/audit-exceptions.json`. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`. No globe and no data store yet.
 
 ## Reports
@@ -2301,5 +2301,54 @@ deviation in the files; the hand-over message did not reach the planner,
 who found the pull request on GitHub.
 
 Commit: `f1b9897` (squash merge of pull request #33).
+
+Next task: FND-034 – GitHub Pages deployment.
+
+### PLAN-007 – Checking the published site becomes its own task (2026-11-17)
+
+Not a development task: no application code changed.
+
+"GitHub Pages deployment" asked for two things: that the deployment
+succeeds, and that the live address shows the application and the data.
+The first is a workflow and its safety rules. The second is a check that
+has to run somewhere that can reach the live address, with tests of its
+own. They are now two tasks, in this order:
+
+- FND-034 – GitHub Pages deployment (two jobs after the gates: build the
+  site, publish the site).
+- FND-035 – Check the published site after each deployment (a job that
+  looks at the live address and fails the run when the site is broken or
+  stale).
+
+Why the second cannot simply be the planner looking: the planner's
+environment may not reach `bigdaddy284.github.io` (its network policy
+refuses the address), so the planner cannot open the published site. A
+check that runs on GitHub after every deployment is the stronger answer in
+any case. Until FND-035 is verified, "published" means that GitHub accepted
+the deployment, and the owner can open the address to see it.
+
+Phase 1 has 35 tasks and the project 227. No requirement was dropped.
+
+What the planner tried for FND-034:
+
+- Locally (Linux, Python 3.13.18 and 3.12.3, Node 22.23.4, npm 10.9.9, uv
+  0.11.32): repository checks 34 of 34 on both Pythons; the full run 19 of
+  19 gates, 557 tests passed, 0 failed, 0 skipped; 82 of 82 planted defects
+  in the workflow detected.
+- On GitHub, in a trial pull request (#34, closed without merging): run
+  44158864492 with exactly the planned files, the gates green on Linux and
+  on Windows with 557 tests each and both publishing jobs skipped; run
+  44159606743 with a temporary variant that builds the site on a pull
+  request, "Build the site" green, handing over `index.html`, the three
+  icon files, `data/manifest.json` and the script and style sheet (110 kB),
+  and "Publish the site" still skipped.
+- Not tried, because GitHub only lets `main` publish: the publishing
+  itself. Its first real run is the run for `main` after FND-034 is merged.
+
+A correction found on the way, made part of FND-034: a comment in the
+workflow said every commit on `main` gets its result. Runs for `main` go
+one at a time, and a run that is still waiting gives way to a newer one, so
+a commit in the middle of a quick series may get none. That order is what
+keeps an older commit from replacing a newer one on the site.
 
 Next task: FND-034 – GitHub Pages deployment.
