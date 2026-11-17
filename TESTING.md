@@ -9,19 +9,40 @@ test means the task is not complete.
 
 ## Gates
 
-| Gate | Command |
-|---|---|
-| Repository checks (`tests/repo`) | `python -m unittest discover -s tests/repo -v` |
-| Backend unit tests (`backend/tests`) | `cd backend && uv run pytest` |
-| Backend lint | `cd backend && uv run ruff check .` |
-| Backend format | `cd backend && uv run ruff format --check .` |
-| Backend type check | `cd backend && uv run mypy` |
-| Frontend lint | `cd frontend && npm run lint` |
-| Frontend format | `cd frontend && npm run format:check` |
-| Frontend unit tests (`frontend/src/**/*.test.tsx`) | `cd frontend && npm test` |
-| Frontend type check | `cd frontend && npm run typecheck` |
-| Frontend build | `cd frontend && npm run build` |
-| Browser tests (`frontend/e2e`) | `cd frontend && npm run e2e` |
+One command runs every gate, in this order, from a clean checkout:
+
+```
+python scripts/check.py
+```
+
+It needs Python 3.12 or newer, Git, uv and Node.js, and nothing else: the
+script itself uses the Python standard library only. Every gate runs even
+when an earlier one failed. At the end it prints one line for each gate, with
+`PASSED` or `FAILED` and the time it took, and the exit code is 0 only when
+every gate passed. `python scripts/check.py --list` shows the gates without
+running them, and `--only` runs the gates you name, for example
+`python scripts/check.py --only frontend-lint frontend-tests`.
+
+| Name | Gate | Command | Runs in |
+|---|---|---|---|
+| `repo` | Repository checks | `python -m unittest discover -s tests/repo -v` | repository root |
+| `scripts` | Script tests | `python -m unittest discover -s tests/scripts -v` | repository root |
+| `backend-lock` | Backend lock file | `uv lock --check` | `backend/` |
+| `backend-install` | Backend install | `uv sync --locked` | `backend/` |
+| `backend-types` | Backend type check | `uv run mypy` | `backend/` |
+| `backend-lint` | Backend lint | `uv run ruff check .` | `backend/` |
+| `backend-format` | Backend format | `uv run ruff format --check .` | `backend/` |
+| `backend-tests` | Backend tests | `uv run pytest` | `backend/` |
+| `frontend-install` | Frontend install | `npm ci` | `frontend/` |
+| `frontend-lint` | Frontend lint | `npm run lint` | `frontend/` |
+| `frontend-format` | Frontend format | `npm run format:check` | `frontend/` |
+| `frontend-types` | Frontend type check | `npm run typecheck` | `frontend/` |
+| `frontend-tests` | Frontend unit tests | `npm test` | `frontend/` |
+| `frontend-build` | Frontend build | `npm run build` | `frontend/` |
+| `browser-tests` | Browser tests | `npm run e2e` | `frontend/` |
+| `frontend-audit` | Frontend dependency audit | `npm audit` | `frontend/` |
+
+A test compares this table with the script, so the two cannot drift apart.
 
 The backend suite includes integration tests that run the real command line
 (`python -m motosphere`) as a separate process.

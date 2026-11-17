@@ -61,6 +61,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   is unavailable (FND-028).
 - Browser tests can name the page problems they expect; the data status is
   tested with a missing manifest and a failed request (FND-029).
+- `python scripts/check.py`: one command that runs every gate in order and
+  reports which passed (FND-017).
 
 ### Removed
 
