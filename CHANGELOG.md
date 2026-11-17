@@ -63,6 +63,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   tested with a missing manifest and a failed request (FND-029).
 - `python scripts/check.py`: one command that runs every gate in order and
   reports which passed (FND-017).
+- The check runner reports how many tests each gate ran and fails a gate when
+  a test was skipped (FND-030).
 
 ### Removed
 
