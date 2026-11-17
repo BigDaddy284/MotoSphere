@@ -298,14 +298,16 @@ repository:
 Every task must pass every gate that exists at that point:
 
 1. Repository checks (`tests/repo`).
-2. Pipeline: ruff, mypy, pytest (unit and integration).
+2. Pipeline: ruff, mypy, pytest (unit and integration). The Python files
+   outside the pipeline (`scripts/`, `tests/`) pass the same ruff and mypy
+   checks, with the pipeline's locked tools (task FND-031).
 3. Frontend: oxlint, Prettier, TypeScript, Vitest, production build.
 4. Browser: Playwright against the built app, reading data produced by the
    real export command.
 
-A single command, `python scripts/check.py`, runs all gates and prints a count
-summary (task FND-017). Until it exists, each plan lists the exact commands.
-Details live in TESTING.md.
+A single command, `python scripts/check.py`, runs all gates, counts the
+tests and fails when a test was skipped (tasks FND-017 and FND-030). Details
+live in TESTING.md.
 
 ## 11. Security baseline (Decided)
 

@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-031 – Lint and format checks for Python outside the pipeline (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 27 of 223
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (473 today) and fails if any test was skipped. No globe and no data store yet.
+- **Current task:** FND-018 – Continuous integration (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 28 of 223
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (476 today) and fails if any test was skipped. No globe and no data store yet.
 
 ## Reports
 
@@ -1815,3 +1815,74 @@ Windows run is FND-018.
 Commit: `94f0862` (squash merge of pull request #27).
 
 Next task: FND-031 – Lint and format checks for Python outside the pipeline.
+
+### FND-031 – Lint and format checks for Python outside the pipeline (2026-11-17)
+
+TASK: FND-031 – Lint and format checks for Python outside the pipeline
+
+Implementation: Complete (builder thread, pull request #28). Three new gates
+in the check runner (`tools-types`, `tools-lint`, `tools-format`) hold the
+Python files outside the pipeline, in `scripts/` and `tests/`, to the
+pipeline's rules. They run from the repository root with the ruff and mypy
+the pipeline has locked, so there is no new dependency. `ruff.toml` extends
+the pipeline's rules with only the pytest-style rules off; `mypy.ini` is as
+strict as the pipeline's configuration. The repository checks were brought
+into line (return types, full generic types, two marked and explained
+exemptions for the Git call, two lines rewrapped). Exactly the planned
+files; all eight are identical to the planner's trial.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The runner's tests: 73/73 passed, and 73/73 again on Python 3.12 (the
+  gate table 11, of which 3 new; the rest as before).
+- Repository checks: 9/9 passed.
+- `--list`: 19 gates, the three new ones after "Backend tests" and before
+  "Frontend install".
+- The full run, started from another folder: 19 of 19 gates passed, exit
+  code 0, with the line "Tests: 476 passed, 0 failed, 0 skipped."
+  (repository checks 9, script tests 73, backend tests 115, frontend unit
+  tests 199, browser tests 80). The pipeline's type check still covered 23
+  source files; the new one covered 3.
+- Real planted defects through the real gates: 20 of 20 failed the matching
+  gate with exit code 1. In `scripts/`: a print call, an undefined name, an
+  unsorted import, a function without types, a wrong type, an ignore
+  without a code, bad formatting, and a new file with an unused import. In
+  `tests/repo/`: an unused variable, a bare assert, `eval`, a test without a
+  return type, a bare generic type, bad formatting. In `tests/scripts/`: a
+  Git call without its marked exemption, an exemption that is not needed, a
+  wrong type, a call the runner does not have, bad formatting. And a new
+  folder under `tests/` with an untyped function.
+- Gate checks through the runner's tests: 18 of 18 planted defects detected:
+  each new gate removed; the format gate rewriting instead of checking; a
+  gate leaving the tests out; a gate using a tool from the PATH instead of
+  the locked one; the type gate run in the pipeline's folder; the tests
+  folder not covered; the gates moved before the pipeline's install; rules
+  that are not the pipeline's; security rules switched off; a type check
+  that is not strict or leaves the tests out; a gate missing from, or
+  different in, `TESTING.md`; and a Python file in a folder no gate covers.
+- Without uv on the PATH the three gates failed with "uv is not installed",
+  exit code 1, and no Python error.
+- `git status` clean after the full run.
+
+Unit and integration tests: 396/396 passed (repository 9, script tests 73,
+backend 115, frontend 199). Browser tests: 80/80 passed.
+Type checking: passed (frontend, backend and the Python files outside the
+pipeline). Lint and format: passed (the same three).
+Build: passed (frontend).
+Browser or integration verification: passed (the full run executes the real
+gates, browser tests included).
+
+Overall applicable tests: 476/476 passed (100%), all 19 gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the three gates use the pipeline's environment, so they
+need uv, like the pipeline's own gates. The cover is by folder (`scripts/`
+and `tests/`); a test fails if a Python file appears outside the pipeline
+anywhere else. Not run on Windows 11; first Windows run is FND-018.
+
+Commit: `df929bf` (squash merge of pull request #28).
+
+Next task: FND-018 – Continuous integration.

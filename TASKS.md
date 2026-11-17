@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 31 | 27 |
+| 1 | Foundation (FND) | 31 | 28 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-031 – Lint and format checks for Python outside the pipeline.
+**Current task:** FND-018 – Continuous integration.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -530,7 +530,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-030.md`
 
 ### FND-031 – Lint and format checks for Python outside the pipeline
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The Python files outside `backend/` (`scripts/`, `tests/repo`, `tests/scripts`) pass the same lint, format and type checks as the pipeline.
 - **Description:** A `ruff.toml` at the repository root that extends the pipeline's rules, with only the pytest-style rules off because these tests use standard-library `unittest`; a `mypy.ini` that checks `scripts/` and `tests/` as strictly as the pipeline; and three new gates in the check runner (`tools-types`, `tools-lint`, `tools-format`) that run them from the repository root with the pipeline's locked tools, so that no new dependency is needed. The gates cover the two folders, not a list of files, and a test fails when a Python file appears outside the pipeline in a folder they do not cover. The existing files are brought into line (types, two marked exemptions and formatting in the repository checks).
 - **Acceptance criteria:**
@@ -541,10 +541,10 @@ Windows 11. No database and no globe yet.
   5. The pipeline's own gates are unchanged.
   6. `TESTING.md` lists the 19 gates exactly as the script has them, and `README.md` gives the three commands.
 - **Tests required:** the runner's own tests (73, of which 3 new: the tooling gates use the locked tools, every Python file outside the pipeline is in a covered folder, the two configuration files follow the pipeline's rules); repository checks (9, with two sample paths added); one full real run of all 19 gates; real planted lint, format and type defects in each of the three folders, run through the new gates.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #28 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the runner's tests (73, and 73 again on Python 3.12), repository checks (9), `--list` (19 gates), and the full run started from another folder: 19 of 19 gates passed, "Tests: 476 passed, 0 failed, 0 skipped.", exit code 0; the pipeline's type check still covered 23 files and the new one 3. Real lint, format and type defects planted in each of `scripts/`, `tests/repo/` and `tests/scripts/`, and in a new file and a new folder, each failed the matching gate with exit code 1 (20 of 20). Without uv on the PATH the three gates failed with "uv is not installed". 38 of 38 planted defects detected in all.
+- **Passed / Failed:** 476 / 0 tests (repository 9, script tests 73, backend 115, frontend unit 199, browser 80); all 19 gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. The three gates need the pipeline's environment, which the "Backend install" gate creates before them; run on their own on a fresh checkout, uv installs it first. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `df929bf`
 - **Plan:** `docs/plans/FND-031.md`
 
 ### FND-018 – Continuous integration
