@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 24 | 13 |
+| 1 | Foundation (FND) | 26 | 14 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-023 – Apply the owner's Graphite theme.
+**Current task:** FND-014 – Application shell layout.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -37,6 +37,9 @@ added for it (FND-020 to FND-022).
 **Visual identity (owner, 2026-11-17):** the owner supplied the Graphite
 theme and the Sky Classic icon style (`docs/design/`). Two foundation tasks
 were added for them (FND-023 and FND-024).
+
+The layout task was also split into smaller ones: regions (FND-014), section
+navigation (FND-025) and the current date (FND-026).
 
 Added tasks are listed where they fall in dependency order, so task numbers
 in Phase 1 are not strictly ascending.
@@ -280,7 +283,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-013.md`
 
 ### FND-023 – Apply the owner's Graphite theme
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The application uses the colours and font the owner chose.
 - **Description:** Replace the provisional colour tokens from FND-013 with the owner's Graphite theme (soft charcoal greys with a sky-blue accent, `docs/design/graphite-theme/`): bar, canvas, panel, window, control and pressed surfaces, borders, text, secondary and disabled text, the blue accent family and selection colour, and the Segoe UI font stack. Status colours stay. Base styles, contrast tests and browser tests follow the new names and values.
 - **Acceptance criteria:**
@@ -289,29 +292,34 @@ Windows 11. No database and no globe yet.
   3. In the browser the page shows the Graphite canvas colour as its background, the Graphite text colour, the Segoe UI font stack and the sky-blue focus ring.
   4. `npm test` reports 69 passed; `npm run e2e` reports 9 passed; all earlier gates pass.
 - **Tests required:** frontend unit tests (69: 47 contrast cases, a check of the 16 Graphite colours against the owner's values, token and style sheet checks, contrast maths, existing tests); browser tests (9); frontend lint, format check, type check, build; repository checks (9); backend untouched (55 tests).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #14 (Linux, Node 22.23.4, npm 10.9.9): `npm ci`, lint, format check, frontend unit tests (69, including 47 contrast cases), type check, build, browser tests (9), `npm audit` (0 vulnerabilities), repository checks (9 tests). The 16 Graphite tokens were also compared directly with the owner's reference files. Eight planted defects all detected. Backend not re-run: no backend file has changed since its 55/55 run on commit `0914ec5`.
+- **Passed / Failed:** 87 / 0 tests (frontend unit 69, browser 9, repository 9); frontend lint, format, type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. White on the accent blue is 3.89:1 (the owner's colours, used as supplied; bold button labels only). Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `15a9f59`
 - **Plan:** `docs/plans/FND-023.md`
 
-### FND-024 – Application icon in the Sky Classic style
-- **Status:** NOT STARTED
-- **Objective:** MotoSphere has its own icon in the style the owner chose.
-- **Description:** A MotoSphere icon drawn in the Sky Classic style (`docs/design/sky-classic-icon/`): rounded dark gradient tile, a glowing outline glyph with round joins in the sky-blue gradient. The glyph is MotoSphere's own (a globe motif), not the folder from the reference. Delivered as the page icon (SVG) with PNG fallbacks, and the style rules for later interface icons are written down.
-- **Acceptance criteria:** the icon uses the reference tile, gradient and stroke style with a MotoSphere glyph; it is legible at 16, 32 and 180 pixels; the page links it and the browser loads it; the icon style rules are documented.
-- **Tests required:** unit or repository test that the icon file uses the reference colours and contains no script or external reference; browser test that the icon is served; visual check by the planner at three sizes; all frontend gates.
+### FND-014 – Application shell layout
+- **Status:** IN PROGRESS
+- **Objective:** The final screen regions, with the globe area dominant.
+- **Description:** Top bar (name and tagline), sections panel on the left, globe stage in the centre and details panel on the right, as semantic landmarks in the Graphite surfaces, sized by layout tokens. Regions only: the section list, collapsing, data status and globe are later tasks, so the sections panel and stage are empty for now and no placeholder controls are added.
+- **Acceptance criteria:**
+  1. The four regions render as named landmarks, once each, in reading order; the name and tagline are in the top bar; the details panel shows its empty-state sentence.
+  2. At 1366×768 and 1920×1080 the regions fill the screen exactly without overlapping, the stage is wider than half the screen and wider than both panels together, and the page does not scroll.
+  3. The regions use the Graphite bar, panel and canvas colours through tokens.
+  4. `npm test` reports 75 passed; `npm run e2e` reports 16 passed; all earlier gates pass.
+- **Tests required:** frontend unit tests (75, of which 6 new component tests); browser tests (16, of which 7 new: three per viewport and one for surfaces); frontend lint, format check, type check, build; repository checks (9); backend untouched (55 tests).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-014.md`
 
-### FND-014 – Application shell layout
+### FND-025 – Section navigation
 - **Status:** NOT STARTED
-- **Objective:** The final screen regions, with the globe area dominant.
-- **Description:** Top bar (name, placeholder search slot, date, data-status slot), left navigation (Explore, Events, Tracks, Championships, Riders, Teams, Results, News, Statistics), centre stage reserved for the globe, right details panel. Semantic landmarks. No functionality behind the links yet.
-- **Acceptance criteria:** all four regions render with accessible landmarks and names; the centre stage takes the largest share of the viewport at 1366×768 and 1920×1080; no page scrollbars at those sizes.
-- **Tests required:** component tests for regions and nav items; browser test measuring region sizes at both viewports.
+- **Objective:** The user can see and choose the application's sections.
+- **Description:** The sections panel lists Explore, Events, Tracks, Championships, Riders, Teams, Results, News and Statistics. One section is current (Explore at start); choosing another by mouse or keyboard makes it current. The choice is application state that later tasks use to decide what the panels show.
+- **Acceptance criteria:** all nine sections are listed in that order with accessible names; exactly one is marked current (`aria-current`); selection works by click, Enter and Space and is visible in the Graphite selection style; focus is visible.
+- **Tests required:** component tests for the list, the current marker and selection by click and keyboard; browser test for keyboard selection and the visible current style; all frontend gates.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -323,6 +331,28 @@ Windows 11. No database and no globe yet.
 - **Description:** Collapse/expand controls for the left and right panels, keyboard accessible, state remembered for the session.
 - **Acceptance criteria:** each panel collapses and expands by mouse and keyboard; `aria-expanded` reflects state; the centre stage grows when a panel collapses.
 - **Tests required:** component tests for state and ARIA; browser test measuring centre-stage width before and after.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-026 – Current date in the top bar
+- **Status:** NOT STARTED
+- **Objective:** The top bar shows today's date, as DESIGN.md §12.1 suggests.
+- **Description:** The date in the user's own locale and time zone, in a `time` element, updating when the day changes.
+- **Acceptance criteria:** the date shown matches the browser's date for at least two time zones and locales; it changes at midnight without a reload; the machine-readable `datetime` attribute is correct.
+- **Tests required:** component tests with a controlled clock (formatting, midnight change); browser test with an emulated time zone and locale; all frontend gates.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-024 – Application icon in the Sky Classic style
+- **Status:** NOT STARTED (waiting for the owner to choose the symbol; nine mock-ups are published and the builder recommended the globe with a track across its equator)
+- **Objective:** MotoSphere has its own icon in the style the owner chose.
+- **Description:** A MotoSphere icon drawn in the Sky Classic style (`docs/design/sky-classic-icon/`): rounded dark gradient tile, a glowing outline glyph with round joins in the sky-blue gradient. The glyph is MotoSphere's own (a globe motif), not the folder from the reference. Delivered as the page icon (SVG) with PNG fallbacks, and the style rules for later interface icons are written down.
+- **Acceptance criteria:** the icon uses the reference tile, gradient and stroke style with a MotoSphere glyph; it is legible at 16, 32 and 180 pixels; the page links it and the browser loads it; the icon style rules are documented.
+- **Tests required:** unit or repository test that the icon file uses the reference colours and contains no script or external reference; browser test that the icon is served; visual check by the planner at three sizes; all frontend gates.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified

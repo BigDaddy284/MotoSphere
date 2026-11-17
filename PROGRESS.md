@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-023 – Apply the owner's Graphite theme (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 13 of 216
-- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application name, and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page has a dark theme. They are not connected yet; no globe and no database. The API server is due to be replaced by a data pipeline command (FND-020) following the GitHub Pages decision.
+- **Current task:** FND-014 – Application shell layout (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 14 of 218
+- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application name, and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. They are not connected yet; no globe and no database. The API server is due to be replaced by a data pipeline command (FND-020) following the GitHub Pages decision.
 
 ## Reports
 
@@ -735,3 +735,71 @@ the layout task FND-014. Not run on Windows 11; first Windows run is FND-018.
 Commit: `7e04f76` (squash merge of pull request #13).
 
 Next task: FND-023 – Apply the owner's Graphite theme.
+
+### FND-023 – Apply the owner's Graphite theme (2026-11-17)
+
+TASK: FND-023 – Apply the owner's Graphite theme
+
+Implementation: Complete (builder thread, pull request #14). The provisional
+colours are replaced by the owner's Graphite theme under Graphite's own role
+names: six surfaces (bar, canvas, panel, window, control, pressed), two line
+colours, text, secondary and disabled text, the accent blue with its sky and
+light variants, the selection colour and an accent gradient. The font stack
+starts with Segoe UI Variable Text and Segoe UI. Status colours are
+unchanged. Base styles use the canvas as page background, the sky blue for
+links and the focus ring, and the selection colour for selected text. Exactly
+the six planned files; `tokens.css`, `base.css` and the browser tests are
+identical to the planner's trial; no deviations.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. No dependency changed.
+- Frontend lint: passed. Format check: passed.
+- Frontend unit tests: 69/69 passed (4 files), including 47 contrast cases
+  and a check of the 16 Graphite tokens against the owner's values.
+- Independent comparison by the planner of `tokens.css` with the owner's
+  files in `docs/design/graphite-theme/`: 15 colours in the CSS reference and
+  the on-accent colour in the JSON reference all match exactly.
+- Type check: passed. Build: passed (script bundle 219.76 kB, style sheet
+  2.37 kB).
+- Browser tests: 9/9 passed. Screenshot of the built page checked by the
+  planner.
+- No old token name remains in `frontend/`; no skipped or focused tests and
+  no suppressions.
+- Gate checks: 8 planted defects all detected: one owner colour changed by
+  one digit; secondary text too dark; an old token name (unit and browser);
+  wrong focus ring colour (browser); font stack reordered (browser); page
+  background on the wrong surface (browser); a status colour too dark; the
+  on-accent colour darkened.
+- Repository checks: 9/9 passed.
+- Backend: not touched and not re-run; no backend file has changed since its
+  55/55 run on commit `0914ec5`.
+- `git status` clean after the full run.
+
+Unit tests: 78/78 passed (frontend 69, repository 9). Browser tests: 9/9
+passed.
+Type checking: passed (frontend). Lint and format: passed (frontend).
+Build: passed (frontend).
+Browser verification: passed (automated, headless Chromium, production build).
+
+Overall applicable tests: 87/87 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: white on the owner's accent blue measures 3.89:1, below
+the 4.5:1 guideline for small text. The colours are used as supplied; the
+pair is limited to bold button labels, the test records the 3:1 level, and
+the owner has been told. The owner's control border colour is below 3:1
+against the surfaces, which is not tested. Segoe UI is only present on
+Windows; other systems fall back to their system font. Not run on Windows
+11; first Windows run is FND-018.
+
+Planning notes: the layout task was split into regions (FND-014), section
+navigation (FND-025) and the current date (FND-026). The application icon
+(FND-024) waits for the owner to choose a symbol from the published
+mock-ups, so FND-014 goes first.
+
+Commit: `15a9f59` (squash merge of pull request #14).
+
+Next task: FND-014 – Application shell layout.
