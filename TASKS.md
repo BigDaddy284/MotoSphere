@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 31 | 28 |
+| 1 | Foundation (FND) | 32 | 28 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -45,7 +45,9 @@ data locally (FND-027) and the data status in the top bar (FND-028). One
 task was added after it (FND-029), so that the browser tests can also cover
 a manifest the server does not have. The check runner task was split into
 three: the runner itself (FND-017), test counts and skipped tests (FND-030)
-and the Python files outside the pipeline (FND-031).
+and the Python files outside the pipeline (FND-031). Continuous integration
+was split into two: Linux (FND-018) and Windows (FND-032). Where an earlier
+entry says the first Windows run is FND-018, that run is now FND-032.
 
 Added tasks are listed where they fall in dependency order, so task numbers
 in Phase 1 are not strictly ascending.
@@ -548,11 +550,29 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-031.md`
 
 ### FND-018 – Continuous integration
+- **Status:** IN PROGRESS
+- **Objective:** Every pull request and every change to `main` is checked automatically on GitHub, on Linux.
+- **Description:** A GitHub Actions workflow (`.github/workflows/checks.yml`) with one job on a Linux machine: it installs Python 3.12 (the oldest version the pipeline supports), uv, Node.js and the browser for the browser tests, then runs `python scripts/check.py`, the same command as on a developer's machine. The workflow is given as little as possible: a token that can only read, no secret, no credentials left by the checkout, every action pinned to a full commit, and only four actions allowed. New repository checks hold every workflow to these rules. The existing check that source paths are not ignored is corrected so that it can also fail for files Git already tracks. Windows is a separate task (FND-032).
+- **Acceptance criteria:**
+  1. On the task's own pull request the job finishes green, and its log ends with "19 of 19 gates passed." and "Tests: 489 passed, 0 failed, 0 skipped."
+  2. A commit with a failing test makes the job fail, and its log names the failed gate.
+  3. The token can only read, no secret is used, the checkout keeps no credentials, every action is pinned to a full commit with its release beside it, and only the four known actions are used; repository checks pin each of these for every workflow.
+  4. No step can be skipped or allowed to fail, and the only commands are the two that install the browser and `python scripts/check.py`.
+  5. An ignore rule that would hide a tracked source file fails the repository checks.
+  6. After the merge, the run for `main` is green.
+- **Tests required:** repository checks (22, of which 13 new, on the workflows); the full local run of all 19 gates; the real workflow run on the pull request (green on the final commit, red on a commit with a failing test); the run for `main` after the merge.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-018.md`
+
+### FND-032 – Continuous integration on Windows
 - **Status:** NOT STARTED
-- **Objective:** Every pull request is checked automatically, on Linux and Windows.
-- **Description:** A GitHub Actions workflow that installs Python, uv and Node, then runs `python scripts/check.py` on Linux and Windows runners for pull requests and pushes to `main`.
-- **Acceptance criteria:** the workflow runs on the task's own pull request and passes on both operating systems.
-- **Tests required:** the workflow run itself (both jobs green); local check runner still passes.
+- **Objective:** Every pull request and every change to `main` is also checked on Windows.
+- **Description:** A second job in the checks workflow runs `python scripts/check.py` on a Windows machine. This is the first time the project runs on Windows, so the task includes finding and fixing whatever that run exposes in the check runner, the tests or the application, without weakening any test. Split from FND-018.
+- **Acceptance criteria:** the Windows job passes on the task's own pull request with the same number of gates and tests as the Linux job; the Linux job still passes; every fix made for Windows is listed with its cause; no test is skipped or loosened.
+- **Tests required:** the workflow run itself (both jobs green); the repository checks on the workflows, extended to the second job; the full local run.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified

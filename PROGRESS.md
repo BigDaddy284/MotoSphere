@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-018 – Continuous integration (`NOT STARTED`, the planner is writing its plan)
-- **Tasks verified:** 28 of 223
+- **Current task:** FND-018 – Continuous integration (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 28 of 224
 - **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (476 today) and fails if any test was skipped. No globe and no data store yet.
 
 ## Reports
@@ -1884,5 +1884,36 @@ and `tests/`); a test fails if a Python file appears outside the pipeline
 anywhere else. Not run on Windows 11; first Windows run is FND-018.
 
 Commit: `df929bf` (squash merge of pull request #28).
+
+Next task: FND-018 – Continuous integration.
+
+### PLAN-005 – Continuous integration split into Linux and Windows (2026-11-17)
+
+"Continuous integration" asked for a workflow that passes on Linux and on
+Windows. The project has never run on Windows, so that run is expected to
+find things to fix, and those fixes can be tested on their own. Setting the
+workflow up is a different job. It is now two tasks, in this order:
+
+- FND-018 – Continuous integration (the workflow, on Linux, with the rules
+  that keep it safe).
+- FND-032 – Continuous integration on Windows (a second job, and whatever
+  the first Windows run exposes).
+
+Earlier reports and task entries say "first Windows run is FND-018". That
+run is now FND-032. Phase 1 has 32 tasks and the project 224. No requirement
+was dropped.
+
+Found while trying the task out, and made part of FND-018: the repository
+check "source paths are not ignored" (FND-001) asked Git whether sample
+paths are ignored, but Git never reports a file it already tracks as
+ignored. For every sample file that exists, the check could not fail. One
+option (`--no-index`) corrects it; with it, an ignore rule that hides a
+tracked source folder fails the check.
+
+What the planner could not try: the workflow itself, which only runs on
+GitHub. Its first real run is on the builder's pull request. The planner
+ran every gate locally with the variables GitHub sets and with Python 3.12
+(19 of 19 gates, 489 tests), and read the actions' pinned commits and
+inputs from their own repositories.
 
 Next task: FND-018 – Continuous integration.
