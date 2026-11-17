@@ -53,6 +53,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   atomically and deterministically (FND-021).
 - Application icon: the owner's approved design as the page icon, with a
   small version for browser tabs, an ICO fallback and a touch icon (FND-024).
+- Frontend manifest reader: fetches and checks the published data manifest,
+  with a plain result for every failure (FND-016).
 
 ### Removed
 
