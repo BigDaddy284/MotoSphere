@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-034 – GitHub Pages deployment (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 32 of 227
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (548 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; one advisory, for a build tool, is accepted until 2026-12-17 in `frontend/audit-exceptions.json`. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`. No globe and no data store yet.
+- **Current task:** FND-035 – Check the published site after each deployment (`NOT STARTED`, the planner is writing its plan; work is on hold until 2026-11-18, 20:00 UK time, at the owner's request)
+- **Tasks verified:** 33 of 227
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (557 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; one advisory, for a build tool, is accepted until 2026-12-17 in `frontend/audit-exceptions.json`. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). No globe and no data store yet.
 
 ## Reports
 
@@ -2352,3 +2352,80 @@ a commit in the middle of a quick series may get none. That order is what
 keeps an older commit from replacing a newer one on the site.
 
 Next task: FND-034 – GitHub Pages deployment.
+
+### FND-034 – GitHub Pages deployment (2026-11-17)
+
+TASK: FND-034 – GitHub Pages deployment
+
+Implementation: Complete (builder thread, pull request #35). The checks
+workflow has two more jobs after the gates. "Build the site" waits for the
+gates on both machines, exports the published data, builds the application
+and hands `frontend/dist` to the next job; it can only read the repository.
+"Publish the site" is the only job with the right to publish (`pages:
+write`, `id-token: write`); it checks out nothing and runs no command of
+its own, and goes through the `github-pages` environment. Both run for a
+change to `main` only, never for a pull request. Two actions of GitHub's
+own were added, each pinned to a commit. The repository checks hold the
+workflow to all of this (34 tests, 25 before). Exactly the 6 planned
+files; all are identical to the planner's trial.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  557 passed, 0 failed, 0 skipped." (repository checks 34, script tests
+  122, backend tests 115, frontend unit tests 199, browser tests 87).
+- The 34 repository checks again on Python 3.12.3: OK.
+- Gate checks: 82 of 82 planted defects in the workflow detected by the
+  repository checks, among them a pull request that publishes, a site
+  built without waiting for the gates or when a gate failed, a build job
+  that may publish, a publishing job that may change the repository, runs
+  a command or skips the Pages environment, a site without its data, the
+  whole repository published, an action named by a tag, a start by hand,
+  and a fourth job.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44160652237, the pull request's commit (`6563e24`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 557 passed, 0 failed, 0 skipped."; "Build the
+  site" and "Publish the site" skipped, as they must be on a pull request.
+- Run 44162680770, for `main` after the merge (`fbfe689`): all four jobs green.
+  The gates on both machines end with the same two lines. "Build the
+  site" took 17 seconds and handed over `index.html`, `favicon.ico`,
+  `favicon.svg`, `apple-touch-icon.png`, `data/manifest.json` and one
+  script and one style sheet under `assets/` (110550 bytes). "Publish the
+  site" ran with a token that could read the run's metadata and write to
+  Pages and nothing else; its log says "Created deployment for
+  fbfe689f075f1f162783e4b26b39f6ec473bd72a" and "Reported success!". This
+  was the first deployment, and it confirms that GitHub Pages is switched
+  on for the repository with GitHub Actions as its source.
+
+Unit and integration tests: 470/470 passed (repository 34, script tests
+122, backend 115, frontend 199). Browser tests: 87/87 passed.
+Type checking: passed (frontend, backend and the Python files outside the
+pipeline). Lint and format: passed (the same three).
+Build: passed (frontend, in the gates and again in "Build the site").
+Browser or integration verification: the browser tests passed on Linux and
+on Windows against the production build served under `/MotoSphere/`; the
+deployment itself succeeded on GitHub.
+
+Overall applicable tests: 557/557 passed (100%), all 19 gates passed, on
+both machines; the deployment succeeded.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: "published" means that GitHub Pages accepted the
+deployment and reported success. Nobody has yet looked at
+<https://bigdaddy284.github.io/MotoSphere/> on the project's behalf: the
+planner's environment may not reach the address (tried again after the
+deployment, refused by its network policy), and the deployment's log does
+not print the address. The owner can open it; the automatic check of what
+a visitor gets, after every deployment, is the next task. From now on
+every change to `main` that passes every gate republishes the site, the
+planner's bookkeeping commits included. The builder reported no deviation.
+
+Commit: `fbfe689` (squash merge of pull request #35).
+
+Next task: FND-035 – Check the published site after each deployment.
