@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 26 | 16 |
+| 1 | Foundation (FND) | 26 | 17 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-015 – Collapsible side panels.
+**Current task:** FND-026 – Current date in the top bar.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -333,7 +333,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-025.md`
 
 ### FND-015 – Collapsible side panels
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Let the user give the globe the whole screen.
 - **Description:** A Sections button and a Details button in the top bar close and open the two side panels, by mouse or keyboard. A closed panel stays in the page, hidden, and the globe stage takes its room. The choice is remembered for the browser session (session storage): it survives a reload and ends with the tab. Unknown stored values and unusable storage both mean open. No icons and no animation in this task.
 - **Acceptance criteria:**
@@ -345,22 +345,29 @@ Windows 11. No database and no globe yet.
   6. With both panels open the layout is unchanged (the FND-014 layout tests pass unmodified).
   7. `npm test` reports 96 passed; `npm run e2e` reports 30 passed; all earlier gates pass.
 - **Tests required:** frontend unit tests (96, of which 10 new for the side panels: state, ARIA, keyboard, remembering, bad stored values, storage that throws); browser tests (30, of which 9 new: start state, stage edges for each panel and both, keyboard, keyboard order, reload, new tab, button style); frontend lint, format check, type check, build; `npm audit`; repository checks (9); backend untouched (55 tests).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #17 (Linux, Node 22.23.4, npm 10.9.9): `npm ci`, lint, format check, frontend unit tests (96), type check, build, browser tests (30, three runs in a row), `npm audit` (0 vulnerabilities), repository checks (9 tests). Fourteen planted defects all detected. Backend not re-run: no backend file has changed since its 55/55 run on commit `0914ec5`.
+- **Passed / Failed:** 135 / 0 tests (frontend unit 96, browser 30, repository 9); frontend lint, format, type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. The buttons are text only (icons follow the icon task) and the panels open and close without animation. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `98bf3c3`
 - **Plan:** `docs/plans/FND-015.md`
 
 ### FND-026 – Current date in the top bar
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The top bar shows today's date, as DESIGN.md §12.1 suggests.
-- **Description:** The date in the user's own locale and time zone, in a `time` element, updating when the day changes.
-- **Acceptance criteria:** the date shown matches the browser's date for at least two time zones and locales; it changes at midnight without a reload; the machine-readable `datetime` attribute is correct.
-- **Tests required:** component tests with a controlled clock (formatting, midnight change); browser test with an emulated time zone and locale; all frontend gates.
+- **Description:** Today's date written out in the language of the user's browser, for the day where the user is, in a `time` element at the right-hand end of the top bar. One timer runs to the next local midnight (worked out from the calendar), and the day is also checked whenever the page comes back into view. Only `Date` and `Intl.DateTimeFormat` are used; no date library. The shell gets an `info` slot that the data status will share later.
+- **Acceptance criteria:**
+  1. The date is shown in a `time` element between the tagline and the Details button, at the right-hand end of the bar, in the secondary text colour.
+  2. The wording follows the browser's language (British English, American English and German verified in a real browser).
+  3. The day is the day where the user is (Los Angeles: previous day; Tokyo: next day), and `datetime` holds it as `YYYY-MM-DD`.
+  4. The date changes at local midnight without a reload, keeps doing so on following days, and catches up when the page comes back into view.
+  5. Removing the component leaves no timer and no listener behind.
+  6. `npm test` reports 115 passed; `npm run e2e` reports 35 passed; all earlier gates pass.
+- **Tests required:** frontend unit tests (115, of which 19 new: 12 for the day functions, 5 for the component with a controlled clock, 1 for the shell slot, 1 for the application), also run in a second time zone; browser tests (35, of which 5 new with emulated language, time zone and clock: London, Los Angeles, Tokyo, midnight change, position and colour); frontend lint, format check, type check, build; `npm audit`; repository checks (9); backend untouched (55 tests).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-026.md`
 
 ### FND-024 – Application icon in the Sky Classic style
 - **Status:** NOT STARTED (waiting for the owner's final choice. The owner rejected the first nine mock-ups and chose a globe outline with MOTO following the top of the rim and SPHERE the bottom, the rim breaking where the words sit, with no dots in the O's. The choice of lettering font is still open; five drafts are in front of the owner. The lettering cannot be read at 16 pixels, so the smallest size may need a globe-only variant)

@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-015 – Collapsible side panels (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 16 of 218
-- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application's layout (top bar, sections panel with the nine sections to choose from, globe area and details panel; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. They are not connected yet; no globe and no database. The API server is due to be replaced by a data pipeline command (FND-020) following the GitHub Pages decision.
+- **Current task:** FND-026 – Current date in the top bar (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 17 of 218
+- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application's layout (top bar, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. They are not connected yet; no globe and no database. The API server is due to be replaced by a data pipeline command (FND-020) following the GitHub Pages decision.
 
 ## Reports
 
@@ -928,3 +928,67 @@ first Windows run is FND-018.
 Commit: `385d15e` (squash merge of pull request #16).
 
 Next task: FND-015 – Collapsible side panels.
+
+### FND-015 – Collapsible side panels (2026-11-17)
+
+TASK: FND-015 – Collapsible side panels
+
+Implementation: Complete (builder thread, pull request #17). A Sections
+button and a Details button in the top bar close and open the two side
+panels. `aria-expanded` gives the state and `aria-controls` names the panel.
+A closed panel stays in the page, hidden, and the globe stage takes its
+room: the grid's side columns are now automatic and the panels carry their
+own width. The choice is kept in session storage, so it survives a reload
+and ends with the tab; unknown stored values and unusable storage both mean
+open. A shared browser test helper, `tabTo`, reaches an element with the Tab
+key. Exactly the planned files; the hook, the shell, its style sheet, the
+test setup and the helper are identical to the planner's trial. One
+deviation, accepted: the test for unusable storage also checks that storage
+was tried.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. No dependency changed.
+- Frontend lint: passed. Format check: passed.
+- Frontend unit tests: 96/96 passed (6 files), 10 of them new. Type check:
+  passed.
+- Build: passed (script bundle 221.87 kB, style sheet 5.05 kB).
+- Browser tests: 30/30 passed, three runs in a row; 9 of them new (start
+  state, stage edges with each panel and both closed, keyboard, keyboard
+  order, reload, new tab, button style). The FND-014 layout tests pass
+  unmodified. Two existing keyboard tests were changed as planned, because
+  the top bar buttons now come first in the Tab order.
+- No skipped or focused tests, no suppressions and no fixed sleeps.
+- Gate checks: 14 planted defects all detected: panel never hidden; state
+  not announced; choice not stored; unguarded storage read; unguarded
+  storage write; local storage instead of session storage (caught by the
+  new-tab browser test); stage not growing (browser only); button naming
+  the wrong panel; no style for the open state (browser only); both buttons
+  driving one panel; one storage key for both panels; button out of the
+  keyboard order; unknown stored value treated as closed; closed panel only
+  made invisible instead of hidden.
+- Repository checks: 9/9 passed.
+- Backend: not touched and not re-run; no backend file has changed since its
+  55/55 run on commit `0914ec5`.
+- `git status` clean after the full run.
+
+Unit tests: 105/105 passed (frontend 96, repository 9). Browser tests: 30/30
+passed.
+Type checking: passed (frontend). Lint and format: passed (frontend).
+Build: passed (frontend).
+Browser verification: passed (automated, headless Chromium, production
+build), plus screenshots checked by the planner during the trial.
+
+Overall applicable tests: 135/135 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the buttons are text only until the icon task; panels
+open and close at once, without animation; the choice is per browser tab and
+is not kept after the tab is closed. Not run on Windows 11; first Windows
+run is FND-018.
+
+Commit: `98bf3c3` (squash merge of pull request #17).
+
+Next task: FND-026 – Current date in the top bar.
