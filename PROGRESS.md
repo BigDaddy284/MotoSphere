@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-028 – Data status in the top bar (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 23 of 221
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The page itself does not show the data yet; no globe and no data store.
+- **Current task:** FND-029 – Browser tests can expect a page problem (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 24 of 221
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. No globe and no data store yet.
 
 ## Reports
 
@@ -1492,3 +1492,78 @@ tests from FND-016 and the component's). Phase 1 has 29 tasks and the
 project 221. No requirement was dropped.
 
 Next task: FND-028 – Data status in the top bar.
+
+### FND-028 – Data status in the top bar (2026-11-17)
+
+TASK: FND-028 – Data status in the top bar
+
+Implementation: Complete (builder thread, pull request #24). A hook,
+`useManifest`, loads the published manifest once when the application
+starts; it stops the request when its component goes away and ignores a late
+answer. A component, `DataStatus`, shows one line in the top bar before the
+date: "Loading data…", then "Data updated" with the day the data was
+generated (in the language of the browser, for the day where the user is, in
+a `time` element that carries the exact moment), or "Data unavailable", or
+"Reload the page to see the data" when the data is in a newer format than
+the application reads. The line is an `output` element, so changes are
+announced to assistive technology. Exactly the planned files; all twelve
+code and test files are identical to the planner's trial.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9, uv 0.11.32):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. No dependency changed.
+- Frontend lint: passed. Format check: passed.
+- Frontend unit tests: 199/199 passed (12 files); 22 new: the hook 10, the
+  date 5, the component 6, the application 1. Passed again, 199/199, with
+  the time zone set to Asia/Tokyo.
+- Type check: passed. Build: passed (script bundle 224.92 kB, style sheet
+  5.15 kB).
+- Browser tests: 62/62 passed, three runs in a row; 9 of them new: the real
+  exported manifest for a British user in London; position between the
+  tagline and the date, colour and size at 1366 pixels; the American way for
+  the day in Los Angeles; the German way for the day in Tokyo; loading until
+  the answer arrives; a web page as the answer; a damaged manifest; a newer
+  format; the rest of the page still working when the data is unavailable.
+- Looked at in a browser (production build with really exported data, 1366
+  and 1100 pixels wide): "Data updated 17 November 2026" then "Tuesday, 17
+  November 2026" on one line, in the quiet colour, before the Details
+  button.
+- No skipped or focused tests and no suppressions.
+- Gate checks: 22 of 22 planted defects detected: the status never leaving
+  loading; the reason for a failure lost; a loader that throws; the request
+  not stopped; a late answer used; loading on every draw; a new loader
+  ignored; the base path ignored; the signal not passed on; a newer format
+  reported as unavailable; every failure asking for a reload; no `time`
+  element; a wrong machine-readable moment; a fixed language; not announced;
+  no space after "Data updated"; the day taken in UTC; a short month name;
+  the status missing from the page; the date before the status; no room
+  between the two; the information laid out as boxes that the top bar cuts
+  off. Three of these are detected only by the browser tests (the two layout
+  defects always; the UTC day on a machine whose own time zone is UTC).
+- Repository checks: 9/9 passed.
+- `git status` clean after the full run.
+- Backend gates: not run again. No backend file changed since they passed
+  for FND-027 (115/115), and the browser tests run the real export command.
+
+Unit and integration tests: 208/208 passed (frontend 199, repository 9).
+Browser tests: 62/62 passed.
+Type checking: passed. Lint and format: passed.
+Build: passed.
+Browser or integration verification: passed (automated, headless Chromium,
+production build with really exported data), plus the top bar looked at by
+the planner.
+
+Overall applicable tests: 270/270 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the status is loaded once per page load, with no retry
+and no refresh while the page stays open. A manifest answered with HTTP 404
+and a failed request are covered by unit tests only, because every browser
+test fails on those by design; their browser tests come with FND-029. Not
+run on Windows 11; first Windows run is FND-018.
+
+Commit: `d45e008` (squash merge of pull request #24).
+
+Next task: FND-029 – Browser tests can expect a page problem.

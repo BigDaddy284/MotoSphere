@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 29 | 23 |
+| 1 | Foundation (FND) | 29 | 24 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-028 – Data status in the top bar.
+**Current task:** FND-029 – Browser tests can expect a page problem.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -460,7 +460,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-027.md`
 
 ### FND-028 – Data status in the top bar
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The user can see how current the data is, or that it could not be loaded.
 - **Description:** A hook, `useManifest`, loads the manifest once when the application starts and reports loading, ready or failed; it stops the request when its component goes away and ignores a late answer. A component, `DataStatus`, shows one line in the top bar's information slot, before the date, in plain language: "Loading data…", "Data updated" with the day the data was generated (written in the language of the user's browser, for the day where the user is, in a `time` element that carries the exact moment), "Data unavailable" for a manifest that cannot be fetched or is not a manifest, and "Reload the page to see the data" when the data is in a newer format than the application reads. The line is an `output` element, so changes are announced to assistive technology. The browser tests of the normal case read the manifest the real export command wrote for the run. A browser test with a manifest the server does not have (HTTP 404) or a failed request is not possible until the browser tests can expect a page problem (FND-029); those cases are covered by unit tests here.
 - **Acceptance criteria:**
@@ -471,10 +471,10 @@ Windows 11. No database and no globe yet.
   5. Leaving the page stops the request, and a late answer changes nothing.
   6. `npm test` reports 199 passed in 12 files; `npm run e2e` reports 62 passed.
 - **Tests required:** frontend unit tests (199, of which 22 new: the hook 10, the date 5, the component 6, the application 1); browser tests (62, of which 9 new: the real manifest for a British user, position and colour, the American way for the day in Los Angeles, the German way for the day in Tokyo, loading until the answer arrives, a web page as the answer, a damaged manifest, a newer format, the rest of the page still working); the unit tests once more in another time zone; lint, format check, type check, build, audit; repository checks (9).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #24 (Linux, Node 22.23.4, npm 10.9.9, uv 0.11.32): `npm ci`, lint, format check, frontend unit tests (199, and 199 again with the time zone set to Asia/Tokyo), type check, build, browser tests (62, three runs in a row), `npm audit` (0 vulnerabilities); repository checks (9 tests). The top bar was looked at in a browser at 1366 and 1100 pixels. 22 of 22 planted defects detected. The backend gates were not run again: no backend file changed since they passed for FND-027 (115 tests), and the browser tests run the real export.
+- **Passed / Failed:** 270 / 0 tests (frontend unit 199, browser 62, repository 9); all lint, format, type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. A manifest answered with HTTP 404 and a failed request are covered by unit tests only; their browser tests come with FND-029. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `d45e008`
 - **Plan:** `docs/plans/FND-028.md`
 
 ### FND-029 – Browser tests can expect a page problem
