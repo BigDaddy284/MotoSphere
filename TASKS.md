@@ -478,15 +478,20 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-028.md`
 
 ### FND-029 – Browser tests can expect a page problem
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** A browser test can say which page problems it expects, so that the data status can be tested in the browser with a manifest the server does not have.
-- **Description:** Every browser test fails when the page reports a console error, an uncaught error, a failed request or an HTTP error (`frontend/e2e/fixtures.ts`). That is right for every test so far, but it makes one real case untestable: on GitHub Pages a missing manifest is answered with HTTP 404, which the browser also reports in its console. This task lets a single test name the problems it expects; such a test then fails if an expected problem does not happen, and still fails on any problem it did not name. With it, browser tests are added for the data status when the manifest is answered with HTTP 404 and when the request fails.
-- **Acceptance criteria:** a test that names its expected problems passes only when exactly those happen; every other browser test behaves as before; the data status shows "Data unavailable" for a manifest answered with HTTP 404 and for a failed request, and the rest of the page keeps working.
-- **Tests required:** browser tests for the two new data status cases; proof by planted defects that an unexpected problem still fails a test and that an expected problem which does not happen fails it too; all frontend gates.
+- **Description:** Every browser test fails when the page reports a console error or warning, an uncaught error, a failed request or an HTTP error (`frontend/e2e/fixtures.ts`). That stays the rule. A test about a failure now names what it expects, inside the test, with `expectProblem(/pattern/)`; it then fails if an expected problem does not happen and still fails on any problem it did not name, so an expectation can never hide another fault. The judgement is one function with no browser in it, `unexplained`. The rule gets tests of its own for the first time; tests that must fail under the rule are marked with `test.fail()` and are reported as passed, never as skipped. With it, the data status is tested in the browser with a manifest answered with HTTP 404 and with a failed request. The application itself does not change.
+- **Acceptance criteria:**
+  1. A browser test that names no problem behaves as before: it fails on a console error or warning, an uncaught error, a failed request or an HTTP error, and passes on a healthy page.
+  2. A test that names its expected problems passes only when every one of them happens and nothing else does.
+  3. The data status says "Data unavailable" when the manifest is answered with HTTP 404 and when the request fails, and the rest of the page keeps working.
+  4. `npm run e2e` reports 80 passed with none skipped; `npm test` still reports 199 passed in 12 files.
+- **Tests required:** browser tests (80, of which 18 new: 7 of the judgement, 9 of the rule in a real page, 2 of the data status); frontend unit tests unchanged (199); lint, format check, type check, build, audit; repository checks (9).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-029.md`
 
 ### FND-017 – Unified check runner
 - **Status:** NOT STARTED
