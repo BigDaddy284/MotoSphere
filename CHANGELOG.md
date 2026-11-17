@@ -69,7 +69,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`scripts/`, `tests/`), run with the pipeline's locked tools (FND-031).
 - Continuous integration: GitHub runs every gate on Linux for each pull
   request and each change to `main` (FND-018).
-- Continuous integration also runs every gate on Windows (FND-032).
 
 ### Removed
 
