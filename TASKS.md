@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 35 | 32 |
+| 1 | Foundation (FND) | 35 | 33 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-034 – GitHub Pages deployment.
+**Current task:** FND-035 – Check the published site after each deployment.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -626,7 +626,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-022.md`
 
 ### FND-034 – GitHub Pages deployment
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Every change to `main` that passes every gate is published on GitHub Pages, by itself, and nothing else ever is.
 - **Description:** The checks workflow gets two more jobs after the gates. "Build the site" waits for the gates on both machines, exports the published data, builds the application and hands `frontend/dist` over; it can only read the repository. "Publish the site" is the only job with the right to publish; it checks out nothing and runs no command of its own, and goes through the `github-pages` environment. Both run for a change to `main` only, never for a pull request. Runs for `main` go one at a time, in order, so an older commit never replaces a newer one. Two actions of GitHub's own are added, pinned to a commit. The repository checks hold the workflow to all of this. The planner's trial on GitHub (pull request #34, closed without merging) showed the two jobs skipped on a pull request and the site built and handed over correctly. Publishing itself can only run from `main`, so its first real run is the run for `main` after the merge. Split from FND-022 (PLAN-006); the check of the published site is FND-035 (PLAN-007).
 - **Acceptance criteria:**
@@ -637,10 +637,10 @@ Windows 11. No database and no globe yet.
   5. Every rule from FND-018 and FND-032 still holds, for all three jobs.
   6. After the merge, the run for `main` builds and publishes the site: all four jobs green.
 - **Tests required:** repository checks (34, of which 9 new: the jobs, the order they wait in, a pull request never publishes, only the deployment may publish, the publishing job runs nothing of its own, the Pages environment, what the site is made of, where it is built, named machines); the full run of all 19 gates; planted defects; the workflow run on the pull request; the run for `main` after the merge, with its deployment. The owner reported on 2026-11-17 that GitHub Pages is switched on for the repository with GitHub Actions as its source; the run for `main` will confirm it. If that run shows Pages is not available, the task is `BLOCKED – EXTERNAL DEPENDENCY`, not passed.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #35 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 557 passed, 0 failed, 0 skipped.", exit code 0 (repository checks 34); the 34 repository checks again on Python 3.12.3. Planted defects in the workflow: 82 of 82 detected by the repository checks. On GitHub, read by the planner from the runs and job logs: run 44160652237 on the pull request's commit, "All gates (Linux)" and "All gates (Windows)" green, each log ending "19 of 19 gates passed." and "Tests: 557 passed, 0 failed, 0 skipped.", "Build the site" and "Publish the site" skipped; run 44162680770 for `main` after the merge, all four jobs green: the gates on both machines with the same two closing lines, "Build the site" (the site handed over: `index.html`, three icon files, `data/manifest.json`, one script and one style sheet, 110550 bytes), and "Publish the site" (its token: "Metadata: read", "Pages: write"; "Created deployment for fbfe689f075f1f162783e4b26b39f6ec473bd72a"; "Reported success!").
+- **Passed / Failed:** 557 / 0 tests (repository 34, script tests 122, backend 115, frontend unit 199, browser 87); all 19 gates passed, locally and on both machines on GitHub; the first deployment succeeded
+- **Verification status:** Verified by the planner on 2026-11-17. All 6 files are identical to the planner's trial. "Published" here means that GitHub Pages accepted the deployment and reported success. The planner could not open <https://bigdaddy284.github.io/MotoSphere/> to look (the planner's network policy refuses the address); checking what a visitor gets, after every deployment, is FND-035.
+- **Commit:** `fbfe689`
 - **Plan:** `docs/plans/FND-034.md`
 
 ### FND-035 – Check the published site after each deployment

@@ -77,6 +77,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   recorded with a reason and a review date. One exception is recorded: a
   slow pattern match in picomatch, a build and test tool, for which no fixed
   version exists yet (GHSA-fc5q-39xc-vjpf, review by 2026-12-17) (FND-033).
+- Deployment: every change to `main` that passes all gates on both machines
+  is published on GitHub Pages, at
+  <https://bigdaddy284.github.io/MotoSphere/> (FND-034).
 
 ### Removed
 
