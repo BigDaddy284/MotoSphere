@@ -23,3 +23,5 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Frontend project skeleton (`frontend/`): Vite, React and TypeScript in strict
   mode (FND-009).
 - Frontend unit testing with Vitest and Testing Library (FND-010).
+- Frontend linting with oxlint (React, accessibility and security rules) and
+  formatting with Prettier (FND-011).
