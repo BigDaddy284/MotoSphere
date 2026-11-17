@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-032 – Continuous integration on Windows (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 29 of 224
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (489 today) and fails if any test was skipped. GitHub runs the same command on Linux for every pull request and every change to `main`. No globe and no data store yet.
+- **Current task:** FND-022 – GitHub Pages deployment (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 30 of 224
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (492 today) and fails if any test was skipped. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`. No globe and no data store yet.
 
 ## Reports
 
@@ -1997,3 +1997,80 @@ commits included.
 Commit: `a743a64` (squash merge of pull request #29).
 
 Next task: FND-032 – Continuous integration on Windows.
+
+### FND-032 – Continuous integration on Windows (2026-11-17)
+
+TASK: FND-032 – Continuous integration on Windows
+
+Implementation: Complete (builder thread, pull request #31). The checks
+workflow now runs its one set of steps on two machines, Linux
+(`ubuntu-24.04`) and Windows (`windows-2025`). Each gives its own result,
+"All gates (Linux)" and "All gates (Windows)", and one failing does not
+stop the other. The browser install is two steps of one command each,
+because on Windows a step with several commands only fails on its last one;
+a repository check forbids such steps. Exactly the planned files; all four
+are identical to the planner's trial.
+
+This is the first time the project ran on Windows. It passed every gate
+without any change to the application, the tests or the check runner.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- Repository checks: 25/25 passed, and 25/25 again on Python 3.12 (16 on
+  the workflows, 13 before).
+- The full run, started from another folder: 19 of 19 gates passed, exit
+  code 0, with the line "Tests: 492 passed, 0 failed, 0 skipped."
+  (repository checks 25, script tests 73, backend tests 115, frontend unit
+  tests 199, browser tests 80).
+- Gate checks: 41 of 41 planted defects in the workflow detected: the 30
+  kept from FND-018, and no Windows machine, no Linux machine, either
+  image left as "latest", every job run on Linux whatever its name says,
+  one machine failing stopping the other (set or left to the default), job
+  names that cannot be told apart, a step with two commands, a third
+  machine nobody decided on, and the frontend's dependencies not installed
+  before the browser.
+- `git status` clean after the full run.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44132384609, final commit of the pull request (`e7307d9`): both jobs
+  green. The Windows log (windows-2025, Python 3.12.10) ends with "19 of 19
+  gates passed." and "Tests: 492 passed, 0 failed, 0 skipped." The Windows
+  job takes about five minutes, most of it installing the browser; the
+  Linux job about two.
+- Run 44131523747, a commit with a test that fails on Windows only
+  (`d704714`): the Windows job red, stopped by exit code 1 at the step that
+  runs the gates; the Linux job green; both ran to the end. The commit was
+  reverted before the merge, and neither commit is on `main`.
+- Run 44133777708, for `main` after the merge (`9e0c57a`): both jobs green.
+- The planner's own trial before the hand-over (pull request #30, closed
+  without merging, runs 44127512048 and 44128755891) gave the same results:
+  Windows passed at the first attempt, and with the planted test the
+  Windows log read "18 of 19 gates passed. FAILED: Repository checks." and
+  "Tests: 492 passed, 1 failed, 0 skipped."
+
+Unit and integration tests: 412/412 passed (repository 25, script tests 73,
+backend 115, frontend 199). Browser tests: 80/80 passed.
+Type checking: passed (frontend, backend and the Python files outside the
+pipeline). Lint and format: passed (the same three).
+Build: passed (frontend).
+Browser or integration verification: passed on Linux and on Windows (the
+full run executes the real gates, browser tests included, on both).
+
+Overall applicable tests: 492/492 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the Windows machine is GitHub's Windows Server 2025, not
+the owner's Windows 11 PC; scripts for local use and a run on that PC are
+FND-019. A red run is shown on the pull request but does not block a merge
+(a repository setting). A correction to the plan: prove-it step 7 was said
+to fail 2 tests; as worded it fails 1 ("every step runs one command"), and
+the planner confirmed that. The defect is detected either way.
+
+Commit: `9e0c57a` (squash merge of pull request #31).
+
+Next task: FND-022 – GitHub Pages deployment.

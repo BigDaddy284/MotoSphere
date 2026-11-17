@@ -115,14 +115,16 @@ They also check the workflows described below.
 
 ## Continuous integration
 
-GitHub runs every gate for each pull request and for each change to `main`.
-The workflow is `.github/workflows/checks.yml`. It does nothing of its own: it
-installs Python, uv, Node.js and the browser for the browser tests on a Linux
-machine, and then runs `python scripts/check.py`, the same command as on a
-developer's machine. The job fails when the command does, and its log ends
-with the same summary.
+GitHub runs every gate for each pull request and for each change to `main`,
+on a Linux machine and on a Windows machine. The workflow is
+`.github/workflows/checks.yml`. It does nothing of its own: on each machine
+it installs Python, uv, Node.js and the browser for the browser tests, and
+then runs `python scripts/check.py`, the same command as on a developer's
+machine. A job fails when the command does, and its log ends with the same
+summary. Each machine gives its own result, "All gates (Linux)" and "All
+gates (Windows)": one failing does not stop the other.
 
-The job uses Python 3.12, the oldest version the pipeline supports, so that
+The jobs use Python 3.12, the oldest version the pipeline supports, so that
 nothing newer slips into the code unnoticed.
 
 The workflow is given as little as possible, and the repository checks hold
@@ -135,9 +137,9 @@ it to that:
 - It never runs with the repository's rights on code from outside
   (`pull_request_target`), and no text from outside, such as the title of a
   pull request, reaches a command.
-- No step may be skipped or allowed to fail.
-
-A run on Windows is a separate task (FND-032).
+- No step may be skipped or allowed to fail, and every step runs one
+  command: on Windows, a step with several commands only fails on its last
+  one.
 
 ## Latest results
 
