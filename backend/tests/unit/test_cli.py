@@ -1,5 +1,6 @@
 """Tests for the MotoSphere command line, calling :func:`motosphere.cli.main` directly."""
 
+import argparse
 import logging
 import sys
 from collections.abc import Iterator
@@ -8,9 +9,10 @@ from pathlib import Path
 import pytest
 
 import motosphere
-from motosphere.cli import main
+from motosphere.cli import main, version
 from motosphere.cli.app import build_parser
 from motosphere.core.logging_config import HANDLER_NAME
+from motosphere.core.settings import Settings
 
 USAGE_PREFIX = "usage: python -m motosphere "
 
@@ -91,6 +93,25 @@ def test_help_lists_the_commands(capsys: pytest.CaptureFixture[str]) -> None:
     assert "version" in captured.out
     assert "print the MotoSphere version" in captured.out
     assert captured.err == ""
+
+
+def test_help_lists_every_command(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exit_info:
+        main(["--help"])
+
+    assert exit_info.value.code == 0
+    captured = capsys.readouterr()
+    assert "export    write the published data files" in captured.out
+    assert "version   print the MotoSphere version" in captured.out
+
+
+def test_exit_code_of_the_command_is_returned(monkeypatch: pytest.MonkeyPatch) -> None:
+    def finish_with_seven(_arguments: argparse.Namespace, _settings: Settings) -> int:
+        return 7
+
+    monkeypatch.setattr(version, "run", finish_with_seven)
+
+    assert main(["version"]) == 7
 
 
 def test_every_command_has_its_own_help(capsys: pytest.CaptureFixture[str]) -> None:

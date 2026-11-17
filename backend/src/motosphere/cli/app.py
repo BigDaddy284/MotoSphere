@@ -14,7 +14,7 @@ from collections.abc import Callable, Sequence
 
 from pydantic import ValidationError
 
-from motosphere.cli import version
+from motosphere.cli import export, version
 from motosphere.core.logging_config import configure_logging
 from motosphere.core.settings import Settings, get_settings
 
@@ -41,6 +41,7 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="<command>",
         required=True,
     )
+    export.add_parser(commands)
     version.add_parser(commands)
     return parser
 

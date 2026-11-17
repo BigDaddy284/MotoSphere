@@ -49,6 +49,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   browser, changing at midnight (FND-026).
 - Pipeline command line: `python -m motosphere <command>`, with a `version`
   command (FND-020).
+- `export` command: writes the published data manifest, `manifest.json`,
+  atomically and deterministically (FND-021).
 
 ### Removed
 
