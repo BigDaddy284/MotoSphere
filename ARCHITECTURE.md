@@ -82,7 +82,7 @@ Directories are created by the task that first needs them, not in advance.
 | Styling | Plain CSS with design tokens (CSS custom properties) and CSS modules | No heavy UI kit. A dark motorsport theme is easier to keep consistent with our own tokens. |
 | Unit tests | Vitest + Testing Library | Native to Vite. |
 | Browser tests | Playwright (Chromium, software WebGL) | Real globe rendering and interaction can be verified headlessly. |
-| Lint/format | ESLint + Prettier | Standard. |
+| Lint/format | oxlint + Prettier | oxlint has the React hooks, accessibility, import, Vitest and TypeScript rules built in as one dependency, and is what the current Vite template ships. ESLint was the first choice, but `typescript-eslint` depends on the older JavaScript compiler API and the project uses the native TypeScript 7 compiler. Type errors are covered by the type-check gate. |
 
 Rules: no track or marker data hardcoded in the frontend. Everything shown on
 the globe comes from the API. Map rendering code and business logic stay in
@@ -195,7 +195,7 @@ Every task must pass every gate that exists at that point:
 
 1. Repository checks (`tests/repo`).
 2. Backend: ruff, mypy, pytest (unit and integration).
-3. Frontend: ESLint, TypeScript, Vitest, production build.
+3. Frontend: oxlint, Prettier, TypeScript, Vitest, production build.
 4. Browser: Playwright against the built app.
 
 A single command, `python scripts/check.py`, runs all gates and prints a count

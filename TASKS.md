@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 9 |
+| 1 | Foundation (FND) | 19 | 10 |
 | 2 | Database and API (DB, API) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-010 – Frontend unit testing.
+**Current task:** FND-011 – Frontend linting and formatting.
 
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
@@ -200,7 +200,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-009.md`
 
 ### FND-010 – Frontend unit testing
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Component tests run with one command.
 - **Description:** Add Vitest, jsdom and Testing Library; `npm test` runs the suite once and exits. First tests cover `App` and the entry point.
 - **Acceptance criteria:**
@@ -209,22 +209,28 @@ Windows 11. No database and no globe yet.
   3. Test files are type-checked by `npm run typecheck` and are not part of the production bundle.
   4. README, TESTING.md and CHANGELOG.md describe the new gate; all earlier gates still pass.
 - **Tests required:** frontend unit tests (5); frontend type check; frontend build; repository checks (9); backend gates unchanged (55 tests).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #10 (Linux, Node 22.23.4, npm 10.9.9, vitest 5.1.0, jsdom 31.0.1, @testing-library/react 16.3.3, @testing-library/jest-dom 7.0.1): `npm ci`, frontend unit tests (5), type check, build (bundle unchanged at 219.76 kB, no test code in `dist/`), `npm audit` (0 vulnerabilities), repository checks (9 tests). Six planted defects all detected. Backend gates (lock check, mypy, ruff lint and format, 55 tests) re-run on `main` after the merge.
+- **Passed / Failed:** 69 / 0 tests (frontend 5, backend 55, repository 9); frontend type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `0914ec5`
 - **Plan:** `docs/plans/FND-010.md`
 
 ### FND-011 – Frontend linting and formatting
-- **Status:** NOT STARTED
-- **Objective:** Enforce one code style for TypeScript automatically.
-- **Description:** ESLint (typescript-eslint, React hooks rules) and Prettier with `npm run lint` and `npm run format:check`.
-- **Acceptance criteria:** both commands pass; a deliberate violation is reported, then removed.
-- **Tests required:** lint, format check, plus all earlier frontend gates.
+- **Status:** IN PROGRESS
+- **Objective:** Make likely bugs, unsafe patterns, accessibility mistakes and code style an automatic gate for the frontend.
+- **Description:** oxlint (React hooks, accessibility, import, Vitest and TypeScript rules; raw HTML rendering, `eval`, `any` and console output banned) with `npm run lint`, and Prettier with `npm run format:check`. oxlint replaces the ESLint originally planned because the project uses the native TypeScript 7 compiler (see `ARCHITECTURE.md` §3).
+- **Acceptance criteria:**
+  1. `npm run lint` exits 0 on the project and non-zero on a violation, naming the rule and file.
+  2. `npm run format:check` exits 0 on the project and non-zero on a badly formatted file.
+  3. The linter configuration is exactly the planned one; no suppressions anywhere in `frontend/`.
+  4. No application or test source file changed; only `tsconfig.json` is reformatted.
+  5. README, TESTING.md and CHANGELOG.md describe the new gates; all earlier gates still pass.
+- **Tests required:** frontend lint; frontend format check; frontend unit tests (5); frontend type check; frontend build; repository checks (9); backend untouched (55 tests).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-011.md`
 
 ### FND-012 – Browser test infrastructure
 - **Status:** NOT STARTED

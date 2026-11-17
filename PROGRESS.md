@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-010 – Frontend unit testing (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 9 of 211
-- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application name. They are not connected yet; no globe and no database.
+- **Current task:** FND-011 – Frontend linting and formatting (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 10 of 211
+- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application name, and has its own unit tests (`npm test`). They are not connected yet; no globe and no database.
 
 ## Reports
 
@@ -457,3 +457,59 @@ Not run on Windows 11; first Windows run is FND-018.
 Commit: `76b694e` (squash merge of pull request #9).
 
 Next task: FND-010 – Frontend unit testing.
+
+### FND-010 – Frontend unit testing (2026-11-17)
+
+TASK: FND-010 – Frontend unit testing
+
+Implementation: Complete (builder thread, pull request #10). Vitest with
+jsdom and Testing Library; `npm test` runs the suite once and exits. Five
+tests: three for `App` (heading with the application name, tagline, exactly
+one main landmark) and two for the entry point (renders `App` into the root
+element; fails with a clear message when the root element is missing). Test
+files are type-checked with the rest of the frontend. README, TESTING.md and
+CHANGELOG updated. Exactly the ten planned files; no application code
+changed; no deviations.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9; installed vitest 5.1.0, jsdom 31.0.1,
+@testing-library/react 16.3.3, @testing-library/jest-dom 7.0.1):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. Lock file references only
+  the public npm registry.
+- Frontend unit tests: 5/5 passed (2 files), exit code 0, no warnings.
+- Frontend type check: passed. Frontend build: passed; bundle unchanged at
+  219.76 kB and no test code in `dist/`.
+- No `any`, `@ts-ignore`, skipped or focused tests.
+- Gate checks: 6 planted defects all detected (heading level changed, error
+  message changed, type error inside a test file, tagline removed, second
+  main landmark added, entry point no longer rendering `App`); the test run
+  or the type check exits non-zero each time.
+- Repository checks: 9/9 passed.
+- Backend (not touched by this pull request), re-run on `main` after the
+  merge: lock check, mypy, ruff lint and format passed; 55/55 tests passed.
+- `git status` clean after the full run.
+
+Unit, API and integration tests: 69/69 passed (frontend 5, backend 55,
+repository 9).
+Type checking: passed (backend and frontend). Lint and format: passed (backend).
+Build: passed (frontend).
+Browser verification: not applicable to this task (no visible change; the
+page was verified in FND-009).
+
+Overall applicable tests: 69/69 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: no frontend lint or format gate until FND-011; no
+automated browser tests until FND-012. Not run on Windows 11; first Windows
+run is FND-018.
+
+Planning note for FND-011: the linter will be oxlint, not the ESLint named in
+the original plan, because the project uses the native TypeScript 7 compiler.
+The reason is recorded in `ARCHITECTURE.md` §3. The planner trial-ran the
+configuration on the merged frontend before writing the plan.
+
+Commit: `0914ec5` (squash merge of pull request #10).
+
+Next task: FND-011 – Frontend linting and formatting.
