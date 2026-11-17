@@ -41,3 +41,5 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   font stack (FND-023).
 - Application shell layout: top bar, sections panel, globe stage and details
   panel (FND-014).
+- Section navigation: the nine sections listed in the sections panel,
+  selectable by mouse or keyboard (FND-025).

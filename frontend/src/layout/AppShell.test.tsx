@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest'
 import { AppShell } from './AppShell.tsx'
 
 function renderShell() {
-  return render(<AppShell name="Test name" tagline="Test tagline" />)
+  return render(
+    <AppShell name="Test name" tagline="Test tagline" sections={<p>Test sections</p>} />,
+  )
 }
 
 describe('AppShell', () => {
@@ -15,10 +17,11 @@ describe('AppShell', () => {
     expect(within(topBar).getByText('Test tagline')).toBeVisible()
   })
 
-  it('has a sections panel', () => {
+  it('shows the sections content inside the sections panel', () => {
     renderShell()
 
-    expect(screen.getByRole('navigation', { name: 'Sections' })).toBeInTheDocument()
+    const sections = screen.getByRole('navigation', { name: 'Sections' })
+    expect(within(sections).getByText('Test sections')).toBeVisible()
   })
 
   it('has the globe stage as the main region', () => {
