@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-016 – Manifest reader in the frontend (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 21 of 220
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. The two are not connected yet; no globe and no data store.
+- **Current task:** FND-027 – Real published data in local development and browser tests (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 22 of 220
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. The frontend has a reader for the published data manifest, but the page does not use it yet, so the two are still not connected; no globe and no data store.
 
 ## Reports
 
@@ -1328,3 +1328,75 @@ a new part of the page. It is now three tasks, in this order:
 Phase 1 has 28 tasks and the project 220. No requirement was dropped.
 
 Next task: FND-016 – Manifest reader in the frontend.
+
+### FND-016 – Manifest reader in the frontend (2026-11-17)
+
+TASK: FND-016 – Manifest reader in the frontend
+
+Implementation: Complete (builder thread, pull request #22). One module,
+`frontend/src/data/manifest.ts`, with no dependency and no React.
+`parseManifest` checks a parsed JSON value field by field and returns the
+manifest or the reason there is none; the format version is checked first
+and unknown extra fields are ignored. `loadManifest` fetches
+`data/manifest.json` under the application's base path with
+`cache: 'no-cache'` and never throws: its result is the manifest,
+`unavailable`, `malformed` or `unsupported`. Exactly the planned files; the
+module and its tests are identical to the planner's trial. Nothing on the
+page changed, and the built script bundle has the same size as before.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. No dependency changed.
+- Frontend lint: passed. Format check: passed.
+- Frontend unit tests: 177/177 passed (9 files), 62 of them new; also
+  177/177 with the machine on Los Angeles time. Type check: passed.
+- The 62 new tests: 48 for checking a manifest (among them the exact text
+  the real export command wrote during the verification of FND-021, 13
+  generation times and 12 kinds of counts that must be rejected), 3 for the
+  manifest's address and 11 for fetching it with a stand-in fetch function.
+- Build: passed (script bundle 222.72 kB, unchanged).
+- Browser tests: 47/47 passed (none new).
+- No skipped or focused tests and no suppressions.
+- Gate checks: 33 of 33 planted defects detected: any format version
+  accepted; format version checked last; zero allowed; a fraction allowed; a
+  newer format reported as malformed; length of the generation time not
+  checked; dates that do not exist allowed; unreadable generation time not
+  caught; generation time of any type; empty application version;
+  application version of any type; negative, fractional and inexact counts;
+  record kind names not checked; counts not checked; lists accepted as
+  objects; null accepted as an object; counts returned empty; fields mixed
+  up; server errors not checked; server error reported as malformed; failed
+  request not caught; unreadable answer reported as unavailable; unreadable
+  answer not caught; answer not checked; no request for the current copy;
+  signal not passed on; wrong address; base path without a final slash;
+  base path ignored; given fetch function ignored; wrong supported version.
+- Repository checks: 9/9 passed.
+- Backend: not touched and not re-run; no backend file has changed since its
+  115/115 run on pull request #20.
+- `git status` clean after the full run.
+
+Unit tests: 186/186 passed (frontend 177, repository 9). Browser tests: 47/47
+passed.
+Type checking: passed (frontend). Lint and format: passed (frontend).
+Build: passed (frontend).
+Browser or integration verification: not applicable yet; the module is not
+used by the page. Its first run against a really served manifest is FND-027.
+
+Overall applicable tests: 233/233 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the reader is written by hand to match the pipeline's
+manifest model; the types generated from a JSON Schema (PUB-002) will
+replace the hand-written checks or be tested against them. The one sample
+of real output in the tests was copied from a real run and would not notice
+a later change in the pipeline; FND-027 closes that by reading a freshly
+exported manifest in the browser tests. A missing file on a server that
+answers every address with the application's page is reported as
+`malformed`, not `unavailable`. Not run on Windows 11; first Windows run is
+FND-018.
+
+Commit: `d42bfe4` (squash merge of pull request #22).
+
+Next task: FND-027 – Real published data in local development and browser tests.

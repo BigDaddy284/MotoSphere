@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 28 | 21 |
+| 1 | Foundation (FND) | 28 | 22 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-016 – Manifest reader in the frontend.
+**Current task:** FND-027 – Real published data in local development and browser tests.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -424,7 +424,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-021.md`
 
 ### FND-016 – Manifest reader in the frontend
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The frontend can fetch and check the data manifest the pipeline publishes, and reports every failure as a plain result.
 - **Description:** One module, `frontend/src/data/manifest.ts`, with no dependency and no React. `parseManifest` checks a parsed JSON value field by field (published data is treated as untrusted) and returns the manifest or the reason there is none; the format version is checked first, and unknown extra fields are ignored. `loadManifest` fetches `data/manifest.json` under the application's base path, asking the server for the current copy, and never throws: the result is the manifest, `unavailable`, `malformed` or `unsupported`. Nothing is shown on the page yet. This task was split from the original "Frontend data client and data status"; the other parts are FND-027 and FND-028.
 - **Acceptance criteria:**
@@ -434,10 +434,10 @@ Windows 11. No database and no globe yet.
   4. `loadManifest` uses the base path and `cache: 'no-cache'`, passes a signal on and never throws: a failed or stopped request and an error answer give `unavailable`; an answer that is not JSON or not a manifest gives `malformed`.
   5. `npm test` reports 177 passed in 9 files.
 - **Tests required:** frontend unit tests (177, of which 62 new: 48 for checking a manifest, 3 for its address, 11 for fetching it with a stand-in fetch function); lint, format check, type check, build, audit; browser tests unchanged (47); repository checks (9); backend untouched (115).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #22 (Linux, Node 22.23.4, npm 10.9.9): `npm ci`, lint, format check, frontend unit tests (177, run on UTC and again on Los Angeles time), type check, build, browser tests (47), `npm audit` (0 vulnerabilities), repository checks (9 tests). 33 of 33 planted defects detected. Backend not re-run: no backend file has changed since its run on pull request #20.
+- **Passed / Failed:** 233 / 0 tests (frontend unit 177, browser 47, repository 9); frontend lint, format, type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. The reader is not used by the page yet, and has only been run against a stand-in fetch function; FND-027 runs it against a manifest served from the built site. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `d42bfe4`
 - **Plan:** `docs/plans/FND-016.md`
 
 ### FND-027 – Real published data in local development and browser tests
