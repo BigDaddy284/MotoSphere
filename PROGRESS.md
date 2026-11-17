@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-022 – The application served from the site's path (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 31 of 226
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (541 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; one advisory, for a build tool, is accepted until 2026-12-17 in `frontend/audit-exceptions.json`. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`. No globe and no data store yet.
+- **Current task:** FND-034 – GitHub Pages deployment (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 32 of 226
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (548 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; one advisory, for a build tool, is accepted until 2026-12-17 in `frontend/audit-exceptions.json`. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`. No globe and no data store yet.
 
 ## Reports
 
@@ -2229,3 +2229,77 @@ reported no deviation.
 Commit: `4962ae1` (squash merge of pull request #32).
 
 Next task: FND-022 – The application served from the site's path.
+
+### FND-022 – The application served from the site's path (2026-11-17)
+
+TASK: FND-022 – The application served from the site's path
+
+Implementation: Complete (builder thread, pull request #33). The
+application is built, developed and tested under `/MotoSphere/`, the path
+it will have on GitHub Pages. The path is written once, in
+`frontend/site.ts`, and read by the build (`vite.config.ts`) and by the
+browser tests (`playwright.config.ts`). The browser tests reach the site
+through a base address that ends with the path and write every address
+relative to it; no address that starts at the root of the server is left
+in them. Seven new browser tests check the path's name, that the
+application is served there, that everything the page loads comes from
+under it, and that the icon files and the data manifest are not at the
+root. The application code did not change. The unit test for the
+manifest's address now gives the build another path. Exactly the 18
+planned files; all are identical to the planner's trial.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  548 passed, 0 failed, 0 skipped." (repository checks 25, script tests
+  122, backend tests 115, frontend unit tests 199, browser tests 87).
+- The development server, by hand: `/MotoSphere/` answers 200, `/`
+  redirects (302), `/favicon.svg` is not there (404), and
+  `/MotoSphere/favicon.svg` and `/MotoSphere/data/manifest.json` answer
+  200.
+- Gate checks: 10 of 10 planted defects detected in the pull request, each
+  run through the type check, the unit tests and the browser tests: the
+  build without the site path (30 browser tests failed), the path as the
+  root (7), in small letters (3), without its closing slash (20), the
+  application asking the root for its data (1 unit test, 49 browser
+  tests), the data's address written out as `/MotoSphere/` (2 unit tests,
+  and no browser test, which is why the unit test uses another path), an
+  icon link that skips the path (1), the page asking the root for a file
+  (59), the browser tests looking at the root (20), and a path that is not
+  text (type check). The planner's trial had detected an eleventh, the
+  build using relative addresses (72 browser tests failed).
+- `git status` clean after the full run.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44143905377, the pull request's commit (`f8e2044`): both jobs green.
+  The Linux log and the Windows log each end with "19 of 19 gates passed."
+  and "Tests: 548 passed, 0 failed, 0 skipped.", with 87 browser tests on
+  each.
+- Run 44158699104, for `main` after the merge (`f1b9897`): green.
+
+Unit and integration tests: 461/461 passed (repository 25, script tests
+122, backend 115, frontend 199). Browser tests: 87/87 passed.
+Type checking: passed (frontend, backend and the Python files outside the
+pipeline). Lint and format: passed (the same three).
+Build: passed (frontend).
+Browser or integration verification: passed on Linux and on Windows (the
+production build served under `/MotoSphere/`), and the development server
+by hand on Linux.
+
+Overall applicable tests: 548/548 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the site is not published yet (FND-034). The path is
+the repository's name; if the site moves to a domain of its own,
+`frontend/site.ts` is the one place to change. The builder reported no
+deviation in the files; the hand-over message did not reach the planner,
+who found the pull request on GitHub.
+
+Commit: `f1b9897` (squash merge of pull request #33).
+
+Next task: FND-034 – GitHub Pages deployment.
