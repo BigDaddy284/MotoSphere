@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures'
+import { tabTo } from './keyboard'
 
 const LABELS = [
   'Explore',
@@ -58,8 +59,8 @@ test.describe('section navigation', () => {
     // A key pressed before the list is drawn would be lost.
     await expect(section(page, 'Explore')).toBeVisible()
 
-    await page.keyboard.press('Tab')
     const explore = section(page, 'Explore')
+    await tabTo(page, explore)
     await expect(explore).toBeFocused()
     await expect(explore).toHaveCSS('outline-style', 'solid')
     await expect(explore).toHaveCSS('outline-width', '2px')
