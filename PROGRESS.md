@@ -7,7 +7,7 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-024 – Application icon in the Sky Classic style (`NOT STARTED`, the planner is writing its plan)
+- **Current task:** FND-024 – Application icon in the Sky Classic style (`IN PROGRESS`, with a builder)
 - **Tasks verified:** 20 of 218
 - **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. The two are not connected yet; no globe and no data store.
 

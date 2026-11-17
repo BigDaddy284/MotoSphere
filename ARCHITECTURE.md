@@ -121,7 +121,9 @@ reference files are kept unchanged in `docs/design/`:
   dark gradient tile carrying a glowing outline glyph with round joins and
   caps, drawn in the sky-blue gradient. The reference shows another
   product's glyph; MotoSphere gets its own glyph in the same style (task
-  FND-024), and interface icons follow the same outline style.
+  FND-024), and interface icons follow the same outline style. The owner's
+  approved MotoSphere icon, its small version and the rules for both are in
+  `docs/design/icon/`.
 
 Rules:
 

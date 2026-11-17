@@ -370,15 +370,22 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-026.md`
 
 ### FND-024 – Application icon in the Sky Classic style
-- **Status:** NOT STARTED (the owner approved the final design on 2026-11-17: a globe outline with MOTO following the top of the rim and SPHERE the bottom, in Orbitron converted to paths, on the Sky Classic tile. Still to do in this task: bring the approved file into the repository, a simplified version for 16 pixels where the lettering cannot be read, the PNG and ICO exports, and the page links. It follows FND-021)
-- **Objective:** MotoSphere has its own icon in the style the owner chose.
-- **Description:** A MotoSphere icon drawn in the Sky Classic style (`docs/design/sky-classic-icon/`): rounded dark gradient tile, a glowing outline glyph with round joins in the sky-blue gradient. The glyph is MotoSphere's own (a globe motif), not the folder from the reference. Delivered as the page icon (SVG) with PNG fallbacks, and the style rules for later interface icons are written down.
-- **Acceptance criteria:** the icon uses the reference tile, gradient and stroke style with a MotoSphere glyph; it is legible at 16, 32 and 180 pixels; the page links it and the browser loads it; the icon style rules are documented.
-- **Tests required:** unit or repository test that the icon file uses the reference colours and contains no script or external reference; browser test that the icon is served; visual check by the planner at three sizes; all frontend gates.
+- **Status:** IN PROGRESS
+- **Objective:** MotoSphere has its own icon, linked by the page and recognisable at every size it is used.
+- **Description:** The owner approved the full design on 2026-11-17: a globe outline with MOTO following the top of the rim and SPHERE the bottom, in Orbitron converted to outlines, on the Sky Classic tile. It is kept unchanged in `docs/design/icon/`, together with a small design for sizes under 64 pixels, where the lettering cannot be read: the same tile and gradients, the outline closed into a full circle, a reduced grid, no lettering and no glow. One script, `npm run icons`, generates the served files from the two designs with the browser the browser tests already use: `favicon.svg` (the small design), `favicon.ico` (16, 32 and 48 pixel images) and `apple-touch-icon.png` (180 pixels, full design). The page links all three. The icon rules, including the owner's preferences and the style for later interface icons, are written down in `docs/design/icon/README.md`.
+- **Acceptance criteria:**
+  1. The built page links the ICO file (with its size), the SVG file and the touch icon, and all three are served with an image content type.
+  2. `favicon.svg` is the small design byte for byte; `favicon.ico` holds 16, 32 and 48 pixel images that show the sky-blue globe outline on the dark tile with see-through corners; `apple-touch-icon.png` is 180 pixels square, shows the full design and has no see-through corners.
+  3. Neither design holds a script, an event handler, a link, an embedded image or an outside address, and both use only the Sky Classic colours.
+  4. `npm run icons` regenerates the three files, and running it again changes nothing.
+  5. `npm run e2e` reports 47 passed and `npm test` 115 passed.
+  6. The planner has looked at the icon at 16, 32, 48 and 180 pixels on dark and light backgrounds.
+- **Tests required:** browser tests (47, of which 13 new: the page's links, three content types, the vector icon equal to the small design, two checks that the designs hold nothing that runs or loads, the designs' colours, the images inside the ICO file, three checks of decoded pixels at 16, 32 and 48 pixels, the touch icon; one earlier icon test is replaced); frontend unit tests unchanged (115); lint, format check, type check, build, audit; repository checks (9); visual check by the planner at four sizes; backend untouched (115).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-024.md`
 
 ### FND-020 – Replace the API server with the pipeline command line
 - **Status:** PASSED – VERIFIED
