@@ -37,3 +37,5 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   automatic page health check (FND-012).
 - Dark theme design tokens and base styles, with automatic contrast checks
   (FND-013).
+- The owner's Graphite theme: charcoal surfaces, sky-blue accent and Segoe UI
+  font stack (FND-023).
