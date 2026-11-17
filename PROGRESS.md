@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-018 – Continuous integration (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 28 of 224
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (476 today) and fails if any test was skipped. No globe and no data store yet.
+- **Current task:** FND-032 – Continuous integration on Windows (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 29 of 224
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (489 today) and fails if any test was skipped. GitHub runs the same command on Linux for every pull request and every change to `main`. No globe and no data store yet.
 
 ## Reports
 
@@ -1917,3 +1917,83 @@ ran every gate locally with the variables GitHub sets and with Python 3.12
 inputs from their own repositories.
 
 Next task: FND-018 – Continuous integration.
+
+### FND-018 – Continuous integration (2026-11-17)
+
+TASK: FND-018 – Continuous integration
+
+Implementation: Complete (builder thread, pull request #29). A GitHub
+Actions workflow, `.github/workflows/checks.yml`, runs for every pull
+request and every change to `main`. Its one job, on a Linux machine,
+installs Python 3.12, uv 0.11.32, Node.js 22 and the browser for the browser
+tests, then runs `python scripts/check.py`. Thirteen new repository checks
+hold every workflow to its rules: a token that can only read, no secret, no
+credentials left by the checkout, every action pinned to a full commit with
+its release beside it, only four known actions, no text from outside in a
+command, and no step that can be skipped or allowed to fail. The existing
+check that source paths are not ignored now also sees files Git already
+tracks. Exactly the planned files; all six are identical to the planner's
+trial, and the workflow went green on its first real run.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- Repository checks: 22/22 passed, and 22/22 again on Python 3.12 (9 as
+  before, 6 that hold for every workflow, 7 on the checks workflow).
+- The runner's tests: 73/73 passed.
+- The full run, started from another folder: 19 of 19 gates passed, exit
+  code 0, with the line "Tests: 489 passed, 0 failed, 0 skipped."
+  (repository checks 22, script tests 73, backend tests 115, frontend unit
+  tests 199, browser tests 80).
+- Gate checks: 32 of 32 planted defects in the workflow detected: an action
+  named by a tag, pinned without its release, pinned to a shortened commit,
+  not on the list, or taken from a container image; `pull_request_target`;
+  a secret handed to the job; no limit on the token, a token that may
+  write, `write-all`, a job giving itself more rights; the title of a pull
+  request in a command; a trigger missing or for the wrong branch; checkout
+  credentials kept; only some gates run, a failing run forgiven, the runner
+  not started; `continue-on-error`, a condition that skips the step, a
+  shell that carries on after a failure; the browser installed without the
+  locked version; an unnamed machine image; no time limit; a newer Python,
+  another Node.js line, an unpinned uv; the workflow removed; a second
+  workflow that breaks the rules; and the workflows folder ignored by Git.
+- `git status` clean after the full run.
+
+On GitHub (Ubuntu 24.04, Python 3.12.16), read by the planner from the
+job logs, not taken from the builder's report:
+
+- Run 44125941639, final commit of the pull request (`9a94766`): green.
+  The log ends with "19 of 19 gates passed." and "Tests: 489 passed, 0
+  failed, 0 skipped.", with the same counts per gate as the local run.
+- Run 44125492578, a commit with a failing test planted on purpose
+  (`afd07e3`): red. "FAILED  Frontend unit tests  198 passed, 1 failed  exit
+  code 1", "18 of 19 gates passed. FAILED: Frontend unit tests." and "Tests:
+  488 passed, 1 failed, 0 skipped." The commit was reverted before the
+  merge, and neither commit is on `main`.
+- Run 44124894488, the first commit (`b2a0dc9`): green.
+- Run 44126685964, for `main` after the merge (`a743a64`): green, with the
+  same closing lines.
+
+Unit and integration tests: 409/409 passed (repository 22, script tests 73,
+backend 115, frontend 199). Browser tests: 80/80 passed.
+Type checking: passed (frontend, backend and the Python files outside the
+pipeline). Lint and format: passed (the same three).
+Build: passed (frontend).
+Browser or integration verification: passed, locally and on GitHub's
+machine (the full run executes the real gates, browser tests included).
+
+Overall applicable tests: 489/489 passed (100%), all 19 gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: Linux only; the first Windows run is FND-032. A red run
+is shown on the pull request but does not block a merge: that is a
+repository setting (a required check), which only the owner can switch on.
+The repository checks read the workflow as text, so its layout has to stay
+plain. Every change to `main` now starts a run, the planner's own record
+commits included.
+
+Commit: `a743a64` (squash merge of pull request #29).
+
+Next task: FND-032 – Continuous integration on Windows.

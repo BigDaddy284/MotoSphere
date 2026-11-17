@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 32 | 28 |
+| 1 | Foundation (FND) | 32 | 29 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-018 – Continuous integration.
+**Current task:** FND-032 – Continuous integration on Windows.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -550,7 +550,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-031.md`
 
 ### FND-018 – Continuous integration
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Every pull request and every change to `main` is checked automatically on GitHub, on Linux.
 - **Description:** A GitHub Actions workflow (`.github/workflows/checks.yml`) with one job on a Linux machine: it installs Python 3.12 (the oldest version the pipeline supports), uv, Node.js and the browser for the browser tests, then runs `python scripts/check.py`, the same command as on a developer's machine. The workflow is given as little as possible: a token that can only read, no secret, no credentials left by the checkout, every action pinned to a full commit, and only four actions allowed. New repository checks hold every workflow to these rules. The existing check that source paths are not ignored is corrected so that it can also fail for files Git already tracks. Windows is a separate task (FND-032).
 - **Acceptance criteria:**
@@ -561,10 +561,10 @@ Windows 11. No database and no globe yet.
   5. An ignore rule that would hide a tracked source file fails the repository checks.
   6. After the merge, the run for `main` is green.
 - **Tests required:** repository checks (22, of which 13 new, on the workflows); the full local run of all 19 gates; the real workflow run on the pull request (green on the final commit, red on a commit with a failing test); the run for `main` after the merge.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #29 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: repository checks (22, and 22 again on Python 3.12), the runner's tests (73), and the full run started from another folder: 19 of 19 gates passed, "Tests: 489 passed, 0 failed, 0 skipped.", exit code 0. 32 of 32 planted defects in the workflow detected. On GitHub (Ubuntu 24.04, Python 3.12.16), read by the planner from the job logs: run 44125941639 on the final commit of the pull request, green, "19 of 19 gates passed." and "Tests: 489 passed, 0 failed, 0 skipped."; run 44125492578 on a commit with a planted failing test, red, "FAILED  Frontend unit tests  198 passed, 1 failed" and "18 of 19 gates passed."; run 44126685964 for `main` after the merge, green, with the same closing lines as the first.
+- **Passed / Failed:** 489 / 0 tests (repository 22, script tests 73, backend 115, frontend unit 199, browser 80); all 19 gates passed, locally and on GitHub
+- **Verification status:** Verified by the planner on 2026-11-17. The workflow went green on its first real run, with no change to the plan. Whether GitHub blocks a merge when the run is red is a repository setting and is not switched on. Linux only: the first Windows run is FND-032.
+- **Commit:** `a743a64`
 - **Plan:** `docs/plans/FND-018.md`
 
 ### FND-032 – Continuous integration on Windows

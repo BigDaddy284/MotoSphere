@@ -306,8 +306,10 @@ Every task must pass every gate that exists at that point:
    real export command.
 
 A single command, `python scripts/check.py`, runs all gates, counts the
-tests and fails when a test was skipped (tasks FND-017 and FND-030). Details
-live in TESTING.md.
+tests and fails when a test was skipped (tasks FND-017 and FND-030). GitHub
+runs the same command on Linux for every pull request and every change to
+`main`, with a token that can only read (task FND-018). Details live in
+TESTING.md.
 
 ## 11. Security baseline (Decided)
 
