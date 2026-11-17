@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 7 |
+| 1 | Foundation (FND) | 19 | 8 |
 | 2 | Database and API (DB, API) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-008 – Backend run command.
+**Current task:** FND-009 – Frontend project skeleton.
 
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
@@ -166,7 +166,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-007.md`
 
 ### FND-008 – Backend run command
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Start the API with one documented command.
 - **Description:** `uv run python -m motosphere` loads settings, configures logging and serves the application with uvicorn on the configured host and port. Configuration mistakes produce a one-line message and exit code 2 instead of a traceback.
 - **Acceptance criteria:**
@@ -176,22 +176,28 @@ Windows 11. No database and no globe yet.
   4. Invalid configuration exits with code 2 and a one-line message naming the setting; a port already in use exits non-zero with an error line.
   5. README documents how to start and stop the API; all earlier gates still pass with no suppressions.
 - **Tests required:** backend pytest (55: 4 new unit + 5 new integration + 46 existing); mypy; ruff check; ruff format check; repository checks (9); `uv lock --check`.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #8 (Linux, uv 0.11.32, uvicorn 0.54.0): `uv lock --check`, `uv sync --locked`, backend pytest three times in a row on Python 3.13.18 and once on 3.12.3 (55 tests each, no warnings, no process left behind), mypy on both, ruff check, ruff format check, repository checks (9 tests). Real server exercised with curl: health 200 with `no-store`, documentation 200, unknown path 404, clean stop on interrupt with exit code 0, port and log level taken from `backend/.env`, configuration errors exit with code 2 and one line. Seven planted defects all detected.
+- **Passed / Failed:** 64 / 0 tests (backend 55, repository 9); type-check, lint, format and lock gates passed
+- **Verification status:** Verified by the planner on 2026-11-17 on Linux. The Windows-only branches of the integration test helper have not been executed; their first run is the Windows CI job in FND-018.
+- **Commit:** `219166f`
 - **Plan:** `docs/plans/FND-008.md`
 
 ### FND-009 – Frontend project skeleton
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** A React + TypeScript project that type-checks and builds.
-- **Description:** Create `frontend/` with Vite, React, TypeScript strict mode, committed `package-lock.json`, and a minimal `App` that renders the application name.
-- **Acceptance criteria:** `npm ci` succeeds from a clean checkout; `npm run typecheck` passes; `npm run build` produces `dist/index.html`; `node_modules` and `dist` are not tracked.
-- **Tests required:** typecheck, build; earlier gates still pass.
+- **Description:** Create `frontend/` with Vite, React and TypeScript in strict mode, a committed `package-lock.json`, and a minimal `App` that renders the application name and tagline. No styling, tests or lint yet.
+- **Acceptance criteria:**
+  1. `npm ci` succeeds from a clean checkout.
+  2. `npm run typecheck` passes with strict settings.
+  3. `npm run build` produces `dist/index.html` and a script bundle; the built page, served by `npm run preview`, shows the application name in a real browser with no console errors.
+  4. `node_modules`, `dist` and build caches are not tracked; no template demo content remains.
+  5. README, TESTING.md and CHANGELOG.md describe the frontend commands; all earlier gates still pass.
+- **Tests required:** frontend type check; frontend build; browser check of the built page (planner); repository checks (9); backend gates unchanged (55 tests).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-009.md`
 
 ### FND-010 – Frontend unit testing
 - **Status:** NOT STARTED

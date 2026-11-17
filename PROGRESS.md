@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-008 – Backend run command (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 7 of 211
-- **Application state:** no runnable application yet. The backend has validated settings, logging and an API application with a health endpoint (not yet served by a process); lint, type-check and test gates in place.
+- **Current task:** FND-009 – Frontend project skeleton (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 8 of 211
+- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. No user interface and no database yet.
 
 ## Reports
 
@@ -351,3 +351,61 @@ Not run on Windows 11; first Windows run is FND-018.
 Commit: `70a32c3` (squash merge of pull request #7).
 
 Next task: FND-008 – Backend run command.
+
+### FND-008 – Backend run command (2026-11-17)
+
+Implementation: Complete. Pull request #8, built in its own thread.
+
+What was implemented: `python -m motosphere` (`motosphere.__main__.main`):
+loads settings, configures logging, serves the application with uvicorn
+0.54.0 (locked) on the configured host and port with uvicorn's own log
+configuration disabled so every line uses the MotoSphere format. Invalid
+configuration prints one `Configuration error:` line naming each setting and
+exits with code 2. Four unit tests and five integration tests that start the
+real server as a child process and call it over HTTP. README "Running the
+API", TESTING.md and CHANGELOG updated. No suppressions.
+
+Deviations from the plan, accepted (behaviour unchanged): one `Popen` call
+with per-platform `creationflags`; the port-in-use test holds the blocking
+socket from the moment the port is chosen.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+uv 0.11.32):
+
+- `uv lock --check`: passed. `uv sync --locked`: passed.
+- Backend tests, Python 3.13.18: 55/55 passed, three runs in a row, no
+  warnings. Python 3.12.3: 55/55 passed. No server process left running.
+- Backend type check, both Pythons: passed, 15 source files.
+- Backend lint: passed. Backend format: passed.
+- Repository checks: 9/9 passed.
+- Real server, by hand with curl: `GET /api/health` returned 200,
+  `cache-control: no-store` and
+  `{"status":"ok","name":"MotoSphere","version":"0.1.0"}`; `/api/docs` 200;
+  unknown path 404; every log line in the MotoSphere format on standard error
+  and nothing on standard output; interrupt shut the server down cleanly with
+  exit code 0; a `backend/.env` changed the port and silenced INFO lines at
+  WARNING level; port `0` and a non-numeric port with an invalid log level
+  each produced one `Configuration error:` line and exit code 2.
+- Mutation checks: 7 planted defects (uvicorn log configuration left on,
+  wrong exit code, logging not configured, configured port ignored,
+  configured host ignored, traceback instead of message, entry point guard
+  removed) all detected, with no process left behind after failures.
+
+Unit, API and integration tests: 64/64 passed (backend 55, repository 9).
+Type checking: passed. Lint: passed. Format: passed.
+Build: locked install passed.
+Integration verification: passed (real process, real HTTP).
+Browser verification: not applicable.
+
+Overall applicable tests: 64/64 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: verified on Linux only. The Windows-only branches of the
+integration test helper (new process group, Ctrl+Break) have not been
+executed; their first run is the Windows CI job in FND-018, and start/stop on
+a real Windows 11 machine is FND-019.
+
+Commit: `219166f` (squash merge of pull request #8).
+
+Next task: FND-009 – Frontend project skeleton.
