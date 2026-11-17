@@ -16,11 +16,15 @@ test means the task is not complete.
 | Backend lint | `cd backend && uv run ruff check .` |
 | Backend format | `cd backend && uv run ruff format --check .` |
 | Backend type check | `cd backend && uv run mypy` |
+| Frontend unit tests (`frontend/src/**/*.test.tsx`) | `cd frontend && npm test` |
 | Frontend type check | `cd frontend && npm run typecheck` |
 | Frontend build | `cd frontend && npm run build` |
 
 The backend suite includes integration tests that start the real API server on
 a free local port and call it over HTTP.
+
+Frontend tests sit next to the code they test and query the page by role and
+text, the way a user perceives it.
 
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.

@@ -22,3 +22,4 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `python -m motosphere` starts the API server (FND-008).
 - Frontend project skeleton (`frontend/`): Vite, React and TypeScript in strict
   mode (FND-009).
+- Frontend unit testing with Vitest and Testing Library (FND-010).

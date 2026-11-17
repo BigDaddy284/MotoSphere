@@ -104,13 +104,18 @@ Backend type check (mypy, strict mode), from `backend/`:
 uv run mypy
 ```
 
-Frontend type check (TypeScript, strict mode) and production build, from
-`frontend/` (run `npm ci` first to install the locked dependencies):
+Frontend unit tests, type check (TypeScript, strict mode) and production
+build, from `frontend/` (run `npm ci` first to install the locked
+dependencies):
 
 ```
+npm test
 npm run typecheck
 npm run build
 ```
+
+`npm run test:watch` re-runs the frontend tests whenever a file changes while
+you develop.
 
 ## Configuration
 
