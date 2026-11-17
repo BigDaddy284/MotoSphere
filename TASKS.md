@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 34 | 30 |
+| 1 | Foundation (FND) | 34 | 31 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-033 – Dependency audit with recorded exceptions.
+**Current task:** FND-022 – The application served from the site's path.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -589,7 +589,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-032.md`
 
 ### FND-033 – Dependency audit with recorded exceptions
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The dependency audit fails on every security advisory except the ones recorded with a reason and a review date, and fails again by itself when a recorded exception has run out or is no longer needed.
 - **Description:** On 2026-11-17 an advisory was published for `picomatch` (GHSA-fc5q-39xc-vjpf, high, a pattern that is slow to match). The project gets it only through its build and test tools (vite and vitest), every version is affected including the newest (4.0.7), and production dependencies are not affected (`npm audit --omit=dev`: 0). The last gate, `npm audit`, has failed since then on `main` and on every pull request, with nothing changed in the repository. A new script, `python scripts/audit.py` (standard library only), runs `npm audit --json` in `frontend/` and compares the advisories with `frontend/audit-exceptions.json`. An exception names one advisory id and its package, with a reason of at least 40 characters, the day it was accepted and a review day at most 31 days later; every exception in use is printed on every run. The gate `frontend-audit` runs the script. One exception is recorded, for the advisory above, accepted on 2026-11-17 and **to be reviewed by 2026-12-17**: from 2026-12-18 the gate fails again until somebody has looked (a fixed version installed and the exception removed, or the exception renewed with its reason). Rejected: leaving build tools out of the audit, a severity threshold, and going back two major versions of vite and vitest.
 - **Acceptance criteria:**
@@ -600,10 +600,10 @@ Windows 11. No database and no globe yet.
   5. The gate keeps its key, name and place; the gate table in `TESTING.md` matches the script.
   6. On the pull request both jobs are green (Linux and Windows), each with 19 of 19 gates and 541 tests; after the merge the run for `main` is green again.
 - **Tests required:** script tests (122, of which 49 new: 13 for reading the exceptions, 8 for reading npm's report, 9 for judging, 6 for running the audit command, 9 for the script's result and output, 3 for the repository's own files, 1 in the runner's tests); the full run of all 19 gates; the real audit without the exception, with an expired one, with a wrong one and without a lock file; the workflow run on the pull request on both machines; the run for `main` after the merge.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #32 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 541 passed, 0 failed, 0 skipped.", exit code 0, the audit gate printing "npm audit reports 1 advisory.", the recorded exception with its reason and review day, and "Dependency audit passed."; the script tests again on Python 3.12 (122). The real audit with the exception taken out (the gate fails and names the picomatch advisory with its address) and with the dates moved back (fails with "was due for review on 2026-10-31"). 53 of 53 planted defects in the script, the gate, the gate table and the exceptions file detected by the script tests. On GitHub, read by the planner: run 44138689020 on the pull request's commit, both jobs green, each log ending "19 of 19 gates passed." and "Tests: 541 passed, 0 failed, 0 skipped."; run 44138077506 for `main` before the merge, both jobs red in the audit gate only ("18 of 19 gates passed. FAILED: Frontend dependency audit."), which is the failure this task answers; run 44140586126 for `main` after the merge, green.
+- **Passed / Failed:** 541 / 0 tests (repository 25, script tests 122, backend 115, frontend unit 199, browser 80); all 19 gates passed, locally and on both machines on GitHub
+- **Verification status:** Verified by the planner on 2026-11-17. Eight of the nine files are identical to the planner's trial; the ninth, `ARCHITECTURE.md`, differs only by the line the plan commit itself changed. The exception for GHSA-fc5q-39xc-vjpf must be looked at again by 2026-12-17: from 2026-12-18 the audit gate fails until it is removed (a fixed picomatch installed) or renewed with its reason. The pipeline's Python dependencies are not audited yet (PRF-005).
+- **Commit:** `4962ae1`
 - **Plan:** `docs/plans/FND-033.md`
 
 ### FND-022 – The application served from the site's path
