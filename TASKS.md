@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 34 | 31 |
+| 1 | Foundation (FND) | 34 | 32 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-022 – The application served from the site's path.
+**Current task:** FND-034 – GitHub Pages deployment.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -607,7 +607,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-033.md`
 
 ### FND-022 – The application served from the site's path
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The application works when it is served from `/MotoSphere/`, the path it will have on GitHub Pages, and the tests prove it there.
 - **Description:** The site's path is written once (`frontend/site.ts`) and read by the build and by the browser tests. The browser tests run against the production build served under that path, write every address relative to it, and check that everything the page loads comes from under it and that its files are not at the root of the server. The development server uses the same path. The application code does not change: it already takes its base path from the build; the unit test for the manifest's address now gives the build another path, so that no fixed address can pass. Split from the GitHub Pages task (PLAN-006).
 - **Acceptance criteria:**
@@ -618,10 +618,10 @@ Windows 11. No database and no globe yet.
   5. `npm run dev` serves the application at `http://localhost:5173/MotoSphere/`, and the README says so.
   6. `python scripts/check.py` reports 19 of 19 gates and 548 tests; on the pull request both jobs are green (Linux and Windows).
 - **Tests required:** browser tests against the build served from the sub-path (87, of which 7 new: the path's name, the application served there, everything the page loads under the path, four files under the path and not at the root); frontend unit tests (199, one made stricter); the full run of all 19 gates; the development server's addresses by hand; planted defects; the workflow run on the pull request on both machines; the run for `main` after the merge.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #33 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 548 passed, 0 failed, 0 skipped.", exit code 0 (frontend unit tests 199, browser tests 87). The development server by hand: `/MotoSphere/` 200, `/` 302, `/favicon.svg` 404, `/MotoSphere/favicon.svg` and `/MotoSphere/data/manifest.json` 200. Planted defects, each run through the type check, the unit tests and the browser tests: 10 of 10 detected in the pull request (11 of 11 in the planner's trial, which also had the build using relative addresses). On GitHub, read by the planner: run 44143905377 on the pull request's commit, both jobs green, each log ending "19 of 19 gates passed." and "Tests: 548 passed, 0 failed, 0 skipped."; run 44158699104 for `main` after the merge, green.
+- **Passed / Failed:** 548 / 0 tests (repository 25, script tests 122, backend 115, frontend unit 199, browser 87); all 19 gates passed, locally and on both machines on GitHub
+- **Verification status:** Verified by the planner on 2026-11-17. All 18 files are identical to the planner's trial. One planted defect, the data's address written out in the application as `/MotoSphere/`, passes every browser test and is detected only by the unit test that gives the build another path. The site is not published yet: that is FND-034.
+- **Commit:** `f1b9897`
 - **Plan:** `docs/plans/FND-022.md`
 
 ### FND-034 – GitHub Pages deployment
