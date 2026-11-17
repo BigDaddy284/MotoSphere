@@ -55,6 +55,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   small version for browser tabs, an ICO fallback and a touch icon (FND-024).
 - Frontend manifest reader: fetches and checks the published data manifest,
   with a plain result for every failure (FND-016).
+- `npm run data`: exports the published data for local development; the
+  browser tests run against freshly exported data (FND-027).
 
 ### Removed
 
