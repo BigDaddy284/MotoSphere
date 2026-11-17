@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-017 – Unified check runner (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 25 of 223
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. No globe and no data store yet.
+- **Current task:** FND-030 – Test counts and skipped tests in the check runner (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 26 of 223
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project. No globe and no data store yet.
 
 ## Reports
 
@@ -1667,3 +1667,75 @@ hand. The tests now run a copy of the script in a stand-in repository, where
 the worst a defect can do is run gates that fail at once.
 
 Next task: FND-017 – Unified check runner.
+
+### FND-017 – Unified check runner (2026-11-17)
+
+TASK: FND-017 – Unified check runner
+
+Implementation: Complete (builder thread, pull request #26).
+`python scripts/check.py` (standard library only, started from any folder)
+runs the project's 16 gates in order from a clean checkout: repository
+checks, the runner's own tests, the pipeline's lock check, install, type
+check, lint, format check and tests, and the frontend's install, lint,
+format check, type check, unit tests, build, browser tests and dependency
+audit. Every gate runs even when an earlier one failed; a summary names each
+gate as passed or failed with the time it took; the exit code is 0 only when
+every gate passed. `--list` shows the gates and `--only` runs the named
+ones. `TESTING.md` lists the gates and a test keeps the list and the script
+the same. Exactly the planned files; all six are identical to the planner's
+trial.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The runner's tests: 30/30 passed, and 30/30 again on Python 3.12: the gate
+  table 7, running one gate 8, the whole run with stand-in gates 11, the
+  script as a separate process 4.
+- Repository checks: 9/9 passed, with two sample paths added.
+- `python scripts/check.py --list`: 16 gates, nothing run.
+- The full run, started from another folder: 16 of 16 gates passed, exit
+  code 0. Inside it: repository checks 9/9, script tests 30/30, lock file up
+  to date, mypy on 23 source files, ruff check and format check, backend
+  tests 115/115, `npm ci`, frontend lint, format check and type check,
+  frontend unit tests 199/199, build, browser tests 80/80 with none
+  skipped, `npm audit` with 0 vulnerabilities.
+- Real failures, by hand: one frontend test broken on purpose gave exit code
+  1 with "1 of 2 gates passed. FAILED: Frontend unit tests." while the lint
+  gate named with it still passed and ran first, in the order of the table;
+  with no uv on the PATH the gate failed with "uv is not installed" and no
+  Python error; an unknown gate name was refused with exit code 2.
+- Gate checks: 30 of 30 planted defects detected, among them: an exit code
+  that is always 0; a failing command counted as passed; stopping after the
+  first failure; `--only` ignored or run in the order given; `--list`
+  running the gates; a missing program or a command that cannot start not
+  handled; the gate's folder or the given root ignored; the wrong Python;
+  wrong counts, names, notes and marks in the summary; no announcement; the
+  time not measured; the script's exit code not passed on; a gate renamed,
+  removed, out of order, pointing at a script or folder that does not exist;
+  and the document and the script drifting apart in either direction.
+- `git status` clean after the full run.
+
+Unit and integration tests: 353/353 passed (script tests 30, repository 9,
+backend 115, frontend 199). Browser tests: 80/80 passed.
+Type checking: passed (frontend and backend). Lint and format: passed
+(frontend and backend).
+Build: passed (frontend).
+Browser or integration verification: passed (the full run executes the real
+gates, browser tests included).
+
+Overall applicable tests: 433/433 passed (100%), all 16 gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the runner reports pass or fail for each gate, not test
+counts, and does not yet fail on skipped tests (FND-030). The Python files
+outside the pipeline are not yet under lint, format or type gates (FND-031);
+the new files were written to pass the pipeline's rules. The frontend
+dependency audit needs the network. The runner's tests must never run the
+real script in the real repository (see PLAN-004). Not run on Windows 11;
+first Windows run is FND-018.
+
+Commit: `0620e94` (squash merge of pull request #26).
+
+Next task: FND-030 – Test counts and skipped tests in the check runner.

@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 31 | 25 |
+| 1 | Foundation (FND) | 31 | 26 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-017 – Unified check runner.
+**Current task:** FND-030 – Test counts and skipped tests in the check runner.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -496,7 +496,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-029.md`
 
 ### FND-017 – Unified check runner
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One command that runs every gate in order and says which passed.
 - **Description:** `python scripts/check.py` (standard library only, started from any folder) runs the 16 gates of the project in order from a clean checkout: the repository checks, the runner's own tests, the pipeline's lock check, install, type check, lint, format check and tests, and the frontend's install, lint, format check, type check, unit tests, build, browser tests and dependency audit. Every gate runs even when an earlier one failed. A summary names each gate as passed or failed with the time it took; the exit code is 0 only when every gate passed. `--list` shows the gates without running them and `--only` runs the named ones. A program that is not installed is a failed gate with a plain reason, not an error. `TESTING.md` lists the gates, and a test keeps the list and the script the same. This task was split from the original check runner task; the other parts are FND-030 and FND-031.
 - **Acceptance criteria:**
@@ -506,10 +506,10 @@ Windows 11. No database and no globe yet.
   4. A program that is not installed, or a missing folder, gives a failed gate with a plain reason and no Python error.
   5. `TESTING.md` lists every gate exactly as the script has it.
 - **Tests required:** the runner's own tests (30, standard library `unittest`: the gate table 7, running one gate 8, the whole run with stand-in gates 11, the script as a separate process 4, always as a copy in a stand-in repository); repository checks (9, with two sample paths added); one full real run of all 16 gates; one real run with a deliberately failing gate.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #26 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the runner's tests (30, and 30 again on Python 3.12), repository checks (9), `--list` (16 gates), and the full run started from another folder: 16 of 16 gates passed, exit code 0 (inside it: 9 repository checks, 30 script tests, 115 backend tests, 199 frontend unit tests, 80 browser tests, mypy on 23 files, both lint and format gates, the build, 0 vulnerabilities). A real failing frontend test gave exit code 1 and was named in the summary; without uv on the PATH the gate failed with "uv is not installed"; an unknown gate name gave exit code 2. 30 of 30 planted defects detected.
+- **Passed / Failed:** 433 / 0 tests (script tests 30, repository 9, backend 115, frontend unit 199, browser 80); all 16 gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. The runner does not yet count tests or fail on skipped tests (FND-030), and the Python files outside the pipeline are not yet under lint, format or type gates (FND-031). Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `0620e94`
 - **Plan:** `docs/plans/FND-017.md`
 
 ### FND-030 – Test counts and skipped tests in the check runner
