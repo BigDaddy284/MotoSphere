@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 8 |
+| 1 | Foundation (FND) | 19 | 9 |
 | 2 | Database and API (DB, API) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-009 – Frontend project skeleton.
+**Current task:** FND-010 – Frontend unit testing.
 
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
@@ -183,7 +183,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-008.md`
 
 ### FND-009 – Frontend project skeleton
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A React + TypeScript project that type-checks and builds.
 - **Description:** Create `frontend/` with Vite, React and TypeScript in strict mode, a committed `package-lock.json`, and a minimal `App` that renders the application name and tagline. No styling, tests or lint yet.
 - **Acceptance criteria:**
@@ -193,22 +193,27 @@ Windows 11. No database and no globe yet.
   4. `node_modules`, `dist` and build caches are not tracked; no template demo content remains.
   5. README, TESTING.md and CHANGELOG.md describe the frontend commands; all earlier gates still pass.
 - **Tests required:** frontend type check; frontend build; browser check of the built page (planner); repository checks (9); backend gates unchanged (55 tests).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #9 (Linux, Node 22.23.4, npm 10.9.9, vite 8.3.8, react 19.3.1, typescript 7.0.2): `npm ci`, type check, build, `npm audit` (0 vulnerabilities), repository checks (9 tests), backend pytest (55 tests). Headless Chromium against both `npm run preview` (built page) and `npm run dev`: title, language, one main landmark, visible heading and tagline, no console errors or warnings, no failed requests. Five planted type defects all reported.
+- **Passed / Failed:** 64 / 0 tests (backend 55, repository 9); frontend type-check and build gates passed; browser check passed
+- **Verification status:** Verified by the planner on 2026-11-17. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `76b694e`
 - **Plan:** `docs/plans/FND-009.md`
 
 ### FND-010 – Frontend unit testing
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Component tests run with one command.
-- **Description:** Add Vitest, jsdom and Testing Library; `npm test` runs once and exits.
-- **Acceptance criteria:** a test renders `App` and finds the application name; the test run exits non-zero when an assertion fails (demonstrated, then reverted).
-- **Tests required:** Vitest suite; typecheck and build still pass.
+- **Description:** Add Vitest, jsdom and Testing Library; `npm test` runs the suite once and exits. First tests cover `App` and the entry point.
+- **Acceptance criteria:**
+  1. `npm test` runs once, passes the five planned tests and exits 0; it exits non-zero when an assertion fails.
+  2. Tests query the page the way a user perceives it (roles and text).
+  3. Test files are type-checked by `npm run typecheck` and are not part of the production bundle.
+  4. README, TESTING.md and CHANGELOG.md describe the new gate; all earlier gates still pass.
+- **Tests required:** frontend unit tests (5); frontend type check; frontend build; repository checks (9); backend gates unchanged (55 tests).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-010.md`
 
 ### FND-011 – Frontend linting and formatting
 - **Status:** NOT STARTED

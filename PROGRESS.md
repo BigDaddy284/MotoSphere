@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-009 – Frontend project skeleton (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 8 of 211
-- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. No user interface and no database yet.
+- **Current task:** FND-010 – Frontend unit testing (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 9 of 211
+- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application name. They are not connected yet; no globe and no database.
 
 ## Reports
 
@@ -409,3 +409,51 @@ a real Windows 11 machine is FND-019.
 Commit: `219166f` (squash merge of pull request #8).
 
 Next task: FND-009 – Frontend project skeleton.
+
+### FND-009 – Frontend project skeleton (2026-11-17)
+
+Implementation: Complete. Pull request #9, built in its own thread.
+
+What was implemented: `frontend/` as a Vite + React + TypeScript project
+(strict mode plus unchecked-index, implicit-override and exact-optional
+checks), committed `package-lock.json`, an original favicon, an `App`
+component rendering the application name and tagline, and an entry point that
+fails with a clear message if the page has no root element. README "Running
+the frontend", TESTING.md gates and CHANGELOG updated. Exactly the ten planned
+files; no template demo content; no deviations.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9; installed vite 8.3.8, react 19.3.1,
+typescript 7.0.2, @vitejs/plugin-react 6.3.0):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. Lock file references only
+  the public npm registry.
+- Frontend type check: passed. Frontend build: passed (`dist/index.html`,
+  one script bundle, favicon).
+- Browser check, headless Chromium, built page via `npm run preview`: title
+  `MotoSphere`, `lang="en"`, one main landmark, heading and tagline visible,
+  no console errors or warnings, no failed requests. Same result against
+  `npm run dev`.
+- Gate checks: 5 planted defects (wrong type, unused import, implicit any,
+  unchecked index access, invalid Vite configuration) all reported; type
+  check and build exit non-zero.
+- Repository checks: 9/9 passed. Backend tests: 55/55 passed (unchanged).
+- `git status` clean after the full run.
+
+Unit, API and integration tests: 64/64 passed (backend 55, repository 9).
+Type checking: passed (backend and frontend). Lint and format: passed (backend).
+Build: passed (frontend).
+Browser verification: passed.
+
+Overall applicable tests: 64/64 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the page is unstyled until FND-013; no automated frontend
+tests until FND-010 and no automated browser tests until FND-012 (the browser
+check above was run by the planner with a script outside the repository).
+Not run on Windows 11; first Windows run is FND-018.
+
+Commit: `76b694e` (squash merge of pull request #9).
+
+Next task: FND-010 – Frontend unit testing.
