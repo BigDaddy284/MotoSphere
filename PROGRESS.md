@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-029 – Browser tests can expect a page problem (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 24 of 221
+- **Current task:** FND-017 – Unified check runner (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 25 of 221
 - **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. No globe and no data store yet.
 
 ## Reports
@@ -1567,3 +1567,73 @@ run on Windows 11; first Windows run is FND-018.
 Commit: `d45e008` (squash merge of pull request #24).
 
 Next task: FND-029 – Browser tests can expect a page problem.
+
+### FND-029 – Browser tests can expect a page problem (2026-11-17)
+
+TASK: FND-029 – Browser tests can expect a page problem
+
+Implementation: Complete (builder thread, pull request #25). Every browser
+test still fails when the page logs an error or a warning, throws an
+uncaught error, has a failed request or receives an HTTP error. A test about
+a failure now names what it expects with `expectProblem(/pattern/)`; it
+fails if an expected problem does not happen and still fails on any problem
+it did not name. The judgement is one function with no browser in it,
+`unexplained`. The rule has tests of its own for the first time, and the
+data status is now tested in the browser with a manifest answered with HTTP
+404 and with a failed request. The application itself did not change.
+Exactly the planned files; the three test and fixture files are identical to
+the planner's trial.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9, uv 0.11.32):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. No dependency changed.
+- Frontend lint: passed. Format check: passed. No lint suppression, and no
+  skipped or focused test.
+- Frontend unit tests: 199/199 passed (12 files; none new). Type check:
+  passed. Build: passed.
+- Browser tests: 80/80 passed, three runs in a row, none skipped; 18 new: 7
+  of the judgement (nothing wrong, unexpected problems named, an expected
+  problem accepted once or several times, a missing one named, another
+  problem beside the expected one, every expected problem wanted); 9 of the
+  rule in a real page (a healthy page, information in the console, a test
+  that must fail on an unexpected problem, on a missing expected one and on
+  a second problem, console errors and warnings counted, two expected
+  problems); 2 of the data status ("Data unavailable" with HTTP 404 and with
+  a failed request, the rest of the page still working).
+- The three tests that must fail under the rule are marked `test.fail()`;
+  Playwright reports them as passed, and as failed if the rule ever stops
+  working (shown by the first planted defect).
+- Gate checks: 14 of 14 planted defects detected: the rule switched off;
+  only missing problems reported; only unexpected problems reported; a
+  problem having to match every pattern; a pattern having to match every
+  problem; anything allowed once something is expected; expectations not
+  remembered; console warnings, console errors, uncaught errors, failed
+  requests, HTTP 404 and all HTTP errors not recorded; console information
+  recorded as a problem.
+- Repository checks: 9/9 passed.
+- `git status` clean after the full run.
+- Backend gates: not run again. No backend file changed since they passed
+  for FND-027 (115/115), and the browser tests run the real export command.
+
+Unit and integration tests: 208/208 passed (frontend 199, repository 9).
+Browser tests: 80/80 passed.
+Type checking: passed. Lint and format: passed.
+Build: passed.
+Browser or integration verification: passed (automated, headless Chromium,
+production build with really exported data).
+
+Overall applicable tests: 288/288 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the two new data status tests name the manifest's
+address at the root of the site; the GitHub Pages task (FND-022) serves the
+site from a sub-path and must keep them passing there. A `test.fail()` test
+passes on any failure of its body, not only on the rule's; the bodies are
+kept to one or two harmless steps for that reason. Not run on Windows 11;
+first Windows run is FND-018.
+
+Commit: `5f4fde1` (squash merge of pull request #25).
+
+Next task: FND-017 – Unified check runner.
