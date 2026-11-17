@@ -66,10 +66,11 @@ npm run dev
 
 Open the address Vite prints, normally <http://localhost:5173>. The page shows
 the application's layout: a top bar, a sections panel, the globe area and a
-details panel. The sections panel lists the application's sections, and one can
-be chosen with the mouse or the keyboard; there is no globe or data yet. The
-Sections and Details buttons in the top bar close and open the side panels.
-Press Ctrl+C to stop the development server.
+details panel. The top bar shows today's date, in the language and time zone
+of your browser, and it changes at midnight. The sections panel lists the
+application's sections, and one can be chosen with the mouse or the keyboard;
+there is no globe or data yet. The Sections and Details buttons in the top bar
+close and open the side panels. Press Ctrl+C to stop the development server.
 
 ## Running the checks
 

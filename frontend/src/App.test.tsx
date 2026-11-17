@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { APP_NAME, APP_TAGLINE, App } from './App.tsx'
 
 /** The labels of the sections marked as current. */
@@ -13,6 +13,10 @@ function currentSections() {
 }
 
 describe('App', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('shows the application name as the main heading', () => {
     render(<App />)
 
@@ -58,5 +62,18 @@ describe('App', () => {
     await user.tab()
     await user.keyboard(' ')
     expect(currentSections()).toEqual(['Tracks'])
+  })
+
+  it("shows today's date in the top bar", () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 10, 17, 9, 30))
+
+    render(<App />)
+
+    const date = screen.getByRole('banner').querySelector('time')
+    expect(date).not.toBeNull()
+    expect(date).toBeVisible()
+    expect(date).toHaveAttribute('datetime', '2026-11-17')
+    expect(date?.textContent).toContain('2026')
   })
 })

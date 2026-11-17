@@ -62,8 +62,10 @@
   background-color: var(--color-pressed);
 }
 
-.toggleEnd {
+.info {
   margin-left: auto;
+  color: var(--color-subtext);
+  font-size: var(--font-size-sm);
 }
 
 .sections {

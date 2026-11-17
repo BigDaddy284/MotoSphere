@@ -45,3 +45,5 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   selectable by mouse or keyboard (FND-025).
 - Collapsible side panels: buttons in the top bar close and open the sections
   and details panels, remembered for the session (FND-015).
+- Current date in the top bar, in the language and time zone of the user's
+  browser, changing at midnight (FND-026).
