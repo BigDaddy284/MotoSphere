@@ -530,15 +530,22 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-030.md`
 
 ### FND-031 – Lint and format checks for Python outside the pipeline
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The Python files outside `backend/` (`scripts/`, `tests/repo`, `tests/scripts`) pass the same lint, format and type checks as the pipeline.
-- **Description:** A ruff configuration for the repository root that follows the pipeline's rules where they fit standard-library `unittest` code, a strict mypy check of `scripts/`, and new gates in the check runner for them, run with the pipeline's locked tools so that no new dependency is needed. Existing files are brought into line.
-- **Acceptance criteria:** the new gates pass on the existing files and fail on a planted lint, format and type defect in each folder; the gates are listed in `TESTING.md`; the pipeline's own gates are unchanged.
-- **Tests required:** the runner's tests updated for the new gates; planted defects for each new gate; one full real run.
+- **Description:** A `ruff.toml` at the repository root that extends the pipeline's rules, with only the pytest-style rules off because these tests use standard-library `unittest`; a `mypy.ini` that checks `scripts/` and `tests/` as strictly as the pipeline; and three new gates in the check runner (`tools-types`, `tools-lint`, `tools-format`) that run them from the repository root with the pipeline's locked tools, so that no new dependency is needed. The gates cover the two folders, not a list of files, and a test fails when a Python file appears outside the pipeline in a folder they do not cover. The existing files are brought into line (types, two marked exemptions and formatting in the repository checks).
+- **Acceptance criteria:**
+  1. The full run ends with "19 of 19 gates passed." and "Tests: 476 passed, 0 failed, 0 skipped.", exit code 0, with the three new gates after the backend tests.
+  2. A lint defect, a format defect and a type defect planted in each of `scripts/`, `tests/repo/` and `tests/scripts/` each make the matching gate fail with exit code 1.
+  3. A new Python file in `scripts/` or under `tests/` is checked without further change; a Python file in any other folder outside the pipeline makes a test fail.
+  4. The gates use the pipeline's locked tools and rules, with only the pytest-style rules off, and a test pins this.
+  5. The pipeline's own gates are unchanged.
+  6. `TESTING.md` lists the 19 gates exactly as the script has them, and `README.md` gives the three commands.
+- **Tests required:** the runner's own tests (73, of which 3 new: the tooling gates use the locked tools, every Python file outside the pipeline is in a covered folder, the two configuration files follow the pipeline's rules); repository checks (9, with two sample paths added); one full real run of all 19 gates; real planted lint, format and type defects in each of the three folders, run through the new gates.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-031.md`
 
 ### FND-018 – Continuous integration
 - **Status:** NOT STARTED
