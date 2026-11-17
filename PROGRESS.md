@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-028 – Data status in the top bar (`NOT STARTED`, the planner is writing its plan)
-- **Tasks verified:** 23 of 220
+- **Current task:** FND-028 – Data status in the top bar (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 23 of 221
 - **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The page itself does not show the data yet; no globe and no data store.
 
 ## Reports
@@ -1467,5 +1467,28 @@ show the data yet (FND-028). Not run on Windows 11; first Windows run is
 FND-018.
 
 Commit: `f117964` (squash merge of pull request #23).
+
+Next task: FND-028 – Data status in the top bar.
+
+### PLAN-003 – A task added for expected page problems (2026-11-17)
+
+While trial-running FND-028 the planner found one case that the browser
+tests cannot cover yet. Every browser test fails when the page reports an
+HTTP error or a failed request, by design. A manifest the server does not
+have is answered with HTTP 404 on GitHub Pages, so a browser test of that
+case would always fail, whatever the page showed. The local preview server
+does not help: it answers a missing file with the page itself and status
+200, which FND-028 does test.
+
+Weakening the rule for every test would hide real faults, so one small task
+was added after FND-028:
+
+- FND-029 – Browser tests can expect a page problem (a single test names
+  the problems it expects; then the data status is tested in the browser
+  with HTTP 404 and with a failed request).
+
+In FND-028 those two cases are covered by unit tests (the reader's own
+tests from FND-016 and the component's). Phase 1 has 29 tasks and the
+project 221. No requirement was dropped.
 
 Next task: FND-028 – Data status in the top bar.

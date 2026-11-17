@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 28 | 23 |
+| 1 | Foundation (FND) | 29 | 23 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -41,7 +41,9 @@ were added for them (FND-023 and FND-024).
 The layout task was also split into smaller ones: regions (FND-014), section
 navigation (FND-025) and the current date (FND-026). The data client task
 was split into three: reading the manifest (FND-016), serving real published
-data locally (FND-027) and the data status in the top bar (FND-028).
+data locally (FND-027) and the data status in the top bar (FND-028). One
+task was added after it (FND-029), so that the browser tests can also cover
+a manifest the server does not have.
 
 Added tasks are listed where they fall in dependency order, so task numbers
 in Phase 1 are not strictly ascending.
@@ -458,11 +460,29 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-027.md`
 
 ### FND-028 – Data status in the top bar
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The user can see how current the data is, or that it could not be loaded.
-- **Description:** A hook that loads the manifest once when the application starts, and a status indicator in the top bar's information slot with three states in plain language: loading, up to date ("Data updated" with the date, written in the language of the user's browser) and unavailable (one friendly message for a missing, malformed or unsupported manifest, with different wording when the application is older than the data). The states are announced to assistive technology.
-- **Acceptance criteria:** the indicator shows each of the three states correctly; a missing, malformed or wrong-version manifest shows a friendly message and never an unhandled error; the date shown is the one in the manifest; leaving the page stops the request.
-- **Tests required:** unit tests with a stand-in loader for all states; browser tests against a manifest produced by the export command (up to date) and with the file absent, malformed and in a newer format (unavailable); all frontend gates.
+- **Description:** A hook, `useManifest`, loads the manifest once when the application starts and reports loading, ready or failed; it stops the request when its component goes away and ignores a late answer. A component, `DataStatus`, shows one line in the top bar's information slot, before the date, in plain language: "Loading data…", "Data updated" with the day the data was generated (written in the language of the user's browser, for the day where the user is, in a `time` element that carries the exact moment), "Data unavailable" for a manifest that cannot be fetched or is not a manifest, and "Reload the page to see the data" when the data is in a newer format than the application reads. The line is an `output` element, so changes are announced to assistive technology. The browser tests of the normal case read the manifest the real export command wrote for the run. A browser test with a manifest the server does not have (HTTP 404) or a failed request is not possible until the browser tests can expect a page problem (FND-029); those cases are covered by unit tests here.
+- **Acceptance criteria:**
+  1. While the manifest is on its way the top bar says "Loading data…".
+  2. With the manifest of the real export it says "Data updated" and the day the data was generated, in the language of the browser and for the day where the user is; the `time` element's `datetime` is the moment in the manifest.
+  3. A manifest that cannot be fetched, is a web page or is damaged gives "Data unavailable"; a newer format gives "Reload the page to see the data"; nothing is thrown, the console stays clean and the rest of the page keeps working.
+  4. The line has the role `status`, sits between the tagline and the date in the quiet text colour, and the top bar still fits at 1366 pixels.
+  5. Leaving the page stops the request, and a late answer changes nothing.
+  6. `npm test` reports 199 passed in 12 files; `npm run e2e` reports 62 passed.
+- **Tests required:** frontend unit tests (199, of which 22 new: the hook 10, the date 5, the component 6, the application 1); browser tests (62, of which 9 new: the real manifest for a British user, position and colour, the American way for the day in Los Angeles, the German way for the day in Tokyo, loading until the answer arrives, a web page as the answer, a damaged manifest, a newer format, the rest of the page still working); the unit tests once more in another time zone; lint, format check, type check, build, audit; repository checks (9).
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-028.md`
+
+### FND-029 – Browser tests can expect a page problem
+- **Status:** NOT STARTED
+- **Objective:** A browser test can say which page problems it expects, so that the data status can be tested in the browser with a manifest the server does not have.
+- **Description:** Every browser test fails when the page reports a console error, an uncaught error, a failed request or an HTTP error (`frontend/e2e/fixtures.ts`). That is right for every test so far, but it makes one real case untestable: on GitHub Pages a missing manifest is answered with HTTP 404, which the browser also reports in its console. This task lets a single test name the problems it expects; such a test then fails if an expected problem does not happen, and still fails on any problem it did not name. With it, browser tests are added for the data status when the manifest is answered with HTTP 404 and when the request fails.
+- **Acceptance criteria:** a test that names its expected problems passes only when exactly those happen; every other browser test behaves as before; the data status shows "Data unavailable" for a manifest answered with HTTP 404 and for a failed request, and the rest of the page keeps working.
+- **Tests required:** browser tests for the two new data status cases; proof by planted defects that an unexpected problem still fails a test and that an expected problem which does not happen fails it too; all frontend gates.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified

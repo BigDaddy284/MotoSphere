@@ -7,7 +7,7 @@ this folder.
 | File | What it is | Used for |
 |---|---|---|
 | `motosphere-icon.svg` | The full design, approved by the owner on 2026-11-17 | 64 pixels and larger |
-| `motosphere-icon-small.svg` | The small design, a reduction of the full one | Smaller than 64 pixels |
+| `motosphere-icon-small.svg` | The small design, a reduction of the full one; shown to the owner at every size on 2026-11-17, who acknowledged it and asked for no change | Smaller than 64 pixels |
 
 ## The full design
 
