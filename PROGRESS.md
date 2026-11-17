@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-014 – Application shell layout (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 14 of 218
-- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application name, and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. They are not connected yet; no globe and no database. The API server is due to be replaced by a data pipeline command (FND-020) following the GitHub Pages decision.
+- **Current task:** FND-025 – Section navigation (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 15 of 218
+- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application's layout (top bar, sections panel, globe area and details panel, all still empty), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. They are not connected yet; no globe and no database. The API server is due to be replaced by a data pipeline command (FND-020) following the GitHub Pages decision.
 
 ## Reports
 
@@ -803,3 +803,68 @@ mock-ups, so FND-014 goes first.
 Commit: `15a9f59` (squash merge of pull request #14).
 
 Next task: FND-014 – Application shell layout.
+
+### FND-014 – Application shell layout (2026-11-17)
+
+TASK: FND-014 – Application shell layout
+
+Implementation: Complete (builder thread, pull request #15). The page now has
+its final regions as named landmarks: a top bar with the name and tagline,
+the sections panel on the left, the globe stage in the centre and the
+details panel on the right, in the Graphite bar, panel and canvas colours.
+Three layout size tokens were added. The shell is exactly one screen high,
+so the page never scrolls; the panels scroll inside themselves. The sections
+panel and the stage are empty until their own tasks. Exactly the ten planned
+files; the component, its style sheet, `App.tsx`, the tokens and the token
+test are identical to the planner's trial; no deviations.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. No dependency changed.
+- Frontend lint: passed. Format check: passed.
+- Frontend unit tests: 75/75 passed (5 files), 6 of them new component
+  tests. Type check: passed.
+- Build: passed (script bundle 220.44 kB, style sheet 3.62 kB).
+- Browser tests: 16/16 passed, 7 of them new: at 1366×768 and at 1920×1080
+  the regions fill the screen without overlapping, the stage is the largest
+  region and the page does not scroll; and the regions use the Graphite
+  surfaces.
+- Existing tests unchanged apart from the one planned theme assertion; no
+  skipped or focused tests and no suppressions.
+- Gate checks: 9 planted defects all detected: page taller than the screen;
+  details panel too wide for the stage to be the largest; missing landmark
+  name; regions out of reading order; a raw colour on the stage; an unknown
+  layout token; a fixed stage width; the details panel on the wrong surface;
+  the tagline removed.
+- Repository checks: 9/9 passed.
+- Backend: not touched and not re-run; no backend file has changed since its
+  55/55 run on commit `0914ec5`.
+- `git status` clean after the full run.
+
+Unit tests: 84/84 passed (frontend 75, repository 9). Browser tests: 16/16
+passed.
+Type checking: passed (frontend). Lint and format: passed (frontend).
+Build: passed (frontend).
+Browser verification: passed (automated, headless Chromium, production build).
+
+Overall applicable tests: 100/100 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: desktop sizes only, from 1366×768; there is no
+small-screen layout yet. The sections panel and the stage are empty until
+FND-025 and Phase 3. An unknown layout token is caught by the unit test but
+not by the browser tests, which still pass because the grid falls back to
+automatic sizing. Not run on Windows 11; first Windows run is FND-018.
+
+Planning notes: the owner rejected the first icon mock-ups and has chosen a
+globe outline with MOTO along the top of the rim and SPHERE along the
+bottom; the lettering font is still to be chosen, so FND-024 stays behind
+the layout tasks. While trial-running FND-025 the planner found that a
+browser test which presses a key straight after loading the page can lose
+the key; the plan makes such tests wait for the page to be drawn first.
+
+Commit: `0bfd7e1` (squash merge of pull request #15).
+
+Next task: FND-025 – Section navigation.

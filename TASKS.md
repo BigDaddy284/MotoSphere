@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 26 | 14 |
+| 1 | Foundation (FND) | 26 | 15 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-014 – Application shell layout.
+**Current task:** FND-025 – Section navigation.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -299,7 +299,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-023.md`
 
 ### FND-014 – Application shell layout
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The final screen regions, with the globe area dominant.
 - **Description:** Top bar (name and tagline), sections panel on the left, globe stage in the centre and details panel on the right, as semantic landmarks in the Graphite surfaces, sized by layout tokens. Regions only: the section list, collapsing, data status and globe are later tasks, so the sections panel and stage are empty for now and no placeholder controls are added.
 - **Acceptance criteria:**
@@ -308,22 +308,29 @@ Windows 11. No database and no globe yet.
   3. The regions use the Graphite bar, panel and canvas colours through tokens.
   4. `npm test` reports 75 passed; `npm run e2e` reports 16 passed; all earlier gates pass.
 - **Tests required:** frontend unit tests (75, of which 6 new component tests); browser tests (16, of which 7 new: three per viewport and one for surfaces); frontend lint, format check, type check, build; repository checks (9); backend untouched (55 tests).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #15 (Linux, Node 22.23.4, npm 10.9.9): `npm ci`, lint, format check, frontend unit tests (75), type check, build, browser tests (16), `npm audit` (0 vulnerabilities), repository checks (9 tests). Nine planted defects all detected. Backend not re-run: no backend file has changed since its 55/55 run on commit `0914ec5`.
+- **Passed / Failed:** 100 / 0 tests (frontend unit 75, browser 16, repository 9); frontend lint, format, type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. Desktop sizes only (from 1366×768); no small-screen layout yet. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `0bfd7e1`
 - **Plan:** `docs/plans/FND-014.md`
 
 ### FND-025 – Section navigation
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The user can see and choose the application's sections.
-- **Description:** The sections panel lists Explore, Events, Tracks, Championships, Riders, Teams, Results, News and Statistics. One section is current (Explore at start); choosing another by mouse or keyboard makes it current. The choice is application state that later tasks use to decide what the panels show.
-- **Acceptance criteria:** all nine sections are listed in that order with accessible names; exactly one is marked current (`aria-current`); selection works by click, Enter and Space and is visible in the Graphite selection style; focus is visible.
-- **Tests required:** component tests for the list, the current marker and selection by click and keyboard; browser test for keyboard selection and the visible current style; all frontend gates.
+- **Description:** The sections panel lists Explore, Events, Tracks, Championships, Riders, Teams, Results, News and Statistics as buttons. One section is current (Explore at start); choosing another by mouse or keyboard makes it current. The choice is application state held in `App` that later tasks use to decide what the panels show; nothing else reacts to it yet, and it is not stored in the address bar. Adds one development dependency, `@testing-library/user-event`, so that unit tests can press keys the way a user does.
+- **Acceptance criteria:**
+  1. The nine sections are listed in that order as buttons in a list inside the sections panel.
+  2. Exactly one is marked current with `aria-current="page"`; it is Explore at start.
+  3. Clicking a section, or reaching it with Tab and pressing Enter or Space, makes it current.
+  4. The current section is shown in the Graphite selection style, other sections show a hover style, and keyboard focus is visible; all colours come from tokens.
+  5. At 1366×768 the nine sections fit in the panel without scrolling.
+  6. `npm test` reports 86 passed; `npm run e2e` reports 21 passed; all earlier gates pass.
+- **Tests required:** frontend unit tests (86, of which 11 new: 3 for the section data, 5 for the list component, 3 for selection in the application); browser tests (21, of which 5 new: list and start state, click and selection style, keyboard and focus ring, hover, fit at 1366×768); frontend lint, format check, type check, build; `npm audit`; repository checks (9); backend untouched (55 tests).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-025.md`
 
 ### FND-015 – Collapsible side panels
 - **Status:** NOT STARTED
@@ -348,7 +355,7 @@ Windows 11. No database and no globe yet.
 - **Commit:** –
 
 ### FND-024 – Application icon in the Sky Classic style
-- **Status:** NOT STARTED (waiting for the owner to choose the symbol; nine mock-ups are published and the builder recommended the globe with a track across its equator)
+- **Status:** NOT STARTED (waiting for the owner's final choice. The owner rejected the first nine mock-ups and chose a globe outline with MOTO following the top of the rim and SPHERE the bottom, the rim breaking where the words sit, with no dots in the O's. The choice of lettering font is still open; five drafts are in front of the owner. The lettering cannot be read at 16 pixels, so the smallest size may need a globe-only variant)
 - **Objective:** MotoSphere has its own icon in the style the owner chose.
 - **Description:** A MotoSphere icon drawn in the Sky Classic style (`docs/design/sky-classic-icon/`): rounded dark gradient tile, a glowing outline glyph with round joins in the sky-blue gradient. The glyph is MotoSphere's own (a globe motif), not the folder from the reference. Delivered as the page icon (SVG) with PNG fallbacks, and the style rules for later interface icons are written down.
 - **Acceptance criteria:** the icon uses the reference tile, gradient and stroke style with a MotoSphere glyph; it is legible at 16, 32 and 180 pixels; the page links it and the browser loads it; the icon style rules are documented.
