@@ -25,3 +25,5 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Frontend unit testing with Vitest and Testing Library (FND-010).
 - Frontend linting with oxlint (React, accessibility and security rules) and
   formatting with Prettier (FND-011).
+- Browser tests with Playwright against the built application, with an
+  automatic page health check (FND-012).
