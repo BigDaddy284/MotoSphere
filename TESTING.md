@@ -16,12 +16,17 @@ test means the task is not complete.
 | Backend lint | `cd backend && uv run ruff check .` |
 | Backend format | `cd backend && uv run ruff format --check .` |
 | Backend type check | `cd backend && uv run mypy` |
+| Frontend type check | `cd frontend && npm run typecheck` |
+| Frontend build | `cd frontend && npm run build` |
 
 The backend suite includes integration tests that start the real API server on
 a free local port and call it over HTTP.
 
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.
+
+Before the frontend gates, `npm ci` (run in `frontend/`) installs the locked
+dependencies from `package-lock.json`.
 
 The repository checks use the Python standard library only and need nothing
 but Python 3.12 or newer and Git. They verify the required documents, ignore
