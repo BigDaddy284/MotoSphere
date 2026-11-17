@@ -30,11 +30,12 @@ test.describe('Graphite theme', () => {
 
   test('shows a focus ring when an element is reached by keyboard', async ({ page }) => {
     await page.goto('/')
-    // The page has nothing focusable yet, so the test adds a button.
+    // The test adds its own button, first on the page, to measure the base
+    // focus style rather than a component's.
     await page.evaluate(() => {
       const button = document.createElement('button')
       button.textContent = 'Focus target'
-      document.body.append(button)
+      document.body.prepend(button)
     })
     const button = page.getByRole('button', { name: 'Focus target' })
     await expect(button).toHaveCSS('outline-style', 'none')
