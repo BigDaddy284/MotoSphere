@@ -441,15 +441,21 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-016.md`
 
 ### FND-027 – Real published data in local development and browser tests
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The development server, the production preview and the browser tests serve a manifest written by the real export command.
-- **Description:** One command (an npm script that runs `python -m motosphere export` through uv) writes the published data into `frontend/public/data/`, which Git ignores. The browser tests' web server runs it before the build, so the built site under test always carries freshly exported data and never a hand-written copy. README documents the command for local development.
-- **Acceptance criteria:** after the command, `data/manifest.json` is served by the development server and by the preview of the production build; a browser test fetches it from the built site and the frontend's manifest reader accepts it; its generation time is from this run; the exported files are not tracked by Git; a failed export stops the browser tests with a clear message instead of testing stale data.
-- **Tests required:** browser tests that the served manifest is read by the manifest reader and is fresh; repository check that the data directory is ignored; all frontend and backend gates.
+- **Description:** One command, `npm run data` in `frontend/`, runs the pipeline's export through uv (from the `backend/` folder, so the pipeline finds its own settings) and writes into `frontend/public/data/`, which Git and Prettier ignore. Vite serves that folder in development and copies it into the build. The browser tests' web server runs the export before the build; a failed export stops the server, so stale data is never tested. The Playwright configuration records when the run started, and a test proves that the served manifest was generated in this run. The tests use the frontend's own manifest reader against the served site. Nothing is shown on the page yet (FND-028).
+- **Acceptance criteria:**
+  1. `npm run data` writes `frontend/public/data/manifest.json` with the real export command; Git does not list it.
+  2. The browser tests' web server exports before it builds; when the export fails, no test runs.
+  3. The built site serves `data/manifest.json` as JSON; the frontend's reader accepts it, called from the tests and from inside a page; its application version is the pipeline's; its generation time is not earlier than the start of the test run.
+  4. The development server serves the exported manifest too.
+  5. `npm run e2e` reports 53 passed; `npm test` 177 passed; the repository checks 9 tests; the backend 115 passed.
+- **Tests required:** browser tests (53, of which 6 new: served as JSON, accepted by the reader, exported for this run, from this version of the pipeline, fetched and read inside a page, nothing but the manifest in the data folder); repository checks (9, with two sample paths added); frontend unit tests unchanged (177); lint, format check, type check, build, audit; all backend gates (115 tests); a hand check of the development server.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-027.md`
 
 ### FND-028 – Data status in the top bar
 - **Status:** NOT STARTED

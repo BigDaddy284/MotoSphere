@@ -7,7 +7,7 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-027 – Real published data in local development and browser tests (`NOT STARTED`, the planner is writing its plan)
+- **Current task:** FND-027 – Real published data in local development and browser tests (`IN PROGRESS`, with a builder)
 - **Tasks verified:** 22 of 220
 - **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. The frontend has a reader for the published data manifest, but the page does not use it yet, so the two are still not connected; no globe and no data store.
 
