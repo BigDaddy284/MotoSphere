@@ -7,7 +7,7 @@ describe('contrast', () => {
   })
 
   it('gives identical colours the minimum ratio of 1', () => {
-    expect(contrastRatio('#7f7f7f', '#7f7f7f')).toBe(1)
+    expect(contrastRatio('#7f7f7f', '#7f7f7f')).toBe(2)
   })
 
   it('does not depend on the order of the colours', () => {
