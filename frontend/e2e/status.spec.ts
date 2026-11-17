@@ -169,4 +169,44 @@ test.describe('data status', () => {
     )
     await expect(page.getByRole('banner').locator('time:not(output time)')).toBeVisible()
   })
+
+  // A missing file and a failed request are page problems, which fail every
+  // browser test (see `fixtures.ts`). These two tests say that they expect them.
+  test('says the data is unavailable when the server does not have the manifest', async ({
+    page,
+    expectProblem,
+  }) => {
+    expectProblem(/^HTTP 404: http:\/\/[^/]+\/data\/manifest\.json$/)
+    expectProblem(/^console error: Failed to load resource: .* status of 404 /)
+    await page.route(MANIFEST, (route) =>
+      route.fulfill({ status: 404, contentType: 'text/html', body: '<h1>Not found</h1>' }),
+    )
+    await page.goto('/')
+    await expect(dataStatus(page)).toHaveText('Data unavailable')
+
+    await page.getByRole('button', { name: 'Events' }).click()
+
+    await expect(page.getByRole('button', { name: 'Events' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
+
+  test('says the data is unavailable when the request for the manifest fails', async ({
+    page,
+    expectProblem,
+  }) => {
+    expectProblem(/^request failed: GET http:\/\/[^/]+\/data\/manifest\.json$/)
+    expectProblem(/^console error: Failed to load resource: net::ERR_FAILED$/)
+    await page.route(MANIFEST, (route) => route.abort())
+    await page.goto('/')
+    await expect(dataStatus(page)).toHaveText('Data unavailable')
+
+    await page.getByRole('button', { name: 'Events' }).click()
+
+    await expect(page.getByRole('button', { name: 'Events' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
 })
