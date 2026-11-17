@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CurrentDate } from './clock/CurrentDate.tsx'
+import { DataStatus } from './data/DataStatus.tsx'
 import { AppShell } from './layout/AppShell.tsx'
 import { SectionList } from './navigation/SectionList.tsx'
 import { DEFAULT_SECTION, type SectionId } from './navigation/sections.ts'
@@ -14,7 +15,12 @@ export function App() {
     <AppShell
       name={APP_NAME}
       tagline={APP_TAGLINE}
-      info={<CurrentDate />}
+      info={
+        <>
+          <DataStatus />
+          <CurrentDate />
+        </>
+      }
       sections={<SectionList current={section} onSelect={setSection} />}
     />
   )

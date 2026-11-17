@@ -7,6 +7,9 @@ import { APP_NAME } from './App.tsx'
 describe('entry point', () => {
   beforeEach(() => {
     vi.resetModules()
+    // The page asks for the published data as soon as it is shown. These
+    // tests are not about the data, so the answer never comes.
+    vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise(() => {}))
   })
 
   afterEach(() => {

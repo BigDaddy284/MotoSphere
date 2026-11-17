@@ -2,7 +2,8 @@ import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 
 function currentDate(page: Page) {
-  return page.getByRole('banner').locator('time')
+  // The data status has a time element of its own, inside an output element.
+  return page.getByRole('banner').locator('time:not(output time)')
 }
 
 test.describe('current date', () => {

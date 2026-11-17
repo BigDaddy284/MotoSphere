@@ -68,6 +68,11 @@
   font-size: var(--font-size-sm);
 }
 
+/* The pieces of information stay in the line of text, with room between them. */
+.info > * + * {
+  margin-left: var(--space-4);
+}
+
 .sections {
   grid-area: sections;
   width: var(--size-sections-panel);
