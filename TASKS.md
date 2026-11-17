@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 31 | 26 |
+| 1 | Foundation (FND) | 31 | 27 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-030 – Test counts and skipped tests in the check runner.
+**Current task:** FND-031 – Lint and format checks for Python outside the pipeline.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -513,7 +513,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-017.md`
 
 ### FND-030 – Test counts and skipped tests in the check runner
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The check runner reports how many tests each gate ran, and fails when any test was skipped.
 - **Description:** The five gates that run tests (repository checks and script tests with `unittest`, backend tests with pytest, frontend unit tests with Vitest, browser tests with Playwright) name their tool in the gate table. The runner reads every gate's output while passing it on to the terminal unchanged, and for a test gate reads the number of tests passed, failed and skipped from the tool's own closing lines, with colour codes removed. Every test that neither passed nor failed counts as skipped: skipped, expected to fail, still to do, left out or not run. A test gate fails when its command fails, when a test was skipped, when no test ran or when the counts cannot be found. The summary shows the counts on each test gate's line and a total for the run.
 - **Acceptance criteria:**
@@ -523,10 +523,10 @@ Windows 11. No database and no globe yet.
   4. Every gate's output still appears on the terminal, also when it is not valid UTF-8 or the console is limited to ASCII.
   5. Gates that do not run tests behave as before.
 - **Tests required:** the runner's own tests (70, of which 40 new: reading counts from closing lines copied from real runs of each tool 19, judging a gate 8, and additions to the gate table, running one gate, the whole run and the script as a separate process); repository checks (9); one full real run of all 16 gates; one real run with a skipped test planted in each of the five tools.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #27 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the runner's tests (70, and 70 again on Python 3.12), repository checks (9), and the full run started from another folder: 16 of 16 gates passed, "Tests: 473 passed, 0 failed, 0 skipped.", exit code 0. By hand: a skipped test planted in each of the five test tools failed all five gates with "tests were skipped" and the total "473 passed, 0 failed, 5 skipped"; a broken frontend test showed "198 passed, 1 failed"; a console limited to ASCII did not disturb the run. 51 of 51 planted defects detected.
+- **Passed / Failed:** 473 / 0 tests (repository 9, script tests 70, backend 115, frontend unit 199, browser 80); all 16 gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. From this task on, the totals in these records are the ones the check runner prints. The closing lines for flaky, interrupted and not-run browser tests are taken from Playwright's wording, not from a real run. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `94f0862`
 - **Plan:** `docs/plans/FND-030.md`
 
 ### FND-031 – Lint and format checks for Python outside the pipeline

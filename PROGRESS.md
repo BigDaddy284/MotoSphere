@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-030 – Test counts and skipped tests in the check runner (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 26 of 223
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project. No globe and no data store yet.
+- **Current task:** FND-031 – Lint and format checks for Python outside the pipeline (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 27 of 223
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (473 today) and fails if any test was skipped. No globe and no data store yet.
 
 ## Reports
 
@@ -1739,3 +1739,79 @@ first Windows run is FND-018.
 Commit: `0620e94` (squash merge of pull request #26).
 
 Next task: FND-030 – Test counts and skipped tests in the check runner.
+
+### FND-030 – Test counts and skipped tests in the check runner (2026-11-17)
+
+TASK: FND-030 – Test counts and skipped tests in the check runner
+
+Implementation: Complete (builder thread, pull request #27). The runner now
+reads every gate's output while passing it on to the terminal unchanged. For
+the five gates that run tests it reads the number of tests passed, failed
+and skipped from the tool's own closing lines (`unittest`, pytest, Vitest,
+Playwright), with colour codes removed, shows them on the gate's line and
+adds a total for the run. A test gate fails when its command fails, when a
+test was skipped, when no test ran or when the counts cannot be found. Every
+test that neither passed nor failed counts as skipped. Exactly the planned
+files; all four are identical to the planner's trial.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The runner's tests: 70/70 passed, and 70/70 again on Python 3.12: the gate
+  table 8, reading counts 19, judging a gate 8, running one gate 13, the
+  whole run 16, the script as a separate process 6.
+- Repository checks: 9/9 passed.
+- The full run, started from another folder: 16 of 16 gates passed, exit
+  code 0, with the line "Tests: 473 passed, 0 failed, 0 skipped."
+  (repository checks 9, script tests 70, backend tests 115, frontend unit
+  tests 199, browser tests 80). The eleven other gates passed as before:
+  lock file, both installs, both type checks, both lints, both format
+  checks, the build and the dependency audit (0 vulnerabilities).
+- Real skipped tests, by hand: one skipped test planted in each of the five
+  tools made all five gates fail with "tests were skipped", each line still
+  showing its real count and "1 skipped"; the total read "473 passed, 0
+  failed, 5 skipped" and the exit code was 1.
+- A real failing test, by hand: one frontend test broken on purpose gave
+  "198 passed, 1 failed  exit code 1" and exit code 1.
+- A console limited to ASCII did not disturb a real run of the frontend
+  unit tests.
+- Gate checks: 51 of 51 planted defects detected: the three new rules
+  switched off one by one; a failing exit code forgiven; colours not
+  removed; each tool's reader miscounting one kind of outcome (errors,
+  unexpected successes, expected failures, tests left out, tests still to
+  do, flaky, interrupted and not-run tests); the wrong report or the wrong
+  line read; output not passed on, not kept, error output lost, output that
+  is not UTF-8, output forced through the console's character set; counts or
+  totals missing or wrong in the summary; a gate reading the wrong tool or
+  none; and the defects kept from FND-017.
+- A defect found by the tests during the planner's trial, before the plan
+  was written: `unittest` outcomes of two words after a comma ("errors",
+  "expected failures") were first read with a leading space and so not
+  counted. The fix and its tests are part of the plan.
+- `git status` clean after the full run.
+
+Unit and integration tests: 393/393 passed (repository 9, script tests 70,
+backend 115, frontend 199). Browser tests: 80/80 passed.
+Type checking: passed (frontend and backend). Lint and format: passed
+(frontend and backend).
+Build: passed (frontend).
+Browser or integration verification: passed (the full run executes the real
+gates, browser tests included).
+
+Overall applicable tests: 473/473 passed (100%), all 16 gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the readers depend on the closing lines of the four
+tools; if a tool changes its wording, the gate fails with "the test counts
+could not be read" rather than passing. The lines for flaky, interrupted and
+not-run browser tests follow Playwright's wording and were not produced by a
+real run. With output read through a pipe, the tools no longer colour their
+output or draw progress bars. The Python files outside the pipeline are not
+yet under lint, format or type gates (FND-031). Not run on Windows 11; first
+Windows run is FND-018.
+
+Commit: `94f0862` (squash merge of pull request #27).
+
+Next task: FND-031 – Lint and format checks for Python outside the pipeline.
