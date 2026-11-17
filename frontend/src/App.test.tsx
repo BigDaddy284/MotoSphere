@@ -50,7 +50,7 @@ describe('App', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.tab()
+    screen.getByRole('button', { name: 'Explore' }).focus()
     await user.tab()
     await user.keyboard('{Enter}')
     expect(currentSections()).toEqual(['Events'])
