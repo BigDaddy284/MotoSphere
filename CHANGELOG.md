@@ -65,6 +65,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   reports which passed (FND-017).
 - The check runner reports how many tests each gate ran and fails a gate when
   a test was skipped (FND-030).
+- Lint, format and type gates for the Python files outside the pipeline
+  (`scripts/`, `tests/`), run with the pipeline's locked tools (FND-031).
 
 ### Removed
 

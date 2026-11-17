@@ -40,6 +40,9 @@ expected to fail, marked as still to do or left out of a run count as skipped.
 | `backend-lint` | Backend lint | `uv run ruff check .` | `backend/` |
 | `backend-format` | Backend format | `uv run ruff format --check .` | `backend/` |
 | `backend-tests` | Backend tests | `uv run pytest` | `backend/` |
+| `tools-types` | Tooling type check | `uv run --project backend mypy` | repository root |
+| `tools-lint` | Tooling lint | `uv run --project backend ruff check scripts tests` | repository root |
+| `tools-format` | Tooling format | `uv run --project backend ruff format --check scripts tests` | repository root |
 | `frontend-install` | Frontend install | `npm ci` | `frontend/` |
 | `frontend-lint` | Frontend lint | `npm run lint` | `frontend/` |
 | `frontend-format` | Frontend format | `npm run format:check` | `frontend/` |
@@ -50,6 +53,16 @@ expected to fail, marked as still to do or left out of a run count as skipped.
 | `frontend-audit` | Frontend dependency audit | `npm audit` | `frontend/` |
 
 A test compares this table with the script, so the two cannot drift apart.
+
+The three tooling gates cover the Python files outside the pipeline: the
+check runner in `scripts/` and the tests in `tests/`. They use the pipeline's
+locked ruff and mypy, so nothing else needs installing, and they follow the
+pipeline's rules: `ruff.toml` extends `backend/pyproject.toml`, and `mypy.ini`
+is as strict. The one difference is that the rules about pytest style are
+off, because these tests are written with `unittest`. A test fails when a
+Python file appears outside the pipeline in a folder these gates do not cover.
+`uv run --project backend ruff format scripts tests`, from the repository
+root, applies the formatting.
 
 The backend suite includes integration tests that run the real command line
 (`python -m motosphere`) as a separate process.

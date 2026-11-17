@@ -142,6 +142,18 @@ Backend type check (mypy, strict mode), from `backend/`:
 uv run mypy
 ```
 
+The same three checks for the Python files outside the pipeline (`scripts/`
+and `tests/`), from the repository root. They use the tools installed for the
+backend:
+
+```
+uv run --project backend mypy
+uv run --project backend ruff check scripts tests
+uv run --project backend ruff format --check scripts tests
+```
+
+`uv run --project backend ruff format scripts tests` applies the formatting.
+
 Frontend lint (oxlint), format check (Prettier), unit tests, type check
 (TypeScript, strict mode) and production build, from `frontend/` (run `npm ci`
 first to install the locked dependencies):
