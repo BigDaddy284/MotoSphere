@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-027 – Real published data in local development and browser tests (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 22 of 220
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. The frontend has a reader for the published data manifest, but the page does not use it yet, so the two are still not connected; no globe and no data store.
+- **Current task:** FND-028 – Data status in the top bar (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 23 of 220
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The page itself does not show the data yet; no globe and no data store.
 
 ## Reports
 
@@ -1400,3 +1400,72 @@ FND-018.
 Commit: `d42bfe4` (squash merge of pull request #22).
 
 Next task: FND-027 – Real published data in local development and browser tests.
+
+### FND-027 – Real published data in local development and browser tests (2026-11-17)
+
+TASK: FND-027 – Real published data in local development and browser tests
+
+Implementation: Complete (builder thread, pull request #23). `npm run data`
+in `frontend/` runs the pipeline's export through uv, from the `backend/`
+folder, and writes into `frontend/public/data/`, which Git and Prettier
+ignore. The browser tests' web server runs it before the build, so the built
+site under test carries data exported for that run; when the export fails,
+the server does not start and no test runs. The Playwright configuration
+records when the run started. Six new browser tests use the frontend's own
+manifest reader against the served site. This is the first time the pipeline
+and the frontend meet. Exactly the planned files; the tests, the
+configuration and the ignore rules are identical to the planner's trial.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9, uv 0.11.32):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. No dependency changed;
+  `package-lock.json` and `uv.lock` are untouched.
+- Frontend lint: passed. Format check: passed, also with exported data in
+  place.
+- Frontend unit tests: 177/177 passed (9 files; none new). Type check:
+  passed. Build: passed.
+- Browser tests: 53/53 passed, three runs in a row; 6 of them new: the built
+  site serves the manifest as JSON; the frontend's reader accepts it; it was
+  generated no earlier than the start of the run; its application version is
+  the one in `backend/pyproject.toml`; a page can fetch and read it; the data
+  folder holds nothing but the manifest.
+- Backend: lock check, sync, mypy (23 source files), ruff check and ruff
+  format check passed; 115/115 tests passed.
+- Development server, by hand: after `npm run data`, `npm run dev` served
+  `/data/manifest.json` with status 200 as `application/json`.
+- No skipped or focused tests and no suppressions. The exported data is not
+  tracked and does not show in `git status`.
+- Gate checks: 7 of 7 planted defects detected: no export before the build
+  with old data left behind (only the freshness test fails, as intended); no
+  export and no data; export into the wrong folder; a failing export (the
+  server does not start and the run exits with an error); a failing export
+  that is ignored; the start of the run not recorded; the exported data not
+  ignored by Git (repository checks).
+- Repository checks: 9/9 passed, with two sample paths added.
+- `git status` clean after the full run.
+
+Unit and integration tests: 301/301 passed (frontend 177, backend 115,
+repository 9). Browser tests: 53/53 passed.
+Type checking: passed (frontend and backend). Lint and format: passed
+(frontend and backend).
+Build: passed (frontend).
+Browser or integration verification: passed (automated, headless Chromium,
+production build with really exported data), plus the development server
+checked by hand.
+
+Overall applicable tests: 354/354 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the browser tests now need uv as well as Node.js, and the
+continuous integration task (FND-018) must install both. `npm run dev` does
+not export by itself; `npm run data` is run by hand. The Prettier ignore
+entry for the data folder is a guard that no test exercises: today's
+manifest happens to be formatted the way Prettier wants. The page does not
+show the data yet (FND-028). Not run on Windows 11; first Windows run is
+FND-018.
+
+Commit: `f117964` (squash merge of pull request #23).
+
+Next task: FND-028 – Data status in the top bar.

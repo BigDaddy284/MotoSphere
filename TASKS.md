@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 28 | 22 |
+| 1 | Foundation (FND) | 28 | 23 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-027 – Real published data in local development and browser tests.
+**Current task:** FND-028 – Data status in the top bar.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -441,7 +441,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-016.md`
 
 ### FND-027 – Real published data in local development and browser tests
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The development server, the production preview and the browser tests serve a manifest written by the real export command.
 - **Description:** One command, `npm run data` in `frontend/`, runs the pipeline's export through uv (from the `backend/` folder, so the pipeline finds its own settings) and writes into `frontend/public/data/`, which Git and Prettier ignore. Vite serves that folder in development and copies it into the build. The browser tests' web server runs the export before the build; a failed export stops the server, so stale data is never tested. The Playwright configuration records when the run started, and a test proves that the served manifest was generated in this run. The tests use the frontend's own manifest reader against the served site. Nothing is shown on the page yet (FND-028).
 - **Acceptance criteria:**
@@ -451,10 +451,10 @@ Windows 11. No database and no globe yet.
   4. The development server serves the exported manifest too.
   5. `npm run e2e` reports 53 passed; `npm test` 177 passed; the repository checks 9 tests; the backend 115 passed.
 - **Tests required:** browser tests (53, of which 6 new: served as JSON, accepted by the reader, exported for this run, from this version of the pipeline, fetched and read inside a page, nothing but the manifest in the data folder); repository checks (9, with two sample paths added); frontend unit tests unchanged (177); lint, format check, type check, build, audit; all backend gates (115 tests); a hand check of the development server.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #23 (Linux, Node 22.23.4, npm 10.9.9, uv 0.11.32): `npm ci`, lint, format check (also after an export), frontend unit tests (177), type check, build, browser tests (53, three runs in a row), `npm audit` (0 vulnerabilities); backend lock check, sync, mypy (23 files), ruff check, ruff format check, pytest (115); repository checks (9 tests). The development server was started by hand and served the exported manifest as JSON. 7 of 7 planted defects detected.
+- **Passed / Failed:** 354 / 0 tests (frontend unit 177, browser 53, backend 115, repository 9); all lint, format, type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. The browser tests now need uv as well as Node.js; the continuous integration task (FND-018) must install both. The page does not show the data yet (FND-028). Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `f117964`
 - **Plan:** `docs/plans/FND-027.md`
 
 ### FND-028 – Data status in the top bar
