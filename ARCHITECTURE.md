@@ -324,8 +324,11 @@ TESTING.md.
 - Parameterised SQL only.
 - Workflows run with the least permissions they need. Only the deployment
   job may publish the site, and only the collection job may write data.
-- Dependency vulnerability checks (`pip-audit`, `npm audit`) are part of the
-  check runner once it exists.
+- Dependency vulnerability checks are part of the check runner. The
+  frontend's is `scripts/audit.py`: it fails on every advisory `npm audit`
+  reports unless an exception is recorded in `frontend/audit-exceptions.json`
+  with a reason and a review date at most 31 days away. The pipeline's
+  (`pip-audit`) is task PRF-005.
 
 ## 12. Windows 11 operation (Decided)
 

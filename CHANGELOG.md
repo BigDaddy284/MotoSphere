@@ -70,6 +70,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Continuous integration: GitHub runs every gate on Linux for each pull
   request and each change to `main` (FND-018).
 - Continuous integration also runs every gate on Windows (FND-032).
+- `python scripts/audit.py`: the dependency audit, with exceptions that are
+  recorded with a reason and a review date. One exception is recorded: a
+  slow pattern match in picomatch, a build and test tool, for which no fixed
+  version exists yet (GHSA-fc5q-39xc-vjpf, review by 2026-12-17) (FND-033).
 
 ### Removed
 

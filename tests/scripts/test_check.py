@@ -125,11 +125,26 @@ class GateTableTest(unittest.TestCase):
                 self.assertIn(script, package["scripts"])
 
     def test_gates_that_start_python_tests_point_at_folders_with_tests(self) -> None:
-        folders = [gate.command[-2] for gate in check.GATES if gate.command[0] == "python"]
+        folders = [
+            gate.command[-2]
+            for gate in check.GATES
+            if gate.command[:3] == ("python", "-m", "unittest")
+        ]
         self.assertEqual(folders, ["tests/repo", "tests/scripts"])
         for folder in folders:
             with self.subTest(folder=folder):
                 self.assertTrue(list((ROOT / folder).glob("test_*.py")))
+
+    def test_every_python_script_a_gate_runs_exists(self) -> None:
+        scripts = {
+            gate.key: ROOT / gate.folder / gate.command[1]
+            for gate in check.GATES
+            if gate.command[0] == "python" and gate.command[1] != "-m"
+        }
+        self.assertEqual(list(scripts), ["frontend-audit"])
+        for key, script in scripts.items():
+            with self.subTest(gate=key):
+                self.assertTrue(script.is_file())
 
     def test_gates_that_run_tests_name_the_tool_that_counts_them(self) -> None:
         self.assertEqual(

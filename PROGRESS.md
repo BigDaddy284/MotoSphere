@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-033 – Dependency audit with recorded exceptions (`IN PROGRESS`, with a builder). Until it is merged, the dependency audit gate fails on `main` and on every pull request because of an advisory published on 2026-11-17 (PLAN-006)
-- **Tasks verified:** 30 of 226
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (492 today) and fails if any test was skipped. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`. No globe and no data store yet.
+- **Current task:** FND-022 – The application served from the site's path (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 31 of 226
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (541 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; one advisory, for a build tool, is accepted until 2026-12-17 in `frontend/audit-exceptions.json`. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`. No globe and no data store yet.
 
 ## Reports
 
@@ -2143,3 +2143,89 @@ What the planner tried for FND-033 (Linux, Python 3.13.18 and 3.12.3, Node
 - Not tried: Windows. The builder's pull request runs there.
 
 Next task: FND-033 – Dependency audit with recorded exceptions.
+
+### FND-033 – Dependency audit with recorded exceptions (2026-11-17)
+
+TASK: FND-033 – Dependency audit with recorded exceptions
+
+Implementation: Complete (builder thread, pull request #32). A new script,
+`python scripts/audit.py` (standard library only), runs `npm audit --json`
+in `frontend/` and fails on every advisory it reports, unless an exception
+is recorded in `frontend/audit-exceptions.json` with the advisory's id, its
+package, a reason of at least 40 characters, the day it was accepted and a
+review day at most 31 days later. It also fails on an exception that is
+past its review day, no longer needed, about another package or dated in
+the future, on a faulty exceptions file, and on an answer from npm that is
+not a report. Every exception in use is printed on every run. The gate
+`frontend-audit` runs the script; it keeps its key, name and place. One
+exception is recorded: GHSA-fc5q-39xc-vjpf (picomatch, a build and test
+tool, no fixed version published), accepted on 2026-11-17, review by
+2026-12-17. Exactly the nine planned files; all are identical to the
+planner's trial except one line of `ARCHITECTURE.md` that the plan commit
+itself had changed.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  541 passed, 0 failed, 0 skipped." (repository checks 25, script tests
+  122, backend tests 115, frontend unit tests 199, browser tests 80). The
+  audit gate printed "npm audit reports 1 advisory.", the recorded
+  exception with its reason and "review by 2026-12-17", and "Dependency
+  audit passed."
+- Script tests again on Python 3.12: 122/122 passed.
+- The real audit with the exception taken out: the gate failed and named
+  "picomatch: picomatch vulnerable to ReDoS through single-branch repeated
+  extglobs (high)" with the advisory's address. With the dates moved back
+  to October: it failed with "was due for review on 2026-10-31".
+- Gate checks: 53 of 53 planted defects detected by the script tests,
+  among them: an advisory without an exception passing, only high
+  advisories counting, an exception that never runs out or runs out a day
+  early or late, one that nothing needs being kept, one for another
+  package or dated in the future, 32 days or for ever, a one-word reason,
+  any text as an advisory id, unknown or missing fields, a broken or
+  missing exceptions file counted as no exceptions, an answer that is not
+  a report counted as clean, the build tools left out of the audit, exit
+  code 0 with problems found or when the check could not be carried out,
+  exceptions or their reasons not shown, the day fixed instead of today,
+  the gate still running npm directly or missing, and the recorded
+  exception without a reason, for a year or for everything.
+- `git status` clean after the full run.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44138689020, the pull request's commit (`81c47c2`): both jobs green.
+  The Linux log (ubuntu-24.04) and the Windows log (windows-2025) each end
+  with "19 of 19 gates passed." and "Tests: 541 passed, 0 failed, 0
+  skipped." The audit gate took 0.7 s on Linux and 1.0 s on Windows.
+- Run 44138077506, for `main` before the merge (`f543974`, the plan
+  commit): both jobs red, "18 of 19 gates passed. FAILED: Frontend
+  dependency audit." and "Tests: 492 passed, 0 failed, 0 skipped." That is
+  the failure this task answers; nothing else failed.
+- Run 44140586126, for `main` after the merge (`4962ae1`): green.
+
+Unit and integration tests: 461/461 passed (repository 25, script tests
+122, backend 115, frontend 199). Browser tests: 80/80 passed.
+Type checking: passed (frontend, backend and the Python files outside the
+pipeline). Lint and format: passed (the same three).
+Build: passed (frontend).
+Browser or integration verification: passed on Linux and on Windows (the
+full run executes the real gates, the real audit included, on both).
+
+Overall applicable tests: 541/541 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the exception for GHSA-fc5q-39xc-vjpf is a decision
+with a date. From 2026-12-18 the audit gate fails until somebody has
+looked again: a fixed picomatch installed and the exception removed, or
+the exception renewed with its reason. The gate needs the npm registry: with
+no network it fails ("could not be judged") and never passes unseen. The
+pipeline's Python dependencies are not audited yet (PRF-005). The builder
+reported no deviation.
+
+Commit: `4962ae1` (squash merge of pull request #32).
+
+Next task: FND-022 – The application served from the site's path.
