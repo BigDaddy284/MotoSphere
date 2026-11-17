@@ -47,3 +47,11 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and details panels, remembered for the session (FND-015).
 - Current date in the top bar, in the language and time zone of the user's
   browser, changing at midnight (FND-026).
+- Pipeline command line: `python -m motosphere <command>`, with a `version`
+  command (FND-020).
+
+### Removed
+
+- The API server and its health endpoint, the `MOTOSPHERE_API_HOST` and
+  `MOTOSPHERE_API_PORT` settings and the `fastapi`, `uvicorn` and `httpx2`
+  dependencies, following the GitHub Pages hosting decision (FND-020).

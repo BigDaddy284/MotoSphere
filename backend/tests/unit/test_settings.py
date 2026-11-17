@@ -28,54 +28,46 @@ def _active_env_example_names() -> set[str]:
     return names
 
 
+def test_settings_are_exactly_the_documented_ones() -> None:
+    assert set(Settings.model_fields) == {"environment", "log_level"}
+
+
 def test_defaults_without_environment() -> None:
     settings = Settings()
 
     assert settings.environment is Environment.DEVELOPMENT
-    assert settings.api_host == "127.0.0.1"
-    assert settings.api_port == 8000
     assert settings.log_level is LogLevel.INFO
 
 
 def test_environment_variables_override_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MOTOSPHERE_ENVIRONMENT", "production")
-    monkeypatch.setenv("MOTOSPHERE_API_HOST", "localhost")
-    monkeypatch.setenv("MOTOSPHERE_API_PORT", "9000")
     monkeypatch.setenv("MOTOSPHERE_LOG_LEVEL", "WARNING")
 
     settings = Settings()
 
     assert settings.environment is Environment.PRODUCTION
-    assert settings.api_host == "localhost"
-    assert type(settings.api_port) is int
-    assert settings.api_port == 9000
     assert settings.log_level is LogLevel.WARNING
 
 
 def test_dotenv_file_overrides_defaults(tmp_path: Path) -> None:
     _write_dotenv(
         tmp_path,
-        "MOTOSPHERE_ENVIRONMENT=test\n"
-        "MOTOSPHERE_API_HOST=localhost\n"
-        "MOTOSPHERE_API_PORT=8100\n"
-        "MOTOSPHERE_LOG_LEVEL=ERROR\n",
+        "MOTOSPHERE_ENVIRONMENT=test\nMOTOSPHERE_LOG_LEVEL=ERROR\n",
     )
 
     settings = Settings()
 
     assert settings.environment is Environment.TEST
-    assert settings.api_host == "localhost"
-    assert settings.api_port == 8100
     assert settings.log_level is LogLevel.ERROR
 
 
 def test_environment_variable_beats_dotenv_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _write_dotenv(tmp_path, "MOTOSPHERE_API_PORT=8100\n")
-    monkeypatch.setenv("MOTOSPHERE_API_PORT", "8200")
+    _write_dotenv(tmp_path, "MOTOSPHERE_LOG_LEVEL=ERROR\n")
+    monkeypatch.setenv("MOTOSPHERE_LOG_LEVEL", "DEBUG")
 
-    assert Settings().api_port == 8200
+    assert Settings().log_level is LogLevel.DEBUG
 
 
 def test_values_are_normalised(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -88,68 +80,69 @@ def test_values_are_normalised(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.environment is Environment.PRODUCTION
 
 
-@pytest.mark.parametrize("value", ["0", "65536", "-1", "abc", ""])
-def test_invalid_port_is_rejected(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
-    monkeypatch.setenv("MOTOSPHERE_API_PORT", value)
-
-    with pytest.raises(ValidationError, match="api_port"):
-        Settings()
-
-
-def test_invalid_log_level_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MOTOSPHERE_LOG_LEVEL", "LOUD")
+@pytest.mark.parametrize("value", ["LOUD", "", "10"])
+def test_invalid_log_level_is_rejected(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+    monkeypatch.setenv("MOTOSPHERE_LOG_LEVEL", value)
 
     with pytest.raises(ValidationError, match="log_level"):
         Settings()
 
 
-def test_invalid_environment_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MOTOSPHERE_ENVIRONMENT", "staging")
+@pytest.mark.parametrize("value", ["staging", ""])
+def test_invalid_environment_is_rejected(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+    monkeypatch.setenv("MOTOSPHERE_ENVIRONMENT", value)
 
     with pytest.raises(ValidationError, match="environment"):
         Settings()
 
 
-def test_empty_host_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MOTOSPHERE_API_HOST", "")
+def test_unknown_key_in_dotenv_file_is_rejected(tmp_path: Path) -> None:
+    _write_dotenv(tmp_path, "MOTOSPHERE_LOG_LEVLE=INFO\n")
 
-    with pytest.raises(ValidationError, match="api_host"):
+    with pytest.raises(ValidationError, match="log_levle"):
         Settings()
 
 
-def test_unknown_key_in_dotenv_file_is_rejected(tmp_path: Path) -> None:
-    _write_dotenv(tmp_path, "MOTOSPHERE_API_PROT=9000\n")
+@pytest.mark.parametrize(
+    ("line", "name"),
+    [
+        ("MOTOSPHERE_API_HOST=127.0.0.1", "api_host"),
+        ("MOTOSPHERE_API_PORT=8000", "api_port"),
+    ],
+)
+def test_removed_server_settings_are_rejected(tmp_path: Path, line: str, name: str) -> None:
+    _write_dotenv(tmp_path, line + "\n")
 
-    with pytest.raises(ValidationError, match="api_prot"):
+    with pytest.raises(ValidationError, match=name):
         Settings()
 
 
 def test_settings_are_immutable() -> None:
     settings = Settings()
-    field_name = "api_port"
+    field_name = "log_level"
 
     with pytest.raises(ValidationError) as error:
-        setattr(settings, field_name, 9000)
+        setattr(settings, field_name, LogLevel.ERROR)
 
     assert field_name in str(error.value)
     assert "frozen" in str(error.value)
 
-    assert settings.api_port == 8000
+    assert settings.log_level is LogLevel.INFO
 
 
 def test_get_settings_is_cached_and_clearable(monkeypatch: pytest.MonkeyPatch) -> None:
     first = get_settings()
     assert get_settings() is first
-    assert first.api_port == 8000
+    assert first.log_level is LogLevel.INFO
 
-    monkeypatch.setenv("MOTOSPHERE_API_PORT", "8300")
+    monkeypatch.setenv("MOTOSPHERE_LOG_LEVEL", "ERROR")
     assert get_settings() is first
-    assert get_settings().api_port == 8000
+    assert get_settings().log_level is LogLevel.INFO
 
     get_settings.cache_clear()
     reloaded = get_settings()
     assert reloaded is not first
-    assert reloaded.api_port == 8300
+    assert reloaded.log_level is LogLevel.ERROR
 
 
 def test_env_example_lists_every_setting() -> None:

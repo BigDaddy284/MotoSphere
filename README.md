@@ -10,9 +10,9 @@ directly from the globe.
 
 ## Status
 
-Early development. The backend API can now be started and answers a health
-check. There is also a frontend skeleton that shows the application name; it
-does not talk to the backend yet and has no globe. The repository holds the
+Early development. The data pipeline has a command line with one command so
+far, which prints the installed version. The frontend shows the application's
+layout, with no globe and no data yet. The repository holds the
 project documentation, the repository checks, the backend Python package with
 its tests and the frontend project.
 
@@ -32,7 +32,7 @@ its tests and the frontend project.
 - [CHANGELOG.md](CHANGELOG.md) – significant changes and releases.
 - [docs/WORKFLOW.md](docs/WORKFLOW.md) – how tasks are planned, built, tested and merged.
 
-## Running the API
+## Running the data pipeline
 
 Prerequisites: Python 3.12 or newer and
 [uv](https://docs.astral.sh/uv/getting-started/installation/).
@@ -42,14 +42,12 @@ From the repository root:
 ```
 cd backend
 uv sync --locked
-uv run python -m motosphere
+uv run python -m motosphere version
 ```
 
-While it is running, the health check is at
-<http://127.0.0.1:8000/api/health> and the interactive API documentation at
-<http://127.0.0.1:8000/api/docs>. Press Ctrl+C to stop the server. To use a
-different host or port, change the settings described in
-[Configuration](#configuration).
+This prints the installed MotoSphere version. The pipeline will gain commands
+to collect, check and publish data; `uv run python -m motosphere --help` lists
+the commands. Nothing listens on a network port.
 
 ## Running the frontend
 
@@ -145,15 +143,13 @@ values you need. The example file lists every setting with its default value.
 
 - An environment variable always wins over the same setting in `backend/.env`.
 - Every name in `backend/.env` must be a known setting. An unknown or misspelt
-  name, such as `MOTOSPHERE_API_PROT`, stops the backend with an error naming
+  name, such as `MOTOSPHERE_LOG_LEVLE`, stops the backend with an error naming
   it, instead of being silently ignored.
 - Never commit `.env`. Git already ignores it.
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `MOTOSPHERE_ENVIRONMENT` | `development` | Where MotoSphere is running: development, test or production. |
-| `MOTOSPHERE_API_HOST` | `127.0.0.1` | The network address the API listens on. The default only accepts connections from this computer. |
-| `MOTOSPHERE_API_PORT` | `8000` | The port number the API listens on, from 1 to 65535. |
 | `MOTOSPHERE_LOG_LEVEL` | `INFO` | How much detail is written to the log: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
 
 Values for `MOTOSPHERE_ENVIRONMENT` and `MOTOSPHERE_LOG_LEVEL` are not

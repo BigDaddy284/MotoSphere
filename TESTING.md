@@ -23,8 +23,8 @@ test means the task is not complete.
 | Frontend build | `cd frontend && npm run build` |
 | Browser tests (`frontend/e2e`) | `cd frontend && npm run e2e` |
 
-The backend suite includes integration tests that start the real API server on
-a free local port and call it over HTTP.
+The backend suite includes integration tests that run the real command line
+(`python -m motosphere`) as a separate process.
 
 Frontend tests sit next to the code they test and query the page by role and
 text, the way a user perceives it.

@@ -1,8 +1,11 @@
 """Smoke tests for the motosphere package."""
 
+import importlib.util
 import re
 import tomllib
 from pathlib import Path
+
+import pytest
 
 import motosphere
 
@@ -38,3 +41,12 @@ def test_package_is_loaded_from_src() -> None:
     assert motosphere.__file__ is not None
     package_dir = Path(motosphere.__file__).resolve().parent
     assert package_dir == BACKEND_DIR / "src" / "motosphere"
+
+
+@pytest.mark.parametrize("name", ["fastapi", "starlette", "uvicorn", "httpx2"])
+def test_server_packages_are_not_installed(name: str) -> None:
+    assert importlib.util.find_spec(name) is None
+
+
+def test_api_package_is_gone() -> None:
+    assert importlib.util.find_spec("motosphere.api") is None

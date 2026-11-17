@@ -1,18 +1,15 @@
 [project]
 name = "motosphere"
 version = "0.1.0"
-description = "MotoSphere backend: API, data layer and collection workers."
+description = "MotoSphere data pipeline: collection, validation, storage and export."
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.115",
     "pydantic>=2.9",
     "pydantic-settings>=2.6",
-    "uvicorn>=0.32",
 ]
 
 [dependency-groups]
 dev = [
-    "httpx2>=2.0",
     "mypy>=1.13",
     "pytest>=8.3",
     "ruff>=0.9",

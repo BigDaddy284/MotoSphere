@@ -1,4 +1,4 @@
-"""Logging configuration shared by the API and the collection worker.
+"""Logging configuration shared by every MotoSphere command.
 
 :func:`configure_logging` sets up the root logger once at start-up: the level
 comes from the settings, every line has the same predictable format with a UTC
