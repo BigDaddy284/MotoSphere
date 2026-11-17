@@ -1,4 +1,4 @@
-"""Checks on the continuous integration workflows (tasks FND-018 and FND-032).
+"""Checks on the workflows: the gates and the deployment (FND-018, FND-032, FND-034).
 
 The workflows are read as text: the repository checks use the standard
 library only, and it has no YAML reader. The files are kept plain enough for
@@ -23,8 +23,10 @@ CHECKS = WORKFLOWS / "checks.yml"
 # runs with access to the repository, so it is made here and not in passing.
 KNOWN_ACTIONS = (
     "actions/checkout",
+    "actions/deploy-pages",
     "actions/setup-node",
     "actions/setup-python",
+    "actions/upload-pages-artifact",
     "astral-sh/setup-uv",
 )
 
@@ -42,6 +44,14 @@ MACHINES = (
     ("Linux", "ubuntu-24.04"),
     ("Windows", "windows-2025"),
 )
+
+# The jobs of the checks workflow, in order: the gates, then the two jobs
+# that publish the site.
+JOBS = ("gates", "site", "deploy")
+
+# The one condition a job may have: it runs for a change to `main` only. The
+# workflow starts for nothing but pull requests and changes to `main`.
+ONLY_FOR_MAIN = "    if: github.event_name == 'push'\n"
 
 # An action pinned to a full commit, with the release it belongs to beside it.
 PINNED = re.compile(r"^ +uses: ([\w.-]+/[\w.-]+)@[0-9a-f]{40} # v\d+\.\d+\.\d+$")
@@ -72,6 +82,25 @@ def commands(text: str) -> list[str]:
     return found
 
 
+def jobs(text: str) -> dict[str, str]:
+    """Return the text of every job of a workflow, by its key, in order."""
+    found: dict[str, str] = {}
+    key = ""
+    for line in text.split("\njobs:\n", 1)[1].splitlines(keepends=True):
+        start = re.match(r"^  (\w+):$", line.rstrip("\n"))
+        if start is not None:
+            key = start.group(1)
+            found[key] = ""
+        elif key:
+            found[key] += line
+    return found
+
+
+def actions(text: str) -> list[str]:
+    """Return the actions a piece of a workflow uses, in order."""
+    return re.findall(r"\buses: *([^@\s]+)", text)
+
+
 class WorkflowSafetyTest(unittest.TestCase):
     """Rules that hold for every workflow in the repository."""
 
@@ -88,7 +117,7 @@ class WorkflowSafetyTest(unittest.TestCase):
 
     def test_only_known_actions_are_used(self) -> None:
         for name, text in workflows().items():
-            for action in re.findall(r"\buses: *([^@\s]+)", text):
+            for action in actions(text):
                 with self.subTest(workflow=name, action=action):
                     self.assertIn(action, KNOWN_ACTIONS)
 
@@ -113,31 +142,41 @@ class WorkflowSafetyTest(unittest.TestCase):
 
 
 class ChecksWorkflowTest(unittest.TestCase):
-    """The workflow that runs every gate."""
+    """The workflow that runs every gate, and the job that does it."""
 
     text: str
+    jobs: dict[str, str]
+    gates: str
 
     @classmethod
     def setUpClass(cls) -> None:
         cls.text = CHECKS.read_text(encoding="utf-8")
+        cls.jobs = jobs(cls.text)
+        cls.gates = cls.jobs["gates"]
 
     def test_runs_for_pull_requests_and_for_changes_to_main(self) -> None:
         self.assertIn("\non:\n  pull_request:\n  push:\n    branches: [main]\n\n", self.text)
 
+    def test_its_jobs_are_the_gates_and_the_two_that_publish(self) -> None:
+        self.assertEqual(tuple(self.jobs), JOBS)
+
     def test_its_token_can_only_read(self) -> None:
-        self.assertEqual(self.text.count("permissions:"), 1)
         self.assertIn("\npermissions:\n  contents: read\n\n", self.text)
+        for name in ("gates", "site"):
+            with self.subTest(job=name):
+                self.assertNotIn("permissions", self.jobs[name])
 
     def test_checkout_keeps_no_credentials(self) -> None:
-        self.assertEqual(self.text.count("actions/checkout@"), 1)
-        self.assertRegex(
-            self.text,
+        kept_out = re.findall(
             r"uses: actions/checkout@\S+ # \S+\n +with:\n +persist-credentials: false\n",
+            self.text,
         )
+        self.assertEqual(self.text.count("actions/checkout@"), 2)
+        self.assertEqual(len(kept_out), 2)
 
     def test_runs_the_check_runner_and_nothing_in_its_place(self) -> None:
         self.assertEqual(
-            commands(self.text),
+            commands(self.gates),
             [
                 "npm ci",
                 "npx playwright install --with-deps chromium",
@@ -147,23 +186,28 @@ class ChecksWorkflowTest(unittest.TestCase):
 
     def test_nothing_lets_a_failing_step_pass(self) -> None:
         self.assertNotIn("continue-on-error", self.text)
-        self.assertNotRegex(self.text, re.compile(r"^ +(- )?if:", re.MULTILINE))
         self.assertNotRegex(self.text, re.compile(r"^ +(- )?shell:", re.MULTILINE))
+        # No step has a condition, and the gates always run.
+        self.assertNotRegex(self.text, re.compile(r"^ {5,}(- )?if:", re.MULTILINE))
+        self.assertNotRegex(self.gates, re.compile(r"^ +(- )?if:", re.MULTILINE))
+        self.assertNotIn("needs:", self.gates)
 
     def test_runs_on_linux_and_on_windows(self) -> None:
         machines = re.findall(r"^ +- name: (\w+)\n +os: (\S+)$", self.text, re.MULTILINE)
 
         self.assertEqual(machines, list(MACHINES))
         self.assertEqual(
-            re.findall(r"^ +runs-on: (.+)$", self.text, re.MULTILINE), ["${{ matrix.os }}"]
+            re.findall(r"^ +runs-on: (.+)$", self.gates, re.MULTILINE), ["${{ matrix.os }}"]
         )
-        self.assertIn("All gates (${{ matrix.name }})", self.text)
+        self.assertIn("All gates (${{ matrix.name }})", self.gates)
 
     def test_one_machine_failing_does_not_stop_the_other(self) -> None:
         self.assertEqual(re.findall(r"^ +fail-fast: (.+)$", self.text, re.MULTILINE), ["false"])
 
-    def test_the_job_has_a_time_limit(self) -> None:
-        self.assertRegex(self.text, re.compile(r"^ +timeout-minutes: \d+$", re.MULTILINE))
+    def test_every_job_has_a_time_limit(self) -> None:
+        for name, job in self.jobs.items():
+            with self.subTest(job=name):
+                self.assertRegex(job, re.compile(r"^    timeout-minutes: \d+$", re.MULTILINE))
 
     def test_every_step_runs_one_command(self) -> None:
         # On Windows a step with several commands only fails on its last one.
@@ -179,13 +223,78 @@ class ChecksWorkflowTest(unittest.TestCase):
         node = re.findall(r'^ +node-version: "(.+)"$', self.text, re.MULTILINE)
         uv = re.findall(r'^ +version: "(.+)"$', self.text, re.MULTILINE)
 
-        # The oldest Python the pipeline supports, so that nothing newer
-        # slips into the code unnoticed.
-        self.assertEqual([f">={version}" for version in python], [oldest_python])
-        self.assertEqual(len(node), 1)
+        # The gates and the site are prepared alike: two jobs, one version of
+        # each tool. Python is the oldest the pipeline supports, so that
+        # nothing newer slips into the code unnoticed.
+        self.assertEqual([f">={version}" for version in python], [oldest_python] * 2)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(len(set(node)), 1)
         self.assertTrue(oldest_node.startswith(f">={node[0]}."), (node, oldest_node))
-        self.assertEqual(len(uv), 1)
+        self.assertEqual(len(uv), 2)
+        self.assertEqual(len(set(uv)), 1)
         self.assertRegex(uv[0], r"^\d+\.\d+\.\d+$")
+
+
+class DeploymentTest(unittest.TestCase):
+    """The two jobs that publish the site on GitHub Pages."""
+
+    text: str
+    site: str
+    deploy: str
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.text = CHECKS.read_text(encoding="utf-8")
+        cls.site = jobs(cls.text)["site"]
+        cls.deploy = jobs(cls.text)["deploy"]
+
+    def test_the_site_is_built_only_after_every_gate_passed(self) -> None:
+        self.assertIn("    needs: gates\n", self.site)
+        self.assertIn("    needs: site\n", self.deploy)
+        self.assertEqual(self.text.count("needs:"), 2)
+
+    def test_a_pull_request_never_publishes(self) -> None:
+        conditions = re.findall(r"^ +(?:- )?if:.*\n", self.text, re.MULTILINE)
+
+        self.assertIn(ONLY_FOR_MAIN, self.site)
+        self.assertIn(ONLY_FOR_MAIN, self.deploy)
+        self.assertEqual(conditions, [ONLY_FOR_MAIN] * 2)
+
+    def test_only_the_deployment_may_publish(self) -> None:
+        rights = [line for line in self.text.splitlines() if re.search(r":\s*write\b", line)]
+
+        self.assertEqual(rights, ["      pages: write", "      id-token: write"])
+        self.assertIn(
+            "    permissions:\n      pages: write\n      id-token: write\n    environment:",
+            self.deploy,
+        )
+        self.assertEqual(self.text.count("permissions:"), 2)
+
+    def test_the_job_that_publishes_runs_nothing_of_its_own(self) -> None:
+        self.assertEqual(commands(self.deploy), [])
+        self.assertEqual(actions(self.deploy), ["actions/deploy-pages"])
+
+    def test_the_deployment_goes_through_the_pages_environment(self) -> None:
+        self.assertIn("    environment: github-pages\n", self.deploy)
+        self.assertEqual(self.text.count("environment:"), 1)
+
+    def test_the_site_is_the_exported_data_and_the_built_application(self) -> None:
+        self.assertEqual(commands(self.site), ["npm ci", "npm run data", "npm run build"])
+        self.assertEqual(self.site.count("        working-directory: frontend\n"), 3)
+        self.assertEqual(actions(self.site)[-1], "actions/upload-pages-artifact")
+        self.assertRegex(
+            self.site,
+            r"uses: actions/upload-pages-artifact@\S+ # \S+\n +with:\n +path: frontend/dist\n",
+        )
+
+    def test_the_site_is_built_where_it_is_picked_up(self) -> None:
+        # Vite writes the build to `dist` unless it is told otherwise.
+        config = (ROOT / "frontend" / "vite.config.ts").read_text(encoding="utf-8")
+        self.assertNotIn("outDir", config)
+
+    def test_both_jobs_run_on_a_named_linux_image(self) -> None:
+        for job in (self.site, self.deploy):
+            self.assertEqual(re.findall(r"^ +runs-on: (.+)$", job, re.MULTILINE), [MACHINES[0][1]])
 
 
 if __name__ == "__main__":
