@@ -607,15 +607,22 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-033.md`
 
 ### FND-022 – The application served from the site's path
-- **Status:** NOT STARTED
-- **Objective:** The application works when it is served from `/MotoSphere/`, the path it will have on GitHub Pages.
-- **Description:** The site's path is written once (`frontend/site.ts`) and used by the build and by the browser tests. The browser tests run against the production build served from that path, write every address relative to it, and check that nothing the page loads comes from the root of the server. The development server uses the same path. Split from the GitHub Pages task (PLAN-006); the planner's trial of it is done (87 browser tests, of which 7 new).
-- **Acceptance criteria:** the application, its icons and its data all load from under `/MotoSphere/` with no console error; the same files are not served at the root; the manifest's address follows the path the build was given, with a unit test that fails for a hard-coded one; the README gives the development address.
-- **Tests required:** browser tests against the build served from the sub-path (87, of which 7 new); frontend unit tests (199, one changed); the full run of all 19 gates; planted defects.
+- **Status:** IN PROGRESS
+- **Objective:** The application works when it is served from `/MotoSphere/`, the path it will have on GitHub Pages, and the tests prove it there.
+- **Description:** The site's path is written once (`frontend/site.ts`) and read by the build and by the browser tests. The browser tests run against the production build served under that path, write every address relative to it, and check that everything the page loads comes from under it and that its files are not at the root of the server. The development server uses the same path. The application code does not change: it already takes its base path from the build; the unit test for the manifest's address now gives the build another path, so that no fixed address can pass. Split from the GitHub Pages task (PLAN-006).
+- **Acceptance criteria:**
+  1. The production build, served locally, answers at `/MotoSphere/` with the application; its script, style sheet, three icon files and the data manifest load from under that path with no console error.
+  2. The icon files and the data manifest are not served at the root of the test server.
+  3. The path is written in one place, and the build and the browser tests read it there.
+  4. The unit test for the manifest's address fails when the application names a fixed address, whether `/` or `/MotoSphere/`.
+  5. `npm run dev` serves the application at `http://localhost:5173/MotoSphere/`, and the README says so.
+  6. `python scripts/check.py` reports 19 of 19 gates and 548 tests; on the pull request both jobs are green (Linux and Windows).
+- **Tests required:** browser tests against the build served from the sub-path (87, of which 7 new: the path's name, the application served there, everything the page loads under the path, four files under the path and not at the root); frontend unit tests (199, one made stricter); the full run of all 19 gates; the development server's addresses by hand; planted defects; the workflow run on the pull request on both machines; the run for `main` after the merge.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-022.md`
 
 ### FND-034 – GitHub Pages deployment
 - **Status:** NOT STARTED
