@@ -30,7 +30,7 @@ async function expectOnlyCurrent(page: Page, name: string) {
 
 test.describe('section navigation', () => {
   test('lists the nine sections and starts in Explore', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
 
     await expect(panel(page).getByRole('button')).toHaveText(LABELS)
     await expectOnlyCurrent(page, 'Explore')
@@ -39,7 +39,7 @@ test.describe('section navigation', () => {
   test('moves to the section that is clicked and shows it in the selection style', async ({
     page,
   }) => {
-    await page.goto('/')
+    await page.goto('./')
 
     await section(page, 'Tracks').click()
 
@@ -55,7 +55,7 @@ test.describe('section navigation', () => {
   })
 
   test('can be used with the keyboard alone, with a visible focus ring', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     // A key pressed before the list is drawn would be lost.
     await expect(section(page, 'Explore')).toBeVisible()
 
@@ -78,7 +78,7 @@ test.describe('section navigation', () => {
   })
 
   test('shows a hover style on a section that is not current', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
 
     const riders = section(page, 'Riders')
     await riders.hover()
@@ -92,7 +92,7 @@ test.describe('section navigation', () => {
     test.use({ viewport: { width: 1366, height: 768 } })
 
     test('fits every section in the panel without scrolling', async ({ page }) => {
-      await page.goto('/')
+      await page.goto('./')
       await expect(panel(page).getByRole('button')).toHaveCount(9)
 
       const overflow = await panel(page).evaluate((element) => ({

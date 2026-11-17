@@ -12,7 +12,7 @@ test.describe('current date', () => {
 
     test("shows today's date in the top bar", async ({ page }) => {
       await page.clock.setFixedTime(new Date('2026-11-17T12:00:00Z'))
-      await page.goto('/')
+      await page.goto('./')
 
       await expect(currentDate(page)).toHaveText(/^Tuesday,? 17 November 2026$/)
       await expect(currentDate(page)).toHaveAttribute('datetime', '2026-11-17')
@@ -20,7 +20,7 @@ test.describe('current date', () => {
 
     test('changes at midnight without a reload', async ({ page }) => {
       await page.clock.install({ time: new Date('2026-11-17T23:59:50Z') })
-      await page.goto('/')
+      await page.goto('./')
       await expect(currentDate(page)).toHaveAttribute('datetime', '2026-11-17')
 
       await page.clock.fastForward(15_000)
@@ -34,7 +34,7 @@ test.describe('current date', () => {
     }) => {
       await page.setViewportSize({ width: 1366, height: 768 })
       await page.clock.setFixedTime(new Date('2026-11-17T12:00:00Z'))
-      await page.goto('/')
+      await page.goto('./')
 
       const date = currentDate(page)
       await expect(date).toBeInViewport({ ratio: 1 })
@@ -63,7 +63,7 @@ test.describe('current date', () => {
     test('shows the day where the user is, in the American form', async ({ page }) => {
       // 02:00 in London on the 17th is still the evening of the 16th in Los Angeles.
       await page.clock.setFixedTime(new Date('2026-11-17T02:00:00Z'))
-      await page.goto('/')
+      await page.goto('./')
 
       await expect(currentDate(page)).toHaveText('Monday, November 16, 2026')
       await expect(currentDate(page)).toHaveAttribute('datetime', '2026-11-16')
@@ -76,7 +76,7 @@ test.describe('current date', () => {
     test('shows the day where the user is, in German', async ({ page }) => {
       // 20:00 in London on the 17th is already the morning of the 18th in Tokyo.
       await page.clock.setFixedTime(new Date('2026-11-17T20:00:00Z'))
-      await page.goto('/')
+      await page.goto('./')
 
       await expect(currentDate(page)).toHaveText('Mittwoch, 18. November 2026')
       await expect(currentDate(page)).toHaveAttribute('datetime', '2026-11-18')

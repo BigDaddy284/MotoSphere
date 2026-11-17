@@ -1,4 +1,5 @@
 import type { APIRequestContext, Page } from '@playwright/test'
+import { SITE_PATH } from '../site.ts'
 import { manifestUrl } from '../src/data/manifest.ts'
 import { expect, test } from './fixtures'
 
@@ -9,7 +10,7 @@ import { expect, test } from './fixtures'
  * wrong replace the server's answer.
  */
 
-const MANIFEST = `**${manifestUrl('/')}`
+const MANIFEST = `**${manifestUrl(SITE_PATH)}`
 
 function dataStatus(page: Page) {
   return page.getByRole('banner').getByRole('status')
@@ -17,7 +18,7 @@ function dataStatus(page: Page) {
 
 /** When the served data was generated, as the manifest says it. */
 async function generatedAt(request: APIRequestContext): Promise<string> {
-  const response = await request.get(manifestUrl('/'))
+  const response = await request.get(manifestUrl('./'))
   const manifest: unknown = await response.json()
   if (
     typeof manifest !== 'object' ||
@@ -50,7 +51,7 @@ test.describe('data status', () => {
 
     test('says when the published data was updated', async ({ page, request }) => {
       const moment = await generatedAt(request)
-      await page.goto('/')
+      await page.goto('./')
 
       const expected = writtenOut(moment, 'en-GB', 'Europe/London')
       expect(expected).toMatch(/^\d{1,2} [A-Z][a-z]+ \d{4}$/)
@@ -60,7 +61,7 @@ test.describe('data status', () => {
 
     test('sits between the tagline and the date, in the quiet text colour', async ({ page }) => {
       await page.setViewportSize({ width: 1366, height: 768 })
-      await page.goto('/')
+      await page.goto('./')
 
       const status = dataStatus(page)
       await expect(status).toHaveText(/^Data updated /)
@@ -90,7 +91,7 @@ test.describe('data status', () => {
       await page.route(MANIFEST, (route) =>
         route.fulfill({ json: manifestAt('2026-11-17T02:00:00Z') }),
       )
-      await page.goto('/')
+      await page.goto('./')
 
       await expect(dataStatus(page)).toHaveText('Data updated November 16, 2026')
     })
@@ -103,7 +104,7 @@ test.describe('data status', () => {
       await page.route(MANIFEST, (route) =>
         route.fulfill({ json: manifestAt('2026-11-17T20:00:00Z') }),
       )
-      await page.goto('/')
+      await page.goto('./')
 
       await expect(dataStatus(page)).toHaveText('Data updated 18. November 2026')
       await expect(dataStatus(page).locator('time')).toHaveAttribute(
@@ -118,7 +119,7 @@ test.describe('data status', () => {
     await page.route(MANIFEST, (route) => {
       held.push(() => route.continue())
     })
-    await page.goto('/')
+    await page.goto('./')
 
     await expect(dataStatus(page)).toHaveText('Loading data…')
     expect(held).toHaveLength(1)
@@ -133,7 +134,7 @@ test.describe('data status', () => {
     await page.route(MANIFEST, (route) =>
       route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>MotoSphere</title>' }),
     )
-    await page.goto('/')
+    await page.goto('./')
 
     await expect(dataStatus(page)).toHaveText('Data unavailable')
   })
@@ -142,7 +143,7 @@ test.describe('data status', () => {
     await page.route(MANIFEST, (route) =>
       route.fulfill({ json: { format_version: 1, generated_at: 'yesterday' } }),
     )
-    await page.goto('/')
+    await page.goto('./')
 
     await expect(dataStatus(page)).toHaveText('Data unavailable')
   })
@@ -151,14 +152,14 @@ test.describe('data status', () => {
     await page.route(MANIFEST, (route) =>
       route.fulfill({ json: { format_version: 2, layout: 'something new' } }),
     )
-    await page.goto('/')
+    await page.goto('./')
 
     await expect(dataStatus(page)).toHaveText('Reload the page to see the data')
   })
 
   test('keeps the rest of the page working when the data is unavailable', async ({ page }) => {
     await page.route(MANIFEST, (route) => route.fulfill({ contentType: 'text/html', body: '' }))
-    await page.goto('/')
+    await page.goto('./')
     await expect(dataStatus(page)).toHaveText('Data unavailable')
 
     await page.getByRole('button', { name: 'Tracks' }).click()
@@ -176,12 +177,12 @@ test.describe('data status', () => {
     page,
     expectProblem,
   }) => {
-    expectProblem(/^HTTP 404: http:\/\/[^/]+\/data\/manifest\.json$/)
+    expectProblem(/^HTTP 404: http:\/\/[^/]+\/MotoSphere\/data\/manifest\.json$/)
     expectProblem(/^console error: Failed to load resource: .* status of 404 /)
     await page.route(MANIFEST, (route) =>
       route.fulfill({ status: 404, contentType: 'text/html', body: '<h1>Not found</h1>' }),
     )
-    await page.goto('/')
+    await page.goto('./')
     await expect(dataStatus(page)).toHaveText('Data unavailable')
 
     await page.getByRole('button', { name: 'Events' }).click()
@@ -196,10 +197,10 @@ test.describe('data status', () => {
     page,
     expectProblem,
   }) => {
-    expectProblem(/^request failed: GET http:\/\/[^/]+\/data\/manifest\.json$/)
+    expectProblem(/^request failed: GET http:\/\/[^/]+\/MotoSphere\/data\/manifest\.json$/)
     expectProblem(/^console error: Failed to load resource: net::ERR_FAILED$/)
     await page.route(MANIFEST, (route) => route.abort())
-    await page.goto('/')
+    await page.goto('./')
     await expect(dataStatus(page)).toHaveText('Data unavailable')
 
     await page.getByRole('button', { name: 'Events' }).click()
