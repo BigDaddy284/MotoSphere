@@ -1,34 +1,46 @@
 /*
  * MotoSphere design tokens: the single source of truth for colour, type,
  * spacing, shape and motion. Components use these names and never their own
- * raw values. Colours are six-digit hex so the contrast tests can read them.
+ * raw values. The colours are the owner's Graphite theme
+ * (docs/design/graphite-theme/): soft charcoal greys with a sky-blue accent.
+ * Colours are six-digit hex so the contrast tests can read them.
  */
 :root {
-  /* Surfaces, darkest first */
-  --color-bg: #0b0d10;
-  --color-surface: #14171c;
-  --color-surface-raised: #1c2027;
-  --color-border: #2c323c;
+  /* Surfaces (Graphite) */
+  --color-bar: #1b1c1f; /* top bar */
+  --color-canvas: #1d1e21; /* page background, behind panels */
+  --color-panel: #222327; /* navigation and details panels, menus, cards */
+  --color-window: #2a2b2f; /* main content background */
+  --color-control: #35373c; /* inputs, hover */
+  --color-pressed: #3d4046; /* pressed state */
 
-  /* Text */
-  --color-text: #f2f4f7;
-  --color-text-muted: #a8b0bd;
+  /* Lines (Graphite) */
+  --color-border: #383a40;
+  --color-control-border: #4a4d54;
 
-  /* One restrained accent */
-  --color-accent: #ff7a1a;
-  --color-on-accent: #0b0d10;
+  /* Text (Graphite) */
+  --color-text: #ececee;
+  --color-subtext: #a9acb3; /* secondary text and icons */
+  --color-disabled: #75787f;
 
-  /* Status */
+  /* Accent blues (Graphite) */
+  --color-accent: #2580ee; /* buttons, selection fill */
+  --color-on-accent: #ffffff; /* bold labels on the accent only: 3.89:1 */
+  --color-accent-sky: #5ea8ff; /* links, focus ring, active underline */
+  --color-accent-light: #8cc4ff; /* gradient end */
+  --color-selection: #2f4a6e; /* selected row or tile */
+  --gradient-accent: linear-gradient(90deg, var(--color-accent), var(--color-accent-light));
+
+  /* Status (MotoSphere's own: Graphite has none) */
   --color-success: #3ecf8e;
   --color-warning: #f5b83d;
   --color-danger: #ff6b6b;
   --color-info: #5ab0ff;
 
-  /* Keyboard focus ring */
-  --color-focus: #8ab4ff;
-
   /* Type */
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-sans:
+    'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
   --font-mono: ui-monospace, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;

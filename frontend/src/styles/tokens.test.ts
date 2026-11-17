@@ -33,20 +33,49 @@ function token(name: string): string {
   return value
 }
 
+// The owner's Graphite theme (docs/design/graphite-theme/graphite-theme.css),
+// written out here so a changed colour is caught.
+const GRAPHITE_COLOURS: [string, string][] = [
+  ['--color-bar', '#1b1c1f'],
+  ['--color-canvas', '#1d1e21'],
+  ['--color-panel', '#222327'],
+  ['--color-window', '#2a2b2f'],
+  ['--color-control', '#35373c'],
+  ['--color-pressed', '#3d4046'],
+  ['--color-border', '#383a40'],
+  ['--color-control-border', '#4a4d54'],
+  ['--color-text', '#ececee'],
+  ['--color-subtext', '#a9acb3'],
+  ['--color-disabled', '#75787f'],
+  ['--color-accent', '#2580ee'],
+  ['--color-on-accent', '#ffffff'],
+  ['--color-accent-sky', '#5ea8ff'],
+  ['--color-accent-light', '#8cc4ff'],
+  ['--color-selection', '#2f4a6e'],
+]
+
 const EXPECTED_TOKENS = [
-  '--color-bg',
-  '--color-surface',
-  '--color-surface-raised',
+  '--color-bar',
+  '--color-canvas',
+  '--color-panel',
+  '--color-window',
+  '--color-control',
+  '--color-pressed',
   '--color-border',
+  '--color-control-border',
   '--color-text',
-  '--color-text-muted',
+  '--color-subtext',
+  '--color-disabled',
   '--color-accent',
   '--color-on-accent',
+  '--color-accent-sky',
+  '--color-accent-light',
+  '--color-selection',
+  '--gradient-accent',
   '--color-success',
   '--color-warning',
   '--color-danger',
   '--color-info',
-  '--color-focus',
   '--font-sans',
   '--font-mono',
   '--font-size-sm',
@@ -74,30 +103,34 @@ const EXPECTED_TOKENS = [
   '--easing-standard',
 ]
 
-const SURFACES = ['--color-bg', '--color-surface', '--color-surface-raised']
+// Surfaces that whole areas of the page sit on.
+const PAGE_SURFACES = ['--color-bar', '--color-canvas', '--color-panel', '--color-window']
+// Page surfaces plus the control and pressed states.
+const ALL_SURFACES = [...PAGE_SURFACES, '--color-control', '--color-pressed']
 
-// 7:1 is WCAG AAA for text, 4.5:1 is AA for text, 3:1 is AA for non-text
-// parts such as the focus ring.
-const FOREGROUNDS: [string, number][] = [
-  ['--color-text', 7],
-  ['--color-text-muted', 4.5],
-  ['--color-accent', 4.5],
-  ['--color-success', 4.5],
-  ['--color-warning', 4.5],
-  ['--color-danger', 4.5],
-  ['--color-info', 4.5],
-  ['--color-focus', 3],
-]
+type ContrastCase = [string, string, number]
 
-const CONTRAST_CASES: [string, string, number][] = [
-  ...SURFACES.flatMap((surface) =>
-    FOREGROUNDS.map(([foreground, minimum]): [string, string, number] => [
-      foreground,
-      surface,
-      minimum,
-    ]),
+function onEach(foreground: string, backgrounds: string[], minimum: number): ContrastCase[] {
+  return backgrounds.map((background): ContrastCase => [foreground, background, minimum])
+}
+
+// 7:1 is WCAG AAA for text, 4.5:1 is AA for text, 3:1 is AA for large or
+// bold text and for non-text parts such as the focus ring.
+const CONTRAST_CASES: ContrastCase[] = [
+  ...onEach('--color-text', [...ALL_SURFACES, '--color-selection'], 7),
+  ...onEach('--color-subtext', ALL_SURFACES, 4.5),
+  ...onEach('--color-accent-sky', [...PAGE_SURFACES, '--color-control'], 4.5),
+  ...onEach('--color-accent-sky', ['--color-pressed', '--color-selection'], 3),
+  ...onEach('--color-accent-light', ALL_SURFACES, 4.5),
+  ...['--color-success', '--color-warning', '--color-danger', '--color-info'].flatMap((status) =>
+    onEach(status, PAGE_SURFACES, 4.5),
   ),
-  ['--color-on-accent', '--color-accent', 4.5],
+  ...onEach('--color-disabled', PAGE_SURFACES, 3),
+  // Deliberate: white on the owner's accent blue measures 3.89:1. That meets
+  // 3:1 (large or bold text) but not 4.5:1. The owner has been told, and the
+  // pair is used for bold button labels only. Do not raise this threshold and
+  // do not change the colour.
+  ['--color-on-accent', '--color-accent', 3],
 ]
 
 const RAW_COLOUR = /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\(/i
@@ -111,9 +144,15 @@ describe('design tokens', () => {
     expect(declarations).toHaveLength(tokens.size)
   })
 
+  it("uses exactly the owner's Graphite colours", () => {
+    for (const [name, value] of GRAPHITE_COLOURS) {
+      expect({ name, value: token(name) }).toEqual({ name, value })
+    }
+  })
+
   it('writes every colour as a six-digit hex value', () => {
     const colours = declarations.filter(([name]) => name.startsWith('--color-'))
-    expect(colours).toHaveLength(13)
+    expect(colours).toHaveLength(20)
     for (const [, value] of colours) {
       expect(value).toMatch(/^#[0-9a-f]{6}$/)
     }

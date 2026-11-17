@@ -34,12 +34,17 @@ production build, served locally. Every browser test also fails if the page
 logs an error or warning, throws an uncaught error, or has a failed request or
 an HTTP error response.
 
-The theme's colours are defined once, in `frontend/src/styles/tokens.css`.
-Unit tests check every text colour against every surface for WCAG contrast
-(7:1 for main text, 4.5:1 for other text and status colours, 3:1 for the focus
-ring) and reject raw colours or unknown tokens in any style sheet under
-`frontend/src`. Browser tests check the applied theme, the keyboard focus ring
-and reduced motion.
+The theme's colours are the owner's Graphite theme
+(`docs/design/graphite-theme/`), defined once in
+`frontend/src/styles/tokens.css`. A unit test checks each Graphite token
+against the owner's exact value. Contrast is tested per colour on the surfaces
+it is used on (7:1 for main text, 4.5:1 for secondary text, links and status
+colours, 3:1 for disabled text and for the sky blue on the pressed and
+selection colours). White on the accent blue measures 3.89:1, which meets 3:1
+but not 4.5:1, so that pair is limited to bold button labels. The tests also
+reject raw colours or unknown tokens in any style sheet under `frontend/src`.
+Browser tests check the applied theme colours and font stack, the keyboard
+focus ring and reduced motion.
 
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.

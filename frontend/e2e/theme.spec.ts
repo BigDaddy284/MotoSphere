@@ -1,18 +1,18 @@
 import { expect, test } from './fixtures'
 
-test.describe('dark theme', () => {
+test.describe('Graphite theme', () => {
   test('uses the dark background and light text', async ({ page }) => {
     await page.goto('/')
     const body = page.locator('body')
-    await expect(body).toHaveCSS('background-color', 'rgb(11, 13, 16)')
-    await expect(body).toHaveCSS('color', 'rgb(242, 244, 247)')
+    await expect(body).toHaveCSS('background-color', 'rgb(29, 30, 33)')
+    await expect(body).toHaveCSS('color', 'rgb(236, 236, 238)')
     await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark')
   })
 
-  test('uses the system font at a readable size, with no page margin', async ({ page }) => {
+  test('uses the Segoe UI font stack at a readable size, with no page margin', async ({ page }) => {
     await page.goto('/')
     const body = page.locator('body')
-    await expect(body).toHaveCSS('font-family', /^system-ui/)
+    await expect(body).toHaveCSS('font-family', /^"Segoe UI Variable Text", "Segoe UI", system-ui/)
     await expect(body).toHaveCSS('font-size', '16px')
     await expect(body).toHaveCSS('line-height', '24px')
     await expect(body).toHaveCSS('margin', '0px')
@@ -37,7 +37,7 @@ test.describe('dark theme', () => {
     await expect(button).toBeFocused()
     await expect(button).toHaveCSS('outline-style', 'solid')
     await expect(button).toHaveCSS('outline-width', '2px')
-    await expect(button).toHaveCSS('outline-color', 'rgb(138, 180, 255)')
+    await expect(button).toHaveCSS('outline-color', 'rgb(94, 168, 255)')
     await expect(button).toHaveCSS('outline-offset', '2px')
   })
 
