@@ -53,20 +53,6 @@ class Settings(BaseSettings):
         default=Environment.DEVELOPMENT,
         description="Where MotoSphere is running: development, test or production.",
     )
-    api_host: str = Field(
-        default="127.0.0.1",
-        min_length=1,
-        description=(
-            "The network address the API listens on. The default only accepts "
-            "connections from this computer."
-        ),
-    )
-    api_port: int = Field(
-        default=8000,
-        ge=1,
-        le=65535,
-        description="The port number the API listens on, from 1 to 65535.",
-    )
     log_level: LogLevel = Field(
         default=LogLevel.INFO,
         description=(
