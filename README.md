@@ -10,8 +10,9 @@ directly from the globe.
 
 ## Status
 
-Early development. The data pipeline has a command line with one command so
-far, which prints the installed version. The frontend shows the application's
+Early development. The data pipeline has a command line with two commands so
+far: one prints the installed version, the other writes the published data
+manifest, which holds no data yet. The frontend shows the application's
 layout, with no globe and no data yet. The repository holds the
 project documentation, the repository checks, the backend Python package with
 its tests and the frontend project.
@@ -48,6 +49,17 @@ uv run python -m motosphere version
 This prints the installed MotoSphere version. The pipeline will gain commands
 to collect, check and publish data; `uv run python -m motosphere --help` lists
 the commands. Nothing listens on a network port.
+
+To write the published data files:
+
+```
+uv run python -m motosphere export --out <directory>
+```
+
+This writes `manifest.json` into the directory, creating the directory if it
+is missing. The manifest records the version of the data format, when the data
+was generated and the MotoSphere version that generated it. There is no data to
+export yet, so it holds no record counts.
 
 ## Running the frontend
 

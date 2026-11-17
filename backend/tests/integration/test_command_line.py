@@ -5,13 +5,16 @@ file is read, and with every ``MOTOSPHERE_`` variable removed from the
 environment except the ones the test sets itself.
 """
 
+import json
 import os
 import subprocess
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 import motosphere
 from motosphere.core.settings import ENV_PREFIX
+from motosphere.publish.manifest import Manifest
 
 TIMEOUT_SECONDS = 60
 USAGE_PREFIX = "usage: python -m motosphere "
@@ -99,3 +102,50 @@ def test_removed_server_setting_is_rejected(tmp_path: Path) -> None:
     result = _run(tmp_path, "version")
 
     _assert_one_configuration_error(result, "api_port")
+
+
+def test_export_command_writes_a_valid_manifest(tmp_path: Path) -> None:
+    before = datetime.now(UTC).replace(microsecond=0)
+
+    result = _run(tmp_path, "export", "--out", "site/data")
+
+    after = datetime.now(UTC)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{Path('site', 'data', 'manifest.json')}\n"
+    directory = tmp_path / "site" / "data"
+    content = (directory / "manifest.json").read_bytes()
+    assert b"\r" not in content
+    assert content.endswith(b"}\n")
+    manifest = Manifest.model_validate_json(content)
+    assert manifest.application_version == motosphere.__version__
+    assert before <= manifest.generated_at <= after
+    assert sorted(entry.name for entry in directory.iterdir()) == ["manifest.json"]
+
+
+def test_export_twice_differs_only_in_the_generation_time(tmp_path: Path) -> None:
+    first = _run(tmp_path, "export", "--out", "first")
+    second = _run(tmp_path, "export", "--out", "second")
+
+    assert first.returncode == 0, first.stderr
+    assert second.returncode == 0, second.stderr
+    first_data = json.loads((tmp_path / "first" / "manifest.json").read_bytes())
+    second_data = json.loads((tmp_path / "second" / "manifest.json").read_bytes())
+    assert list(first_data) == sorted(first_data)
+    assert list(second_data) == list(first_data)
+    del first_data["generated_at"]
+    del second_data["generated_at"]
+    assert first_data == second_data
+
+
+def test_export_into_a_file_fails_with_one_line(tmp_path: Path) -> None:
+    existing = tmp_path / "data"
+    existing.write_bytes(b"not a directory\n")
+
+    result = _run(tmp_path, "export", "--out", "data")
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    lines = result.stderr.splitlines()
+    assert len(lines) == 1, result.stderr
+    assert lines[0].startswith("Export failed: cannot write to data: ")
+    assert existing.read_bytes() == b"not a directory\n"
