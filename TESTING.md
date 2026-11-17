@@ -34,6 +34,11 @@ production build, served locally. Every browser test also fails if the page
 logs an error or warning, throws an uncaught error, or has a failed request or
 an HTTP error response.
 
+Before it builds, the browser tests' server exports the published data with
+the real export command, so the tests check the served manifest with the
+frontend's own reader and check that it was exported for this run. The browser
+tests therefore need uv as well as Node.js.
+
 The theme's colours are the owner's Graphite theme
 (`docs/design/graphite-theme/`), defined once in
 `frontend/src/styles/tokens.css`. A unit test checks each Graphite token

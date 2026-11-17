@@ -30,6 +30,9 @@ playwright-report/
 test-results/
 .vite/
 
+# Published data exported for local use (`npm run data`); never committed.
+/frontend/public/data/
+
 # --- Logs and local data ---
 *.log
 logs/

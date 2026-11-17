@@ -64,15 +64,20 @@ export yet, so it holds no record counts.
 ## Running the frontend
 
 Prerequisites: [Node.js](https://nodejs.org/) 22.12 or newer, which includes
-npm.
+npm, and [uv](https://docs.astral.sh/uv/getting-started/installation/).
 
 From the repository root:
 
 ```
 cd frontend
 npm ci
+npm run data
 npm run dev
 ```
+
+`npm run data` runs the pipeline's export and writes the published data into
+`frontend/public/data/`, which Git ignores. Run it again whenever you want
+fresh data. Nothing on the page shows the data yet.
 
 Open the address Vite prints, normally <http://localhost:5173>. The page shows
 the application's layout: a top bar, a sections panel, the globe area and a
@@ -145,9 +150,10 @@ Frontend browser tests, from `frontend/`:
 npm run e2e
 ```
 
-This builds the application, opens it in a headless Chromium browser and
-checks the page a user would see. It needs port 4173 to be free. On a machine
-where Playwright's Chromium has never been installed, run
+This first exports the published data, then builds the application, opens it
+in a headless Chromium browser and checks the page a user would see, so it
+needs uv as well. It needs port 4173 to be free. On a machine where
+Playwright's Chromium has never been installed, run
 `npx playwright install chromium` once first.
 
 ## Configuration
