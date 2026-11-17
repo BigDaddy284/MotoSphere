@@ -513,15 +513,21 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-017.md`
 
 ### FND-030 – Test counts and skipped tests in the check runner
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The check runner reports how many tests each gate ran, and fails when any test was skipped.
-- **Description:** For the gates that run tests (repository checks, script tests, pipeline tests, frontend unit tests, browser tests) the runner reads the number of tests passed, failed and skipped from the tool's own output while still showing that output, prints the counts in the summary with a total, and marks a gate as failed when any test is reported as skipped or when no count can be found. A skipped browser test is otherwise invisible to every other gate.
-- **Acceptance criteria:** the summary shows the real counts of each test gate and their total; a skipped test in any of the five test tools makes its gate fail with a plain reason; a test gate whose count cannot be read fails rather than passing silently; all other behaviour of the runner is unchanged.
-- **Tests required:** unit tests of reading the counts from recorded output of each tool, including skipped tests and unreadable output; a real run with a deliberately skipped test in each tool; one full real run.
+- **Description:** The five gates that run tests (repository checks and script tests with `unittest`, backend tests with pytest, frontend unit tests with Vitest, browser tests with Playwright) name their tool in the gate table. The runner reads every gate's output while passing it on to the terminal unchanged, and for a test gate reads the number of tests passed, failed and skipped from the tool's own closing lines, with colour codes removed. Every test that neither passed nor failed counts as skipped: skipped, expected to fail, still to do, left out or not run. A test gate fails when its command fails, when a test was skipped, when no test ran or when the counts cannot be found. The summary shows the counts on each test gate's line and a total for the run.
+- **Acceptance criteria:**
+  1. The full run shows the real counts of the five test gates and ends with "16 of 16 gates passed." and "Tests: 473 passed, 0 failed, 0 skipped.", exit code 0.
+  2. A skipped test in any of the five tools makes its gate fail with the reason "tests were skipped", and the exit code is 1.
+  3. A test gate where no test ran, or whose counts cannot be read, fails with a plain reason.
+  4. Every gate's output still appears on the terminal, also when it is not valid UTF-8 or the console is limited to ASCII.
+  5. Gates that do not run tests behave as before.
+- **Tests required:** the runner's own tests (70, of which 40 new: reading counts from closing lines copied from real runs of each tool 19, judging a gate 8, and additions to the gate table, running one gate, the whole run and the script as a separate process); repository checks (9); one full real run of all 16 gates; one real run with a skipped test planted in each of the five tools.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-030.md`
 
 ### FND-031 – Lint and format checks for Python outside the pipeline
 - **Status:** NOT STARTED
