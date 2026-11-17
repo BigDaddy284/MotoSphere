@@ -2,7 +2,7 @@ import { expect, test } from './fixtures'
 
 test.describe('Graphite theme', () => {
   test('uses the dark background and light text', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     const body = page.locator('body')
     await expect(body).toHaveCSS('background-color', 'rgb(29, 30, 33)')
     await expect(body).toHaveCSS('color', 'rgb(236, 236, 238)')
@@ -10,7 +10,7 @@ test.describe('Graphite theme', () => {
   })
 
   test('uses the Segoe UI font stack at a readable size, with no page margin', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     const body = page.locator('body')
     await expect(body).toHaveCSS('font-family', /^"Segoe UI Variable Text", "Segoe UI", system-ui/)
     await expect(body).toHaveCSS('font-size', '16px')
@@ -29,7 +29,7 @@ test.describe('Graphite theme', () => {
   })
 
   test('shows a focus ring when an element is reached by keyboard', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     // The test adds its own button, first on the page, to measure the base
     // focus style rather than a component's.
     await page.evaluate(() => {
@@ -51,7 +51,7 @@ test.describe('Graphite theme', () => {
 
   test('removes motion for people who ask for reduced motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto('/')
+    await page.goto('./')
     const durations = await page.evaluate(() => {
       const element = document.createElement('div')
       element.style.transition = 'opacity 2s'
@@ -68,7 +68,7 @@ test.describe('Graphite theme', () => {
 
   test('keeps motion for everyone else', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' })
-    await page.goto('/')
+    await page.goto('./')
     const transitionDuration = await page.evaluate(() => {
       const element = document.createElement('div')
       element.style.transition = 'opacity 2s'

@@ -1,8 +1,12 @@
 import { defineConfig, devices } from '@playwright/test'
+import { SITE_PATH } from './site.ts'
 
 const HOST = '127.0.0.1'
 const PORT = 4173
-const BASE_URL = `http://${HOST}:${PORT}`
+// The built site is served under the path it will have when published, and
+// every test reaches it through this address. A test writes addresses
+// relative to it (`./`, `favicon.svg`), never from the root of the server.
+const BASE_URL = `http://${HOST}:${PORT}${SITE_PATH}`
 
 // When this run of the browser tests started. The test runner reads this file
 // first and every worker inherits the value, so they all agree. The data

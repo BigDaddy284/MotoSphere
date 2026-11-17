@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Manifest, ManifestResult } from './manifest.ts'
 import { loadPublishedManifest, useManifest, type ManifestLoader } from './useManifest.ts'
 
@@ -108,7 +108,13 @@ describe('useManifest', () => {
 })
 
 describe('loadPublishedManifest', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   it("fetches the manifest under the application's base path, with the signal", async () => {
+    // Not the path of the real site, so that no fixed address can pass.
+    vi.stubEnv('BASE_URL', '/served/from/here/')
     const fetched = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(new Response('{"format_version": 2}'))
@@ -116,11 +122,10 @@ describe('loadPublishedManifest', () => {
 
     const result = await loadPublishedManifest(signal)
 
-    expect(fetched).toHaveBeenCalledWith(`${import.meta.env.BASE_URL}data/manifest.json`, {
+    expect(fetched).toHaveBeenCalledWith('/served/from/here/data/manifest.json', {
       cache: 'no-cache',
       signal,
     })
-    expect(import.meta.env.BASE_URL).toBe('/')
     expect(result).toEqual({ ok: false, problem: 'unsupported' })
   })
 })

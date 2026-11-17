@@ -91,6 +91,13 @@ an HTTP error response. A test about a failure names the problems it expects
 with `expectProblem`; it then fails if one of them does not happen, and still
 fails on any other. The rule has tests of its own (`e2e/fixtures.spec.ts`).
 
+The build under test is served under `/MotoSphere/`, the path the site has on
+GitHub Pages (`frontend/site.ts`), and nothing is served at the root of the
+test server. A browser test therefore writes addresses relative to the site
+(`page.goto('./')`, `request.get('favicon.svg')`), never from the root. Tests
+of their own (`e2e/site.spec.ts`) check that everything the page loads comes
+from under that path.
+
 Before it builds, the browser tests' server exports the published data with
 the real export command, so the tests check the served manifest with the
 frontend's own reader and check that it was exported for this run. The browser

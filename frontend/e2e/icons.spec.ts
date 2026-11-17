@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { APIRequestContext, Page } from '@playwright/test'
+import { SITE_PATH } from '../site.ts'
 import { expect, test } from './fixtures'
 
 const DESIGNS = path.resolve(import.meta.dirname, '..', '..', 'docs', 'design', 'icon')
@@ -95,27 +96,27 @@ function expectTile([red, green, blue, alpha]: Rgba, where: string) {
 
 test.describe('application icon', () => {
   test('the page links the three icon files', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     const links = page.locator('head > link[rel~="icon"], head > link[rel="apple-touch-icon"]')
     await expect(links).toHaveCount(3)
     await expect(page.locator('link[rel="icon"][sizes="32x32"]')).toHaveAttribute(
       'href',
-      '/favicon.ico',
+      `${SITE_PATH}favicon.ico`,
     )
     await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveAttribute(
       'href',
-      '/favicon.svg',
+      `${SITE_PATH}favicon.svg`,
     )
     await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
       'href',
-      '/apple-touch-icon.png',
+      `${SITE_PATH}apple-touch-icon.png`,
     )
   })
 
   for (const [url, type] of [
-    ['/favicon.svg', /^image\/svg\+xml/],
-    ['/favicon.ico', /^image\/(x-icon|vnd\.microsoft\.icon)$/],
-    ['/apple-touch-icon.png', /^image\/png$/],
+    ['favicon.svg', /^image\/svg\+xml/],
+    ['favicon.ico', /^image\/(x-icon|vnd\.microsoft\.icon)$/],
+    ['apple-touch-icon.png', /^image\/png$/],
   ] as const) {
     test(`${url} is served as an image`, async ({ request }) => {
       const response = await request.get(url)
@@ -126,7 +127,7 @@ test.describe('application icon', () => {
 
   test('the vector icon is the small design, byte for byte', async ({ request }) => {
     const design = await readFile(path.join(DESIGNS, 'motosphere-icon-small.svg'))
-    expect((await served(request, '/favicon.svg')).equals(design)).toBe(true)
+    expect((await served(request, 'favicon.svg')).equals(design)).toBe(true)
   })
 
   for (const name of ['motosphere-icon.svg', 'motosphere-icon-small.svg']) {
@@ -160,7 +161,7 @@ test.describe('application icon', () => {
   })
 
   test('the fallback icon holds 16, 32 and 48 pixel images', async ({ request }) => {
-    const images = icoImages(await served(request, '/favicon.ico'))
+    const images = icoImages(await served(request, 'favicon.ico'))
 
     expect(images.map(({ width }) => width)).toEqual([16, 32, 48])
     for (const { width, height, png } of images) {
@@ -171,11 +172,11 @@ test.describe('application icon', () => {
 
   for (const [index, size] of [16, 32, 48].entries()) {
     test(`the ${size} pixel image shows the globe on its tile`, async ({ page, request }) => {
-      const image = icoImages(await served(request, '/favicon.ico'))[index]
+      const image = icoImages(await served(request, 'favicon.ico'))[index]
       if (image === undefined) {
         throw new Error(`no image ${index} in the icon file`)
       }
-      await page.goto('/')
+      await page.goto('./')
       const middle = size / 2
       const [corner, rim, inside, outside] = await pixels(page, image.png, [
         [0, 0],
@@ -198,10 +199,10 @@ test.describe('application icon', () => {
     page,
     request,
   }) => {
-    const png = await served(request, '/apple-touch-icon.png')
+    const png = await served(request, 'apple-touch-icon.png')
     expect(pngSize(png)).toEqual({ width: 180, height: 180 })
 
-    await page.goto('/')
+    await page.goto('./')
     // In the full design the rim of the globe is 330 units from the centre of
     // a 1024 unit square, and 400 units from the centre there is only the tile.
     const [topLeft, bottomRight, rim, tile] = await pixels(page, png, [

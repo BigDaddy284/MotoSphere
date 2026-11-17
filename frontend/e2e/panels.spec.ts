@@ -33,7 +33,7 @@ test.describe('side panels', () => {
   test.use({ viewport: { width: WIDTH, height: HEIGHT } })
 
   test('start open', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     const region = regions(page)
 
     await expect(region.sectionsButton).toHaveAttribute('aria-expanded', 'true')
@@ -44,7 +44,7 @@ test.describe('side panels', () => {
   })
 
   test('closing the sections panel gives its room to the globe stage', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     const region = regions(page)
 
     await region.sectionsButton.click()
@@ -60,7 +60,7 @@ test.describe('side panels', () => {
   })
 
   test('closing the details panel gives its room to the globe stage', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     const region = regions(page)
 
     await region.detailsButton.click()
@@ -76,7 +76,7 @@ test.describe('side panels', () => {
   })
 
   test('with both panels closed the globe stage is as wide as the screen', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     const region = regions(page)
 
     await region.sectionsButton.click()
@@ -98,7 +98,7 @@ test.describe('side panels', () => {
   })
 
   test('can be closed and opened with the keyboard alone', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     const region = regions(page)
     // A key pressed before the top bar is drawn would be lost.
     await expect(region.sectionsButton).toBeVisible()
@@ -119,7 +119,7 @@ test.describe('side panels', () => {
   })
 
   test('a closed panel takes its sections out of the keyboard order', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     const region = regions(page)
 
     await region.sectionsButton.click()
@@ -131,7 +131,7 @@ test.describe('side panels', () => {
   })
 
   test('stay as the user left them when the page is reloaded', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     const region = regions(page)
 
     await region.detailsButton.click()
@@ -146,12 +146,12 @@ test.describe('side panels', () => {
   })
 
   test('start open again in a new tab', async ({ page, context }) => {
-    await page.goto('/')
+    await page.goto('./')
     await regions(page).sectionsButton.click()
     await expect(regions(page).sections).toBeHidden()
 
     const newTab = await context.newPage()
-    await newTab.goto('/')
+    await newTab.goto('./')
     const region = regions(newTab)
 
     await expect(region.sectionsButton).toHaveAttribute('aria-expanded', 'true')
@@ -159,7 +159,7 @@ test.describe('side panels', () => {
   })
 
   test('the buttons show whether their panel is open', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
     const region = regions(page)
 
     await expect(region.sectionsButton).toHaveCSS('background-color', 'rgb(53, 55, 60)')
