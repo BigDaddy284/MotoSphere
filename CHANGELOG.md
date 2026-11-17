@@ -20,3 +20,5 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   escaped line breaks (FND-006).
 - API application factory and health endpoint `GET /api/health` (FND-007).
 - `python -m motosphere` starts the API server (FND-008).
+- Frontend project skeleton (`frontend/`): Vite, React and TypeScript in strict
+  mode (FND-009).

@@ -11,9 +11,10 @@ directly from the globe.
 ## Status
 
 Early development. The backend API can now be started and answers a health
-check; there is still no user interface. The repository holds the project
-documentation, the repository checks and the backend Python package with its
-tests.
+check. There is also a frontend skeleton that shows the application name; it
+does not talk to the backend yet and has no globe. The repository holds the
+project documentation, the repository checks, the backend Python package with
+its tests and the frontend project.
 
 - [TASKS.md](TASKS.md) lists every development task and its status.
 - [PROGRESS.md](PROGRESS.md) holds the test report for each completed task.
@@ -50,10 +51,28 @@ While it is running, the health check is at
 different host or port, change the settings described in
 [Configuration](#configuration).
 
+## Running the frontend
+
+Prerequisites: [Node.js](https://nodejs.org/) 22.12 or newer, which includes
+npm.
+
+From the repository root:
+
+```
+cd frontend
+npm ci
+npm run dev
+```
+
+Open the address Vite prints, normally <http://localhost:5173>. The page shows
+the application name; it does not use the API yet. Press Ctrl+C to stop the
+development server.
+
 ## Running the checks
 
 Prerequisites: Python 3.12 or newer, Git and
-[uv](https://docs.astral.sh/uv/getting-started/installation/).
+[uv](https://docs.astral.sh/uv/getting-started/installation/). The frontend
+checks also need Node.js 22.12 or newer.
 
 Repository checks, from the repository root:
 
@@ -83,6 +102,14 @@ Backend type check (mypy, strict mode), from `backend/`:
 
 ```
 uv run mypy
+```
+
+Frontend type check (TypeScript, strict mode) and production build, from
+`frontend/` (run `npm ci` first to install the locked dependencies):
+
+```
+npm run typecheck
+npm run build
 ```
 
 ## Configuration
