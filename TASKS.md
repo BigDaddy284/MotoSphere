@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 26 | 19 |
+| 1 | Foundation (FND) | 26 | 20 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-021 – Data manifest export command.
+**Current task:** FND-024 – Application icon in the Sky Classic style.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -397,7 +397,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-020.md`
 
 ### FND-021 – Data manifest export command
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Produce the first real published data file from the pipeline.
 - **Description:** `python -m motosphere export --out <directory>` writes `manifest.json`: data format version, generation time (UTC, to the second), application version and the number of published records of each kind. Nothing is published yet, so the counts are an empty object rather than invented kinds or numbers. The file is described by an immutable Pydantic model that allows no unknown fields, and is written atomically as deterministic JSON (sorted keys, `\n` line breaks on every system). A new `motosphere.publish` package holds the model, the atomic writer and the export step. The file list with content hashes (PUB-001) and the JSON Schema file (PUB-002) are later tasks.
 - **Acceptance criteria:**
@@ -406,12 +406,12 @@ Windows 11. No database and no globe yet.
   3. A failed write never leaves a partial or temporary file and never damages an earlier manifest.
   4. An output path that cannot be written gives one line starting `Export failed: ` and exit code 1; a missing or empty `--out` is a usage error with exit code 2.
   5. The manifest holds no invented data.
-  6. `uv run pytest` reports 114 passed.
-- **Tests required:** backend tests (114, of which 53 new: 25 for the manifest model and its JSON form, 8 for the atomic writer, 6 for the export step, 9 for the command, 2 for the command line including the exit-code test missing from FND-020, 3 integration tests running the real command); lock check, mypy, ruff check, ruff format check; repository checks (9); frontend untouched (115 unit, 35 browser).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+  6. `uv run pytest` reports 115 passed (114 in the plan, plus one test added during verification).
+- **Tests required:** backend tests (115, of which 54 new: 26 for the manifest model and its JSON form, 8 for the atomic writer, 6 for the export step, 9 for the command, 2 for the command line including the exit-code test missing from FND-020, 3 integration tests running the real command); lock check, mypy, ruff check, ruff format check; repository checks (9); frontend untouched (115 unit, 35 browser).
+- **Tests executed:** In a clean checkout of pull request #20 (Linux, uv 0.11.32): `uv lock --check`, `uv sync --locked`, mypy (23 source files), ruff check, ruff format check, backend pytest on Python 3.13.18 and on 3.12.3 (no warnings), repository checks (9 tests). The real command was run: export into a new directory (exit 0, manifest written with `\n` line breaks, path printed), export again (file replaced, only the time differs), export into a path that is a file (one line, exit 1, file untouched), no `--out` and an empty `--out` (usage, exit 2), an invalid setting (one line, exit 2). First run: 114 tests, 32 of 34 planted defects detected; the task was sent back for one more test. Second run on the fixed pull request: all gates again, 115 tests, 33 of 34 detected. Frontend not re-run: no frontend file has changed since its run on pull request #18.
+- **Passed / Failed:** 124 / 0 tests (backend 115, repository 9); lock, type-check, lint and format gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. The one planted defect not detected cannot be observed in practice: allowing the writer to overwrite an existing temporary file, whose name carries 64 random bits. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `b234233`
 - **Plan:** `docs/plans/FND-021.md`
 
 ### FND-016 – Frontend data client and data status
@@ -452,7 +452,7 @@ Windows 11. No database and no globe yet.
 - **Objective:** Every merge to `main` puts the current application online.
 - **Description:** A configurable base path for the frontend build (the site is served from `/MotoSphere/`), and a GitHub Actions workflow that, after the checks pass on `main`, exports the data, builds the frontend and deploys both to GitHub Pages with the least permissions needed. The browser tests also run against a build served from the sub-path.
 - **Acceptance criteria:** the application works when served from a sub-path (assets, icon and data all load, no console errors); the deployment workflow succeeds; the live address shows the application name and the data date.
-- **Tests required:** browser tests against a sub-path build; the workflow run itself; a browser check of the live address. Needs GitHub Pages switched on for the repository by the owner (public repository, or a paid plan for a private one); until then the task is `BLOCKED – EXTERNAL DEPENDENCY`, not passed.
+- **Tests required:** browser tests against a sub-path build; the workflow run itself; a browser check of the live address. The owner reported on 2026-11-17 that GitHub Pages is switched on for the repository with GitHub Actions as its source; the first workflow run will confirm it. If that run shows Pages is not available, the task is `BLOCKED – EXTERNAL DEPENDENCY`, not passed.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified

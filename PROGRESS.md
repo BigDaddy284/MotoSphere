@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-021 – Data manifest export command (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 19 of 218
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with one command so far (`version`). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. The two are not connected yet; no globe and no data store.
+- **Current task:** FND-024 – Application icon in the Sky Classic style (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 20 of 218
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. The two are not connected yet; no globe and no data store.
 
 ## Reports
 
@@ -1140,3 +1140,93 @@ Windows run is FND-018.
 Commit: `f80fe8d` (squash merge of pull request #19).
 
 Next task: FND-021 – Data manifest export command.
+
+### FND-021 – Data manifest export command (2026-11-17)
+
+TASK: FND-021 – Data manifest export command
+
+Implementation: Complete (builder thread, pull request #20, two commits).
+`python -m motosphere export --out <directory>` writes `manifest.json`: the
+data format version, the generation time in UTC to the second, the
+application version and the number of published records of each kind, which
+is an empty object because nothing is published yet. A new
+`motosphere.publish` package holds the manifest model (immutable, no unknown
+fields), a writer that puts a file in place in one step and leaves nothing
+behind when it fails, and the export step. The JSON is deterministic: sorted
+keys, a fixed layout, `\n` line breaks on every system and text outside
+ASCII kept as it is. Exactly the planned files; the six source files are
+identical to the planner's trial, and `pyproject.toml` and `uv.lock` are
+unchanged. The builder wrote the tests from the plan's named list.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+uv 0.11.32):
+
+- `uv lock --check`: passed (20 packages). `uv sync --locked`: passed.
+- mypy: passed (23 source files). ruff check: passed. ruff format check:
+  passed (23 files).
+- Backend tests, first run: 114/114 passed on Python 3.13.18 and 114/114 on
+  Python 3.12.3, no warnings.
+- Real commands: export into a new directory two levels deep (exit 0; the
+  directory holds only `manifest.json`, which ends with `}` and one `\n` and
+  has no carriage return; the path is printed on standard output and one log
+  line goes to standard error); export again a second later (the file is
+  replaced and only `generated_at` differs); export into a path that is a
+  file (`Export failed: cannot write to …: File exists`, exit 1, the file
+  untouched); no `--out` and an empty `--out` (usage, exit 2); an invalid
+  setting (one line starting `Configuration error:`, exit 2).
+- One suppression, the existing one (`noqa: S603` on the fixed child-process
+  call); no skipped tests.
+- Gate checks, first run: 32 of 34 planted defects detected. Not detected:
+  (a) writing the JSON with ASCII escapes instead of the text itself, and
+  (b) letting the writer overwrite an existing temporary file. (a) was a gap
+  in the plan, not in the builder's work: the plan asked for no such test.
+  The task was sent back for one test, which the builder added as a second
+  commit with no other change. (b) cannot be observed in practice, because
+  the temporary file's name carries 64 random bits; no test was asked for.
+- Second run on the fixed pull request: lock check, sync, mypy, ruff check,
+  ruff format check, backend tests (115/115 on Python 3.13.18 and 115/115 on
+  3.12.3, no warnings), repository checks and the real command all passed
+  again; 33 of 34 planted defects detected, (a) now among them. The 33: not
+  atomic (two ways); temporary file not removed; keys not sorted; local time
+  instead of UTC; microseconds kept; unknown fields allowed; negative counts
+  allowed; any record kind name allowed; model not immutable; format version
+  zero allowed; empty application version allowed; directory not created;
+  parent directories not created; export failure exits 0; error not caught;
+  reason over several lines; path not printed; empty directory accepted;
+  exit code ignored; no final line break; platform line endings; wrong
+  application version; command not registered; no log line; ASCII escapes;
+  wrong file name; invented counts; wrong format version; `--out` optional;
+  generation time not the current time; error on standard output; file not
+  flushed to disk.
+- Tests per file: integration 10, command line 15, export command 9, export
+  step 6, logging 14, manifest 26, package 9, writer 8, settings 18.
+- Repository checks: 9/9 passed.
+- Frontend: not touched and not re-run; no frontend file has changed since
+  its run on pull request #18 (115 unit, 35 browser).
+- `git status` clean after the full run.
+
+Unit and integration tests: 124/124 passed (backend 115, repository 9).
+Type checking: passed (backend). Lint and format: passed (backend).
+Build: not applicable (no frontend change).
+Browser or integration verification: passed (the real command run as a
+process by 10 tests and by hand).
+
+Overall applicable tests: 124/124 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the manifest has no file list or content hashes yet
+(PUB-001) and there is no JSON Schema file (PUB-002). The frontend does not
+read the manifest yet (FND-016). If the 64-bit random name of a temporary
+file ever matched an existing file, the export would fail and remove that
+file; this is not expected to happen. Not run on Windows 11; first Windows
+run is FND-018.
+
+Owner's note: the owner reported on 2026-11-17 that GitHub Pages is switched
+on with GitHub Actions as its source, so the deployment task (FND-022) is no
+longer waiting for the owner. Its first workflow run will confirm the
+setting.
+
+Commit: `b234233` (squash merge of pull request #20).
+
+Next task: FND-024 – Application icon in the Sky Classic style.
