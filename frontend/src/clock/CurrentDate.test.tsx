@@ -88,16 +88,16 @@ describe('CurrentDate', () => {
   it('leaves no timer and no listener behind when it is removed', () => {
     const added = vi.spyOn(document, 'addEventListener')
     const removed = vi.spyOn(document, 'removeEventListener')
-    const visibilityCalls = (spy: typeof added | typeof removed) =>
-      spy.mock.calls.filter(([type]) => type === 'visibilitychange').length
+    const visibilityListeners = (spy: typeof added | typeof removed) =>
+      spy.mock.calls.filter(([type]) => type === 'visibilitychange').map(([, listener]) => listener)
     vi.setSystemTime(new Date(2026, 10, 17, 14, 30))
 
     const { unmount } = render(<CurrentDate />)
     expect(vi.getTimerCount()).toBe(1)
-    expect(visibilityCalls(added)).toBe(1)
+    expect(visibilityListeners(added)).toHaveLength(1)
 
     unmount()
     expect(vi.getTimerCount()).toBe(0)
-    expect(visibilityCalls(removed)).toBe(visibilityCalls(added))
+    expect(visibilityListeners(removed)).toEqual(visibilityListeners(added))
   })
 })
