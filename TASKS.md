@@ -370,7 +370,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-026.md`
 
 ### FND-024 – Application icon in the Sky Classic style
-- **Status:** NOT STARTED (waiting for the owner's final choice. The owner rejected the first nine mock-ups and chose a globe outline with MOTO following the top of the rim and SPHERE the bottom, the rim breaking where the words sit, with no dots in the O's. The choice of lettering font is still open; five drafts are in front of the owner. The lettering cannot be read at 16 pixels, so the smallest size may need a globe-only variant)
+- **Status:** NOT STARTED (the owner approved the final design on 2026-11-17: a globe outline with MOTO following the top of the rim and SPHERE the bottom, in Orbitron converted to paths, on the Sky Classic tile. Still to do in this task: bring the approved file into the repository, a simplified version for 16 pixels where the lettering cannot be read, the PNG and ICO exports, and the page links. It follows FND-021)
 - **Objective:** MotoSphere has its own icon in the style the owner chose.
 - **Description:** A MotoSphere icon drawn in the Sky Classic style (`docs/design/sky-classic-icon/`): rounded dark gradient tile, a glowing outline glyph with round joins in the sky-blue gradient. The glyph is MotoSphere's own (a globe motif), not the folder from the reference. Delivered as the page icon (SVG) with PNG fallbacks, and the style rules for later interface icons are written down.
 - **Acceptance criteria:** the icon uses the reference tile, gradient and stroke style with a MotoSphere glyph; it is legible at 16, 32 and 180 pixels; the page links it and the browser loads it; the icon style rules are documented.
