@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 26 | 18 |
+| 1 | Foundation (FND) | 26 | 19 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-020 – Replace the API server with the pipeline command line.
+**Current task:** FND-021 – Data manifest export command.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -381,7 +381,7 @@ Windows 11. No database and no globe yet.
 - **Commit:** –
 
 ### FND-020 – Replace the API server with the pipeline command line
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Remove the server that the hosting decision made unnecessary, and give the data pipeline its command line.
 - **Description:** Remove the FastAPI application, the health endpoint, the server start-up in `python -m motosphere`, the `api_host` and `api_port` settings, their tests and the `fastapi`, `uvicorn` and `httpx2` dependencies. `python -m motosphere` becomes a command-line program with sub-commands, built on the standard library's `argparse` in a new `motosphere.cli` package; the first command is `version`. Arguments are parsed before the settings are loaded, results go to standard output, and logs and errors go to standard error. Settings and logging stay and are used by the command line. README, TESTING.md, `.env.example` and CHANGELOG follow.
 - **Acceptance criteria:**
@@ -390,25 +390,29 @@ Windows 11. No database and no globe yet.
   3. README no longer tells the user to start an API; all remaining backend gates pass.
   4. `uv run pytest` reports 61 passed.
 - **Tests required:** backend tests (61: 13 unit tests for the command line, 7 integration tests running the real command as a separate process, 18 for the settings, 9 for the package including checks that the server packages are not installed, 14 for logging); lock check, mypy, ruff check, ruff format check; repository checks (9); frontend untouched (115 unit, 35 browser).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #19 (Linux, uv 0.11.32): `uv lock --check`, `uv sync --locked`, mypy (14 source files), ruff check, ruff format check, backend pytest on Python 3.13.18 and on 3.12.3 (61 tests each, no warnings), repository checks (9 tests). The real command was run: `version` (exit 0), no command and an unknown command (usage, exit 2), `--help` (exit 0), two invalid settings (one line, exit 2). The lock file holds 20 packages and none of the server packages. 13 of 14 planted defects detected. Frontend not re-run: no frontend file has changed since its run on pull request #18.
+- **Passed / Failed:** 70 / 0 tests (backend 61, repository 9); lock, type-check, lint and format gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. One gap, in the plan and not in the builder's work: no test checked that the command line passes a command's exit code on (the only command always returns 0). The code is correct; FND-021 adds the test. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `f80fe8d`
 - **Plan:** `docs/plans/FND-020.md`
 
 ### FND-021 – Data manifest export command
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Produce the first real published data file from the pipeline.
-- **Description:** `python -m motosphere export --out <directory>` writes `manifest.json`: data format version, generation time (UTC), application version and record counts (all zero for now). The file is described by a Pydantic model, written atomically with stable key order, and a JSON Schema for it is produced from the model.
+- **Description:** `python -m motosphere export --out <directory>` writes `manifest.json`: data format version, generation time (UTC, to the second), application version and the number of published records of each kind. Nothing is published yet, so the counts are an empty object rather than invented kinds or numbers. The file is described by an immutable Pydantic model that allows no unknown fields, and is written atomically as deterministic JSON (sorted keys, `\n` line breaks on every system). A new `motosphere.publish` package holds the model, the atomic writer and the export step. The file list with content hashes (PUB-001) and the JSON Schema file (PUB-002) are later tasks.
 - **Acceptance criteria:**
-  1. The command creates the directory if needed and writes a manifest that validates against the model; running it twice with the same inputs gives byte-identical output apart from the generation time.
-  2. A failed write never leaves a partial manifest behind.
-  3. An unwritable or invalid output path gives a clear one-line error and a non-zero exit code.
-- **Tests required:** unit tests for the model, serialisation and atomic write; integration test running the real command into a temporary directory; all backend gates.
+  1. The command creates the directory if needed, writes a manifest that validates against the model, prints its path and exits 0.
+  2. The same inputs give byte-identical output; two real runs differ only in the generation time.
+  3. A failed write never leaves a partial or temporary file and never damages an earlier manifest.
+  4. An output path that cannot be written gives one line starting `Export failed: ` and exit code 1; a missing or empty `--out` is a usage error with exit code 2.
+  5. The manifest holds no invented data.
+  6. `uv run pytest` reports 114 passed.
+- **Tests required:** backend tests (114, of which 53 new: 25 for the manifest model and its JSON form, 8 for the atomic writer, 6 for the export step, 9 for the command, 2 for the command line including the exit-code test missing from FND-020, 3 integration tests running the real command); lock check, mypy, ruff check, ruff format check; repository checks (9); frontend untouched (115 unit, 35 browser).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-021.md`
 
 ### FND-016 – Frontend data client and data status
 - **Status:** NOT STARTED

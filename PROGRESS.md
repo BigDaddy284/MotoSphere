@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-020 – Replace the API server with the pipeline command line (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 18 of 218
-- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. They are not connected yet; no globe and no database. The API server is due to be replaced by a data pipeline command (FND-020) following the GitHub Pages decision.
+- **Current task:** FND-021 – Data manifest export command (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 19 of 218
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with one command so far (`version`). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. The two are not connected yet; no globe and no data store.
 
 ## Reports
 
@@ -1068,3 +1068,75 @@ goes next.
 Commit: `5e782de` (squash merge of pull request #18).
 
 Next task: FND-020 – Replace the API server with the pipeline command line.
+
+### FND-020 – Replace the API server with the pipeline command line (2026-11-17)
+
+TASK: FND-020 – Replace the API server with the pipeline command line
+
+Implementation: Complete (builder thread, pull request #19). The FastAPI
+application, the health endpoint, the server start-up, the `api_host` and
+`api_port` settings, their tests and the `fastapi`, `uvicorn` and `httpx2`
+dependencies are gone. `python -m motosphere` is now the data pipeline's
+command line, in a new `motosphere.cli` package built on the standard
+library's `argparse`, with one command, `version`. Arguments are parsed
+before the settings are loaded, so `--help` works with broken settings;
+results go to standard output and logs and errors to standard error. README,
+TESTING.md, `.env.example` and the changelog follow. Exactly the planned
+files; all source files, `pyproject.toml` and `uv.lock` are identical to the
+planner's trial. One correction to the plan: regenerating the lock removed
+13 packages, not 12 (the planner's count missed `annotated-doc`); 20 remain,
+as expected.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+uv 0.11.32):
+
+- `uv lock --check`: passed. `uv sync --locked`: passed.
+- mypy: passed (14 source files). ruff check: passed. ruff format check:
+  passed.
+- Backend tests: 61/61 passed on Python 3.13.18 and 61/61 on Python 3.12.3,
+  no warnings: 13 unit tests for the command line, 7 integration tests that
+  run the real command as a separate process, 18 for the settings, 9 for the
+  package (including that the server packages are not installed), 14 for
+  logging.
+- Real commands: `version` prints `motosphere 0.1.0` (exit 0); no command
+  and an unknown command print the usage (exit 2); `--help` lists the
+  command (exit 0); two invalid settings give one line starting
+  `Configuration error:` (exit 2).
+- The lock file holds 20 packages and none of fastapi, uvicorn, starlette,
+  httpx or anyio. A search of `backend/`, README and TESTING.md for the old
+  names finds only the tests that check they are gone.
+- One suppression, as planned (`noqa: S603` on the fixed child-process
+  call); no skipped tests.
+- Gate checks: 13 of 14 planted defects detected: version on the wrong
+  stream; wrong exit code for a configuration error; command made optional;
+  settings loaded before the arguments; logging not set up; a server
+  setting left behind; default program name; configuration error over
+  several lines; version without the name; arguments ignored; a server
+  dependency left behind; configuration error on standard output; the `api`
+  package left behind. Not detected: the command line ignoring a command's
+  exit code. That is a gap in the plan, not in the builder's work: the only
+  command always returns 0, so no test could see it. The code is correct;
+  the test is added by FND-021, whose command can fail.
+- Repository checks: 9/9 passed.
+- Frontend: not touched and not re-run; no frontend file has changed since
+  its run on pull request #18 (115 unit, 35 browser).
+- `git status` clean after the full run.
+
+Unit and integration tests: 70/70 passed (backend 61, repository 9).
+Type checking: passed (backend). Lint and format: passed (backend).
+Build: not applicable (no frontend change).
+Browser or integration verification: passed (the real command run as a
+process by 7 tests and by hand).
+
+Overall applicable tests: 70/70 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the exit-code gap described above, closed by FND-021. The
+command line has only the `version` command. Exit code 2 is used both for
+wrong arguments and for invalid settings. Not run on Windows 11; first
+Windows run is FND-018.
+
+Commit: `f80fe8d` (squash merge of pull request #19).
+
+Next task: FND-021 – Data manifest export command.
