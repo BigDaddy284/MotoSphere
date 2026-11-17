@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-017 – Unified check runner (`NOT STARTED`, the planner is writing its plan)
-- **Tasks verified:** 25 of 221
+- **Current task:** FND-017 – Unified check runner (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 25 of 223
 - **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. No globe and no data store yet.
 
 ## Reports
@@ -1635,5 +1635,35 @@ kept to one or two harmless steps for that reason. Not run on Windows 11;
 first Windows run is FND-018.
 
 Commit: `5f4fde1` (squash merge of pull request #25).
+
+Next task: FND-017 – Unified check runner.
+
+### PLAN-004 – The check runner task split into three (2026-11-17)
+
+"Unified check runner" held three things that can each be tested on their
+own: a runner that executes the gates and reports pass or fail; reading test
+counts out of five different tools and failing on skipped tests; and
+bringing the Python files outside the pipeline under lint, format and type
+checks, which needs its own configuration. It is now three tasks, in this
+order:
+
+- FND-017 – Unified check runner (run every gate, summary, exit code,
+  `--list`, `--only`).
+- FND-030 – Test counts and skipped tests in the check runner. Earlier
+  reports say the check runner "must fail on skipped tests"; that
+  requirement now belongs to this task.
+- FND-031 – Lint and format checks for Python outside the pipeline. The
+  ruff task (FND-003) says root-level Python joins the gate with the check
+  runner; that now belongs to this task.
+
+Continuous integration (FND-018) comes after all three, as before. Phase 1
+has 31 tasks and the project 223. No requirement was dropped.
+
+A lesson from the trial run, written into the FND-017 plan: one of the real
+gates runs the runner's own tests, so those tests must never run the real
+script in the real repository. The planner's first trial did, and a planted
+defect made the runner start itself without end until it was stopped by
+hand. The tests now run a copy of the script in a stand-in repository, where
+the worst a defect can do is run gates that fail at once.
 
 Next task: FND-017 – Unified check runner.

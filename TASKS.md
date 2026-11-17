@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 29 | 25 |
+| 1 | Foundation (FND) | 31 | 25 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -43,7 +43,9 @@ navigation (FND-025) and the current date (FND-026). The data client task
 was split into three: reading the manifest (FND-016), serving real published
 data locally (FND-027) and the data status in the top bar (FND-028). One
 task was added after it (FND-029), so that the browser tests can also cover
-a manifest the server does not have.
+a manifest the server does not have. The check runner task was split into
+three: the runner itself (FND-017), test counts and skipped tests (FND-030)
+and the Python files outside the pipeline (FND-031).
 
 Added tasks are listed where they fall in dependency order, so task numbers
 in Phase 1 are not strictly ascending.
@@ -494,11 +496,39 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-029.md`
 
 ### FND-017 – Unified check runner
+- **Status:** IN PROGRESS
+- **Objective:** One command that runs every gate in order and says which passed.
+- **Description:** `python scripts/check.py` (standard library only, started from any folder) runs the 16 gates of the project in order from a clean checkout: the repository checks, the runner's own tests, the pipeline's lock check, install, type check, lint, format check and tests, and the frontend's install, lint, format check, type check, unit tests, build, browser tests and dependency audit. Every gate runs even when an earlier one failed. A summary names each gate as passed or failed with the time it took; the exit code is 0 only when every gate passed. `--list` shows the gates without running them and `--only` runs the named ones. A program that is not installed is a failed gate with a plain reason, not an error. `TESTING.md` lists the gates, and a test keeps the list and the script the same. This task was split from the original check runner task; the other parts are FND-030 and FND-031.
+- **Acceptance criteria:**
+  1. Started from any folder, the full run executes the 16 gates in order from a clean checkout and, with everything in order, reports "16 of 16 gates passed." with exit code 0.
+  2. A failing gate makes the exit code 1, is marked FAILED with its reason and is named in the verdict; the gates after it still run.
+  3. `--list` runs nothing; `--only` runs only the named gates in the order of the table; an unknown name is refused with exit code 2.
+  4. A program that is not installed, or a missing folder, gives a failed gate with a plain reason and no Python error.
+  5. `TESTING.md` lists every gate exactly as the script has it.
+- **Tests required:** the runner's own tests (30, standard library `unittest`: the gate table 7, running one gate 8, the whole run with stand-in gates 11, the script as a separate process 4, always as a copy in a stand-in repository); repository checks (9, with two sample paths added); one full real run of all 16 gates; one real run with a deliberately failing gate.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-017.md`
+
+### FND-030 – Test counts and skipped tests in the check runner
 - **Status:** NOT STARTED
-- **Objective:** One command that runs every gate and reports counts.
-- **Description:** `python scripts/check.py` (stdlib only) runs repo checks, lint and format checks for root-level Python (`tests/repo`, `scripts/`), pipeline ruff/mypy/pytest, frontend lint/format/typecheck/unit/build and browser tests, in order, and prints a per-gate and overall pass/fail summary. Non-zero exit if any gate fails, and also if any test is reported as skipped (Playwright browser tests can be skipped without the linter noticing). Options to run a single gate.
-- **Acceptance criteria:** all gates run from a clean checkout on Linux and Windows; a failing gate makes the exit code non-zero and is named in the summary; TESTING.md documents the command.
-- **Tests required:** unit tests for the runner's result handling using stub commands; one full real run.
+- **Objective:** The check runner reports how many tests each gate ran, and fails when any test was skipped.
+- **Description:** For the gates that run tests (repository checks, script tests, pipeline tests, frontend unit tests, browser tests) the runner reads the number of tests passed, failed and skipped from the tool's own output while still showing that output, prints the counts in the summary with a total, and marks a gate as failed when any test is reported as skipped or when no count can be found. A skipped browser test is otherwise invisible to every other gate.
+- **Acceptance criteria:** the summary shows the real counts of each test gate and their total; a skipped test in any of the five test tools makes its gate fail with a plain reason; a test gate whose count cannot be read fails rather than passing silently; all other behaviour of the runner is unchanged.
+- **Tests required:** unit tests of reading the counts from recorded output of each tool, including skipped tests and unreadable output; a real run with a deliberately skipped test in each tool; one full real run.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-031 – Lint and format checks for Python outside the pipeline
+- **Status:** NOT STARTED
+- **Objective:** The Python files outside `backend/` (`scripts/`, `tests/repo`, `tests/scripts`) pass the same lint, format and type checks as the pipeline.
+- **Description:** A ruff configuration for the repository root that follows the pipeline's rules where they fit standard-library `unittest` code, a strict mypy check of `scripts/`, and new gates in the check runner for them, run with the pipeline's locked tools so that no new dependency is needed. Existing files are brought into line.
+- **Acceptance criteria:** the new gates pass on the existing files and fail on a planted lint, format and type defect in each folder; the gates are listed in `TESTING.md`; the pipeline's own gates are unchanged.
+- **Tests required:** the runner's tests updated for the new gates; planted defects for each new gate; one full real run.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
