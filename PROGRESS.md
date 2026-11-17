@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-011 – Frontend linting and formatting (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 10 of 211
+- **Current task:** FND-012 – Browser test infrastructure (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 11 of 211
 - **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application name, and has its own unit tests (`npm test`). They are not connected yet; no globe and no database.
 
 ## Reports
@@ -513,3 +513,62 @@ configuration on the merged frontend before writing the plan.
 Commit: `0914ec5` (squash merge of pull request #10).
 
 Next task: FND-011 – Frontend linting and formatting.
+
+### FND-011 – Frontend linting and formatting (2026-11-17)
+
+TASK: FND-011 – Frontend linting and formatting
+
+Implementation: Complete (builder thread, pull request #11). oxlint with the
+React, TypeScript, import, accessibility, Vitest and promise rule sets
+(`npm run lint`, warnings fail the gate) and Prettier (`npm run format:check`,
+`npm run format`). Raw HTML rendering, `eval`, `any`, non-null assertions and
+console output are banned. README, TESTING.md and CHANGELOG updated. Exactly
+the nine planned files; the configuration is identical to the plan; the only
+existing file reformatted is `tsconfig.json`; no source file changed; no
+deviations.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9; installed oxlint 1.94.0, prettier 3.10.1):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. Lock file references only
+  the public npm registry.
+- Frontend lint: passed, covering exactly the 7 project files. Frontend
+  format check: passed.
+- Frontend unit tests: 5/5 passed. Type check: passed. Build: passed, bundle
+  unchanged at 219.76 kB.
+- No suppression comments anywhere in `frontend/`.
+- Gate checks: 8 planted defects all reported with a non-zero exit code:
+  the plan's probe file (17 findings, including unused variable, `any`,
+  hook called conditionally, missing effect dependency, non-null assertion,
+  `@ts-ignore`, loose equality, `eval`, `debugger`, missing image text,
+  click handler without keyboard support and raw HTML); raw HTML in `App`;
+  `console.log` in the entry point; an import used only for its side effect;
+  a focused unit test (`it.only`); a skipped unit test (`it.skip`); a badly
+  formatted new file; double quotes in `App`. Control: a style sheet import
+  is allowed, as planned.
+- Repository checks: 9/9 passed.
+- Backend: not touched and not re-run; no backend file has changed since its
+  55/55 run on commit `0914ec5`.
+- `git status` clean after the full run.
+
+Unit tests: 14/14 passed (frontend 5, repository 9).
+Type checking: passed (frontend). Lint and format: passed (frontend).
+Build: passed (frontend).
+Browser verification: not applicable to this task (no visible change).
+
+Overall applicable tests: 14/14 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the linter does not use type information; type errors are
+caught by the type-check gate. Not run on Windows 11; first Windows run is
+FND-018.
+
+Planning note for FND-012: in the planner's trial, the linter reported a
+skipped Vitest test but not a skipped Playwright test. Skipped browser tests
+are therefore checked by the planner in review, and the check runner
+(FND-017) is now required to fail when any test is reported as skipped.
+
+Commit: `4aa7988` (squash merge of pull request #11).
+
+Next task: FND-012 – Browser test infrastructure.

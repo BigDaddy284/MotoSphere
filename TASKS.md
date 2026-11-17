@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 10 |
+| 1 | Foundation (FND) | 19 | 11 |
 | 2 | Database and API (DB, API) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-011 – Frontend linting and formatting.
+**Current task:** FND-012 – Browser test infrastructure.
 
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
@@ -216,7 +216,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-010.md`
 
 ### FND-011 – Frontend linting and formatting
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Make likely bugs, unsafe patterns, accessibility mistakes and code style an automatic gate for the frontend.
 - **Description:** oxlint (React hooks, accessibility, import, Vitest and TypeScript rules; raw HTML rendering, `eval`, `any` and console output banned) with `npm run lint`, and Prettier with `npm run format:check`. oxlint replaces the ESLint originally planned because the project uses the native TypeScript 7 compiler (see `ARCHITECTURE.md` §3).
 - **Acceptance criteria:**
@@ -226,22 +226,28 @@ Windows 11. No database and no globe yet.
   4. No application or test source file changed; only `tsconfig.json` is reformatted.
   5. README, TESTING.md and CHANGELOG.md describe the new gates; all earlier gates still pass.
 - **Tests required:** frontend lint; frontend format check; frontend unit tests (5); frontend type check; frontend build; repository checks (9); backend untouched (55 tests).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #11 (Linux, Node 22.23.4, npm 10.9.9, oxlint 1.94.0, prettier 3.10.1): `npm ci`, lint (7 files), format check, frontend unit tests (5), type check, build (bundle unchanged), `npm audit` (0 vulnerabilities), repository checks (9 tests). Eight planted defects all reported. Backend not re-run: no backend file has changed since its 55/55 run on commit `0914ec5`.
+- **Passed / Failed:** 14 / 0 tests (frontend 5, repository 9); frontend lint, format, type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `4aa7988`
 - **Plan:** `docs/plans/FND-011.md`
 
 ### FND-012 – Browser test infrastructure
-- **Status:** NOT STARTED
-- **Objective:** Verify the real built application in a real browser.
-- **Description:** Add Playwright (Chromium) under `frontend/e2e/`; the test run builds the app, serves the build and opens it.
-- **Acceptance criteria:** `npm run e2e` passes headlessly; the smoke test confirms the page title, the visible application name and zero console errors.
-- **Tests required:** Playwright smoke test; all earlier gates.
+- **Status:** IN PROGRESS
+- **Objective:** Verify the real built application in a real browser with one command.
+- **Description:** Add Playwright (Chromium, version pinned exactly) under `frontend/e2e/`; `npm run e2e` builds the app, serves the build and opens it headlessly. A shared test fixture fails any browser test in which the page logs an error or warning, throws, or has a failed request.
+- **Acceptance criteria:**
+  1. `npm run e2e` builds, serves and tests the application headlessly, reports 4 passed, and exits non-zero when a browser test fails.
+  2. A console error or warning, uncaught error, failed request or HTTP error status fails the test it happens in.
+  3. Browser test files pass lint, format check and type check; the unit test run still collects exactly 5 tests.
+  4. Nothing under `frontend/src/` changed; no report or result files are left visible to Git.
+  5. README, TESTING.md and CHANGELOG.md describe the new gate; all earlier gates still pass.
+- **Tests required:** browser tests (4); frontend lint, format check, unit tests (5), type check, build; repository checks (9); backend untouched (55 tests).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-012.md`
 
 ### FND-013 – Dark theme design tokens
 - **Status:** NOT STARTED
@@ -290,7 +296,7 @@ Windows 11. No database and no globe yet.
 ### FND-017 – Unified check runner
 - **Status:** NOT STARTED
 - **Objective:** One command that runs every gate and reports counts.
-- **Description:** `python scripts/check.py` (stdlib only) runs repo checks, lint and format checks for root-level Python (`tests/repo`, `scripts/`), backend ruff/mypy/pytest, frontend lint/typecheck/unit/build and browser tests, in order, and prints a per-gate and overall pass/fail summary. Non-zero exit if any gate fails. Options to run a single gate.
+- **Description:** `python scripts/check.py` (stdlib only) runs repo checks, lint and format checks for root-level Python (`tests/repo`, `scripts/`), backend ruff/mypy/pytest, frontend lint/typecheck/unit/build and browser tests, in order, and prints a per-gate and overall pass/fail summary. Non-zero exit if any gate fails, and also if any test is reported as skipped (Playwright browser tests can be skipped without the linter noticing). Options to run a single gate.
 - **Acceptance criteria:** all gates run from a clean checkout on Linux and Windows; a failing gate makes the exit code non-zero and is named in the summary; TESTING.md documents the command.
 - **Tests required:** unit tests for the runner's result handling using stub commands; one full real run.
 - **Tests executed:** –
