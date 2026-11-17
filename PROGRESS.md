@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-022 – GitHub Pages deployment (`NOT STARTED`, the planner is writing its plan)
-- **Tasks verified:** 30 of 224
+- **Current task:** FND-033 – Dependency audit with recorded exceptions (`IN PROGRESS`, with a builder). Until it is merged, the dependency audit gate fails on `main` and on every pull request because of an advisory published on 2026-11-17 (PLAN-006)
+- **Tasks verified:** 30 of 226
 - **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (492 today) and fails if any test was skipped. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`. No globe and no data store yet.
 
 ## Reports
@@ -2074,3 +2074,72 @@ the planner confirmed that. The defect is detected either way.
 Commit: `9e0c57a` (squash merge of pull request #31).
 
 Next task: FND-022 – GitHub Pages deployment.
+
+### PLAN-006 – A security advisory, and the GitHub Pages task split in two (2026-11-17)
+
+Not a development task: no application code changed.
+
+**The advisory.** While trying out the GitHub Pages task, the planner's full
+run failed in the last gate, the dependency audit, and nowhere else (18 of
+19 gates). The cause is not in the repository: on the afternoon of
+2026-11-17, after the last green run on `main` (`03c52e5`), an advisory was
+published for `picomatch` (GHSA-fc5q-39xc-vjpf, high: a pattern that is slow
+to match, "ReDoS"). A clean checkout of `main` fails the same way.
+
+- Where it reaches the project: only through the build and test tools. vite
+  8.3.8 and vitest 5.1.0 use tinyglobby 0.2.17, which uses fdir 6.5.0, which
+  uses picomatch 4.0.7. `npm audit --omit=dev` reports 0 vulnerabilities, so
+  nothing that is published to users is affected.
+- What can be done about it today: nothing by updating. Every version is
+  affected, including the newest (4.0.7). npm's only offer is to go back
+  two major versions of vite and vitest.
+- What it means for this project: the weakness is a slow match for certain
+  patterns. The patterns these tools read are the ones written in this
+  repository's own configuration, never anything from outside.
+
+So the gate has been failing on `main` and on every pull request since that
+afternoon, and would go on failing until a fix is published. Three ways
+out were considered. Leaving build tools out of the audit, or only failing
+above some severity, would switch the check off for everything else as
+well, and a compromised build tool can change what is published. Going back
+two major versions swaps a small known risk for old tools. The third is the
+new task:
+
+- **FND-033 – Dependency audit with recorded exceptions.** The audit still
+  fails on every advisory, except one that is recorded in the repository
+  with a reason and a review day at most 31 days away, and it fails again
+  by itself when that day has passed or the exception is no longer needed.
+  One exception is recorded, for this advisory, **to be reviewed by
+  2026-12-17**. The decision to accept it for a month is the planner's,
+  made for the owner and reported to the owner.
+
+Until FND-033 is merged, the run for `main` is red in that one gate on both
+machines, including the run for this commit. Nothing is merged on a red
+run: FND-033's own pull request is the first place the gate is green again.
+
+**The split.** "GitHub Pages deployment" held two jobs that can be tested
+apart: making the application work from the path it will have on GitHub
+Pages (`/MotoSphere/`), which is tested locally in the browser, and the
+deployment workflow, which can only be tested on GitHub. It is now two
+tasks, in this order:
+
+- FND-022 – The application served from the site's path. The planner's
+  trial is done: 87 browser tests (7 new), all gates but the audit passing.
+- FND-034 – GitHub Pages deployment (the workflow and the live address).
+
+Phase 1 has 34 tasks and the project 226. No requirement was dropped.
+Earlier reports that name "FND-022 – GitHub Pages deployment" as the next
+task mean these two.
+
+What the planner tried for FND-033 (Linux, Python 3.13.18 and 3.12.3, Node
+22.23.4, npm 10.9.9, uv 0.11.32), with exactly the files in the plan:
+
+- Script tests: 122 of 122 passed, on both Pythons.
+- Full run: 19 of 19 gates, 541 tests passed, 0 failed, 0 skipped.
+- The real audit without the exception, with an expired one, with one for
+  another advisory and without a lock file: failed each time, with the
+  reason in plain words.
+- 53 of 53 planted defects detected.
+- Not tried: Windows. The builder's pull request runs there.
+
+Next task: FND-033 – Dependency audit with recorded exceptions.

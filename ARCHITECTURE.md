@@ -339,7 +339,7 @@ before the task that adds them is accepted.
 ## 13. Deployment (Decided)
 
 - **GitHub Pages**, deployed by a GitHub Actions workflow: build the
-  frontend, export the data, publish both as one site (task FND-022).
+  frontend, export the data, publish both as one site (task FND-034).
 - Needed from the owner: Pages switched on for the repository with "GitHub
   Actions" as the source. GitHub offers Pages free for public repositories;
   for a private repository the account needs a paid plan.
