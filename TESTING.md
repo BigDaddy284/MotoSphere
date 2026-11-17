@@ -23,6 +23,13 @@ every gate passed. `python scripts/check.py --list` shows the gates without
 running them, and `--only` runs the gates you name, for example
 `python scripts/check.py --only frontend-lint frontend-tests`.
 
+For the five gates that run tests, the runner reads the number of tests
+passed, failed and skipped from the tool's own closing lines and shows them in
+the summary, with a total for the run. Such a gate also fails when a test was
+skipped, when no test ran, or when the numbers cannot be found: a test that
+did not run has proved nothing, so it never passes unnoticed. Tests that are
+expected to fail, marked as still to do or left out of a run count as skipped.
+
 | Name | Gate | Command | Runs in |
 |---|---|---|---|
 | `repo` | Repository checks | `python -m unittest discover -s tests/repo -v` | repository root |
