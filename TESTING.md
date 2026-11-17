@@ -16,6 +16,8 @@ test means the task is not complete.
 | Backend lint | `cd backend && uv run ruff check .` |
 | Backend format | `cd backend && uv run ruff format --check .` |
 | Backend type check | `cd backend && uv run mypy` |
+| Frontend lint | `cd frontend && npm run lint` |
+| Frontend format | `cd frontend && npm run format:check` |
 | Frontend unit tests (`frontend/src/**/*.test.tsx`) | `cd frontend && npm test` |
 | Frontend type check | `cd frontend && npm run typecheck` |
 | Frontend build | `cd frontend && npm run build` |
