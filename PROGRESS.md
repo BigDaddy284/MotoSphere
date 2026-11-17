@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-025 – Section navigation (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 15 of 218
-- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application's layout (top bar, sections panel, globe area and details panel, all still empty), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. They are not connected yet; no globe and no database. The API server is due to be replaced by a data pipeline command (FND-020) following the GitHub Pages decision.
+- **Current task:** FND-015 – Collapsible side panels (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 16 of 218
+- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application's layout (top bar, sections panel with the nine sections to choose from, globe area and details panel; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. They are not connected yet; no globe and no database. The API server is due to be replaced by a data pipeline command (FND-020) following the GitHub Pages decision.
 
 ## Reports
 
@@ -868,3 +868,63 @@ the key; the plan makes such tests wait for the page to be drawn first.
 Commit: `0bfd7e1` (squash merge of pull request #15).
 
 Next task: FND-025 – Section navigation.
+
+### FND-025 – Section navigation (2026-11-17)
+
+TASK: FND-025 – Section navigation
+
+Implementation: Complete (builder thread, pull request #16). The sections
+panel lists Explore, Events, Tracks, Championships, Riders, Teams, Results,
+News and Statistics as buttons. One is current (Explore at start) and is
+marked with `aria-current="page"` and the Graphite selection style; another
+can be chosen by click, or with Tab and Enter or Space. The choice is state
+in `App`. One development dependency was added,
+`@testing-library/user-event` 14.6.12 (MIT), so that unit tests press keys
+the way a user does. Exactly the planned files; the component, its style
+sheet, the section list, `App.tsx`, `AppShell.tsx`, `package.json` and the
+lock file are identical to the planner's trial; the tests differ from the
+trial only in wording. No deviations.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. The lock file changed by
+  the one package only.
+- Frontend lint: passed. Format check: passed.
+- Frontend unit tests: 86/86 passed (6 files), 11 of them new. Type check:
+  passed.
+- Build: passed (script bundle 221.14 kB, style sheet 4.33 kB).
+- Browser tests: 21/21 passed, three runs in a row; 5 of them new (list and
+  start state, click and selection style, keyboard and focus ring, hover,
+  fit at 1366×768).
+- No skipped or focused tests, no suppressions and no fixed sleeps.
+- Gate checks: 12 planted defects all detected: two sections marked current;
+  the choice ignored; two sections swapped; buttons taken out of the
+  keyboard order; selection style removed (browser only); focus ring removed
+  (browser only); list too tall for the panel (browser only); a raw colour
+  (unit only); hover style removed (browser only); the list not rendered by
+  the shell; every click reporting the first section; one section dropped.
+- Repository checks: 9/9 passed.
+- Backend: not touched and not re-run; no backend file has changed since its
+  55/55 run on commit `0914ec5`.
+- `git status` clean after the full run.
+
+Unit tests: 95/95 passed (frontend 86, repository 9). Browser tests: 21/21
+passed.
+Type checking: passed (frontend). Lint and format: passed (frontend).
+Build: passed (frontend).
+Browser verification: passed (automated, headless Chromium, production build).
+
+Overall applicable tests: 116/116 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: choosing a section changes only which item is marked
+current; the panels and the globe do not react yet, and the choice is not
+kept in the address bar, so a reload returns to Explore. The sections have
+no icons (the icon style rules come with FND-024). Not run on Windows 11;
+first Windows run is FND-018.
+
+Commit: `385d15e` (squash merge of pull request #16).
+
+Next task: FND-015 – Collapsible side panels.

@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 26 | 15 |
+| 1 | Foundation (FND) | 26 | 16 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-025 – Section navigation.
+**Current task:** FND-015 – Collapsible side panels.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -315,7 +315,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-014.md`
 
 ### FND-025 – Section navigation
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The user can see and choose the application's sections.
 - **Description:** The sections panel lists Explore, Events, Tracks, Championships, Riders, Teams, Results, News and Statistics as buttons. One section is current (Explore at start); choosing another by mouse or keyboard makes it current. The choice is application state held in `App` that later tasks use to decide what the panels show; nothing else reacts to it yet, and it is not stored in the address bar. Adds one development dependency, `@testing-library/user-event`, so that unit tests can press keys the way a user does.
 - **Acceptance criteria:**
@@ -326,22 +326,30 @@ Windows 11. No database and no globe yet.
   5. At 1366×768 the nine sections fit in the panel without scrolling.
   6. `npm test` reports 86 passed; `npm run e2e` reports 21 passed; all earlier gates pass.
 - **Tests required:** frontend unit tests (86, of which 11 new: 3 for the section data, 5 for the list component, 3 for selection in the application); browser tests (21, of which 5 new: list and start state, click and selection style, keyboard and focus ring, hover, fit at 1366×768); frontend lint, format check, type check, build; `npm audit`; repository checks (9); backend untouched (55 tests).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #16 (Linux, Node 22.23.4, npm 10.9.9): `npm ci`, lint, format check, frontend unit tests (86), type check, build, browser tests (21, three runs in a row), `npm audit` (0 vulnerabilities), repository checks (9 tests). Twelve planted defects all detected. Backend not re-run: no backend file has changed since its 55/55 run on commit `0914ec5`.
+- **Passed / Failed:** 116 / 0 tests (frontend unit 86, browser 21, repository 9); frontend lint, format, type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. Choosing a section changes only which item is marked current; nothing else reacts yet and the choice is not kept in the address bar. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `385d15e`
 - **Plan:** `docs/plans/FND-025.md`
 
 ### FND-015 – Collapsible side panels
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Let the user give the globe the whole screen.
-- **Description:** Collapse/expand controls for the left and right panels, keyboard accessible, state remembered for the session.
-- **Acceptance criteria:** each panel collapses and expands by mouse and keyboard; `aria-expanded` reflects state; the centre stage grows when a panel collapses.
-- **Tests required:** component tests for state and ARIA; browser test measuring centre-stage width before and after.
+- **Description:** A Sections button and a Details button in the top bar close and open the two side panels, by mouse or keyboard. A closed panel stays in the page, hidden, and the globe stage takes its room. The choice is remembered for the browser session (session storage): it survives a reload and ends with the tab. Unknown stored values and unusable storage both mean open. No icons and no animation in this task.
+- **Acceptance criteria:**
+  1. Each panel closes and opens with its own button, by click, Enter and Space, without affecting the other.
+  2. `aria-expanded` on each button matches its panel and `aria-controls` names it.
+  3. At 1366×768 the stage runs from 0 to 1006 without the sections panel, from 220 to 1366 without the details panel and from 0 to 1366 with both closed; the page never scrolls.
+  4. A closed panel's content cannot be reached with Tab.
+  5. The choice survives a reload and does not carry over to a new tab; unknown stored values and unusable storage mean open and the buttons keep working.
+  6. With both panels open the layout is unchanged (the FND-014 layout tests pass unmodified).
+  7. `npm test` reports 96 passed; `npm run e2e` reports 30 passed; all earlier gates pass.
+- **Tests required:** frontend unit tests (96, of which 10 new for the side panels: state, ARIA, keyboard, remembering, bad stored values, storage that throws); browser tests (30, of which 9 new: start state, stage edges for each panel and both, keyboard, keyboard order, reload, new tab, button style); frontend lint, format check, type check, build; `npm audit`; repository checks (9); backend untouched (55 tests).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-015.md`
 
 ### FND-026 – Current date in the top bar
 - **Status:** NOT STARTED
