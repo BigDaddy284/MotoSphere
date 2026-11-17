@@ -1,8 +1,6 @@
 # Runs every gate of the project for each pull request and each change to
 # `main`. The gates themselves are in `scripts/check.py`; this file only
 # prepares a machine and starts them (TESTING.md, "Continuous integration").
-# For a change to `main`, and only when every gate passed, it then builds
-# the site and publishes it on GitHub Pages (TESTING.md, "Deployment").
 name: Checks
 
 on:
@@ -10,15 +8,12 @@ on:
   push:
     branches: [main]
 
-# Every job only reads the repository, is given no secret and cannot write.
-# The one exception is written out at the job that publishes the site.
+# The job only reads the repository. It is given no secret and cannot write.
 permissions:
   contents: read
 
-# A newer commit on a pull request replaces a run that is still going. A run
-# for `main` that has started is never cut short, and runs for `main` go one
-# at a time, in order, so the site is never replaced by an older one. A run
-# for `main` that is still waiting gives way to a newer one.
+# A newer commit on a pull request replaces a run that is still going. Runs
+# for `main` are never cut short, so every commit there gets its result.
 concurrency:
   group: checks-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -72,67 +67,3 @@ jobs:
 
       - name: Run every gate
         run: python scripts/check.py
-
-  # The two jobs below publish the site. They run for a change to `main`
-  # only, never for a pull request, and only after every gate passed on both
-  # machines.
-  site:
-    name: Build the site
-    needs: gates
-    if: github.event_name == 'push'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Install Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: "3.12"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        with:
-          version: "0.11.32"
-
-      - name: Install Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: "22"
-
-      - name: Install the frontend's dependencies
-        working-directory: frontend
-        run: npm ci
-
-      # The published data goes into the site, next to the application.
-      - name: Export the published data
-        working-directory: frontend
-        run: npm run data
-
-      - name: Build the application
-        working-directory: frontend
-        run: npm run build
-
-      - name: Hand the site to the job that publishes it
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
-        with:
-          path: frontend/dist
-
-  # The only job that may publish. It checks out nothing and runs no command:
-  # it takes the site the job above built and hands it to GitHub Pages.
-  deploy:
-    name: Publish the site
-    needs: site
-    if: github.event_name == 'push'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      pages: write
-      id-token: write
-    environment: github-pages
-    steps:
-      - name: Publish the site on GitHub Pages
-        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
