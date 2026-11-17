@@ -1,0 +1,9 @@
+# Lint and format rules for the Python files outside the pipeline:
+# `scripts/`, `tests/repo/` and `tests/scripts/`. They are the pipeline's
+# rules (`backend/pyproject.toml`), with the one difference set out below.
+extend = "backend/pyproject.toml"
+
+[lint]
+# These tests are written with the standard library's `unittest`, so the
+# rules about pytest style do not apply to them.
+extend-ignore = ["PT"]

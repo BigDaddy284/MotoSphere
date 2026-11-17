@@ -1,4 +1,4 @@
-"""Tests of the check runner, `scripts/check.py` (tasks FND-017 and FND-030).
+"""Tests of the check runner, `scripts/check.py` (tasks FND-017, FND-030 and FND-031).
 
 Standard library only:
 
@@ -8,6 +8,7 @@ The stand-in gates are real commands run by the real Python, so these tests
 exercise the runner as it is used, without running the project's slow gates.
 """
 
+import configparser
 import contextlib
 import io
 import json
@@ -17,6 +18,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -81,6 +83,9 @@ class GateTableTest(unittest.TestCase):
                 "backend-lint",
                 "backend-format",
                 "backend-tests",
+                "tools-types",
+                "tools-lint",
+                "tools-format",
                 "frontend-install",
                 "frontend-lint",
                 "frontend-format",
@@ -138,6 +143,51 @@ class GateTableTest(unittest.TestCase):
             },
         )
         self.assertEqual(sorted(check.COUNTERS), ["playwright", "pytest", "unittest", "vitest"])
+
+    def test_tooling_gates_use_the_tools_the_pipeline_has_locked(self) -> None:
+        commands = {gate.key: gate.command for gate in check.GATES if gate.key.startswith("tools-")}
+
+        self.assertEqual(sorted(commands), ["tools-format", "tools-lint", "tools-types"])
+        for key, command in commands.items():
+            with self.subTest(gate=key):
+                self.assertEqual(command[:4], ("uv", "run", "--project", "backend"))
+        self.assertEqual(commands["tools-types"][4:], ("mypy",))
+        self.assertEqual(commands["tools-lint"][4:], ("ruff", "check", *check.TOOLING))
+        self.assertEqual(
+            commands["tools-format"][4:], ("ruff", "format", "--check", *check.TOOLING)
+        )
+
+    def test_every_python_file_outside_the_pipeline_is_under_the_tooling_gates(self) -> None:
+        listed = subprocess.run(
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard", "*.py"],  # noqa: S607
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        outside = [
+            path
+            for path in listed.stdout.splitlines()
+            if not path.startswith(("backend/", "frontend/"))
+        ]
+
+        self.assertIn("scripts/check.py", outside)
+        self.assertIn("tests/repo/test_repo_hygiene.py", outside)
+        for path in outside:
+            with self.subTest(path=path):
+                self.assertIn(path.split("/")[0], check.TOOLING)
+
+    def test_tooling_follows_the_rules_of_the_pipeline(self) -> None:
+        with (ROOT / "ruff.toml").open("rb") as file:
+            rules = tomllib.load(file)
+        types = configparser.ConfigParser()
+        types.read(ROOT / "mypy.ini", encoding="utf-8")
+
+        self.assertEqual(
+            rules, {"extend": "backend/pyproject.toml", "lint": {"extend-ignore": ["PT"]}}
+        )
+        self.assertEqual(types["mypy"]["files"], ", ".join(check.TOOLING))
+        self.assertEqual(types["mypy"]["strict"], "True")
 
     def test_testing_document_lists_every_gate_with_its_command(self) -> None:
         document = (ROOT / "TESTING.md").read_text(encoding="utf-8")

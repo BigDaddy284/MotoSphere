@@ -78,6 +78,8 @@ NOT_IGNORED_SAMPLE_PATHS = (
     "frontend/public/favicon.svg",
     "scripts/start.ps1",
     "scripts/check.py",
+    "ruff.toml",
+    "mypy.ini",
     "docs/plans/FND-001.md",
     "tests/repo/test_repo_hygiene.py",
     "tests/scripts/test_check.py",
@@ -90,10 +92,12 @@ MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\
 CODE_FENCE = re.compile(r"^(```|~~~).*?^\1", re.MULTILINE | re.DOTALL)
 
 
-def git(*args: str) -> subprocess.CompletedProcess:
+def git(*args: str) -> subprocess.CompletedProcess[str]:
     """Run Git in the repository root with an argument list (never a shell)."""
-    return subprocess.run(
-        ["git", *args],
+    # The arguments are fixed lists written in this file, and Git is looked up
+    # on the PATH on purpose: it is wherever the developer installed it.
+    return subprocess.run(  # noqa: S603
+        ["git", *args],  # noqa: S607
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -105,7 +109,7 @@ def check_ignore(path: str) -> int:
     return git("check-ignore", "-q", "--", path).returncode
 
 
-def check_attr(path: str) -> dict:
+def check_attr(path: str) -> dict[str, str]:
     """Return the `text` and `eol` attributes Git resolves for a path."""
     result = git("check-attr", "text", "eol", "--", path)
     if result.returncode != 0:
@@ -118,7 +122,7 @@ def check_attr(path: str) -> dict:
     return attributes
 
 
-def tracked_files() -> list:
+def tracked_files() -> list[str]:
     result = git("ls-files")
     if result.returncode != 0:
         raise RuntimeError(f"git ls-files failed: {result.stderr.strip()}")
@@ -126,7 +130,7 @@ def tracked_files() -> list:
 
 
 class RepositoryHygieneTest(unittest.TestCase):
-    def test_required_documents_exist(self):
+    def test_required_documents_exist(self) -> None:
         for name in REQUIRED_DOCUMENTS:
             with self.subTest(document=name):
                 path = ROOT / name
@@ -135,13 +139,13 @@ class RepositoryHygieneTest(unittest.TestCase):
                 content = path.read_text(encoding="utf-8")
                 self.assertTrue(content.strip(), f"{name} is empty")
 
-    def test_generated_and_secret_paths_are_ignored(self):
+    def test_generated_and_secret_paths_are_ignored(self) -> None:
         for path in IGNORED_SAMPLE_PATHS:
             with self.subTest(path=path):
                 code = check_ignore(path)
                 self.assertEqual(code, 0, f"{path} is not ignored (git check-ignore exit {code})")
 
-    def test_source_paths_are_not_ignored(self):
+    def test_source_paths_are_not_ignored(self) -> None:
         for path in NOT_IGNORED_SAMPLE_PATHS:
             with self.subTest(path=path):
                 code = check_ignore(path)
@@ -149,7 +153,7 @@ class RepositoryHygieneTest(unittest.TestCase):
                     raise RuntimeError(f"git check-ignore failed for {path} with exit code {code}")
                 self.assertEqual(code, 1, f"{path} is ignored but must be tracked")
 
-    def test_no_secret_or_environment_files_tracked(self):
+    def test_no_secret_or_environment_files_tracked(self) -> None:
         offending = []
         for path in tracked_files():
             name = path.rsplit("/", 1)[-1]
@@ -159,7 +163,7 @@ class RepositoryHygieneTest(unittest.TestCase):
                 offending.append(path)
         self.assertEqual(offending, [], f"Secret or environment files are tracked: {offending}")
 
-    def test_line_ending_attributes(self):
+    def test_line_ending_attributes(self) -> None:
         expectations = (
             ("backend/src/app.py", "eol", "lf"),
             ("frontend/src/main.tsx", "eol", "lf"),
@@ -174,7 +178,7 @@ class RepositoryHygieneTest(unittest.TestCase):
             with self.subTest(path=path, attribute=attribute):
                 self.assertEqual(check_attr(path).get(attribute), expected)
 
-    def test_tracked_text_files_are_lf_in_repository(self):
+    def test_tracked_text_files_are_lf_in_repository(self) -> None:
         result = git("ls-files", "--eol")
         self.assertEqual(result.returncode, 0, result.stderr)
         offending = []
@@ -185,9 +189,11 @@ class RepositoryHygieneTest(unittest.TestCase):
             index_eol = info.split()[0]
             if index_eol in ("i/crlf", "i/mixed"):
                 offending.append(f"{path} ({index_eol})")
-        self.assertEqual(offending, [], f"Tracked files without LF line endings in the index: {offending}")
+        self.assertEqual(
+            offending, [], f"Tracked files without LF line endings in the index: {offending}"
+        )
 
-    def test_editorconfig_baseline(self):
+    def test_editorconfig_baseline(self) -> None:
         content = (ROOT / ".editorconfig").read_text(encoding="utf-8")
         for key, value in (
             ("root", "true"),
@@ -199,7 +205,7 @@ class RepositoryHygieneTest(unittest.TestCase):
                 pattern = rf"^\s*{re.escape(key)}\s*=\s*{re.escape(value)}\s*$"
                 self.assertRegex(content, re.compile(pattern, re.MULTILINE))
 
-    def test_readme_links_resolve(self):
+    def test_readme_links_resolve(self) -> None:
         text = (ROOT / "README.md").read_text(encoding="utf-8")
         text = CODE_FENCE.sub("", text)
         linked = set()
@@ -209,12 +215,14 @@ class RepositoryHygieneTest(unittest.TestCase):
             target = target.split("#", 1)[0]
             linked.add(target)
             with self.subTest(link=target):
-                self.assertTrue((ROOT / target).exists(), f"README link target does not exist: {target}")
+                self.assertTrue(
+                    (ROOT / target).exists(), f"README link target does not exist: {target}"
+                )
         for document in README_LINKED_DOCUMENTS:
             with self.subTest(required_link=document):
                 self.assertIn(document, linked, f"README does not link to {document}")
 
-    def test_changelog_has_unreleased_section(self):
+    def test_changelog_has_unreleased_section(self) -> None:
         content = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
         self.assertRegex(content, re.compile(r"^## \[Unreleased\]\s*$", re.MULTILINE))
 

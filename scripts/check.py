@@ -68,6 +68,9 @@ class Result:
     counts: Counts | None = None
 
 
+# The folders that hold Python files outside the pipeline.
+TOOLING = ("scripts", "tests")
+
 # In the order they run. The two install gates come before the gates that need
 # what they install, so the runner works from a clean checkout.
 GATES: tuple[Gate, ...] = (
@@ -94,6 +97,19 @@ GATES: tuple[Gate, ...] = (
         "backend",
     ),
     Gate("backend-tests", "Backend tests", ("uv", "run", "pytest"), "backend", "pytest"),
+    # The Python files outside the pipeline are checked with the pipeline's
+    # locked tools, from the repository root (`ruff.toml`, `mypy.ini`).
+    Gate("tools-types", "Tooling type check", ("uv", "run", "--project", "backend", "mypy")),
+    Gate(
+        "tools-lint",
+        "Tooling lint",
+        ("uv", "run", "--project", "backend", "ruff", "check", *TOOLING),
+    ),
+    Gate(
+        "tools-format",
+        "Tooling format",
+        ("uv", "run", "--project", "backend", "ruff", "format", "--check", *TOOLING),
+    ),
     Gate("frontend-install", "Frontend install", ("npm", "ci"), "frontend"),
     Gate("frontend-lint", "Frontend lint", ("npm", "run", "lint"), "frontend"),
     Gate("frontend-format", "Frontend format", ("npm", "run", "format:check"), "frontend"),
