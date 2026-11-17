@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-024 – Application icon in the Sky Classic style (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 20 of 218
-- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme. The two are not connected yet; no globe and no data store.
+- **Current task:** FND-016 – Frontend data client and data status (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 21 of 218
+- **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. The two are not connected yet; no globe and no data store.
 
 ## Reports
 
@@ -1230,3 +1230,85 @@ setting.
 Commit: `b234233` (squash merge of pull request #20).
 
 Next task: FND-024 – Application icon in the Sky Classic style.
+
+### FND-024 – Application icon in the Sky Classic style (2026-11-17)
+
+TASK: FND-024 – Application icon in the Sky Classic style
+
+Implementation: Complete (builder thread, pull request #21). The owner's
+approved icon and a small design for sizes under 64 pixels were added by the
+planner beforehand (`docs/design/icon/`, with the rules for both). The
+builder added the script `npm run icons`, which generates the served files
+from the two designs with the browser the browser tests already use, and
+committed its output: `favicon.svg` (the small design, byte for byte),
+`favicon.ico` (16, 32 and 48 pixel images) and `apple-touch-icon.png`
+(180 pixels, the full design on a `#1e1f22` background). The page links all
+three. No new dependency. Exactly the planned files; the script, the
+browser tests, the page, and all three generated files are identical, byte
+for byte, to the planner's trial.
+
+Independent test run (planner, clean checkout of the pull request, Linux,
+Node 22.23.4, npm 10.9.9):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. `package-lock.json`
+  unchanged.
+- Frontend lint: passed. Format check: passed.
+- Frontend unit tests: 115/115 passed (8 files; none new, none changed).
+  Type check: passed.
+- Build: passed; the built site holds the three icon files.
+- Browser tests: 47/47 passed, three runs in a row; 13 of them new and one
+  earlier icon test replaced. They check, against the production build: the
+  page's three links; the content type of each file; that the served SVG is
+  the small design; that neither design holds a script, an event handler, a
+  link, an embedded image or an outside address; the colours of both
+  designs; the directory and the images of the ICO file; the colours of
+  chosen pixels of the 16, 32 and 48 pixel images and of the touch icon, as
+  the browser decodes them.
+- `npm run icons` run again: no file changed. SHA-256 of the generated
+  files: `favicon.svg` `b9512f45…094be8` (718 bytes), `favicon.ico`
+  `d641973b…fe0a48c` (6415 bytes), `apple-touch-icon.png`
+  `967e6141…308a062d` (29806 bytes).
+- No skipped or focused tests and no suppressions.
+- Gate checks: 23 of 23 planted defects detected: no link to the fallback
+  icon; no link to the touch icon; vector link to a missing file; fallback
+  link without its size; served vector icon different from the design; the
+  old placeholder left in place; a size missing from the ICO file; sizes in
+  the wrong order; ICO images drawn from the full design; drawn at the wrong
+  size; drawn on a solid background; touch icon drawn from the small design;
+  with see-through corners; at the wrong size; on a black background; wrong
+  bit depth in the ICO directory; wrong image offsets; and, in the designs, a
+  script element, an event handler, an embedded outside image, an outside
+  address in a paint, and colours off the palette (two ways).
+- Visual check by the planner: the committed files at 16, 32, 48 and 180
+  pixels, true size and enlarged, on dark and light backgrounds. The globe
+  reads clearly at 32 and 48 pixels; at 16 pixels it is a sky-blue ring with
+  a hint of the grid on the dark tile; at 180 pixels the lettering is
+  readable.
+- Repository checks: 9/9 passed.
+- Backend: not touched and not re-run; no backend file has changed since its
+  115/115 run on pull request #20.
+- `git status` clean after the full run.
+
+Unit tests: 124/124 passed (frontend 115, repository 9). Browser tests: 47/47
+passed.
+Type checking: passed (frontend). Lint and format: passed (frontend).
+Build: passed (frontend).
+Browser verification: passed (automated, headless Chromium, production
+build), plus the planner's visual check.
+
+Overall applicable tests: 171/171 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the owner approved the full design; the small design is
+the planner's reduction of it, shown to the owner on the same day, and may
+still change if the owner asks. The PNG and ICO images were drawn by
+Chromium on Linux, and another system may draw slightly different bytes, so
+the tests check sizes and pixels, not hashes. Which of the linked icons a
+browser picks for its tab is the browser's choice and is not tested. There
+is no web app manifest and no icon inside the page yet. Not run on
+Windows 11; first Windows run is FND-018.
+
+Commit: `a8cf14d` (squash merge of pull request #21).
+
+Next task: FND-016 – Frontend data client and data status.

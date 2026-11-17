@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 26 | 20 |
+| 1 | Foundation (FND) | 26 | 21 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-024 – Application icon in the Sky Classic style.
+**Current task:** FND-016 – Frontend data client and data status.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -370,7 +370,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-026.md`
 
 ### FND-024 – Application icon in the Sky Classic style
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** MotoSphere has its own icon, linked by the page and recognisable at every size it is used.
 - **Description:** The owner approved the full design on 2026-11-17: a globe outline with MOTO following the top of the rim and SPHERE the bottom, in Orbitron converted to outlines, on the Sky Classic tile. It is kept unchanged in `docs/design/icon/`, together with a small design for sizes under 64 pixels, where the lettering cannot be read: the same tile and gradients, the outline closed into a full circle, a reduced grid, no lettering and no glow. One script, `npm run icons`, generates the served files from the two designs with the browser the browser tests already use: `favicon.svg` (the small design), `favicon.ico` (16, 32 and 48 pixel images) and `apple-touch-icon.png` (180 pixels, full design). The page links all three. The icon rules, including the owner's preferences and the style for later interface icons, are written down in `docs/design/icon/README.md`.
 - **Acceptance criteria:**
@@ -381,10 +381,10 @@ Windows 11. No database and no globe yet.
   5. `npm run e2e` reports 47 passed and `npm test` 115 passed.
   6. The planner has looked at the icon at 16, 32, 48 and 180 pixels on dark and light backgrounds.
 - **Tests required:** browser tests (47, of which 13 new: the page's links, three content types, the vector icon equal to the small design, two checks that the designs hold nothing that runs or loads, the designs' colours, the images inside the ICO file, three checks of decoded pixels at 16, 32 and 48 pixels, the touch icon; one earlier icon test is replaced); frontend unit tests unchanged (115); lint, format check, type check, build, audit; repository checks (9); visual check by the planner at four sizes; backend untouched (115).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #21 (Linux, Node 22.23.4, npm 10.9.9): `npm ci`, lint, format check, frontend unit tests (115), type check, build, browser tests (47, three runs in a row), `npm audit` (0 vulnerabilities), repository checks (9 tests). `npm run icons` was run again and changed nothing; the three generated files have the same bytes as in the planner's trial. 23 of 23 planted defects detected. The planner looked at the icon at 16, 32, 48 and 180 pixels on dark and light backgrounds. Backend not re-run: no backend file has changed since its run on pull request #20.
+- **Passed / Failed:** 171 / 0 tests (frontend unit 115, browser 47, repository 9); frontend lint, format, type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. The owner approved the full design; the small design is the planner's reduction of it and was shown to the owner the same day. The PNG and ICO images were drawn by Chromium on Linux; another system may draw slightly different bytes. Which icon a browser picks for its tab was not tested. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `a8cf14d`
 - **Plan:** `docs/plans/FND-024.md`
 
 ### FND-020 – Replace the API server with the pipeline command line
