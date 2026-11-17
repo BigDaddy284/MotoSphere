@@ -10,6 +10,8 @@ interface AppShellProps {
   name: string
   /** One line under the name. */
   tagline: string
+  /** Short information shown at the end of the top bar, such as the date. */
+  info: ReactNode
   /** What the sections panel shows. */
   sections: ReactNode
 }
@@ -20,7 +22,7 @@ interface AppShellProps {
  * always gets the largest share of the screen, and takes the room of a side
  * panel that the user closes with its button in the top bar.
  */
-export function AppShell({ name, tagline, sections }: AppShellProps) {
+export function AppShell({ name, tagline, info, sections }: AppShellProps) {
   const [sectionsOpen, toggleSections] = usePanelOpen('sections')
   const [detailsOpen, toggleDetails] = usePanelOpen('details')
 
@@ -38,9 +40,10 @@ export function AppShell({ name, tagline, sections }: AppShellProps) {
         </button>
         <h1 className={styles.name}>{name}</h1>
         <p className={styles.tagline}>{tagline}</p>
+        <div className={styles.info}>{info}</div>
         <button
           type="button"
-          className={`${styles.toggle} ${styles.toggleEnd}`}
+          className={styles.toggle}
           aria-expanded={detailsOpen}
           aria-controls={DETAILS_PANEL_ID}
           onClick={toggleDetails}

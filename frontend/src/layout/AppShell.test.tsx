@@ -5,7 +5,12 @@ import { AppShell } from './AppShell.tsx'
 
 function renderShell() {
   return render(
-    <AppShell name="Test name" tagline="Test tagline" sections={<p>Test sections</p>} />,
+    <AppShell
+      name="Test name"
+      tagline="Test tagline"
+      info={<p>Test info</p>}
+      sections={<p>Test sections</p>}
+    />,
   )
 }
 
@@ -16,6 +21,17 @@ describe('AppShell', () => {
     const topBar = screen.getByRole('banner')
     expect(within(topBar).getByRole('heading', { level: 1, name: 'Test name' })).toBeVisible()
     expect(within(topBar).getByText('Test tagline')).toBeVisible()
+  })
+
+  it('shows the info content in the top bar, between the tagline and the Details button', () => {
+    renderShell()
+
+    const topBar = screen.getByRole('banner')
+    expect(within(topBar).getByText('Test info')).toBeVisible()
+    const texts = [...topBar.querySelectorAll('h1, p, button')].map(
+      (element) => element.textContent,
+    )
+    expect(texts).toEqual(['Sections', 'Test name', 'Test tagline', 'Test info', 'Details'])
   })
 
   it('shows the sections content inside the sections panel', () => {
