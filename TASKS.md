@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 32 | 29 |
+| 1 | Foundation (FND) | 32 | 30 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-032 – Continuous integration on Windows.
+**Current task:** FND-022 – GitHub Pages deployment.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -568,7 +568,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-018.md`
 
 ### FND-032 – Continuous integration on Windows
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Every pull request and every change to `main` is also checked on Windows.
 - **Description:** The checks workflow runs its one set of steps on two machines, Linux (`ubuntu-24.04`) and Windows (`windows-2025`). Each gives its own result, and one failing does not stop the other. The browser install becomes two steps of one command each, because on Windows a step with several commands only fails on its last one; a repository check forbids such steps. The planner's trial on GitHub (pull request #30, closed without merging) showed that the project passes every gate on Windows as it is, so no fix for Windows is part of the plan. Split from FND-018.
 - **Acceptance criteria:**
@@ -578,10 +578,10 @@ Windows 11. No database and no globe yet.
   4. Every rule from FND-018 still holds.
   5. After the merge, the run for `main` is green on both machines.
 - **Tests required:** repository checks (25, of which 3 new and 1 replaced); the full local run of all 19 gates; the real workflow run on the pull request (both jobs green on the final commit; with a test that fails on Windows only, Windows red and Linux green); the run for `main` after the merge.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #31 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: repository checks (25, and 25 again on Python 3.12) and the full run started from another folder: 19 of 19 gates passed, "Tests: 492 passed, 0 failed, 0 skipped.", exit code 0. 41 of 41 planted defects in the workflow detected. On GitHub, read by the planner: run 44132384609 on the final commit of the pull request, both jobs green ("All gates (Linux)" on ubuntu-24.04 and "All gates (Windows)" on windows-2025 with Python 3.12.10; the Windows log ends with "19 of 19 gates passed." and "Tests: 492 passed, 0 failed, 0 skipped."); run 44131523747 on a commit with a test that fails on Windows only: the Windows job red at the step that runs the gates, the Linux job green, both run to the end; run 44133777708 for `main` after the merge, both jobs green. The planner's own trial (pull request #30, closed without merging) gave the same results before the task was handed over.
+- **Passed / Failed:** 492 / 0 tests (repository 25, script tests 73, backend 115, frontend unit 199, browser 80); all 19 gates passed, locally and on both machines on GitHub
+- **Verification status:** Verified by the planner on 2026-11-17. This is the first time the project ran on Windows, and it passed every gate without a change to the application, the tests or the check runner. The machine is Windows Server 2025 on GitHub, not the owner's Windows 11 PC (that is FND-019). The plan said prove-it step 7 fails 2 tests; as worded it fails 1, and the defect is detected either way.
+- **Commit:** `9e0c57a`
 - **Plan:** `docs/plans/FND-032.md`
 
 ### FND-022 – GitHub Pages deployment
