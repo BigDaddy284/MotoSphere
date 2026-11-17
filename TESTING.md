@@ -151,7 +151,9 @@ nothing newer slips into the code unnoticed.
 The workflow is given as little as possible, and the repository checks hold
 it to that:
 
-- Its token can only read the repository, and it uses no secret.
+- Its token can only read the repository, and it uses no secret. The one
+  job that publishes the site (see "Deployment") is given the right to
+  publish to GitHub Pages and nothing else.
 - Every action is pinned to a full commit, with its release beside it, and
   only actions on a short list may be used. To update one, change the commit
   and the release together.
@@ -160,7 +162,29 @@ it to that:
   pull request, reaches a command.
 - No step may be skipped or allowed to fail, and every step runs one
   command: on Windows, a step with several commands only fails on its last
-  one.
+  one. The only condition in the workflow is the one that keeps the two
+  publishing jobs to changes to `main`.
+
+## Deployment
+
+For a change to `main`, and only when every gate passed on both machines,
+the same workflow publishes the site on GitHub Pages, at
+<https://bigdaddy284.github.io/MotoSphere/>. Two more jobs do it:
+
+- "Build the site" exports the published data (`npm run data`), builds the
+  application (`npm run build`) and hands the result, `frontend/dist`, to
+  the next job. It can only read the repository.
+- "Publish the site" is the only job that may publish. It checks out
+  nothing and runs no command of its own: it takes the site the other job
+  built and hands it to GitHub Pages, through the `github-pages`
+  environment.
+
+A pull request never publishes: both jobs are skipped there, and the
+workflow starts for nothing but pull requests and changes to `main`. Runs
+for `main` go one at a time, in order, so an older commit never replaces a
+newer one on the site; a run that is still waiting gives way to a newer
+one. The repository checks hold the workflow to all of this, together with
+the rules above.
 
 ## Latest results
 

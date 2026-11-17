@@ -341,8 +341,10 @@ before the task that adds them is accepted.
 
 ## 13. Deployment (Decided)
 
-- **GitHub Pages**, deployed by a GitHub Actions workflow: build the
-  frontend, export the data, publish both as one site (task FND-034).
+- **GitHub Pages**, deployed by the checks workflow after every gate passed
+  for a change to `main`: one job exports the data and builds the frontend,
+  a second job, the only one with the right to publish, hands both to
+  GitHub Pages as one site (task FND-034; TESTING.md, "Deployment").
 - Needed from the owner: Pages switched on for the repository with "GitHub
   Actions" as the source. GitHub offers Pages free for public repositories;
   for a private repository the account needs a paid plan.
