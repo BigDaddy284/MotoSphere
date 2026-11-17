@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 24 | 12 |
+| 1 | Foundation (FND) | 24 | 13 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-013 – Dark theme design tokens.
+**Current task:** FND-023 – Apply the owner's Graphite theme.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -264,7 +264,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-012.md`
 
 ### FND-013 – Dark theme design tokens
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One source of truth for colours, type, spacing, shape and motion, proven readable by tests.
 - **Description:** CSS custom properties for the dark motorsport theme (surfaces, text, one restrained accent, status colours, focus ring, system fonts and type scale, spacing, radii, motion) and base styles (reset, dark colour scheme, typography, keyboard focus ring, reduced motion). No web fonts.
 - **Acceptance criteria:**
@@ -273,25 +273,27 @@ Windows 11. No database and no globe yet.
   3. In the browser the page has the dark background, light text, system font, no page margin, a visible keyboard focus ring, and no motion when reduced motion is requested.
   4. `npm test` reports 46 passed; `npm run e2e` reports 9 passed; all earlier gates pass.
 - **Tests required:** frontend unit tests (46, of which 41 new: contrast maths 10, tokens and style sheets 31); browser tests (9, of which 5 new); frontend lint, format check, type check, build; repository checks (9); backend untouched (55 tests).
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** On pull request #13 merged with `main` in a clean checkout (Linux, Node 22.23.4, npm 10.9.9): `npm ci`, lint, format check, frontend unit tests (46), type check, build, browser tests (9), `npm audit` (0 vulnerabilities), repository checks (9 tests). Eleven planted defects all detected. Backend not re-run: no backend file has changed since its 55/55 run on commit `0914ec5`.
+- **Passed / Failed:** 64 / 0 tests (frontend unit 46, browser 9, repository 9); frontend lint, format, type-check and build gates passed
+- **Verification status:** Verified by the planner on 2026-11-17. The colours are provisional: the owner's Graphite theme replaces them in FND-023. Not run on Windows 11 (first Windows run is FND-018).
+- **Commit:** `7e04f76`
 - **Plan:** `docs/plans/FND-013.md`
 
 ### FND-023 – Apply the owner's Graphite theme
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The application uses the colours and font the owner chose.
 - **Description:** Replace the provisional colour tokens from FND-013 with the owner's Graphite theme (soft charcoal greys with a sky-blue accent, `docs/design/graphite-theme/`): bar, canvas, panel, window, control and pressed surfaces, borders, text, secondary and disabled text, the blue accent family and selection colour, and the Segoe UI font stack. Status colours stay. Base styles, contrast tests and browser tests follow the new names and values.
 - **Acceptance criteria:**
   1. Every Graphite colour appears as a token with exactly the owner's value; no provisional colour remains.
   2. Contrast is tested with the real numbers: main text ≥ 7:1 and secondary text ≥ 4.5:1 on every surface they are used on; link and focus colour ≥ 4.5:1 on bar, canvas, panel and window. White on the accent blue measures 3.89:1, which meets the 3:1 level for large or bold labels only; the test records that limit and the documentation states it.
-  3. In the browser the page shows the Graphite window colour, text colour, font and focus ring.
-- **Tests required:** updated token and contrast unit tests; updated theme browser tests; all frontend gates; repository checks.
+  3. In the browser the page shows the Graphite canvas colour as its background, the Graphite text colour, the Segoe UI font stack and the sky-blue focus ring.
+  4. `npm test` reports 69 passed; `npm run e2e` reports 9 passed; all earlier gates pass.
+- **Tests required:** frontend unit tests (69: 47 contrast cases, a check of the 16 Graphite colours against the owner's values, token and style sheet checks, contrast maths, existing tests); browser tests (9); frontend lint, format check, type check, build; repository checks (9); backend untouched (55 tests).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-023.md`
 
 ### FND-024 – Application icon in the Sky Classic style
 - **Status:** NOT STARTED

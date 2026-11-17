@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-013 – Dark theme design tokens (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 12 of 216
-- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application name, and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). They are not connected yet; no globe and no database.
+- **Current task:** FND-023 – Apply the owner's Graphite theme (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 13 of 216
+- **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application name, and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page has a dark theme. They are not connected yet; no globe and no database. The API server is due to be replaced by a data pipeline command (FND-020) following the GitHub Pages decision.
 
 ## Reports
 
@@ -678,3 +678,60 @@ changed.
 Open points for the owner: GitHub Pages must be switched on for the
 repository before FND-022 can be verified (a public repository, or a paid
 plan for a private one).
+
+### FND-013 – Dark theme design tokens (2026-11-17)
+
+TASK: FND-013 – Dark theme design tokens
+
+Implementation: Complete (builder thread, pull request #13). Design tokens
+as CSS custom properties (13 colours, system fonts and type scale, spacing,
+radii, motion) in one file, and base styles that apply them: dark colour
+scheme, typography, keyboard focus ring and reduced motion. A WCAG contrast
+helper for tests. Token tests: exact token set, no duplicates, hex colours,
+25 contrast cases, no raw colours outside the token file, no unknown token
+names in any style sheet. Five browser tests of the applied theme.
+TESTING.md and CHANGELOG updated. Exactly the ten planned files; the two
+style sheets are identical to the plan. Deviations, both accepted: sorted
+copies (`toSorted`) instead of in-place sorting, and the contrast helper
+written without a non-null assertion.
+
+Independent test run (planner, the pull request merged with `main` in a
+clean checkout, Linux, Node 22.23.4, npm 10.9.9):
+
+- `npm ci`: passed. `npm audit`: 0 vulnerabilities. No dependency changed.
+- Frontend lint: passed. Format check: passed.
+- Frontend unit tests: 46/46 passed (4 files). Type check: passed.
+- Build: passed; script bundle unchanged at 219.76 kB plus one 2.00 kB style
+  sheet.
+- Browser tests: 9/9 passed.
+- No skipped or focused tests and no suppressions.
+- Gate checks: 11 planted defects all detected: low-contrast colour (exactly
+  the 3 affected cases fail); misspelt token (unit and browser); raw hex
+  colour; raw `rgb()` colour; duplicate token; styles not imported (4 browser
+  tests fail); focus ring rule removed; reduced-motion rule removed; style
+  sheet processing switched off in the unit runner; an extra token outside
+  the agreed set; and a wrong coefficient in the contrast maths (caught by
+  the helper's own tests).
+- Repository checks: 9/9 passed.
+- Backend: not touched and not re-run; no backend file has changed since its
+  55/55 run on commit `0914ec5`.
+- `git status` clean after the full run.
+
+Unit tests: 55/55 passed (frontend 46, repository 9). Browser tests: 9/9
+passed.
+Type checking: passed (frontend). Lint and format: passed (frontend).
+Build: passed (frontend).
+Browser verification: passed (automated, headless Chromium, production build).
+
+Overall applicable tests: 64/64 passed (100%), all gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the colours are provisional. While this task was being
+built the owner supplied the Graphite theme; FND-023 replaces the colour
+values and font stack. The page content sits in the top-left corner until
+the layout task FND-014. Not run on Windows 11; first Windows run is FND-018.
+
+Commit: `7e04f76` (squash merge of pull request #13).
+
+Next task: FND-023 – Apply the owner's Graphite theme.
