@@ -65,8 +65,9 @@ npm run dev
 ```
 
 Open the address Vite prints, normally <http://localhost:5173>. The page shows
-the application name; it does not use the API yet. Press Ctrl+C to stop the
-development server.
+the application's layout: a top bar, a sections panel, the globe area and a
+details panel, with no globe or data yet. Press Ctrl+C to stop the development
+server.
 
 ## Running the checks
 

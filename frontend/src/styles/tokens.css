@@ -62,6 +62,11 @@
   --space-6: 2rem;
   --space-7: 3rem;
 
+  /* Layout */
+  --size-top-bar: 3rem;
+  --size-sections-panel: 13.75rem;
+  --size-details-panel: 22.5rem;
+
   /* Shape */
   --radius-sm: 4px;
   --radius-md: 8px;

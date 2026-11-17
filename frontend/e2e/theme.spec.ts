@@ -16,8 +16,15 @@ test.describe('Graphite theme', () => {
     await expect(body).toHaveCSS('font-size', '16px')
     await expect(body).toHaveCSS('line-height', '24px')
     await expect(body).toHaveCSS('margin', '0px')
-    const heading = page.getByRole('heading', { level: 1 })
-    await expect(heading).toHaveCSS('font-size', '32px')
+    // The application's own heading is styled by the shell, so the test adds
+    // a heading to measure the base heading style.
+    await page.evaluate(() => {
+      const heading = document.createElement('h2')
+      heading.textContent = 'Heading probe'
+      document.body.append(heading)
+    })
+    const heading = page.getByRole('heading', { name: 'Heading probe' })
+    await expect(heading).toHaveCSS('font-size', '24px')
     await expect(heading).toHaveCSS('font-weight', '700')
   })
 
