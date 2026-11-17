@@ -80,8 +80,11 @@ npm run dev
 fresh data. The top bar shows when the data was updated, or "Data
 unavailable" when `npm run data` has not been run.
 
-Open the address Vite prints, normally <http://localhost:5173>. The page shows
-the application's layout: a top bar, a sections panel, the globe area and a
+Open the address Vite prints, normally <http://localhost:5173/MotoSphere/>.
+The application lives under `/MotoSphere/` everywhere, on your machine as on
+the published site, because GitHub Pages serves a project's site under the
+name of its repository (the path is set once, in `frontend/site.ts`). The page
+shows the application's layout: a top bar, a sections panel, the globe area and a
 details panel. The top bar shows when the data was updated and, next to it,
 today's date, both in the language and time zone of your browser; the date
 changes at midnight. The sections panel lists the

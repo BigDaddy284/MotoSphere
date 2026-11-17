@@ -12,6 +12,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   files (owner decision, 2026-11-17).
 - Visual identity: the owner's Graphite theme and Sky Classic icon style are
   the design references (`docs/design/`).
+- The application is served under `/MotoSphere/`, the path it has on GitHub
+  Pages, in development and in the browser tests too; the development
+  address is now <http://localhost:5173/MotoSphere/> (FND-022).
 
 ### Added
 

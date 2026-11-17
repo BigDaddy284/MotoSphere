@@ -35,7 +35,7 @@ for (const viewport of VIEWPORTS) {
     test.use({ viewport })
 
     test('the four regions fill the screen without overlapping', async ({ page }) => {
-      await page.goto('/')
+      await page.goto('./')
       const region = regions(page)
       const topBar = await box(region.topBar)
       const sections = await box(region.sections)
@@ -59,7 +59,7 @@ for (const viewport of VIEWPORTS) {
     })
 
     test('the globe stage is the largest region', async ({ page }) => {
-      await page.goto('/')
+      await page.goto('./')
       const region = regions(page)
       const sections = await box(region.sections)
       const stage = await box(region.stage)
@@ -70,7 +70,7 @@ for (const viewport of VIEWPORTS) {
     })
 
     test('the page itself does not scroll', async ({ page }) => {
-      await page.goto('/')
+      await page.goto('./')
       const overflow = await page.evaluate(() => {
         const root = document.documentElement
         return {
@@ -84,7 +84,7 @@ for (const viewport of VIEWPORTS) {
 }
 
 test('the regions use the Graphite surfaces', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('./')
   const region = regions(page)
   await expect(region.topBar).toHaveCSS('background-color', 'rgb(27, 28, 31)')
   await expect(region.sections).toHaveCSS('background-color', 'rgb(34, 35, 39)')

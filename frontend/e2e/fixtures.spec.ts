@@ -65,18 +65,18 @@ test.describe('judging the problems a page reported', () => {
 // tests do nothing wrong themselves, so what fails them is the rule.
 test.describe('a test that expects no problem', () => {
   test('passes on a healthy page', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
   })
 
   test('passes when the page only writes information to its console', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('./')
 
     await writeToConsole(page, 'info', 'all is well')
   })
 
   test('fails when the page reports one', async ({ page }) => {
     test.fail()
-    await page.goto('/')
+    await page.goto('./')
 
     await breakPage(page, 'boom')
   })
@@ -85,7 +85,7 @@ test.describe('a test that expects no problem', () => {
 test.describe('a test that expects a problem', () => {
   test('passes when the page reports it', async ({ page, expectProblem }) => {
     expectProblem(/^uncaught error: boom$/)
-    await page.goto('/')
+    await page.goto('./')
 
     await breakPage(page, 'boom')
   })
@@ -93,13 +93,13 @@ test.describe('a test that expects a problem', () => {
   test('fails when the page does not report it', async ({ page, expectProblem }) => {
     test.fail()
     expectProblem(/^uncaught error: boom$/)
-    await page.goto('/')
+    await page.goto('./')
   })
 
   test('fails when the page reports another problem as well', async ({ page, expectProblem }) => {
     test.fail()
     expectProblem(/^uncaught error: boom$/)
-    await page.goto('/')
+    await page.goto('./')
 
     await breakPage(page, 'boom')
     await breakPage(page, 'bang')
@@ -107,14 +107,14 @@ test.describe('a test that expects a problem', () => {
 
   test('counts an error in the console as a problem', async ({ page, expectProblem }) => {
     expectProblem(/^console error: boom$/)
-    await page.goto('/')
+    await page.goto('./')
 
     await writeToConsole(page, 'error', 'boom')
   })
 
   test('counts a warning in the console as a problem', async ({ page, expectProblem }) => {
     expectProblem(/^console warning: careful$/)
-    await page.goto('/')
+    await page.goto('./')
 
     await writeToConsole(page, 'warn', 'careful')
   })
@@ -125,7 +125,7 @@ test.describe('a test that expects a problem', () => {
   }) => {
     expectProblem(/^uncaught error: boom$/)
     expectProblem(/^uncaught error: bang$/)
-    await page.goto('/')
+    await page.goto('./')
 
     await breakPage(page, 'boom')
     await breakPage(page, 'bang')
