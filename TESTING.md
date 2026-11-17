@@ -34,6 +34,13 @@ production build, served locally. Every browser test also fails if the page
 logs an error or warning, throws an uncaught error, or has a failed request or
 an HTTP error response.
 
+The theme's colours are defined once, in `frontend/src/styles/tokens.css`.
+Unit tests check every text colour against every surface for WCAG contrast
+(7:1 for main text, 4.5:1 for other text and status colours, 3:1 for the focus
+ring) and reject raw colours or unknown tokens in any style sheet under
+`frontend/src`. Browser tests check the applied theme, the keyboard focus ring
+and reduced motion.
+
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.
 
