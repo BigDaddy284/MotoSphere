@@ -109,10 +109,12 @@ It installs the locked dependencies, runs every gate in order and ends with a
 summary; the exit code is 0 only when every gate passed.
 `python scripts/check.py --list` shows the gates, and `--only` runs the ones
 you name, for example `python scripts/check.py --only backend-tests`. The
-gates are listed in [TESTING.md](TESTING.md). GitHub runs the same command for
-every pull request and every change to `main`
-(`.github/workflows/checks.yml`). The rest of this section runs the same
-checks one at a time.
+gates are listed in [TESTING.md](TESTING.md). The last gate checks the
+frontend's dependencies against published security advisories; an advisory
+that is accepted for now is recorded, with its reason and a review date, in
+`frontend/audit-exceptions.json`. GitHub runs the same command for every pull
+request and every change to `main` (`.github/workflows/checks.yml`). The rest
+of this section runs the same checks one at a time.
 
 Repository checks, from the repository root:
 

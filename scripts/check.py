@@ -117,7 +117,8 @@ GATES: tuple[Gate, ...] = (
     Gate("frontend-tests", "Frontend unit tests", ("npm", "test"), "frontend", "vitest"),
     Gate("frontend-build", "Frontend build", ("npm", "run", "build"), "frontend"),
     Gate("browser-tests", "Browser tests", ("npm", "run", "e2e"), "frontend", "playwright"),
-    Gate("frontend-audit", "Frontend dependency audit", ("npm", "audit"), "frontend"),
+    # `npm audit`, with the exceptions recorded in `frontend/audit-exceptions.json`.
+    Gate("frontend-audit", "Frontend dependency audit", ("python", "scripts/audit.py")),
 )
 
 
