@@ -8,7 +8,7 @@ references are copied from real output, never estimated.
 
 - **Phase:** 1 – Foundation
 - **Current task:** FND-013 – Dark theme design tokens (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 12 of 211
+- **Tasks verified:** 12 of 216
 - **Application state:** the backend API starts with `uv run python -m motosphere` and answers `GET /api/health`. The frontend starts with `npm run dev` and shows the application name, and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). They are not connected yet; no globe and no database.
 
 ## Reports
@@ -631,3 +631,50 @@ FND-018.
 Commit: `e806b63` (squash merge of pull request #12).
 
 Next task: FND-013 – Dark theme design tokens.
+
+### PLAN-001 – Re-plan for GitHub Pages hosting and the owner's visual identity (2026-11-17)
+
+Not a build task: a planning change made by the planner after two decisions
+by the owner on 2026-11-17.
+
+1. **Hosting: GitHub Pages only, with no server.** The owner chose this on a
+   decision card over "Pages preview now, full hosting later" and "keep it
+   local". Consequences, recorded in `ARCHITECTURE.md`:
+   - The backend becomes a command-line data pipeline (collect, validate,
+     store, export) run by a scheduled GitHub Actions job or on the owner's
+     PC. There is no API server.
+   - The data store is SQLite instead of PostgreSQL with PostGIS.
+   - The frontend reads versioned, published data files (manifest, map
+     tiles, lists, details, search index) instead of calling an API.
+   - Administration works through reports and version-controlled decision
+     files instead of a logged-in admin interface.
+   - The FastAPI application, health endpoint and server start command
+     verified in FND-007 and FND-008 are removed by the new task FND-020.
+     Settings and logging (FND-005, FND-006) stay.
+   - New foundation tasks: FND-020 (pipeline command line replaces the API
+     server), FND-021 (data manifest export), FND-022 (GitHub Pages
+     deployment). FND-016 and FND-019 were rewritten. Phase 2 is now "Data
+     store and published data" (DAT, PUB); later phases keep their task
+     counts with server items reworded as published-data items.
+   - GitHub limits checked against GitHub's documentation on 2026-11-17: a
+     published site may be at most 1 GB, traffic has a soft limit of 100 GB
+     a month, a deployment times out after 10 minutes, Pages on GitHub Free
+     needs a public repository, and scheduled workflows in a public
+     repository are disabled after 60 days without repository activity.
+2. **Visual identity.** The owner supplied the Graphite theme and the Sky
+   Classic icon style. The reference files are in `docs/design/`. New tasks:
+   FND-023 (apply the Graphite theme) and FND-024 (application icon), both
+   before the layout task FND-014. FND-013 is still merged as planned,
+   because it delivers the token and contrast-test machinery; its
+   provisional colours are replaced by FND-023.
+3. **Name.** The owner confirmed the product is called MotoSphere only; the
+   earlier working title was removed from all documents.
+
+Task totals: Phase 1 now has 24 tasks; the project has 216 named tasks.
+
+Tests: repository checks 9/9 passed after the document changes. No code
+changed.
+
+Open points for the owner: GitHub Pages must be switched on for the
+repository before FND-022 can be verified (a public repository, or a paid
+plan for a private one).

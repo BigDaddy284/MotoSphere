@@ -12,8 +12,8 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 19 | 12 |
-| 2 | Database and API (DB, API) | 28 | 0 |
+| 1 | Foundation (FND) | 24 | 12 |
+| 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -28,6 +28,19 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task:** FND-013 – Dark theme design tokens.
 
+**Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
+Scheduled jobs collect the data and publish it as files that the globe reads
+(`ARCHITECTURE.md`). Tasks FND-001 to FND-013 were planned before that
+decision; everything after FND-013 follows it. Three foundation tasks were
+added for it (FND-020 to FND-022).
+
+**Visual identity (owner, 2026-11-17):** the owner supplied the Graphite
+theme and the Sky Classic icon style (`docs/design/`). Two foundation tasks
+were added for them (FND-023 and FND-024).
+
+Added tasks are listed where they fall in dependency order, so task numbers
+in Phase 1 are not strictly ascending.
+
 Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
 roadmap of named tasks; each phase is expanded into full task entries (with
 acceptance criteria and required tests) before its first task starts, and any
@@ -38,9 +51,10 @@ point. Task counts above therefore grow rather than shrink.
 
 # Phase 1 – Foundation (FND)
 
-Goal: an empty-but-real application. A backend that starts and answers a
-health check, a frontend shell with the final layout regions, every quality
-gate wired up, one command that runs all gates, and documented start/stop on
+Goal: an empty-but-real application, live on GitHub Pages. A data pipeline
+command that exports a first published data file, a frontend shell with the
+final layout regions that reads it, every quality gate wired up, one command
+that runs all gates, automatic deployment, and documented local use on
 Windows 11. No database and no globe yet.
 
 ### FND-001 – Repository hygiene baseline
@@ -265,6 +279,31 @@ Windows 11. No database and no globe yet.
 - **Commit:** –
 - **Plan:** `docs/plans/FND-013.md`
 
+### FND-023 – Apply the owner's Graphite theme
+- **Status:** NOT STARTED
+- **Objective:** The application uses the colours and font the owner chose.
+- **Description:** Replace the provisional colour tokens from FND-013 with the owner's Graphite theme (soft charcoal greys with a sky-blue accent, `docs/design/graphite-theme/`): bar, canvas, panel, window, control and pressed surfaces, borders, text, secondary and disabled text, the blue accent family and selection colour, and the Segoe UI font stack. Status colours stay. Base styles, contrast tests and browser tests follow the new names and values.
+- **Acceptance criteria:**
+  1. Every Graphite colour appears as a token with exactly the owner's value; no provisional colour remains.
+  2. Contrast is tested with the real numbers: main text ≥ 7:1 and secondary text ≥ 4.5:1 on every surface they are used on; link and focus colour ≥ 4.5:1 on bar, canvas, panel and window. White on the accent blue measures 3.89:1, which meets the 3:1 level for large or bold labels only; the test records that limit and the documentation states it.
+  3. In the browser the page shows the Graphite window colour, text colour, font and focus ring.
+- **Tests required:** updated token and contrast unit tests; updated theme browser tests; all frontend gates; repository checks.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-024 – Application icon in the Sky Classic style
+- **Status:** NOT STARTED
+- **Objective:** MotoSphere has its own icon in the style the owner chose.
+- **Description:** A MotoSphere icon drawn in the Sky Classic style (`docs/design/sky-classic-icon/`): rounded dark gradient tile, a glowing outline glyph with round joins in the sky-blue gradient. The glyph is MotoSphere's own (a globe motif), not the folder from the reference. Delivered as the page icon (SVG) with PNG fallbacks, and the style rules for later interface icons are written down.
+- **Acceptance criteria:** the icon uses the reference tile, gradient and stroke style with a MotoSphere glyph; it is legible at 16, 32 and 180 pixels; the page links it and the browser loads it; the icon style rules are documented.
+- **Tests required:** unit or repository test that the icon file uses the reference colours and contains no script or external reference; browser test that the icon is served; visual check by the planner at three sizes; all frontend gates.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
 ### FND-014 – Application shell layout
 - **Status:** NOT STARTED
 - **Objective:** The final screen regions, with the globe area dominant.
@@ -287,12 +326,40 @@ Windows 11. No database and no globe yet.
 - **Verification status:** Not verified
 - **Commit:** –
 
-### FND-016 – Frontend API client and backend status
+### FND-020 – Replace the API server with the pipeline command line
 - **Status:** NOT STARTED
-- **Objective:** Prove the frontend and backend talk to each other.
-- **Description:** A small typed API client, a Vite dev proxy for `/api`, and a status indicator in the top bar driven by `GET /api/health` with loading, connected and unavailable states in plain language.
-- **Acceptance criteria:** indicator shows each of the three states correctly; a failed request shows a friendly message and never an unhandled error.
-- **Tests required:** unit tests with a mocked fetch for all three states; a browser test against the real backend process (connected) and with the backend stopped (unavailable).
+- **Objective:** Remove the server that the hosting decision made unnecessary, and give the data pipeline its command line.
+- **Description:** Remove the FastAPI application, the health endpoint, the server start-up in `python -m motosphere`, the `api_host` and `api_port` settings, their tests and the `fastapi`, `uvicorn` and `httpx2` dependencies. `python -m motosphere` becomes a command-line program with sub-commands; the first is `version`. Settings and logging stay and are used by the command line. README, TESTING.md, `.env.example` and CHANGELOG follow.
+- **Acceptance criteria:**
+  1. `python -m motosphere version` prints the version and exits 0; with no command or an unknown command it prints help and exits non-zero; an invalid setting still gives the one-line configuration error and exit code 2.
+  2. No server code, server setting or server dependency remains (`uv lock` no longer contains them); nothing listens on a port.
+  3. README no longer tells the user to start an API; all remaining backend gates pass.
+- **Tests required:** unit tests for the command line (version, no command, unknown command, configuration error); integration test running the real command as a subprocess; lock check, mypy, ruff, pytest; repository checks; frontend untouched.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-021 – Data manifest export command
+- **Status:** NOT STARTED
+- **Objective:** Produce the first real published data file from the pipeline.
+- **Description:** `python -m motosphere export --out <directory>` writes `manifest.json`: data format version, generation time (UTC), application version and record counts (all zero for now). The file is described by a Pydantic model, written atomically with stable key order, and a JSON Schema for it is produced from the model.
+- **Acceptance criteria:**
+  1. The command creates the directory if needed and writes a manifest that validates against the model; running it twice with the same inputs gives byte-identical output apart from the generation time.
+  2. A failed write never leaves a partial manifest behind.
+  3. An unwritable or invalid output path gives a clear one-line error and a non-zero exit code.
+- **Tests required:** unit tests for the model, serialisation and atomic write; integration test running the real command into a temporary directory; all backend gates.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-016 – Frontend data client and data status
+- **Status:** NOT STARTED
+- **Objective:** Prove that what the pipeline publishes reaches the user's screen.
+- **Description:** A small typed data client that loads `data/manifest.json` relative to the application's base path, and a status indicator in the top bar with loading, up to date ("Data updated" with the date) and unavailable states in plain language. Local development and the browser tests read a manifest written by the real export command, never a hand-written copy.
+- **Acceptance criteria:** the indicator shows each of the three states correctly; a missing, malformed or wrong-version manifest shows a friendly message and never an unhandled error; the date shown is the one in the manifest.
+- **Tests required:** unit tests with a mocked fetch for all states, including malformed and wrong-version manifests; a browser test against a manifest produced by the export command (up to date) and with the file absent (unavailable).
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -301,7 +368,7 @@ Windows 11. No database and no globe yet.
 ### FND-017 – Unified check runner
 - **Status:** NOT STARTED
 - **Objective:** One command that runs every gate and reports counts.
-- **Description:** `python scripts/check.py` (stdlib only) runs repo checks, lint and format checks for root-level Python (`tests/repo`, `scripts/`), backend ruff/mypy/pytest, frontend lint/typecheck/unit/build and browser tests, in order, and prints a per-gate and overall pass/fail summary. Non-zero exit if any gate fails, and also if any test is reported as skipped (Playwright browser tests can be skipped without the linter noticing). Options to run a single gate.
+- **Description:** `python scripts/check.py` (stdlib only) runs repo checks, lint and format checks for root-level Python (`tests/repo`, `scripts/`), pipeline ruff/mypy/pytest, frontend lint/format/typecheck/unit/build and browser tests, in order, and prints a per-gate and overall pass/fail summary. Non-zero exit if any gate fails, and also if any test is reported as skipped (Playwright browser tests can be skipped without the linter noticing). Options to run a single gate.
 - **Acceptance criteria:** all gates run from a clean checkout on Linux and Windows; a failing gate makes the exit code non-zero and is named in the summary; TESTING.md documents the command.
 - **Tests required:** unit tests for the runner's result handling using stub commands; one full real run.
 - **Tests executed:** –
@@ -311,7 +378,7 @@ Windows 11. No database and no globe yet.
 
 ### FND-018 – Continuous integration
 - **Status:** NOT STARTED
-- **Objective:** Every pull request is checked automatically.
+- **Objective:** Every pull request is checked automatically, on Linux and Windows.
 - **Description:** A GitHub Actions workflow that installs Python, uv and Node, then runs `python scripts/check.py` on Linux and Windows runners for pull requests and pushes to `main`.
 - **Acceptance criteria:** the workflow runs on the task's own pull request and passes on both operating systems.
 - **Tests required:** the workflow run itself (both jobs green); local check runner still passes.
@@ -320,11 +387,22 @@ Windows 11. No database and no globe yet.
 - **Verification status:** Not verified
 - **Commit:** –
 
-### FND-019 – Windows start and stop scripts
+### FND-022 – GitHub Pages deployment
 - **Status:** NOT STARTED
-- **Objective:** Start and stop the whole application on Windows 11 with one command each.
-- **Description:** `scripts/start.ps1` and `scripts/stop.ps1` start/stop the API and the frontend dev server; README documents prerequisites, first-time setup, start, stop and how to run the checks.
-- **Acceptance criteria:** on a real Windows 11 machine, a clean checkout reaches a working app in the browser by following the README only; stop leaves no process behind.
+- **Objective:** Every merge to `main` puts the current application online.
+- **Description:** A configurable base path for the frontend build (the site is served from `/MotoSphere/`), and a GitHub Actions workflow that, after the checks pass on `main`, exports the data, builds the frontend and deploys both to GitHub Pages with the least permissions needed. The browser tests also run against a build served from the sub-path.
+- **Acceptance criteria:** the application works when served from a sub-path (assets, icon and data all load, no console errors); the deployment workflow succeeds; the live address shows the application name and the data date.
+- **Tests required:** browser tests against a sub-path build; the workflow run itself; a browser check of the live address. Needs GitHub Pages switched on for the repository by the owner (public repository, or a paid plan for a private one); until then the task is `BLOCKED – EXTERNAL DEPENDENCY`, not passed.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-019 – Windows scripts for local use
+- **Status:** NOT STARTED
+- **Objective:** Use MotoSphere on Windows 11 without GitHub, with one command per job.
+- **Description:** PowerShell scripts to set up the tools, run all checks, and export the data and open the application locally (and stop it again); README documents prerequisites, first-time setup and each command.
+- **Acceptance criteria:** on a real Windows 11 machine, a clean checkout reaches a working application in the browser by following the README only; stopping leaves no process behind.
 - **Tests required:** script checks runnable anywhere (PowerShell syntax parse, documented commands exist); end-to-end verification on Windows 11. If no Windows machine is reachable the task is `BLOCKED – EXTERNAL DEPENDENCY`, not passed.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
@@ -338,39 +416,39 @@ Windows 11. No database and no globe yet.
 Ordered by dependency. Every item is one task and will get a full entry like
 those above before its phase starts.
 
-## Phase 2 – Database and API
+## Phase 2 – Data store and published data
 
-Database foundation
-- DB-001 PostgreSQL + PostGIS local setup (Linux/CI script, Windows script and guide)
-- DB-002 Database settings and engine/session module
-- DB-003 Isolated test-database fixture (real PostgreSQL, rolled back per test)
-- DB-004 Alembic migration infrastructure (upgrade/downgrade tested)
-- DB-005 Enable PostGIS, pg_trgm and unaccent by migration
-- DB-006 Health endpoint reports database status
-- DB-007 Model conventions: keys, timestamps, constraint naming
-- DB-008 Information sources table (source registry core)
-- DB-009 Data collection runs table
-- DB-010 Provenance columns and confidence/verification enumerations
-- DB-011 Record change-history table
-- DB-012 Review queue table
-- DB-013 Countries table
-- DB-014 Countries reference data import (ISO 3166, licence verified)
-- DB-015 Regions table
-- DB-016 Racing disciplines table and reference data
-- DB-017 Organisations table (governing bodies, clubs, promoters)
-- DB-018 Tracks table with geographic point and spatial index
-- DB-019 Track aliases table
-- DB-020 Media references table
+Data store
+- DAT-001 Data store research and decision record (SQLite features on Windows and Linux, keeping data between scheduled runs, size limits)
+- DAT-002 Store settings and engine/session module (SQLite, foreign keys enforced)
+- DAT-003 Isolated test-database fixture (real SQLite file per test)
+- DAT-004 Schema migration infrastructure (upgrade and downgrade tested)
+- DAT-005 Model conventions: keys, timestamps, constraint naming
+- DAT-006 Information sources table (source registry core)
+- DAT-007 Data collection runs table
+- DAT-008 Provenance columns and confidence/verification enumerations
+- DAT-009 Record change-history table
+- DAT-010 Review queue table
+- DAT-011 Countries table
+- DAT-012 Countries reference data import (ISO 3166, licence verified)
+- DAT-013 Regions table
+- DAT-014 Racing disciplines table and reference data
+- DAT-015 Organisations table (governing bodies, clubs, promoters)
+- DAT-016 Tracks table with validated coordinates and bounding-box index
+- DAT-017 Track aliases table
+- DAT-018 Media references table
+- DAT-019 Snapshot: write the store to deterministic text files
+- DAT-020 Snapshot: rebuild the store from text files (round trip proven)
 
-API foundation
-- API-001 Versioned router `/api/v1` and uniform error format
-- API-002 Pagination conventions
-- API-003 Countries list endpoint
-- API-004 Tracks list endpoint (paginated, filter by country)
-- API-005 Track detail endpoint
-- API-006 Tracks within a bounding box (spatial query)
-- API-007 OpenAPI contract check and generated frontend types
-- API-008 API security baseline (CORS, limits, headers, admin token guard)
+Published data
+- PUB-001 Published data layout, versioning and manifest file list with content hashes
+- PUB-002 Data contract: JSON Schema from the export models and generated frontend types
+- PUB-003 Countries file
+- PUB-004 Track list files (in chunks, by country)
+- PUB-005 Track detail files
+- PUB-006 Map tile files (tracks by tile and zoom level)
+- PUB-007 Export validation (every published file checked against the contract; nothing internal exported)
+- PUB-008 Frontend data access layer (loading, caching, error states)
 
 ## Phase 3 – Interactive 3D Earth
 
@@ -398,15 +476,15 @@ API foundation
 
 ## Phase 4 – Geographic marker system
 
-- MRK-001 Map features endpoint (GeoJSON by bounding box)
-- MRK-002 One marker rendered from API data
+- MRK-001 Map tile loader (published tiles for the area in view)
+- MRK-002 One marker rendered from published data
 - MRK-003 Marker position accuracy check against known coordinates
 - MRK-004 Marker category icons
 - MRK-005 Marker selection
 - MRK-006 Details panel opens for the selected marker
 - MRK-007 Expandable sections in the details panel
-- MRK-008 Viewport-aware marker loading
-- MRK-009 Server-side clustering endpoint
+- MRK-008 Viewport-aware tile loading and unloading
+- MRK-009 Pre-computed clusters in wide-zoom tiles (export)
 - MRK-010 Cluster rendering and zoom-to-expand
 - MRK-011 Marker category filters
 - MRK-012 Terrain-aware marker placement and large-dataset performance test
@@ -428,7 +506,7 @@ API foundation
 - TRK-013 Initial import: Europe
 - TRK-014 Initial import: United States and Canada
 - TRK-015 Initial import: rest of world
-- TRK-016 Track search endpoint
+- TRK-016 Track search index (published files, searched in the browser)
 - TRK-017 Track list and search in the left panel
 - TRK-018 Track details panel
 - TRK-019 Track outline geometry where a reliable source exists
@@ -439,7 +517,7 @@ API foundation
 - EVT-001 Events table and status model
 - EVT-002 Racing classes table
 - EVT-003 Event–track and event–organiser links
-- EVT-004 Events API: list, detail, by date range
+- EVT-004 Published event files: list, detail, by month
 - EVT-005 Event source research and licensing
 - EVT-006 First event calendar adapter (fixtures)
 - EVT-007 Event validation and duplicate detection
@@ -458,7 +536,7 @@ API foundation
 - CHP-003 Championship rounds table linked to events
 - CHP-004 Championship classes
 - CHP-005 Published standings tables (per season, never overwritten)
-- CHP-006 Championships API
+- CHP-006 Published championship files
 - CHP-007 Championship source research and licensing
 - CHP-008 First championship calendar adapter
 - CHP-009 First standings adapter
@@ -475,7 +553,7 @@ API foundation
 - RES-004 Race entries table
 - RES-005 Moto results table (position, time, laps, points, DNF/DNS/DSQ)
 - RES-006 Overall event results table, kept separate from moto results
-- RES-007 Results API
+- RES-007 Published results files
 - RES-008 Rider identity matching rules and review queue integration
 - RES-009 Results source research and licensing
 - RES-010 First results adapter (fixtures)
@@ -486,11 +564,11 @@ API foundation
 
 ## Phase 9 – Riders and teams
 
-- RDR-001 Rider profile fields and API
+- RDR-001 Rider profile fields and published files
 - RDR-002 Rider career records query
 - RDR-003 Rider statistics (wins, podiums, points) from stored results only
 - RDR-004 Rider details panel
-- RDR-005 Team profile fields and API
+- RDR-005 Team profile fields and published files
 - RDR-006 Team details panel
 - RDR-007 Manufacturers and bikes
 - RDR-008 Rider–team–season history
@@ -501,42 +579,42 @@ API foundation
 
 ## Phase 10 – Automated collection and administration
 
-- COL-001 Worker process entry point
+- COL-001 Pipeline run command: collect, validate, store and export in one run
 - COL-002 Source registry: scheduling fields and due-source query
-- COL-003 Scheduler: daily scan loop
+- COL-003 Scheduled daily run (GitHub Actions) that publishes the updated site
 - COL-004 Source availability check
 - COL-005 Change detection and incremental update
 - COL-006 Failure isolation between adapters
 - COL-007 Retry policy and job history
-- COL-008 Recovery after interrupted jobs
+- COL-008 Recovery after interrupted runs
 - COL-009 Source health and reliability scoring
 - COL-010 Cross-source duplicate detection pass
 - COL-011 Source discovery: candidate queue with crawl-scope limits
 - COL-012 Source validation and activation workflow
 - COL-013 Collection logging and run reports
-- COL-014 Windows scheduled start for the worker
-- ADM-001 Admin authentication guard
-- ADM-002 Database statistics endpoint and view
-- ADM-003 Source health view
-- ADM-004 Enable/disable a source
-- ADM-005 Trigger a manual scan and retry failed jobs
-- ADM-006 Review queue view and decisions
+- COL-014 Running the collection from the owner's Windows PC (for sources that refuse hosted runners)
+- ADM-001 Administration model: decisions as reviewed files in the repository
+- ADM-002 Data statistics page
+- ADM-003 Source health page
+- ADM-004 Enable/disable a source (configuration file applied by the next run)
+- ADM-005 Start a manual run and retry failed sources (from GitHub Actions)
+- ADM-006 Review queue report and recorded decisions
 - ADM-007 Correct a record with history
 - ADM-008 Merge confirmed duplicates
-- ADM-009 Collection log viewer
+- ADM-009 Collection log page
 - ADM-010 Scan schedule configuration
 
 ## Phase 11 – Search and comparison
 
-- SRC-001 Search index strategy (PostgreSQL full-text and trigram)
-- SRC-002 Global search endpoint across entity types
+- SRC-001 Search index strategy (index files built at export, searched in the browser)
+- SRC-002 Global search index export across entity types
 - SRC-003 Search box with grouped results
 - SRC-004 Selecting a result flies the globe to it
 - SRC-005 Filter model: country, date range, discipline, championship, class, status
-- SRC-006 Filters applied to map endpoints
+- SRC-006 Filters applied to map tiles
 - SRC-007 Filter controls that update the globe
 - SRC-008 Rider, team and track filters
-- CMP-001 Rider comparison query
+- CMP-001 Rider comparison data (from published rider files)
 - CMP-002 Rider comparison view with head-to-head
 - CMP-003 Team comparison
 - CMP-004 Championship and season comparison
@@ -548,7 +626,7 @@ API foundation
 - NWS-001 News articles table (headline, summary, link; no full text)
 - NWS-002 News source research and licensing
 - NWS-003 RSS/feed adapter
-- NWS-004 News API
+- NWS-004 Published news files
 - NWS-005 News feed view
 - NWS-006 News linked to countries, championships and events
 - HIS-001 Historical record classification (official, independent, reconstructed, unverified)
@@ -558,13 +636,13 @@ API foundation
 
 ## Phase 13 – Performance and deployment
 
-- PRF-001 Query performance review and indexes
-- PRF-002 API response caching
+- PRF-001 Pipeline and export performance review
+- PRF-002 Published file caching and cache-busting review
 - PRF-003 Globe performance budget with large datasets
 - PRF-004 Browser memory test over a long session
 - PRF-005 Dependency vulnerability checks in the check runner
 - PRF-006 Security review
-- DEP-001 Hosting, storage and imagery-licence cost investigation
-- DEP-002 Production configuration and build
-- DEP-003 Backup and restore procedure
-- DEP-004 Deployment guide and first hosted release
+- DEP-001 Published site size, traffic and imagery-licence review against GitHub Pages limits
+- DEP-002 Custom domain (optional, owner's decision)
+- DEP-003 Data backup and restore procedure
+- DEP-004 Operations guide and first public release

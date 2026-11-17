@@ -1,0 +1,25 @@
+{
+  "name": "Graphite",
+  "mode": "dark",
+  "colors": {
+    "bar": "#1b1c1f",
+    "canvas": "#1d1e21",
+    "panel": "#222327",
+    "window": "#2a2b2f",
+    "control": "#35373c",
+    "pressed": "#3d4046",
+    "border": "#383a40",
+    "controlBorder": "#4a4d54",
+    "text": "#ececee",
+    "subtext": "#a9acb3",
+    "disabled": "#75787f",
+    "accent": "#2580ee",
+    "accentSky": "#5ea8ff",
+    "accentLight": "#8cc4ff",
+    "selection": "#2f4a6e",
+    "onAccent": "#ffffff",
+    "folderStart": "#3d8bff",
+    "folderEnd": "#8cc4ff"
+  },
+  "font": "Segoe UI Variable Text, Segoe UI, sans-serif"
+}

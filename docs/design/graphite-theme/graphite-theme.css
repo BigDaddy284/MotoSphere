@@ -1,0 +1,32 @@
+/* Graphite theme (from Myiles). Soft charcoal greys with a sky-blue accent.
+   Plain hex custom properties, ready to drop into any project. */
+:root {
+  /* Surfaces */
+  --graphite-bar: #1b1c1f;          /* title bar / tab strip */
+  --graphite-canvas: #1d1e21;       /* behind panels, preview wells */
+  --graphite-panel: #222327;        /* navigation panel, info panel, menus, cards */
+  --graphite-window: #2a2b2f;       /* main content background */
+  --graphite-control: #35373c;      /* inputs, address bar, hover */
+  --graphite-pressed: #3d4046;      /* pressed state */
+
+  /* Lines */
+  --graphite-border: #383a40;
+  --graphite-control-border: #4a4d54;
+
+  /* Text */
+  --graphite-text: #ececee;
+  --graphite-subtext: #a9acb3;      /* secondary text and icons (passes 4.5:1 on window) */
+  --graphite-disabled: #75787f;
+
+  /* Accent (blues) */
+  --graphite-accent: #2580ee;       /* buttons, selection fill (white text on it) */
+  --graphite-accent-sky: #5ea8ff;   /* focus ring, active tab underline, links */
+  --graphite-accent-light: #8cc4ff; /* gradient end */
+  --graphite-selection: #2f4a6e;    /* selected file tile / row */
+  --graphite-accent-gradient: linear-gradient(90deg, #2580ee, #8cc4ff);
+
+  /* Folder icon gradient */
+  --graphite-folder-start: #3d8bff;
+  --graphite-folder-end: #8cc4ff;
+  --graphite-folder-glow: rgb(94 168 255 / 45%);
+}

@@ -1,0 +1,37 @@
+/* The exact block Myiles uses (HSL triplets, shadcn-style variable names). It sits on top of the .dark theme. */
+/* Graphite: soft charcoal greys with a sky-blue accent. Builds on .dark and only swaps colours. */
+.dark.graphite {
+  --background-2: 228 6.85% 14.31%; /* Panel #222327 */
+  --background-3: 228 5.62% 17.45%; /* Window #2a2b2f */
+  --window-toolbar: 225 6.9% 11.37%; /* Bar #1b1c1f */
+  --icon: 222 5.71% 68.24%; /* SubText #a9acb3 */
+  --accent-a: 214 88% 54%; /* Blue #2580ee */
+  --accent-b: 211 100% 77.45%; /* Sky #8cc4ff */
+  --glow: 212 45% 38%;
+  --pill: 225 6.9% 12.5%;
+  --pill-sep: 222 5.5% 34%;
+  --disabled-foreground: 222 4% 48%;
+  --canvas: 225 6.38% 12.35%;
+  --folder-gradient-start: #3d8bff;
+  --folder-gradient-end: #8cc4ff;
+  --folder-glow: rgb(94 168 255 / 45%);
+  --background: 228 5.62% 17.45%; /* Window #2a2b2f */
+  --foreground: 240 4.35% 93.14%; /* Text #ececee */
+  --muted: 223 6.4% 22.16%; /* Hover #35373c */
+  --muted-foreground: 222 5.71% 68.24%; /* SubText #a9acb3 */
+  --accent: 223 6.4% 22.16%; /* Hover #35373c */
+  --accent-pressed: 220 6.88% 25.69%; /* Pressed #3d4046 */
+  --popover: 228 6.85% 14.31%;
+  --popover-foreground: 240 4.35% 93.14%;
+  --card: 228 6.85% 14.31%;
+  --card-foreground: 240 4.35% 93.14%;
+  --border: 225 6.67% 23.53%; /* BarBorder #383a40 */
+  --control-border: 222 6.4% 31.18%; /* ControlBorder #4a4d54 */
+  --input: 223 6.4% 22.16%; /* Control #35373c */
+  --primary: 214 88% 54%; /* Blue */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 223 6.4% 22.16%;
+  --secondary-foreground: 240 4.35% 93.14%;
+  --destructive-foreground: 228 5.62% 17.45%;
+  --ring: 211 100% 68.43%; /* Sky #5ea8ff */
+}
