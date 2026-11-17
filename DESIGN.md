@@ -1,7 +1,7 @@
-# GLOBAL MOTOCROSS DASHBOARD
+# MOTOSPHERE
 ## Complete Project Design & Development Specification
 
-**Project:** Global Motocross Dashboard  
+**Project:** MotoSphere  
 **Type:** Global motorsport information, intelligence and mapping platform  
 **Primary interface:** Interactive 3D Earth  
 **Initial development:** Windows 11 PC  

@@ -5,8 +5,8 @@ important decision. It is the planner's evaluation of the stack proposed in
 DESIGN.md §13. Change it in the same commit as any change that contradicts it.
 
 **Naming.** The product is called **MotoSphere** ("The World of Motocross,
-Connected."). DESIGN.md and CLAUDE.md call it "Global Motocross Dashboard";
-they describe the same product. Code, packages and UI text use MotoSphere.
+Connected."). That is its only name: documents, code, packages and UI text
+all use MotoSphere.
 
 Status of this document: decisions marked **Decided** are binding for builders.
 Decisions marked **Open** are settled by a named research task before any code

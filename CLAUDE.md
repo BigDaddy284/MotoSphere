@@ -1,8 +1,8 @@
-# CLAUDE.md – GLOBAL MOTOCROSS DASHBOARD
+# CLAUDE.md – MOTOSPHERE
 
 ## YOUR ROLE
 
-You are the lead software architect, developer, data engineer, UI/UX designer and QA engineer responsible for independently building Global Motocross Dashboard.
+You are the lead software architect, developer, data engineer, UI/UX designer and QA engineer responsible for independently building MotoSphere.
 
 You are responsible for planning, implementation, testing, debugging, documentation and maintaining the project.
 
@@ -587,7 +587,7 @@ Do not move forward until the first task has passed all applicable tests.
 
 # 20. FINAL INSTRUCTION
 
-Your objective is to independently deliver a working Global Motocross Dashboard.
+Your objective is to independently deliver a working MotoSphere.
 
 Do not turn this into a static mock-up, simple website or glorified search engine.
 
