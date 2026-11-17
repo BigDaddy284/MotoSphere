@@ -78,7 +78,8 @@ jobs:
   # machines.
   site:
     name: Build the site
-    if: github.event_name == 'pull_request'
+    needs: gates
+    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
