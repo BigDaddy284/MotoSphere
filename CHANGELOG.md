@@ -35,3 +35,5 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   formatting with Prettier (FND-011).
 - Browser tests with Playwright against the built application, with an
   automatic page health check (FND-012).
+- Dark theme design tokens and base styles, with automatic contrast checks
+  (FND-013).
