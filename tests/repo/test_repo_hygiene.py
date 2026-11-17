@@ -77,8 +77,10 @@ NOT_IGNORED_SAMPLE_PATHS = (
     "frontend/e2e/smoke.spec.ts",
     "frontend/public/favicon.svg",
     "scripts/start.ps1",
+    "scripts/check.py",
     "docs/plans/FND-001.md",
     "tests/repo/test_repo_hygiene.py",
+    "tests/scripts/test_check.py",
 )
 
 SECRET_FILE_NAMES = ("id_rsa", "id_ed25519")
