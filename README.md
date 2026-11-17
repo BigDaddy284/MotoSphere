@@ -77,12 +77,14 @@ npm run dev
 
 `npm run data` runs the pipeline's export and writes the published data into
 `frontend/public/data/`, which Git ignores. Run it again whenever you want
-fresh data. Nothing on the page shows the data yet.
+fresh data. The top bar shows when the data was updated, or "Data
+unavailable" when `npm run data` has not been run.
 
 Open the address Vite prints, normally <http://localhost:5173>. The page shows
 the application's layout: a top bar, a sections panel, the globe area and a
-details panel. The top bar shows today's date, in the language and time zone
-of your browser, and it changes at midnight. The sections panel lists the
+details panel. The top bar shows when the data was updated and, next to it,
+today's date, both in the language and time zone of your browser; the date
+changes at midnight. The sections panel lists the
 application's sections, and one can be chosen with the mouse or the keyboard;
 there is no globe or data yet. The Sections and Details buttons in the top bar
 close and open the side panels. Press Ctrl+C to stop the development server.

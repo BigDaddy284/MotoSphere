@@ -57,6 +57,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with a plain result for every failure (FND-016).
 - `npm run data`: exports the published data for local development; the
   browser tests run against freshly exported data (FND-027).
+- Data status in the top bar: when the published data was updated, or that it
+  is unavailable (FND-028).
 
 ### Removed
 

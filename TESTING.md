@@ -39,6 +39,10 @@ the real export command, so the tests check the served manifest with the
 frontend's own reader and check that it was exported for this run. The browser
 tests therefore need uv as well as Node.js.
 
+The data status in the top bar is tested in the browser against that data, and
+with replaced answers for a slow, damaged or newer manifest and for other time
+zones.
+
 The theme's colours are the owner's Graphite theme
 (`docs/design/graphite-theme/`), defined once in
 `frontend/src/styles/tokens.css`. A unit test checks each Graphite token

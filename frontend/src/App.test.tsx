@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { APP_NAME, APP_TAGLINE, App } from './App.tsx'
 
 /** The labels of the sections marked as current. */
@@ -13,6 +13,12 @@ function currentSections() {
 }
 
 describe('App', () => {
+  beforeEach(() => {
+    // The page asks for the published data as soon as it is shown. These
+    // tests are not about the data, so the answer never comes.
+    vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise(() => {}))
+  })
+
   afterEach(() => {
     vi.useRealTimers()
   })
@@ -70,10 +76,34 @@ describe('App', () => {
 
     render(<App />)
 
-    const date = screen.getByRole('banner').querySelector('time')
+    const date = screen.getByRole('banner').querySelector('time:not(output time)')
     expect(date).not.toBeNull()
     expect(date).toBeVisible()
     expect(date).toHaveAttribute('datetime', '2026-11-17')
     expect(date?.textContent).toContain('2026')
+  })
+
+  it('shows the data status in the top bar, before the date', async () => {
+    const manifest = {
+      format_version: 1,
+      generated_at: '2026-11-17T12:53:59Z',
+      application_version: '0.1.0',
+      counts: {},
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(manifest)))
+
+    render(<App />)
+
+    const topBar = screen.getByRole('banner')
+    const status = within(topBar).getByRole('status')
+    expect(status).toHaveTextContent('Loading data…')
+    expect(await within(status).findByText(/2026/)).toHaveAttribute(
+      'datetime',
+      '2026-11-17T12:53:59Z',
+    )
+    expect(status).toHaveTextContent(/^Data updated /)
+    const date = topBar.querySelector('time:not(output time)')
+    expect(date).not.toBeNull()
+    expect(status.compareDocumentPosition(date as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 })
