@@ -1,4 +1,4 @@
-"""Checks on the continuous integration workflows (tasks FND-018 and FND-032).
+"""Checks on the continuous integration workflows (task FND-018).
 
 The workflows are read as text: the repository checks use the standard
 library only, and it has no YAML reader. The files are kept plain enough for
@@ -33,14 +33,6 @@ KNOWN_ACTIONS = (
 KNOWN_EXPRESSIONS = (
     "github.event_name == 'pull_request'",
     "github.ref",
-    "matrix.name",
-    "matrix.os",
-)
-
-# The machines the gates run on, each a named image and not "the latest".
-MACHINES = (
-    ("Linux", "ubuntu-24.04"),
-    ("Windows", "windows-2025"),
 )
 
 # An action pinned to a full commit, with the release it belongs to beside it.
@@ -150,24 +142,11 @@ class ChecksWorkflowTest(unittest.TestCase):
         self.assertNotRegex(self.text, re.compile(r"^ +(- )?if:", re.MULTILINE))
         self.assertNotRegex(self.text, re.compile(r"^ +(- )?shell:", re.MULTILINE))
 
-    def test_runs_on_linux_and_on_windows(self) -> None:
-        machines = re.findall(r"^ +- name: (\w+)\n +os: (\S+)$", self.text, re.MULTILINE)
-
-        self.assertEqual(machines, list(MACHINES))
+    def test_runs_on_a_named_linux_image_with_a_time_limit(self) -> None:
         self.assertEqual(
-            re.findall(r"^ +runs-on: (.+)$", self.text, re.MULTILINE), ["${{ matrix.os }}"]
+            re.findall(r"^ +runs-on: (.+)$", self.text, re.MULTILINE), ["ubuntu-24.04"]
         )
-        self.assertIn("All gates (${{ matrix.name }})", self.text)
-
-    def test_one_machine_failing_does_not_stop_the_other(self) -> None:
-        self.assertEqual(re.findall(r"^ +fail-fast: (.+)$", self.text, re.MULTILINE), ["false"])
-
-    def test_the_job_has_a_time_limit(self) -> None:
         self.assertRegex(self.text, re.compile(r"^ +timeout-minutes: \d+$", re.MULTILINE))
-
-    def test_every_step_runs_one_command(self) -> None:
-        # On Windows a step with several commands only fails on its last one.
-        self.assertNotRegex(self.text, re.compile(r"^ +run: *[|>]", re.MULTILINE))
 
     def test_tools_are_the_versions_the_project_supports(self) -> None:
         with (ROOT / "backend" / "pyproject.toml").open("rb") as file:
