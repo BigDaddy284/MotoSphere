@@ -1,0 +1,62 @@
+.shell {
+  display: grid;
+  grid-template-areas:
+    'top top top'
+    'sections stage details';
+  grid-template-columns: var(--size-sections-panel) minmax(0, 1fr) var(--size-details-panel);
+  grid-template-rows: var(--size-top-bar) minmax(0, 1fr);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.topBar {
+  grid-area: top;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: 0 var(--space-4);
+  background-color: var(--color-bar);
+  border-bottom: 1px solid var(--color-border);
+  line-height: var(--size-top-bar);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.name {
+  font-size: var(--font-size-lg);
+  line-height: inherit;
+}
+
+.tagline {
+  color: var(--color-subtext);
+  font-size: var(--font-size-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sections {
+  grid-area: sections;
+  background-color: var(--color-panel);
+  border-right: 1px solid var(--color-border);
+  overflow-y: auto;
+}
+
+.stage {
+  grid-area: stage;
+  position: relative;
+  background-color: var(--color-canvas);
+  overflow: hidden;
+}
+
+.details {
+  grid-area: details;
+  padding: var(--space-4);
+  background-color: var(--color-panel);
+  border-left: 1px solid var(--color-border);
+  overflow-y: auto;
+}
+
+.hint {
+  color: var(--color-subtext);
+  font-size: var(--font-size-sm);
+}

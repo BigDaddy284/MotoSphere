@@ -39,3 +39,5 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (FND-013).
 - The owner's Graphite theme: charcoal surfaces, sky-blue accent and Segoe UI
   font stack (FND-023).
+- Application shell layout: top bar, sections panel, globe stage and details
+  panel (FND-014).
