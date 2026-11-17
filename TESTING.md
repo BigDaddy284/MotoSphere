@@ -50,7 +50,7 @@ expected to fail, marked as still to do or left out of a run count as skipped.
 | `frontend-tests` | Frontend unit tests | `npm test` | `frontend/` |
 | `frontend-build` | Frontend build | `npm run build` | `frontend/` |
 | `browser-tests` | Browser tests | `npm run e2e` | `frontend/` |
-| `frontend-audit` | Frontend dependency audit | `npm audit` | `frontend/` |
+| `frontend-audit` | Frontend dependency audit | `python scripts/audit.py` | repository root |
 
 A test compares this table with the script, so the two cannot drift apart.
 
@@ -63,6 +63,20 @@ off, because these tests are written with `unittest`. A test fails when a
 Python file appears outside the pipeline in a folder these gates do not cover.
 `uv run --project backend ruff format scripts tests`, from the repository
 root, applies the formatting.
+
+The dependency audit (`python scripts/audit.py`) runs `npm audit` in
+`frontend/` and fails on every security advisory it reports for an installed
+package, whatever its severity and whether the package is part of the site or
+only a build or test tool. The one way past it is an exception recorded in
+`frontend/audit-exceptions.json`: the advisory's id, the package, the reason
+in a sentence, the day it was accepted and a day, at most 31 days later, by
+which it must be looked at again. Each exception in use is printed on every
+run. The audit also fails when an exception is past its review day, when
+nothing reports its advisory any more, when it names another package, and
+when the file or npm's report cannot be read, so the list can neither grow
+stale nor switch the check off. Record an exception only when no fixed
+version can be installed and the reason holds for this project; otherwise
+update the package.
 
 The backend suite includes integration tests that run the real command line
 (`python -m motosphere`) as a separate process.
