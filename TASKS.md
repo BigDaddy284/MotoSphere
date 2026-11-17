@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 26 | 21 |
+| 1 | Foundation (FND) | 28 | 21 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-016 – Frontend data client and data status.
+**Current task:** FND-016 – Manifest reader in the frontend.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -39,7 +39,9 @@ theme and the Sky Classic icon style (`docs/design/`). Two foundation tasks
 were added for them (FND-023 and FND-024).
 
 The layout task was also split into smaller ones: regions (FND-014), section
-navigation (FND-025) and the current date (FND-026).
+navigation (FND-025) and the current date (FND-026). The data client task
+was split into three: reading the manifest (FND-016), serving real published
+data locally (FND-027) and the data status in the top bar (FND-028).
 
 Added tasks are listed where they fall in dependency order, so task numbers
 in Phase 1 are not strictly ascending.
@@ -421,12 +423,40 @@ Windows 11. No database and no globe yet.
 - **Commit:** `b234233`
 - **Plan:** `docs/plans/FND-021.md`
 
-### FND-016 – Frontend data client and data status
+### FND-016 – Manifest reader in the frontend
+- **Status:** IN PROGRESS
+- **Objective:** The frontend can fetch and check the data manifest the pipeline publishes, and reports every failure as a plain result.
+- **Description:** One module, `frontend/src/data/manifest.ts`, with no dependency and no React. `parseManifest` checks a parsed JSON value field by field (published data is treated as untrusted) and returns the manifest or the reason there is none; the format version is checked first, and unknown extra fields are ignored. `loadManifest` fetches `data/manifest.json` under the application's base path, asking the server for the current copy, and never throws: the result is the manifest, `unavailable`, `malformed` or `unsupported`. Nothing is shown on the page yet. This task was split from the original "Frontend data client and data status"; the other parts are FND-027 and FND-028.
+- **Acceptance criteria:**
+  1. The text the real export command writes is read correctly, with the counts as a map.
+  2. A value that is not an object, a missing field, a wrong type or an impossible value (a generation time in another spelling or on a date that does not exist, a negative, fractional or inexact count, a badly named record kind) gives `malformed`.
+  3. Another format version gives `unsupported`, even when nothing else in the file can be read.
+  4. `loadManifest` uses the base path and `cache: 'no-cache'`, passes a signal on and never throws: a failed or stopped request and an error answer give `unavailable`; an answer that is not JSON or not a manifest gives `malformed`.
+  5. `npm test` reports 177 passed in 9 files.
+- **Tests required:** frontend unit tests (177, of which 62 new: 48 for checking a manifest, 3 for its address, 11 for fetching it with a stand-in fetch function); lint, format check, type check, build, audit; browser tests unchanged (47); repository checks (9); backend untouched (115).
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-016.md`
+
+### FND-027 – Real published data in local development and browser tests
 - **Status:** NOT STARTED
-- **Objective:** Prove that what the pipeline publishes reaches the user's screen.
-- **Description:** A small typed data client that loads `data/manifest.json` relative to the application's base path, and a status indicator in the top bar with loading, up to date ("Data updated" with the date) and unavailable states in plain language. Local development and the browser tests read a manifest written by the real export command, never a hand-written copy.
-- **Acceptance criteria:** the indicator shows each of the three states correctly; a missing, malformed or wrong-version manifest shows a friendly message and never an unhandled error; the date shown is the one in the manifest.
-- **Tests required:** unit tests with a mocked fetch for all states, including malformed and wrong-version manifests; a browser test against a manifest produced by the export command (up to date) and with the file absent (unavailable).
+- **Objective:** The development server, the production preview and the browser tests serve a manifest written by the real export command.
+- **Description:** One command (an npm script that runs `python -m motosphere export` through uv) writes the published data into `frontend/public/data/`, which Git ignores. The browser tests' web server runs it before the build, so the built site under test always carries freshly exported data and never a hand-written copy. README documents the command for local development.
+- **Acceptance criteria:** after the command, `data/manifest.json` is served by the development server and by the preview of the production build; a browser test fetches it from the built site and the frontend's manifest reader accepts it; its generation time is from this run; the exported files are not tracked by Git; a failed export stops the browser tests with a clear message instead of testing stale data.
+- **Tests required:** browser tests that the served manifest is read by the manifest reader and is fresh; repository check that the data directory is ignored; all frontend and backend gates.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-028 – Data status in the top bar
+- **Status:** NOT STARTED
+- **Objective:** The user can see how current the data is, or that it could not be loaded.
+- **Description:** A hook that loads the manifest once when the application starts, and a status indicator in the top bar's information slot with three states in plain language: loading, up to date ("Data updated" with the date, written in the language of the user's browser) and unavailable (one friendly message for a missing, malformed or unsupported manifest, with different wording when the application is older than the data). The states are announced to assistive technology.
+- **Acceptance criteria:** the indicator shows each of the three states correctly; a missing, malformed or wrong-version manifest shows a friendly message and never an unhandled error; the date shown is the one in the manifest; leaving the page stops the request.
+- **Tests required:** unit tests with a stand-in loader for all states; browser tests against a manifest produced by the export command (up to date) and with the file absent, malformed and in a newer format (unavailable); all frontend gates.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified

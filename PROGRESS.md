@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-016 – Frontend data client and data status (`NOT STARTED`, the planner is writing its plan)
-- **Tasks verified:** 21 of 218
+- **Current task:** FND-016 – Manifest reader in the frontend (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 21 of 220
 - **Application state:** there is no server: the site will be static files on GitHub Pages. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. The two are not connected yet; no globe and no data store.
 
 ## Reports
@@ -1312,3 +1312,19 @@ Windows 11; first Windows run is FND-018.
 Commit: `a8cf14d` (squash merge of pull request #21).
 
 Next task: FND-016 – Frontend data client and data status.
+
+### PLAN-002 – The data client task split into three (2026-11-17)
+
+"Frontend data client and data status" was too large to test thoroughly as
+one task: it held a reader for untrusted data, the wiring that puts really
+exported data in front of the development server and the browser tests, and
+a new part of the page. It is now three tasks, in this order:
+
+- FND-016 – Manifest reader in the frontend (fetch and check the manifest;
+  unit tests only).
+- FND-027 – Real published data in local development and browser tests.
+- FND-028 – Data status in the top bar.
+
+Phase 1 has 28 tasks and the project 220. No requirement was dropped.
+
+Next task: FND-016 – Manifest reader in the frontend.
