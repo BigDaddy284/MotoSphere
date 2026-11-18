@@ -36,22 +36,15 @@ async function box(locator: Locator): Promise<Box> {
 }
 
 function regions(page: Page) {
+  const topBar = page.getByRole('banner')
   return {
-    topBar: page.getByRole('banner'),
+    topBar,
+    sectionsButton: topBar.getByRole('button', { name: 'Sections', exact: true }),
+    detailsButton: topBar.getByRole('button', { name: 'Details', exact: true }),
     sections: page.getByRole('navigation', { name: 'Sections' }),
     stage: page.getByRole('main', { name: 'Globe' }),
     details: page.getByRole('complementary', { name: 'Details' }),
   }
-}
-
-/** Opens the page as a visitor who closed these side panels earlier in the session. */
-async function openWithClosed(page: Page, ...panels: ('sections' | 'details')[]): Promise<void> {
-  await page.addInitScript((names) => {
-    for (const name of names) {
-      window.sessionStorage.setItem(`motosphere.panel.${name}`, 'closed')
-    }
-  }, panels)
-  await page.goto('./')
 }
 
 interface Piece {
@@ -139,19 +132,23 @@ for (const viewport of NARROW_SCREENS) {
       })
     })
 
-    test('the globe stage keeps the whole width when the panels are closed', async ({ page }) => {
-      await openWithClosed(page, 'sections', 'details')
+    test('the page opens with both panels closed and the globe stage in view', async ({ page }) => {
+      await page.goto('./')
       const region = regions(page)
+
+      await expect(region.sectionsButton).toHaveAttribute('aria-expanded', 'false')
+      await expect(region.detailsButton).toHaveAttribute('aria-expanded', 'false')
       await expect(region.sections).toBeHidden()
       await expect(region.details).toBeHidden()
-
       expect(await box(region.stage)).toMatchObject({ x: 0, width: viewport.width })
       expect(await regionAt(page, viewport.width / 2, viewport.height / 2)).toBe('main')
     })
 
     test('the sections panel lies over the globe stage, from the left', async ({ page }) => {
-      await openWithClosed(page, 'details')
+      await page.goto('./')
       const region = regions(page)
+      await region.sectionsButton.click()
+      await expect(region.sectionsButton).toHaveAttribute('aria-expanded', 'true')
       const stage = await box(region.stage)
       const sections = await box(region.sections)
 
@@ -167,8 +164,10 @@ for (const viewport of NARROW_SCREENS) {
     })
 
     test('the details panel lies over the globe stage, from the right', async ({ page }) => {
-      await openWithClosed(page, 'sections')
+      await page.goto('./')
       const region = regions(page)
+      await region.detailsButton.click()
+      await expect(region.detailsButton).toHaveAttribute('aria-expanded', 'true')
       const stage = await box(region.stage)
       const details = await box(region.details)
 
@@ -181,6 +180,54 @@ for (const viewport of NARROW_SCREENS) {
         height: stage.height,
       })
       expect(await regionAt(page, viewport.width - width / 2, viewport.height / 2)).toBe('aside')
+    })
+
+    test('a button closes the panel it opened', async ({ page }) => {
+      await page.goto('./')
+      const region = regions(page)
+
+      await region.sectionsButton.click()
+      await expect(region.sections).toBeVisible()
+      await region.sectionsButton.click()
+      await expect(region.sectionsButton).toHaveAttribute('aria-expanded', 'false')
+      await expect(region.sections).toBeHidden()
+
+      await region.detailsButton.click()
+      await expect(region.details).toBeVisible()
+      await region.detailsButton.click()
+      await expect(region.detailsButton).toHaveAttribute('aria-expanded', 'false')
+      await expect(region.details).toBeHidden()
+      expect(await regionAt(page, viewport.width / 2, viewport.height / 2)).toBe('main')
+    })
+
+    test('opening one panel closes the other', async ({ page }) => {
+      await page.goto('./')
+      const region = regions(page)
+
+      await region.sectionsButton.click()
+      await expect(region.sections).toBeVisible()
+      await region.detailsButton.click()
+      await expect(region.details).toBeVisible()
+      await expect(region.sections).toBeHidden()
+      await expect(region.sectionsButton).toHaveAttribute('aria-expanded', 'false')
+
+      await region.sectionsButton.click()
+      await expect(region.sections).toBeVisible()
+      await expect(region.details).toBeHidden()
+      await expect(region.detailsButton).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    test('the panels are closed again when the page is loaded again', async ({ page }) => {
+      await page.goto('./')
+      const region = regions(page)
+      await region.detailsButton.click()
+      await expect(region.details).toBeVisible()
+
+      await page.reload()
+
+      await expect(region.detailsButton).toHaveAttribute('aria-expanded', 'false')
+      await expect(region.details).toBeHidden()
+      await expect(region.sections).toBeHidden()
     })
 
     test('the page itself does not scroll', async ({ page }) => {
@@ -335,5 +382,59 @@ test.describe(`the narrowest wide screen, ${NARROW_BELOW} pixels`, () => {
       'the Details button',
     ])
     await expect(page.getByText(TAGLINE)).toBeVisible()
+  })
+})
+
+test.describe('between a wide screen and a narrow one', () => {
+  const WIDE = { width: 1366, height: 768 }
+  const PHONE = { width: 390, height: 844 }
+  test.use({ viewport: WIDE })
+
+  test('the panels change at once when the width crosses the line', async ({ page }) => {
+    await page.goto('./')
+    const region = regions(page)
+    await expect(region.sections).toBeVisible()
+    await expect(region.details).toBeVisible()
+
+    await page.setViewportSize({ width: NARROW_BELOW - 1, height: 700 })
+    await expect(region.sections).toBeHidden()
+    await expect(region.details).toBeHidden()
+    await expect(region.sectionsButton).toHaveAttribute('aria-expanded', 'false')
+    await expect(region.detailsButton).toHaveAttribute('aria-expanded', 'false')
+
+    await page.setViewportSize({ width: NARROW_BELOW, height: 700 })
+    await expect(region.sections).toBeVisible()
+    await expect(region.details).toBeVisible()
+    expect(await box(region.stage)).toMatchObject({
+      x: SECTIONS_WIDTH,
+      width: NARROW_BELOW - SECTIONS_WIDTH - DETAILS_WIDTH,
+    })
+  })
+
+  test('what was chosen on the wide screen is still there afterwards', async ({ page }) => {
+    await page.goto('./')
+    const region = regions(page)
+    await region.detailsButton.click()
+    await expect(region.details).toBeHidden()
+
+    await page.setViewportSize(PHONE)
+    await expect(region.sections).toBeHidden()
+    await region.detailsButton.click()
+    await expect(region.details).toBeVisible()
+    await region.sectionsButton.click()
+    await region.sectionsButton.click()
+    await expect(region.sections).toBeHidden()
+
+    await page.setViewportSize(WIDE)
+    await expect(region.sections).toBeVisible()
+    await expect(region.details).toBeHidden()
+    expect(await box(region.stage)).toMatchObject({
+      x: SECTIONS_WIDTH,
+      width: WIDE.width - SECTIONS_WIDTH,
+    })
+
+    await page.reload()
+    await expect(region.sections).toBeVisible()
+    await expect(region.details).toBeHidden()
   })
 })

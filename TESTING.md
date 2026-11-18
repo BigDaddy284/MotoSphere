@@ -125,7 +125,15 @@ The browser tests measure the layout at two desktop sizes and at five narrow
 ones, from 320 to 899 pixels wide (`frontend/e2e/narrow.spec.ts`): where each
 region is, which one is on top, and that the page itself does not scroll. At
 the narrow sizes they also measure everything the top bar shows: each piece
-must be whole, on one line, inside the bar and clear of the others.
+must be whole, on one line, inside the bar and clear of the others. There
+they also open and close the side panels with the buttons, as a visitor
+does, load the page again, and change the width of the window across the
+line between narrow and wide.
+
+The test environment of the unit tests has no screen, so
+`frontend/src/test/screen.ts` stands in for the part of the browser that
+knows how wide the screen is. Every unit test starts with a wide screen; a
+test changes the width with `showScreen(pixels)`.
 
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.
