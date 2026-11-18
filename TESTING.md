@@ -186,6 +186,27 @@ newer one on the site; a run that is still waiting gives way to a newer
 one. The repository checks hold the workflow to all of this, together with
 the rules above.
 
+That GitHub accepted a deployment does not say what a visitor gets. One
+command compares a published site with the site that was built:
+
+```
+python scripts/live.py <site.tar> <address>
+```
+
+`site.tar` is the built site as "Build the site" hands it over, and the
+address is where it is published, ending with a slash. The script asks the
+address for every file of the built site, and for the address itself, which
+must answer with the page. Each answer must be there (status 200, with no
+redirect), be served as the right kind of content, and match the built
+file byte for byte. The data manifest names the moment it was exported, so
+an older deployment never matches. A new deployment takes a moment to reach
+every server, so the script tries again every 10 seconds for up to 5
+minutes before it fails, and then names each file that is wrong. It uses
+the Python standard library only and accepts an address without encryption
+only on this computer. Its tests (`tests/scripts/test_live.py`) run it
+against a small web server on this computer and reach nothing else. The
+workflow does not run it yet: that is task FND-037.
+
 ## Latest results
 
 Results are recorded per task in [PROGRESS.md](PROGRESS.md).

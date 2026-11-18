@@ -78,6 +78,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Deployment: every change to `main` that passes all gates on both machines
   is published on GitHub Pages, at
   <https://bigdaddy284.github.io/MotoSphere/> (FND-034).
+- `python scripts/live.py <site.tar> <address>`: compares a published site
+  with the site that was built, file by file, and names what differs
+  (FND-035).
 
 ### Removed
 
