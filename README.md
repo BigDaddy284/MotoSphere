@@ -19,9 +19,8 @@ its tests and the frontend project.
 
 The current state of `main` is published at
 <https://bigdaddy284.github.io/MotoSphere/>. Every change to `main` that
-passes all checks is published there automatically, and the published
-site is then compared with what was built ([TESTING.md](TESTING.md),
-"Deployment").
+passes all checks is published there automatically
+([TESTING.md](TESTING.md), "Deployment").
 
 - [TASKS.md](TASKS.md) lists every development task and its status.
 - [PROGRESS.md](PROGRESS.md) holds the test report for each completed task.

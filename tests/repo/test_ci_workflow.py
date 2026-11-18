@@ -1,4 +1,4 @@
-"""Checks on the workflows: the gates and the deployment (FND-018, FND-032, FND-034, FND-037).
+"""Checks on the workflows: the gates and the deployment (FND-018, FND-032, FND-034).
 
 The workflows are read as text: the repository checks use the standard
 library only, and it has no YAML reader. The files are kept plain enough for
@@ -24,7 +24,6 @@ CHECKS = WORKFLOWS / "checks.yml"
 KNOWN_ACTIONS = (
     "actions/checkout",
     "actions/deploy-pages",
-    "actions/download-artifact",
     "actions/setup-node",
     "actions/setup-python",
     "actions/upload-pages-artifact",
@@ -46,18 +45,13 @@ MACHINES = (
     ("Windows", "windows-2025"),
 )
 
-# The jobs of the checks workflow, in order: the gates, the two jobs that
-# publish the site, and the job that checks what was published.
-JOBS = ("gates", "site", "deploy", "live")
+# The jobs of the checks workflow, in order: the gates, then the two jobs
+# that publish the site.
+JOBS = ("gates", "site", "deploy")
 
 # The one condition a job may have: it runs for a change to `main` only. The
 # workflow starts for nothing but pull requests and changes to `main`.
 ONLY_FOR_MAIN = "    if: github.event_name == 'push'\n"
-
-# The name GitHub's own actions give the built site when one job hands it to
-# another, and the file inside it.
-SITE_ARTIFACT = "github-pages"
-SITE_TAR = "artifact.tar"
 
 # An action pinned to a full commit, with the release it belongs to beside it.
 PINNED = re.compile(r"^ +uses: ([\w.-]+/[\w.-]+)@[0-9a-f]{40} # v\d+\.\d+\.\d+$")
@@ -163,12 +157,12 @@ class ChecksWorkflowTest(unittest.TestCase):
     def test_runs_for_pull_requests_and_for_changes_to_main(self) -> None:
         self.assertIn("\non:\n  pull_request:\n  push:\n    branches: [main]\n\n", self.text)
 
-    def test_its_jobs_are_the_gates_the_two_that_publish_and_the_check(self) -> None:
+    def test_its_jobs_are_the_gates_and_the_two_that_publish(self) -> None:
         self.assertEqual(tuple(self.jobs), JOBS)
 
     def test_its_token_can_only_read(self) -> None:
         self.assertIn("\npermissions:\n  contents: read\n\n", self.text)
-        for name in ("gates", "site", "live"):
+        for name in ("gates", "site"):
             with self.subTest(job=name):
                 self.assertNotIn("permissions", self.jobs[name])
 
@@ -177,8 +171,8 @@ class ChecksWorkflowTest(unittest.TestCase):
             r"uses: actions/checkout@\S+ # \S+\n +with:\n +persist-credentials: false\n",
             self.text,
         )
-        self.assertEqual(self.text.count("actions/checkout@"), 3)
-        self.assertEqual(len(kept_out), 3)
+        self.assertEqual(self.text.count("actions/checkout@"), 2)
+        self.assertEqual(len(kept_out), 2)
 
     def test_runs_the_check_runner_and_nothing_in_its_place(self) -> None:
         self.assertEqual(
@@ -231,9 +225,8 @@ class ChecksWorkflowTest(unittest.TestCase):
 
         # The gates and the site are prepared alike: two jobs, one version of
         # each tool. Python is the oldest the pipeline supports, so that
-        # nothing newer slips into the code unnoticed. The check of the
-        # published site needs Python only.
-        self.assertEqual([f">={version}" for version in python], [oldest_python] * 3)
+        # nothing newer slips into the code unnoticed.
+        self.assertEqual([f">={version}" for version in python], [oldest_python] * 2)
         self.assertEqual(len(node), 2)
         self.assertEqual(len(set(node)), 1)
         self.assertTrue(oldest_node.startswith(f">={node[0]}."), (node, oldest_node))
@@ -258,14 +251,14 @@ class DeploymentTest(unittest.TestCase):
     def test_the_site_is_built_only_after_every_gate_passed(self) -> None:
         self.assertIn("    needs: gates\n", self.site)
         self.assertIn("    needs: site\n", self.deploy)
-        self.assertEqual(self.text.count("needs:"), 3)
+        self.assertEqual(self.text.count("needs:"), 2)
 
     def test_a_pull_request_never_publishes(self) -> None:
         conditions = re.findall(r"^ +(?:- )?if:.*\n", self.text, re.MULTILINE)
 
         self.assertIn(ONLY_FOR_MAIN, self.site)
         self.assertIn(ONLY_FOR_MAIN, self.deploy)
-        self.assertEqual(conditions, [ONLY_FOR_MAIN] * 3)
+        self.assertEqual(conditions, [ONLY_FOR_MAIN] * 2)
 
     def test_only_the_deployment_may_publish(self) -> None:
         rights = [line for line in self.text.splitlines() if re.search(r":\s*write\b", line)]
@@ -291,7 +284,7 @@ class DeploymentTest(unittest.TestCase):
         self.assertEqual(actions(self.site)[-1], "actions/upload-pages-artifact")
         self.assertRegex(
             self.site,
-            r"uses: actions/upload-pages-artifact@\S+ # \S+\n +with:\n +path: frontend/dist\n\n",
+            r"uses: actions/upload-pages-artifact@\S+ # \S+\n +with:\n +path: frontend/dist\n",
         )
 
     def test_the_site_is_built_where_it_is_picked_up(self) -> None:
@@ -302,68 +295,6 @@ class DeploymentTest(unittest.TestCase):
     def test_both_jobs_run_on_a_named_linux_image(self) -> None:
         for job in (self.site, self.deploy):
             self.assertEqual(re.findall(r"^ +runs-on: (.+)$", job, re.MULTILINE), [MACHINES[0][1]])
-
-
-class PublishedSiteTest(unittest.TestCase):
-    """The job that checks the published site after each deployment."""
-
-    text: str
-    live: str
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.text = CHECKS.read_text(encoding="utf-8")
-        cls.live = jobs(cls.text)["live"]
-
-    def address(self) -> str:
-        """The address the job checks: the last word of its one command."""
-        (command,) = commands(self.live)
-        return command.split()[-1]
-
-    def test_the_site_is_checked_only_after_it_was_published(self) -> None:
-        self.assertIn("    needs: deploy\n", self.live)
-        self.assertIn(ONLY_FOR_MAIN, self.live)
-
-    def test_the_check_has_no_right_but_to_read(self) -> None:
-        self.assertNotIn("permissions", self.live)
-        self.assertNotIn("environment", self.live)
-        self.assertNotIn("token", self.live)
-
-    def test_it_takes_the_site_this_run_built(self) -> None:
-        self.assertEqual(
-            actions(self.live),
-            ["actions/checkout", "actions/setup-python", "actions/download-artifact"],
-        )
-        self.assertRegex(
-            self.live,
-            r"uses: actions/download-artifact@\S+ # \S+\n"
-            rf" +with:\n +name: {SITE_ARTIFACT}\n +path: built\n\n",
-        )
-        # It is this run's site: the step names no other run to take one from.
-        self.assertNotIn("run-id", self.text)
-        self.assertNotIn("repository:", self.text)
-
-    def test_it_runs_the_check_of_the_published_site_and_nothing_else(self) -> None:
-        (command,) = commands(self.live)
-
-        self.assertEqual(command, f"python scripts/live.py built/{SITE_TAR} {self.address()}")
-        self.assertTrue((ROOT / "scripts" / "live.py").is_file())
-
-    def test_the_address_is_where_the_site_is_published(self) -> None:
-        site = (ROOT / "frontend" / "site.ts").read_text(encoding="utf-8")
-        (path,) = re.findall(r"^export const SITE_PATH = '(.+)'$", site, re.MULTILINE)
-
-        self.assertRegex(self.address(), rf"^https://[a-z0-9-]+\.github\.io{re.escape(path)}$")
-        # The address people are given is the address that is checked.
-        for document in ("README.md", "TESTING.md"):
-            with self.subTest(document=document):
-                text = (ROOT / document).read_text(encoding="utf-8")
-                self.assertIn(f"<{self.address()}>", text)
-
-    def test_it_runs_on_a_named_linux_image(self) -> None:
-        self.assertEqual(
-            re.findall(r"^ +runs-on: (.+)$", self.live, re.MULTILINE), [MACHINES[0][1]]
-        )
 
 
 if __name__ == "__main__":

@@ -162,15 +162,14 @@ it to that:
   pull request, reaches a command.
 - No step may be skipped or allowed to fail, and every step runs one
   command: on Windows, a step with several commands only fails on its last
-  one. The only condition in the workflow is the one that keeps the three
-  jobs that publish the site and check it to changes to `main`.
+  one. The only condition in the workflow is the one that keeps the two
+  publishing jobs to changes to `main`.
 
 ## Deployment
 
 For a change to `main`, and only when every gate passed on both machines,
 the same workflow publishes the site on GitHub Pages, at
-<https://bigdaddy284.github.io/MotoSphere/>, and then checks what was
-published. Three more jobs do it:
+<https://bigdaddy284.github.io/MotoSphere/>. Two more jobs do it:
 
 - "Build the site" exports the published data (`npm run data`), builds the
   application (`npm run build`) and hands the result, `frontend/dist`, to
@@ -179,21 +178,16 @@ published. Three more jobs do it:
   nothing and runs no command of its own: it takes the site the other job
   built and hands it to GitHub Pages, through the `github-pages`
   environment.
-- "Check the published site" takes the site the first job built and
-  compares the published address with it (see below). It can only read. A
-  deployment that leaves the site broken, incomplete or older than this
-  run turns the run red.
 
-A pull request never publishes: all three jobs are skipped there, and the
+A pull request never publishes: both jobs are skipped there, and the
 workflow starts for nothing but pull requests and changes to `main`. Runs
 for `main` go one at a time, in order, so an older commit never replaces a
 newer one on the site; a run that is still waiting gives way to a newer
 one. The repository checks hold the workflow to all of this, together with
 the rules above.
 
-That GitHub accepted a deployment does not say what a visitor gets, so the
-last job looks at the site itself. One command compares a published site
-with the site that was built:
+That GitHub accepted a deployment does not say what a visitor gets. One
+command compares a published site with the site that was built:
 
 ```
 python scripts/live.py <site.tar> <address>
@@ -210,12 +204,8 @@ every server, so the script tries again every 10 seconds for up to 5
 minutes before it fails, and then names each file that is wrong. It uses
 the Python standard library only and accepts an address without encryption
 only on this computer. Its tests (`tests/scripts/test_live.py`) run it
-against a small web server on this computer and reach nothing else.
-
-When "Check the published site" fails, its log names each file that is
-wrong. The site may then be broken for visitors: the run for the next
-change to `main` publishes and checks again, and starting the failed job
-again repeats the check alone.
+against a small web server on this computer and reach nothing else. The
+workflow does not run it yet: that is task FND-037.
 
 ## Latest results
 

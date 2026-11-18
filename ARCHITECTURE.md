@@ -344,10 +344,7 @@ before the task that adds them is accepted.
 - **GitHub Pages**, deployed by the checks workflow after every gate passed
   for a change to `main`: one job exports the data and builds the frontend,
   a second job, the only one with the right to publish, hands both to
-  GitHub Pages as one site (task FND-034; TESTING.md, "Deployment"). A
-  third job then compares every file the published address serves with the
-  site that was built, and fails the run when they differ (tasks FND-035
-  and FND-037).
+  GitHub Pages as one site (task FND-034; TESTING.md, "Deployment").
 - Needed from the owner: Pages switched on for the repository with "GitHub
   Actions" as the source. GitHub offers Pages free for public repositories;
   for a private repository the account needs a paid plan.
