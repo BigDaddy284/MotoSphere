@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-037 – Run the check of the published site after each deployment (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 35 of 232
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (599 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built; nothing runs it after a deployment yet (FND-037). No globe and no data store yet.
+- **Current task:** FND-038 – Phone screens: the globe keeps the screen (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 36 of 232
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (605 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. No globe and no data store yet.
 
 ## Reports
 
@@ -2609,3 +2609,73 @@ Commit: `17d1a3e` (squash merge of pull request #38).
 
 Next task: FND-037 – Run the check of the published site after each
 deployment.
+
+### FND-037 – Run the check of the published site after each deployment (2026-11-18)
+
+TASK: FND-037 – Run the check of the published site after each deployment
+
+Implementation: Complete (builder thread, pull request #40). The checks
+workflow has a fourth job, "Check the published site", after "Publish the
+site". It fetches the site this run built, exactly as it was handed to
+GitHub Pages, and runs `python scripts/live.py built/artifact.tar
+https://bigdaddy284.github.io/MotoSphere/`. It runs for a change to `main`
+only and can only read. One more action of GitHub's own,
+`actions/download-artifact` v8.0.2, is pinned to a commit. The repository
+checks hold the job to all of this (40 checks, 34 before) and tie the
+address to the site's path in `frontend/site.ts` and to the address the
+README and TESTING.md give. Exactly the 6 planned files; all are identical
+to the planner's trial.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  605 passed, 0 failed, 0 skipped." Repository checks: 40.
+- Planted defects: 120 of 120 detected by the repository checks, the 82
+  from FND-034 and 38 about the new job. Among the new ones: the check
+  runs for a pull request, it runs even when publishing failed, it does
+  not wait for the deployment, the job may publish, the site of another
+  run is taken, a failing check is forgiven, someone else's site is
+  checked, the site is checked without encryption, the site's path moves
+  and the check still looks at the old place.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44387215403, the pull request's commit (`c9c4999`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 605 passed, 0 failed, 0 skipped."; "Build the
+  site", "Publish the site" and "Check the published site" skipped.
+- Run 44390229386, for `main` after the merge (`6f68e76`): all five jobs
+  green. The gates end with the same two lines on both machines. "Publish
+  the site" finished at 20:26:56 UTC. "Check the published site" then
+  fetched the built site (the download's digest matched) and its log ends
+  "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7
+  of 7 files." at 20:27:02 UTC, at the first try.
+- Before the plan, the planner's trial (pull request #39, closed without
+  merging) ran the same six files on a pull request: both gates jobs
+  green with 605 tests, the three jobs after the gates skipped.
+
+Unit and integration tests: 518/518 passed (repository 40, script tests
+164, backend 115, frontend 199). Browser tests: 87/87 passed.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the browser tests passed on Linux and
+on Windows; the deployment succeeded and the published site was compared
+with the build from GitHub's machine: 7 of 7 files identical.
+
+Overall applicable tests: 605/605 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the check passed at its first try, so its waiting and
+trying again has not yet been needed on a real deployment; the script's own
+tests cover it. The planner's environment still cannot reach the published
+address; this job is how the planner knows what a visitor gets. The builder
+reported every prove-it step of the plan and no deviation (Node 22.23.5
+locally).
+
+Commit: `6f68e76` (squash merge of pull request #40).
+
+Next task: FND-038 – Phone screens: the globe keeps the screen.

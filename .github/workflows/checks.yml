@@ -2,7 +2,8 @@
 # `main`. The gates themselves are in `scripts/check.py`; this file only
 # prepares a machine and starts them (TESTING.md, "Continuous integration").
 # For a change to `main`, and only when every gate passed, it then builds
-# the site and publishes it on GitHub Pages (TESTING.md, "Deployment").
+# the site, publishes it on GitHub Pages and checks what was published
+# (TESTING.md, "Deployment").
 name: Checks
 
 on:
@@ -73,9 +74,9 @@ jobs:
       - name: Run every gate
         run: python scripts/check.py
 
-  # The two jobs below publish the site. They run for a change to `main`
-  # only, never for a pull request, and only after every gate passed on both
-  # machines.
+  # The three jobs below publish the site and check it. They run for a
+  # change to `main` only, never for a pull request, and only after every
+  # gate passed on both machines.
   site:
     name: Build the site
     needs: gates
@@ -136,3 +137,32 @@ jobs:
     steps:
       - name: Publish the site on GitHub Pages
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  # Looks at the published site itself: every file a visitor gets must be
+  # the one this run built. It can only read.
+  live:
+    name: Check the published site
+    needs: deploy
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      # The site exactly as the job above handed it to GitHub Pages.
+      - name: Fetch the site this run built
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: github-pages
+          path: built
+
+      - name: Compare the published site with it
+        run: python scripts/live.py built/artifact.tar https://bigdaddy284.github.io/MotoSphere/

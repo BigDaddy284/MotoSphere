@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 40 | 35 |
+| 1 | Foundation (FND) | 40 | 36 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-037 – Run the check of the published site after each deployment.
+**Current task:** FND-038 – Phone screens: the globe keeps the screen.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -682,7 +682,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-035.md`
 
 ### FND-037 – Run the check of the published site after each deployment
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A deployment that leaves the published site broken, incomplete or stale turns the run red.
 - **Description:** After "Publish the site", a fourth job, "Check the published site", takes the site this run built, exactly as it was handed to GitHub Pages, and runs FND-035's check against the live address (`https://bigdaddy284.github.io/MotoSphere/`) from GitHub's machine. It can only read: no rights of its own, no environment. It runs for a change to `main` only. One action of GitHub's own is added, pinned to a commit, to fetch the built site. The repository checks hold the workflow to all of this and tie the address to the site's path in `frontend/site.ts` and to the address the documents give. Split from FND-035 by PLAN-008. FND-034 proves that GitHub accepted the deployment, not what a visitor gets, and the planner's environment cannot reach the address to look. The planner's trial has 40 repository checks (34 before) and detects 120 of 120 planted defects; on GitHub (pull request #39, closed without merging) both gates jobs were green with 605 tests and the three jobs after the gates were skipped. The job can only pass for the build that was just published, so its first real run is the run for `main` after the merge.
 - **Acceptance criteria:**
@@ -693,10 +693,10 @@ Windows 11. No database and no globe yet.
   5. Every rule from FND-018, FND-032 and FND-034 still holds, for all four jobs.
   6. In the run for `main` after the merge all five jobs are green, and the log of "Check the published site" ends with "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
 - **Tests required:** repository checks for the new job's rules (40 in all, 6 new); planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, where the job runs for the first time.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #40 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 605 passed, 0 failed, 0 skipped.", exit code 0; 120 of 120 planted defects in the workflow, the documents and the site's path detected by the repository checks (the 82 from FND-034 and 38 about the new job). On GitHub, read by the planner from the runs and job logs: run 44387215403 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 605 passed, 0 failed, 0 skipped.", the three jobs after the gates skipped; run 44390229386 for `main` after the merge, all five jobs green, the gates with the same two closing lines on both machines, the site republished, and "Check the published site", running for the first time, ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 605 / 0 tests (repository 40, script tests 164, backend 115, frontend unit 199, browser 87); all 19 gates passed, locally and on both machines on GitHub; 120 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-18. All 6 files are identical to the planner's trial. The check passed at its first try, about six seconds after GitHub Pages reported the deployment, so its waiting and trying again has not yet been needed on a real deployment (the script's own tests cover it). From now on every change to `main` is checked this way.
+- **Commit:** `6f68e76`
 - **Plan:** `docs/plans/FND-037.md`
 
 ### FND-038 – Phone screens: the globe keeps the screen
