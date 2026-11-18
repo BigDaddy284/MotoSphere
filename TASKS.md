@@ -724,15 +724,23 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-038.md`
 
 ### FND-039 – Narrow screens: the top bar fits
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** On a narrow screen nothing in the top bar is cut off or out of reach.
-- **Description:** On a narrow screen the top bar takes the lines it needs: first the name between the two panel buttons, then the data status and the date, each piece whole; the tagline gives way. From 900 pixels on the bar is unchanged: one line, with the tagline. Style sheet only. Added by PLAN-008, placed by PLAN-009 between FND-038 and FND-040: it needs a layout no wider than the screen, and FND-040's buttons must be in reach. The planner's trial has 28 browser tests and detects 16 of 16 planted defects.
-- **Acceptance criteria:** at 320, 360, 390, 768 and 899 pixels wide every control and piece of information in the top bar is whole, inside the bar and inside the screen, and none lies over another; from 360 pixels on, the first line holds the name between the two buttons, with the buttons at the two edges, and the information starts right under it; the tagline is not shown there; at 900 pixels the bar has one line, 48 pixels tall, with the tagline; no existing test changes.
-- **Tests required:** browser tests at five narrow widths and at 900 pixels that measure every piece of the top bar; the existing desktop tests unchanged; planted defects; the full run on both machines.
+- **Description:** On a narrow screen (under 900 pixels) the top bar takes the lines it needs instead of one fixed line: first the name between the two panel buttons, Sections at the left edge and Details at the right, then the data status and the date on a line of their own, each piece whole, sharing a line where both fit (a tablet held upright) and taking one each where they do not (a phone); the tagline gives way. The globe stage starts under the bar, however tall it is (99 pixels at phone widths, 78 at 768). From 900 pixels on the bar is unchanged: one line of 48 pixels, with the tagline. Style sheet only; the order of the elements in the page does not change. Added by PLAN-008, placed by PLAN-009 between FND-038 and FND-040: it needs a layout no wider than the screen, and FND-040's buttons must be in reach. Before this task the Details button lies outside the screen at 390 pixels. After it, on a phone, both panels are still open when the page opens: FND-040 follows at once. The planner's trial has 28 browser tests at five narrow widths and at 900 pixels, and detects 16 of 16 planted defects.
+- **Acceptance criteria:**
+  1. At 320, 360, 390, 768 and 899 pixels wide, each of the two buttons, the name, the data status and the date is whole, on one line, inside the top bar and inside the screen, and none lies over another.
+  2. There, the tagline is not shown.
+  3. From 360 pixels on, the first line holds the name between the two buttons, with the Sections button at the left edge and the Details button at the right edge, and the information starts right under that line at the left edge.
+  4. At 360 and 390 pixels the data status and the date each have a line; at 768 and 899 pixels they share one.
+  5. At 900 pixels the bar has one line, 48 pixels tall, with the tagline, in the order Sections, name, data status, date, Details.
+  6. No test that exists today changed, and all pass.
+  7. `python scripts/check.py` reports 19 of 19 gates and 659 tests (browser tests 141); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** browser tests at five narrow widths and at 900 pixels that measure every piece of the top bar (28 new, 141 in all); the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines, because the text is drawn with another font on Windows; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-039.md`
 
 ### FND-040 – Narrow screens: the panels start closed, one open at a time
 - **Status:** NOT STARTED
