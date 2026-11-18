@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 42 | 38 |
+| 1 | Foundation (FND) | 42 | 39 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-040 – Narrow screens: the panels start closed, one open at a time.
+**Current task:** FND-041 – Touch screens: controls a finger can hit.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -743,7 +743,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-039.md`
 
 ### FND-040 – Narrow screens: the panels start closed, one open at a time
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** On a narrow screen the page opens with the globe in view, and a panel covers it only when the user asks for it.
 - **Description:** On a narrow screen (under 900 pixels) both side panels start closed, whatever was chosen on a wide screen. A button opens its panel over the globe stage and closes it again, and opening one panel closes the other. Nothing is remembered there and nothing is written to the session's memory, so loading the page again shows the globe. On a wide screen nothing changes: the panels start open and the session remembers the choice. Changing the width across 900 pixels (turning a tablet) switches between the two at once, and what was chosen on the wide screen is there again afterwards. One module tells the script what a narrow screen is (`frontend/src/layout/narrowScreen.ts`), and a unit test ties it to the style sheet's; a new hook (`useSidePanels.ts`) holds both behaviours, and the markup is unchanged. The unit tests get a stand-in for the width of the screen. Nothing closes a panel but its own button and the other panel's: what choosing a section does to the panel on a phone is decided with the first section that shows something. Split from FND-038 by PLAN-009. The planner's trial has 12 new unit tests and 17 new browser tests, and detects 17 of 17 planted defects.
 - **Acceptance criteria:**
@@ -757,10 +757,10 @@ Windows 11. No database and no globe yet.
   8. The line between narrow and wide is written once for the script, and a unit test fails when it differs from the style sheet's.
   9. `python scripts/check.py` reports 19 of 19 gates and 688 tests (frontend unit tests 211, browser tests 158); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** unit tests for the panel state and for the hook that follows the screen, with a stand-in for the width of the screen (12 new, 211 in all); browser tests at five narrow widths, at desktop size and across a change of width (17 new, 158 in all); planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #46 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 688 passed, 0 failed, 0 skipped.", exit code 0 (frontend unit tests 211, browser tests 158); 17 planted defects in the three source files and the test setup: 17 of 17 detected by the unit tests, and 15 of the 16 that reach the browser also by the browser tests (the sixteenth, a watcher of the screen that is never removed, can only be seen by a unit test, which detects it). On GitHub, read by the planner from the runs and job logs: run 44407441917 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 688 passed, 0 failed, 0 skipped." with 211 frontend unit tests and 158 browser tests, the three jobs after the gates skipped; run 44412568975 for `main` after the merge, all five jobs green, the gates with the same two closing lines on both machines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 688 / 0 tests (repository 40, script tests 164, backend 115, frontend unit 211, browser 158); all 19 gates passed, locally and on both machines on GitHub; 17 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-18. All 12 files are identical to the planner's trial. Three existing browser tests in `frontend/e2e/narrow.spec.ts` open the panels with the buttons instead of through the session's memory, which has no effect on a narrow screen any more; no assertion in them was removed or loosened. How the page behaves under a finger on a real phone is for the owner to see on the published site.
+- **Commit:** `29c6dd2`
 - **Plan:** `docs/plans/FND-040.md`
 
 ### FND-041 – Touch screens: controls a finger can hit
