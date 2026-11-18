@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-035 – A check that compares the published site with the site that was built (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 34 of 232
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (557 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). No globe and no data store yet.
+- **Current task:** FND-037 – Run the check of the published site after each deployment (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 35 of 232
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (599 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built; nothing runs it after a deployment yet (FND-037). No globe and no data store yet.
 
 ## Reports
 
@@ -2539,3 +2539,73 @@ Commit: `9663dfa` (squash merge of pull request #37).
 
 Next task: FND-035 – A check that compares the published site with the
 site that was built.
+
+### FND-035 – A check that compares the published site with the site that was built (2026-11-18)
+
+TASK: FND-035 – A check that compares the published site with the site
+that was built
+
+Implementation: Complete (builder thread, pull request #38). A script,
+`python scripts/live.py <site.tar> <address>`, with the Python standard
+library only: it reads the built site from the tar the deployment hands
+over, asks the address for every file in it and for the address itself,
+and compares the status, the kind of content and every byte. It tries
+again every 10 seconds for up to five minutes and sends one line per try
+at once. Exactly the 4 planned files (the script, its 42 tests, TESTING.md
+and CHANGELOG.md); all are identical to the planner's trial.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  599 passed, 0 failed, 0 skipped." Script tests: 164 (122 before, 42
+  new).
+- The 164 script tests also on Python 3.12, the version GitHub uses: all
+  passed.
+- Planted defects: 44 of 44 detected by the script's tests. Among them: a
+  redirect is followed, an address without encryption is accepted for
+  another computer, a path that leaves the site is accepted, the check
+  never tries again, the check tries for ever, wrong files are listed but
+  the exit code is 0, a check that could not be carried out passes, the
+  lines about waiting are sent only at the end.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44365855699, the pull request's commit (`aece46c`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 599 passed, 0 failed, 0 skipped."; "Build the
+  site" and "Publish the site" skipped. The script tests took 6.9 seconds
+  on Windows.
+- Run 44367232626, for `main` after the merge (`17d1a3e`): all four jobs
+  green, the gates with the same two closing lines on both machines, and
+  the site republished ("Created deployment for
+  17d1a3e2b66c39e64b8752a0aeaa6ac52521ca25", "Reported success!").
+- Before the plan, the planner's trial (pull request #36, closed without
+  merging) ran the script on GitHub's machine against the real published
+  site and a fresh build: 6 of 7 files identical with the right content
+  types, and the data manifest different, as it had to be, because the
+  trial's export was newer than the published one.
+
+Unit and integration tests: 512/512 passed (repository 34, script tests
+164, backend 115, frontend 199). Browser tests: 87/87 passed.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the browser tests passed on Linux and
+on Windows; the deployment succeeded.
+
+Overall applicable tests: 599/599 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the script's tests use a stand-in server on the same
+computer, and nothing runs the script after a deployment yet; that is the
+next task. The planner's environment cannot reach the published address.
+The builder reported every prove-it step of the plan and no deviation
+(Node 22.23.5 locally).
+
+Commit: `17d1a3e` (squash merge of pull request #38).
+
+Next task: FND-037 – Run the check of the published site after each
+deployment.

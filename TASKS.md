@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 40 | 34 |
+| 1 | Foundation (FND) | 40 | 35 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-035 – A check that compares the published site with the site that was built.
+**Current task:** FND-037 – Run the check of the published site after each deployment.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -665,7 +665,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-036.md`
 
 ### FND-035 – A check that compares the published site with the site that was built
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One command says whether an address serves exactly the site that was built, and says what differs when it does not.
 - **Description:** A script, `python scripts/live.py <site.tar> <address>`, with the Python standard library only. It reads the built site from the tar the deployment hands over, asks the address for every file in it (and for the address itself, which must be the page), and compares each answer with the built file: the status, the kind of content and every byte. A site that is missing a file, serves an older one or serves the wrong kind of content fails, with each difference named. It tries again every 10 seconds for up to five minutes, because a new deployment takes a moment to reach visitors, and sends one line per try at once. Narrowed by PLAN-008 from "Check the published site after each deployment": the job that runs it is FND-037. The planner's trial has 42 tests against a stand-in server on this computer and detects 44 of 44 planted defects. In a trial on GitHub (pull request #36, closed without merging) the script compared the real published site with a fresh build: 6 of 7 files identical with the right content types, and the data manifest different, as it had to be, because the trial's export was newer. The same trial made the tests eight times faster on Windows (26 seconds to 3).
 - **Acceptance criteria:**
@@ -675,10 +675,10 @@ Windows 11. No database and no globe yet.
   4. It fails in a plain sentence, with exit code 1 and no traceback, when the address is not `https` (other than this computer's own) or carries more than an address, when the tar is not a built site, and when the site gives no answer for the whole waiting time. It reads nothing outside the tar's own list of files.
   5. `python scripts/check.py` reports 19 of 19 gates and 599 tests (script tests 164); on the pull request both gates jobs are green (Linux and Windows) and the two publishing jobs are skipped.
 - **Tests required:** script tests against a local stand-in server (164 in all, 42 new); the tooling type check, lint and format; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #38 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 599 passed, 0 failed, 0 skipped.", exit code 0; the 164 script tests also on Python 3.12, the version GitHub uses; 44 of 44 planted defects detected by the script's tests (among them a followed redirect, an unencrypted address accepted, a path that leaves the site accepted, a check that never tries again, one that tries for ever, wrong files listed but exit code 0). On GitHub, read by the planner from the runs and job logs: run 44365855699 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 599 passed, 0 failed, 0 skipped.", the two publishing jobs skipped, the script tests in 6.9 seconds on Windows; run 44367232626 for `main` after the merge, all four jobs green with the same two closing lines on both machines, the site republished ("Reported success!").
+- **Passed / Failed:** 599 / 0 tests (repository 34, script tests 164, backend 115, frontend unit 199, browser 87); all 19 gates passed, locally and on both machines on GitHub; 44 / 0 planted defects detected
+- **Verification status:** Verified by the planner on 2026-11-18. All 4 files are identical to the planner's trial. The tests use a stand-in server on the same computer; the script met the real published site once, in the planner's trial on GitHub (pull request #36, closed without merging). Running it against the published site after every deployment is FND-037.
+- **Commit:** `17d1a3e`
 - **Plan:** `docs/plans/FND-035.md`
 
 ### FND-037 – Run the check of the published site after each deployment
