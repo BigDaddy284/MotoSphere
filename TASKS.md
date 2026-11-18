@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 40 | 33 |
+| 1 | Foundation (FND) | 40 | 34 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-036 – Remove the audit exception that is no longer needed.
+**Current task:** FND-035 – A check that compares the published site with the site that was built.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -649,7 +649,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-034.md`
 
 ### FND-036 – Remove the audit exception that is no longer needed
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The dependency audit passes again because the exception it no longer needs is gone, and no other exception takes its place.
 - **Description:** On 2026-11-18 `npm audit` no longer reports the picomatch advisory (GHSA-fc5q-39xc-vjpf) for which an exception was recorded a day earlier (FND-033): its report holds 0 advisories for the same lock file, and the npm registry's list of advisories for picomatch no longer holds it. The audit fails on an exception that nothing reports any more, as designed, so the last gate fails on `main` and on every pull request until the exception is removed. `main` was green at `c04a5db`; nothing in the repository changed. The list of exceptions becomes empty and the changelog says so. Added by PLAN-008.
 - **Acceptance criteria:**
@@ -658,10 +658,10 @@ Windows 11. No database and no globe yet.
   3. On the pull request both gates jobs are green (Linux and Windows) and the two publishing jobs are skipped.
   4. Only `frontend/audit-exceptions.json` and `CHANGELOG.md` changed.
 - **Tests required:** the full run of all 19 gates (no test changes: none depends on the exception); three wrong results tried by hand (the exception left in, the list itself gone, the file unformatted); the workflow run on the pull request; the run for `main` after the merge, which also republishes the site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #37 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 557 passed, 0 failed, 0 skipped.", exit code 0; the audit gate printed "npm audit reports 0 advisories." and "Dependency audit passed." Three wrong results tried by hand, each detected: the exception left in (the audit gate fails with "is no longer needed: remove it"), the list itself gone ("could not be judged"), the file unformatted (the frontend's format gate names it). On GitHub, read by the planner from the runs and job logs: run 44360270319 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 557 passed, 0 failed, 0 skipped.", the two publishing jobs skipped; run 44361547750 for `main` after the merge, all four jobs green, the site republished ("Reported success!").
+- **Passed / Failed:** 557 / 0 tests (repository 34, script tests 122, backend 115, frontend unit 199, browser 87); all 19 gates passed, locally and on both machines on GitHub
+- **Verification status:** Verified by the planner on 2026-11-18. Both files are identical to the planner's trial. Between the planning commit and this merge the run for `main` was red in the audit gate (run 44359969370), as expected, and nothing was published from it.
+- **Commit:** `9663dfa`
 - **Plan:** `docs/plans/FND-036.md`
 
 ### FND-035 – A check that compares the published site with the site that was built
