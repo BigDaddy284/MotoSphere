@@ -93,9 +93,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - On a narrow screen the page opens with both side panels closed and the
   globe stage in view, only one panel is open at a time, and loading the
   page again closes them (FND-040).
-- On a touch screen the buttons in the top bar and the sections are 44
-  pixels tall, so that a finger can hit them; with a mouse nothing changes
-  (FND-041).
 
 ### Removed
 

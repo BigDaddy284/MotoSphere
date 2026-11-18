@@ -156,15 +156,3 @@
     justify-self: end;
   }
 }
-
-/*
- * A touch screen: the buttons are tall enough for a finger. They stand in the
- * middle of the bar's first line instead of on its line of text: so tall, a
- * button set on the line of text would reach out of the bar with some fonts.
- */
-@media (pointer: coarse) {
-  .toggle {
-    min-height: var(--size-touch-target);
-    align-self: center;
-  }
-}

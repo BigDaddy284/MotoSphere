@@ -101,9 +101,8 @@ phone, or a tablet held upright) an open side panel lies over the globe area
 instead of standing beside it, and the top bar takes the lines it needs: the
 name between the two buttons, then the data status and the date, without the
 tagline. There the page opens with both side panels closed, so that the globe
-area is in view, and only one panel is open at a time. On a touch screen the
-buttons and the sections are taller, so that a finger can hit them. Press
-Ctrl+C to stop the development server.
+area is in view, and only one panel is open at a time. Press Ctrl+C to stop the
+development server.
 
 The icon files in `frontend/public/` (`favicon.svg`, `favicon.ico` and
 `apple-touch-icon.png`) are generated from the designs in `docs/design/icon/`

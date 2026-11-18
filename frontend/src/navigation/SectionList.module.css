@@ -37,10 +37,3 @@
   background-color: var(--color-selection);
   color: var(--color-text);
 }
-
-/* A touch screen: every section is tall enough for a finger. */
-@media (pointer: coarse) {
-  .item {
-    min-height: var(--size-touch-target);
-  }
-}
