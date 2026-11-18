@@ -74,9 +74,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   request and each change to `main` (FND-018).
 - Continuous integration also runs every gate on Windows (FND-032).
 - `python scripts/audit.py`: the dependency audit, with exceptions that are
-  recorded with a reason and a review date. One exception is recorded: a
-  slow pattern match in picomatch, a build and test tool, for which no fixed
-  version exists yet (GHSA-fc5q-39xc-vjpf, review by 2026-12-17) (FND-033).
+  recorded with a reason and a review date (FND-033).
 - Deployment: every change to `main` that passes all gates on both machines
   is published on GitHub Pages, at
   <https://bigdaddy284.github.io/MotoSphere/> (FND-034).
@@ -86,3 +84,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The API server and its health endpoint, the `MOTOSPHERE_API_HOST` and
   `MOTOSPHERE_API_PORT` settings and the `fastapi`, `uvicorn` and `httpx2`
   dependencies, following the GitHub Pages hosting decision (FND-020).
+- The dependency audit's one recorded exception, for a slow pattern match
+  in picomatch (GHSA-fc5q-39xc-vjpf, recorded on 2026-11-17): a day later
+  `npm audit` no longer reported the advisory, and the audit failed until
+  the exception was taken out. No exception is recorded now (FND-036).
