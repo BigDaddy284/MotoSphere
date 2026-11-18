@@ -783,15 +783,22 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-041.md`
 
 ### FND-042 – Phones: the layout follows the visible height
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** On a phone the layout is as tall as the part of the screen the browser really shows, so its lower edge is never under the browser's own bars.
-- **Description:** A phone's browser shows and hides its own bars, and the height the layout uses today is the tallest of the two. The layout asks for the height that follows the bars, and keeps today's as the fallback for a browser that does not know it. Added by PLAN-008 as part of FND-040; a task of its own since PLAN-009, because the test browser has no bars that come and go: there the two heights are equal, so the tests can show that nothing changed and that the style sheet asks for the right height, and only a real phone can show the rest.
-- **Acceptance criteria:** the layout's style sheet asks for the height that follows the browser's bars, after the plain height as its fallback, and the page's own minimum height does the same; in the test browser the layout is exactly as tall as the screen at every tested size and the page itself does not scroll; every existing test passes unchanged. The effect on a real phone is confirmed by the owner on the published site and recorded as such, not as a test result.
-- **Tests required:** unit tests that read the style sheets; browser tests at phone and desktop sizes that measure the layout's height; planted defects; the full run on both machines.
+- **Description:** A phone's browser shows and hides its own bars, and the height the layout used until now (`100vh`) is measured as if they were hidden. The layout's height and the page's least height become `100dvh`, the height that follows the bars. There is no `100vh` line as a fallback, although this task's first wording asked for one: the planner's trial showed that the build is made for browsers that all know `dvh` (Vite's default list: Chrome and Edge 111, Firefox 114, Safari and iOS 16.4), that its minifier therefore removes such a line as dead code, and that a browser old enough to need it would not run the application's script either. A unit test rejects `vh` in any style sheet under `frontend/src`. Style sheets only. Added by PLAN-008 as part of FND-040; a task of its own since PLAN-009, because the test browser has no bars that come and go: there the two heights are equal, so the tests can show that the style sheets ask for the right height and that nothing else changed, and only a real phone can show the rest. The planner's trial has 1 new unit test and 5 new browser tests, and detects 10 of 10 planted defects.
+- **Acceptance criteria:**
+  1. The style sheets, as the browser received them, ask for `100dvh` as the layout's height and as the page's least height.
+  2. At 390 by 844, 844 by 390 and 1366 by 768 pixels the layout starts at the top left corner and is exactly as wide and as tall as the screen.
+  3. No style sheet under `frontend/src` measures in `vh`, and a unit test fails when one does.
+  4. No existing test changed, and all pass.
+  5. `python scripts/check.py` reports 19 of 19 gates and 702 tests (frontend unit tests 212, browser tests 171); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  6. The effect on a real phone is confirmed by the owner on the published site and recorded as such, not as a test result.
+- **Tests required:** a unit test that reads every style sheet (1 new, 212 in all); browser tests that read the rules the browser received and measure the layout at phone size, turned on its side, and at desktop size (5 new, 171 in all); the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-042.md`
 
 ### FND-019 – Windows scripts for local use
 - **Status:** NOT STARTED
