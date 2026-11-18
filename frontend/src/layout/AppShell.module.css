@@ -101,3 +101,28 @@
   color: var(--color-subtext);
   font-size: var(--font-size-sm);
 }
+
+/*
+ * A narrow screen: a phone, or a tablet held upright. There is no room for the
+ * panels beside the globe stage, so the stage keeps the whole width and an open
+ * panel lies over it, the sections from the left and the details from the right.
+ */
+@media (max-width: 899px) {
+  .shell {
+    grid-template-areas:
+      'top'
+      'stage';
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sections,
+  .details {
+    grid-area: stage;
+    z-index: 1;
+    max-width: 100%;
+  }
+
+  .details {
+    justify-self: end;
+  }
+}
