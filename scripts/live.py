@@ -205,8 +205,10 @@ def main(
                 waiting_for = str(error)
             if not wrong or waited >= wait:
                 break
-            # A new deployment needs a moment to reach every server.
+            # A new deployment needs a moment to reach every server. The line is
+            # sent at once, so that a log shows the waiting while it happens.
             out.write(f"Try {tries}: {waiting_for}.\n")
+            out.flush()
             pause(PAUSE_SECONDS)
             waited += PAUSE_SECONDS
     except UnusableError as error:

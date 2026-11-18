@@ -56,6 +56,10 @@ Served = dict[str, tuple[int, str, bytes]]
 class StandInHandler(http.server.BaseHTTPRequestHandler):
     """Answers with what the test put into the server's `served` table."""
 
+    # An answer leaves in one piece. Sent as headers first and content after,
+    # each answer takes a tenth of a second on Windows.
+    wbufsize = 64 * 1024
+
     def do_GET(self) -> None:
         served: Served = self.server.served  # type: ignore[attr-defined]
         self.server.asked.append(self.path)  # type: ignore[attr-defined]
@@ -133,6 +137,23 @@ class SiteTest(unittest.TestCase):
             [str(archive or self.built()), self.address], out, pause=pauses.append, wait=wait
         )
         return code, out.getvalue(), pauses
+
+
+def no_answer(url: str) -> live.Answer:
+    """A fetcher for a site that gives no answer at all."""
+    raise live.UnreachableError(f"{url} could not be reached: no answer")
+
+
+class Recorder(io.StringIO):
+    """Output that remembers how much of it had been written each time it was sent."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.sent: list[str] = []
+
+    def flush(self) -> None:
+        super().flush()
+        self.sent.append(self.getvalue())
 
 
 class AddressTest(unittest.TestCase):
@@ -411,9 +432,7 @@ class MainTest(SiteTest):
 
         def fetcher(url: str) -> live.Answer:
             calls.append(url)
-            if len(calls) == 1:
-                raise live.UnreachableError(f"{url} could not be reached: no answer")
-            return live.fetch(url)
+            return no_answer(url) if len(calls) == 1 else live.fetch(url)
 
         out = io.StringIO()
         pauses: list[float] = []
@@ -426,17 +445,31 @@ class MainTest(SiteTest):
         self.assertIn("is the site that was built: 6 of 6 files.\n", out.getvalue())
 
     def test_gives_up_on_a_site_that_never_answers_when_the_time_is_over(self) -> None:
-        archive = self.built()
-        self.server.shutdown()
-        self.server.server_close()
+        out = io.StringIO()
+        pauses: list[float] = []
 
-        code, output, pauses = self.check(archive, wait=20)
+        code = live.main([str(self.built()), self.address], out, no_answer, pauses.append, wait=20)
 
         self.assertEqual(code, 1)
         self.assertEqual(pauses, [live.PAUSE_SECONDS] * 2)
-        self.assertEqual(output.count("Try "), 2)
-        self.assertIn("The published site could not be checked: ", output)
-        self.assertNotIn("is the site that was built", output)
+        self.assertEqual(out.getvalue().count("Try "), 2)
+        self.assertIn("The published site could not be checked: ", out.getvalue())
+        self.assertNotIn("is the site that was built", out.getvalue())
+
+    def test_sends_each_line_about_waiting_before_it_waits(self) -> None:
+        # A log must show the waiting while it happens, not after it.
+        self.served["/MotoSphere/data/manifest.json"] = (200, TYPES["json"], OLDER)
+        out = Recorder()
+        not_sent: list[str] = []
+
+        def pause(_: float) -> None:
+            sent = out.sent[-1] if out.sent else ""
+            not_sent.append(out.getvalue().removeprefix(sent))
+
+        live.main([str(self.built()), self.address], out, pause=pause, wait=20)
+
+        self.assertEqual(not_sent, ["", ""])
+        self.assertIn("Try 2: ", out.sent[-1])
 
     def test_waits_five_minutes_unless_told_otherwise(self) -> None:
         self.assertEqual(live.WAIT_SECONDS, 300)
@@ -445,15 +478,17 @@ class MainTest(SiteTest):
         self.assertIn(live.WAIT_SECONDS, live.main.__defaults__ or ())
 
     def test_fails_in_plain_words_when_the_site_cannot_be_reached(self) -> None:
-        archive = self.built()
-        self.server.shutdown()
-        self.server.server_close()
+        out = io.StringIO()
+        pauses: list[float] = []
 
-        code, output, pauses = self.check(archive, wait=0)
+        code = live.main([str(self.built()), self.address], out, no_answer, pauses.append, wait=0)
 
         self.assertEqual(code, 1)
-        self.assertIn("The published site could not be checked: ", output)
-        self.assertIn("could not be reached", output)
+        self.assertEqual(
+            out.getvalue(),
+            f"The published site could not be checked: {self.address}index.html"
+            " could not be reached: no answer\n",
+        )
         self.assertEqual(pauses, [])
 
     def test_fails_in_plain_words_when_the_built_site_has_no_page(self) -> None:
