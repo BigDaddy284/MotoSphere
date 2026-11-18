@@ -87,6 +87,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Narrow screens (under 900 pixels wide: a phone, or a tablet held upright):
   the globe stage keeps the whole width, and an open side panel lies over
   it (FND-038).
+- On a narrow screen the top bar takes the lines it needs, so that nothing
+  in it is cut off: the name between the two buttons, then the data status
+  and the date; the tagline is not shown there (FND-039).
 
 ### Removed
 
