@@ -123,9 +123,7 @@ colours of chosen pixels, and that the designs hold nothing that runs or loads.
 
 The browser tests measure the layout at two desktop sizes and at five narrow
 ones, from 320 to 899 pixels wide (`frontend/e2e/narrow.spec.ts`): where each
-region is, which one is on top, and that the page itself does not scroll. At
-the narrow sizes they also measure everything the top bar shows: each piece
-must be whole, on one line, inside the bar and clear of the others.
+region is, which one is on top, and that the page itself does not scroll.
 
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.
