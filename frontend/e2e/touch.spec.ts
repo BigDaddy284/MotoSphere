@@ -11,6 +11,13 @@ const TOP_BAR_HEIGHT = 48
 
 const PHONE = { width: 390, height: 844 }
 const DESKTOP = { width: 1366, height: 768 }
+// With each screen, the room the first line of the top bar has for its
+// buttons: the whole line on a phone, and one pixel less on a wide screen,
+// where the border under the bar lies inside the bar's height.
+const SCREENS = [
+  { viewport: PHONE, firstLine: TOP_BAR_HEIGHT },
+  { viewport: DESKTOP, firstLine: TOP_BAR_HEIGHT - 1 },
+]
 
 interface Control {
   name: string
@@ -45,11 +52,13 @@ async function controls(page: Page): Promise<{ buttons: Control[]; sections: Con
   return { buttons: await measure('header button'), sections: await measure('nav button') }
 }
 
-for (const viewport of [PHONE, DESKTOP]) {
+for (const { viewport, firstLine } of SCREENS) {
   test.describe(`touch screen, ${viewport.width}×${viewport.height}`, () => {
     test.use({ viewport, hasTouch: true })
 
-    test('the buttons in the top bar are tall enough for a finger', async ({ page }) => {
+    test('the buttons in the top bar are tall enough for a finger, in the middle of its first line', async ({
+      page,
+    }) => {
       await page.goto('./')
       const { buttons } = await controls(page)
 
@@ -57,8 +66,9 @@ for (const viewport of [PHONE, DESKTOP]) {
       for (const button of buttons) {
         expect(button.height, button.name).toBe(TOUCH_TARGET)
         expect(button.width, `${button.name}: width`).toBeGreaterThanOrEqual(TOUCH_TARGET)
-        expect(button.top, `${button.name}: top edge`).toBeGreaterThanOrEqual(0)
-        expect(button.bottom, `${button.name}: bottom edge`).toBeLessThanOrEqual(TOP_BAR_HEIGHT)
+        // In the middle of the first line, whatever the font.
+        expect(button.top, `${button.name}: top edge`).toBe((firstLine - TOUCH_TARGET) / 2)
+        expect(button.bottom, `${button.name}: bottom edge`).toBe((firstLine + TOUCH_TARGET) / 2)
       }
     })
 
