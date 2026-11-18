@@ -682,15 +682,22 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-035.md`
 
 ### FND-037 – Run the check of the published site after each deployment
-- **Status:** NOT STARTED
-- **Objective:** A deployment that leaves the published site broken or stale turns the run red.
-- **Description:** After "Publish the site", a further job takes the site this run built and runs FND-035's check against the live address (`https://bigdaddy284.github.io/MotoSphere/`) from GitHub's machine. It can only read. Split from FND-035 by PLAN-008. FND-034 proves that GitHub accepted the deployment, not what a visitor gets, and the planner's environment cannot reach the address to look.
-- **Acceptance criteria:** the job runs for a change to `main` only, after the deployment, and has no right to write anything; it is green on a real deployment and its log shows how many files it compared; the address it checks is the one the documents give, with the site's path from `frontend/site.ts`; every rule of the workflow still holds for all four jobs.
-- **Tests required:** repository checks for the new job's rules, with planted defects; the full run on both machines; the run for `main` after the merge, where the job runs for the first time.
+- **Status:** IN PROGRESS
+- **Objective:** A deployment that leaves the published site broken, incomplete or stale turns the run red.
+- **Description:** After "Publish the site", a fourth job, "Check the published site", takes the site this run built, exactly as it was handed to GitHub Pages, and runs FND-035's check against the live address (`https://bigdaddy284.github.io/MotoSphere/`) from GitHub's machine. It can only read: no rights of its own, no environment. It runs for a change to `main` only. One action of GitHub's own is added, pinned to a commit, to fetch the built site. The repository checks hold the workflow to all of this and tie the address to the site's path in `frontend/site.ts` and to the address the documents give. Split from FND-035 by PLAN-008. FND-034 proves that GitHub accepted the deployment, not what a visitor gets, and the planner's environment cannot reach the address to look. The planner's trial has 40 repository checks (34 before) and detects 120 of 120 planted defects; on GitHub (pull request #39, closed without merging) both gates jobs were green with 605 tests and the three jobs after the gates were skipped. The job can only pass for the build that was just published, so its first real run is the run for `main` after the merge.
+- **Acceptance criteria:**
+  1. On the pull request both gates jobs are green (Linux and Windows) with 19 of 19 gates and 605 tests, and "Build the site", "Publish the site" and "Check the published site" are skipped.
+  2. The new job runs for a change to `main` only, after the deployment, and has no right to write anything.
+  3. It takes the site this run built and runs `python scripts/live.py` on it against the published address, and nothing else.
+  4. The address it checks ends with the site's path from `frontend/site.ts` and is the address the README and TESTING.md give.
+  5. Every rule from FND-018, FND-032 and FND-034 still holds, for all four jobs.
+  6. In the run for `main` after the merge all five jobs are green, and the log of "Check the published site" ends with "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Tests required:** repository checks for the new job's rules (40 in all, 6 new); planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, where the job runs for the first time.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-037.md`
 
 ### FND-038 – Phone screens: the globe keeps the screen
 - **Status:** NOT STARTED
