@@ -66,6 +66,7 @@
   --size-top-bar: 3rem;
   --size-sections-panel: 13.75rem;
   --size-details-panel: 22.5rem;
+  --size-touch-target: 2.75rem; /* the least height of a control under a finger */
 
   /* Shape */
   --radius-sm: 4px;
