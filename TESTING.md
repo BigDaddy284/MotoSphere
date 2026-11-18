@@ -121,6 +121,10 @@ focus ring and reduced motion. The browser tests also check the icon files as
 served: the page's links, the content types, the sizes of the images, the
 colours of chosen pixels, and that the designs hold nothing that runs or loads.
 
+The browser tests measure the layout at two desktop sizes and at five narrow
+ones, from 320 to 899 pixels wide (`frontend/e2e/narrow.spec.ts`): where each
+region is, which one is on top, and that the page itself does not scroll.
+
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.
 
