@@ -1,11 +1,1 @@
-{
-  "exceptions": [
-    {
-      "advisory": "GHSA-fc5q-39xc-vjpf",
-      "package": "picomatch",
-      "reason": "A pattern that is slow to match (ReDoS) in a file-matching library used by the build and test tools. It only reads patterns written in this repository's own configuration, never anything from outside, and it is not part of the published site. No fixed version exists yet: the latest, 4.0.7, is affected.",
-      "accepted": "2026-11-17",
-      "review_by": "2026-12-17"
-    }
-  ]
-}
+{ "exceptions": [] }
