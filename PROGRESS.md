@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-038 – Phone screens: the globe keeps the screen (`NOT STARTED`, the planner is writing its plan)
-- **Tasks verified:** 36 of 232
+- **Current task:** FND-038 – Narrow screens: an open panel lies over the globe (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 36 of 234
 - **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (605 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. No globe and no data store yet.
 
 ## Reports
@@ -2679,3 +2679,71 @@ locally).
 Commit: `6f68e76` (squash merge of pull request #40).
 
 Next task: FND-038 – Phone screens: the globe keeps the screen.
+
+### PLAN-009 – Phone screens in five tasks (2026-11-18)
+
+Not a development task: no application code changed.
+
+What the planner measured on `main` at 390 by 844 pixels, the size of a
+common phone: the two side panels take 220 and 360 pixels, so the layout
+is 580 pixels wide; the globe stage has a width of 0; the Details button
+lies at 724 pixels, outside the screen, and cannot be reached. At 768
+pixels (a tablet held upright) the stage has 188 pixels and the Details
+button is cut off.
+
+The planner then tried the first two phone tasks one after the other and
+found that the first as PLAN-008 wrote it (the panels start closed, and
+an open panel lies over the globe) is two things that need a third between
+them. A button that cannot be reached cannot be tested honestly; the top
+bar cannot fit while the layout is wider than the screen; and the layout
+is wider than the screen until the panels stop taking width. So:
+
+1. FND-038 – Narrow screens: an open panel lies over the globe. Where the
+   panels are drawn, and nothing else. Style sheet only.
+2. FND-039 – Narrow screens: the top bar fits. The buttons come into
+   reach. Style sheet only.
+3. FND-040 – Narrow screens: the panels start closed, one open at a time.
+   The first task with script in it.
+4. FND-041 – Touch screens: controls a finger can hit (was part of
+   FND-040). The test browser can have a touch screen, so this can be
+   measured.
+5. FND-042 – Phones: the layout follows the visible height (was the other
+   part of FND-040). The test browser has no bars that come and go, so
+   the tests can only show that nothing changed there and that the style
+   sheet asks for the right height. The rest is for the owner to see on a
+   real phone, and will be recorded as that.
+
+A narrow screen is one under 900 pixels wide: a phone, or a tablet held
+upright. Below about 810 pixels the top bar's content does not fit on one
+line even without the tagline, and at 900 pixels the stage still has 320
+pixels between the panels. The smallest width tested is 320 pixels: old
+small phones, and a desktop page enlarged to 400%.
+
+Between the first task and the third the published site is no better on a
+phone than today (both panels open over the stage); the three follow one
+another at once.
+
+What the planner tried for FND-038 (Linux, Python 3.13.18, Node 22.23.4,
+npm 10.9.9, uv 0.11.32), on `main` at `6f68e76`:
+
+- 26 new browser tests at 320, 360, 390, 768 and 899 pixels wide, and at
+  900: all pass. The full run: 19 of 19 gates passed, "Tests: 631 passed,
+  0 failed, 0 skipped." (browser tests 113).
+- 11 of 11 planted defects in the style sheet detected.
+- In trial pull request #41 (closed without merging), exactly the six
+  files below ran on GitHub (run 44391577343): "All gates (Linux)" and
+  "All gates (Windows)" green, each log ending `19 of 19 gates passed.`
+  and `Tests: 631 passed, 0 failed, 0 skipped.` (browser tests 113 on both
+  machines); "Build the site", "Publish the site" and "Check the published
+  site" skipped.
+
+For FND-039, on top of it: 28 more browser tests, all passing, and 16 of
+16 planted defects detected. For FND-040, on top of both: 12 more unit
+tests and 17 more browser tests, all passing, and 17 of 17 planted defects
+detected by the unit tests. Each plan is written when the task before it
+is verified.
+
+Order from here: FND-038, FND-039, FND-040, FND-041, FND-042, FND-019.
+Phase 1 has 42 tasks and the project 234. No requirement was dropped.
+
+Next task: FND-038 – Narrow screens: an open panel lies over the globe.
