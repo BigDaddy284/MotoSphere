@@ -81,6 +81,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `python scripts/live.py <site.tar> <address>`: compares a published site
   with the site that was built, file by file, and names what differs
   (FND-035).
+- After each deployment a job runs that comparison against the published
+  site, so a deployment that leaves the site broken or stale fails the run
+  (FND-037).
 
 ### Removed
 
