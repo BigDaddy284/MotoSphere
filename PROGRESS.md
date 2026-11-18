@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-035 – Check the published site after each deployment (`NOT STARTED`, the planner is writing its plan; work is on hold until 2026-11-18, 20:00 UK time, at the owner's request)
-- **Tasks verified:** 33 of 227
+- **Current task:** FND-036 – Remove the audit exception that is no longer needed (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 33 of 232
 - **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (557 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; one advisory, for a build tool, is accepted until 2026-12-17 in `frontend/audit-exceptions.json`. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). No globe and no data store yet.
 
 ## Reports
@@ -2429,3 +2429,54 @@ planner's bookkeeping commits included. The builder reported no deviation.
 Commit: `fbfe689` (squash merge of pull request #35).
 
 Next task: FND-035 – Check the published site after each deployment.
+
+### PLAN-008 – The audit exception has to go; the site check in two tasks; phone screens (2026-11-18)
+
+Not a development task: no application code changed.
+
+Three changes to the task list.
+
+1. A new task, first in line: FND-036 – Remove the audit exception that is
+   no longer needed. On 2026-11-18 `npm audit` reports 0 advisories for the
+   same lock file: the picomatch advisory (GHSA-fc5q-39xc-vjpf), accepted a
+   day earlier with a review date of 2026-12-17, is no longer reported, and
+   the npm registry's list of advisories for picomatch (4.0.7, still the
+   latest version) no longer holds it. The planner could not read why (the
+   advisory's page cannot be reached from the planning environment). The
+   audit fails on an exception nothing reports any more, as it was built
+   to, so the last gate now fails on `main` and on every pull request:
+   "the exception for GHSA-fc5q-39xc-vjpf (picomatch) is no longer needed:
+   remove it". Nothing in the repository changed; the last run for `main`
+   (44164180581, at `c04a5db`, 2026-11-17) was green. The run for this
+   planning commit is expected to be red in that one gate, and the site is
+   not republished until FND-036 is merged.
+2. Checking the published site is two tasks: FND-035 is the check itself,
+   a script with its own tests against a stand-in server, and FND-037 is
+   the job that runs it after each deployment. The first can be tested
+   completely before it is merged; the second can only show itself on
+   `main`.
+3. Three tasks for phone screens, FND-038 to FND-040: the globe keeps the
+   screen (side panels start closed and lie over the globe), the top bar
+   fits, and full height with controls a finger can hit. The owner opened
+   the published site on a phone on 2026-11-17: it loads, and it is not
+   usable there. DESIGN.md asks for a responsive interface, and no task
+   covered it. They come before the globe (Phase 3), so that the globe is
+   built into a layout that already works on a phone.
+
+What the planner tried for FND-036 (Linux, Python 3.13.18, Node 22.23.4,
+npm 10.9.9, uv 0.11.32), with the list of exceptions empty and the
+changelog changed:
+
+- `python scripts/audit.py`: "npm audit reports 0 advisories." and
+  "Dependency audit passed."
+- The full run: 19 of 19 gates passed, "Tests: 557 passed, 0 failed, 0
+  skipped."
+- With the exception left in, the audit gate fails as quoted above; with
+  the list itself gone the audit "could not be judged"; with the file
+  unformatted the frontend's format check names it.
+
+Order from here: FND-036, FND-035, FND-037, FND-038, FND-039, FND-040,
+FND-019. Phase 1 has 40 tasks and the project 232. No requirement was
+dropped.
+
+Next task: FND-036 – Remove the audit exception that is no longer needed.
