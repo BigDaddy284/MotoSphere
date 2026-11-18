@@ -743,15 +743,25 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-039.md`
 
 ### FND-040 – Narrow screens: the panels start closed, one open at a time
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** On a narrow screen the page opens with the globe in view, and a panel covers it only when the user asks for it.
-- **Description:** On a narrow screen both side panels start closed, whatever was chosen on a wide screen. A button opens its panel over the globe stage and closes it again, and opening one panel closes the other. Nothing is remembered there, so loading the page again shows the globe. On a wide screen nothing changes: the panels start open and the session remembers the choice. Changing the width across 900 pixels (turning a tablet) switches between the two at once. One place tells the script what a narrow screen is, and a test ties it to the style sheet's. Split from FND-038 by PLAN-009.
-- **Acceptance criteria:** at 390 by 844 pixels the page opens with both panels closed, both buttons saying so, and the globe stage on top everywhere under the top bar; each button opens its panel and closes it again; opening one panel closes the other; after loading the page again both are closed; what was chosen on a wide screen is untouched by anything done on a narrow one; changing the width across 900 pixels switches at once; at desktop sizes every existing test passes unchanged.
-- **Tests required:** unit tests for the panel state, with a stand-in for the width of the screen; browser tests at phone size, at desktop size and across a change of width; planted defects; the full run on both machines.
+- **Description:** On a narrow screen (under 900 pixels) both side panels start closed, whatever was chosen on a wide screen. A button opens its panel over the globe stage and closes it again, and opening one panel closes the other. Nothing is remembered there and nothing is written to the session's memory, so loading the page again shows the globe. On a wide screen nothing changes: the panels start open and the session remembers the choice. Changing the width across 900 pixels (turning a tablet) switches between the two at once, and what was chosen on the wide screen is there again afterwards. One module tells the script what a narrow screen is (`frontend/src/layout/narrowScreen.ts`), and a unit test ties it to the style sheet's; a new hook (`useSidePanels.ts`) holds both behaviours, and the markup is unchanged. The unit tests get a stand-in for the width of the screen. Nothing closes a panel but its own button and the other panel's: what choosing a section does to the panel on a phone is decided with the first section that shows something. Split from FND-038 by PLAN-009. The planner's trial has 12 new unit tests and 17 new browser tests, and detects 17 of 17 planted defects.
+- **Acceptance criteria:**
+  1. At 320, 360, 390, 768 and 899 pixels wide the page opens with both panels closed, both buttons saying so, and the globe stage on top in the middle of the screen, also when the session remembers both panels open.
+  2. There, each button opens its panel over the stage and closes it again.
+  3. There, opening one panel closes the other, and its button says so.
+  4. There, after the page is loaded again both panels are closed, and nothing was written to the session's memory.
+  5. When the width crosses 900 pixels the page follows at once, in both directions, without being loaded again.
+  6. What was chosen on a wide screen is untouched by anything done on a narrow one: it is there again when the screen is wide again, and after the page is loaded again.
+  7. At 900 pixels and more nothing changes: every existing unit test and every browser test in the other files passes unchanged. In `frontend/e2e/narrow.spec.ts` three existing tests open the panels with the buttons instead of through the session's memory, which has no effect on a narrow screen any more; no assertion in them is removed or loosened.
+  8. The line between narrow and wide is written once for the script, and a unit test fails when it differs from the style sheet's.
+  9. `python scripts/check.py` reports 19 of 19 gates and 688 tests (frontend unit tests 211, browser tests 158); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** unit tests for the panel state and for the hook that follows the screen, with a stand-in for the width of the screen (12 new, 211 in all); browser tests at five narrow widths, at desktop size and across a change of width (17 new, 158 in all); planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-040.md`
 
 ### FND-041 – Touch screens: controls a finger can hit
 - **Status:** NOT STARTED
