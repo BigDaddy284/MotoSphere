@@ -141,8 +141,15 @@ Rules:
 - A screen under 900 pixels wide is a narrow one (a phone, or a tablet held
   upright). There the globe stage keeps the whole width and an open side
   panel lies over it; from 900 pixels on, the panels stand beside the stage.
-  The width is written once, in the layout's style sheet
-  (`frontend/src/layout/AppShell.module.css`).
+  The width is written in the layout's style sheet
+  (`frontend/src/layout/AppShell.module.css`) and, for the script, in
+  `frontend/src/layout/narrowScreen.ts`; a unit test fails when the two
+  differ.
+- On a narrow screen an open side panel covers the globe stage, so both
+  panels start closed, at most one is open, and nothing about them is
+  remembered: loading the page again shows the globe. On a wide screen each
+  panel starts open and the user's choice is remembered for the session
+  (`frontend/src/layout/useSidePanels.ts`).
 
 ## 4. Data pipeline (Decided)
 

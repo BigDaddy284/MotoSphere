@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { showScreen } from '../test/screen.ts'
 import { AppShell } from './AppShell.tsx'
 
 function renderShell() {
@@ -239,5 +240,129 @@ describe('AppShell side panels', () => {
     expect(sectionsPanel()).toBeNull()
     expect(getItem).toHaveBeenCalled()
     expect(setItem).toHaveBeenCalled()
+  })
+})
+
+describe('AppShell side panels on a narrow screen', () => {
+  it('start closed, and the buttons say so', () => {
+    showScreen(390)
+    renderShell()
+
+    expect(panelButton('Sections')).toHaveAttribute('aria-expanded', 'false')
+    expect(panelButton('Details')).toHaveAttribute('aria-expanded', 'false')
+    expect(sectionsPanel()).toBeNull()
+    expect(detailsPanel()).toBeNull()
+  })
+
+  it('start closed even when the session remembers them open', () => {
+    window.sessionStorage.setItem('motosphere.panel.sections', 'open')
+    window.sessionStorage.setItem('motosphere.panel.details', 'open')
+    showScreen(390)
+    renderShell()
+
+    expect(sectionsPanel()).toBeNull()
+    expect(detailsPanel()).toBeNull()
+  })
+
+  it('open with their button and close with it again', async () => {
+    const user = userEvent.setup()
+    showScreen(390)
+    renderShell()
+
+    await user.click(panelButton('Sections'))
+    expect(panelButton('Sections')).toHaveAttribute('aria-expanded', 'true')
+    expect(sectionsPanel()).toBeVisible()
+    expect(screen.getByText('Test sections')).toBeVisible()
+
+    await user.click(panelButton('Sections'))
+    expect(panelButton('Sections')).toHaveAttribute('aria-expanded', 'false')
+    expect(sectionsPanel()).toBeNull()
+
+    await user.click(panelButton('Details'))
+    expect(panelButton('Details')).toHaveAttribute('aria-expanded', 'true')
+    expect(detailsPanel()).toBeVisible()
+
+    await user.click(panelButton('Details'))
+    expect(panelButton('Details')).toHaveAttribute('aria-expanded', 'false')
+    expect(detailsPanel()).toBeNull()
+  })
+
+  it('are open one at a time: opening one closes the other', async () => {
+    const user = userEvent.setup()
+    showScreen(390)
+    renderShell()
+
+    await user.click(panelButton('Sections'))
+    await user.click(panelButton('Details'))
+
+    expect(detailsPanel()).toBeVisible()
+    expect(panelButton('Details')).toHaveAttribute('aria-expanded', 'true')
+    expect(sectionsPanel()).toBeNull()
+    expect(panelButton('Sections')).toHaveAttribute('aria-expanded', 'false')
+
+    await user.click(panelButton('Sections'))
+
+    expect(sectionsPanel()).toBeVisible()
+    expect(detailsPanel()).toBeNull()
+  })
+
+  it('start closed again when the page is loaded again', async () => {
+    const user = userEvent.setup()
+    showScreen(390)
+    const { unmount } = renderShell()
+
+    await user.click(panelButton('Sections'))
+    expect(sectionsPanel()).toBeVisible()
+    unmount()
+    renderShell()
+
+    expect(sectionsPanel()).toBeNull()
+    expect(detailsPanel()).toBeNull()
+  })
+
+  it('leave nothing in the memory of the session', async () => {
+    const user = userEvent.setup()
+    showScreen(390)
+    renderShell()
+
+    await user.click(panelButton('Sections'))
+    await user.click(panelButton('Details'))
+    await user.click(panelButton('Details'))
+
+    expect(window.sessionStorage).toHaveLength(0)
+  })
+
+  it('change at once when the screen becomes narrow, and back when it is wide again', () => {
+    renderShell()
+    expect(sectionsPanel()).toBeVisible()
+    expect(detailsPanel()).toBeVisible()
+
+    showScreen(899)
+    expect(sectionsPanel()).toBeNull()
+    expect(detailsPanel()).toBeNull()
+
+    showScreen(900)
+    expect(sectionsPanel()).toBeVisible()
+    expect(detailsPanel()).toBeVisible()
+  })
+
+  it('leave the choice made on a wide screen as it was', async () => {
+    const user = userEvent.setup()
+    renderShell()
+    await user.click(panelButton('Details'))
+    expect(detailsPanel()).toBeNull()
+
+    showScreen(390)
+    await user.click(panelButton('Details'))
+    expect(detailsPanel()).toBeVisible()
+    await user.click(panelButton('Sections'))
+    await user.click(panelButton('Sections'))
+    expect(sectionsPanel()).toBeNull()
+
+    showScreen(1366)
+    expect(sectionsPanel()).toBeVisible()
+    expect(panelButton('Sections')).toHaveAttribute('aria-expanded', 'true')
+    expect(detailsPanel()).toBeNull()
+    expect(panelButton('Details')).toHaveAttribute('aria-expanded', 'false')
   })
 })
