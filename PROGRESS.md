@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-038 – Narrow screens: an open panel lies over the globe (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 36 of 234
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (605 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. No globe and no data store yet.
+- **Current task:** FND-039 – Narrow screens: the top bar fits (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 37 of 234
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (631 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. No globe and no data store yet.
 
 ## Reports
 
@@ -2747,3 +2747,71 @@ Order from here: FND-038, FND-039, FND-040, FND-041, FND-042, FND-019.
 Phase 1 has 42 tasks and the project 234. No requirement was dropped.
 
 Next task: FND-038 – Narrow screens: an open panel lies over the globe.
+
+### FND-038 – Narrow screens: an open panel lies over the globe (2026-11-18)
+
+TASK: FND-038 – Narrow screens: an open panel lies over the globe
+
+Implementation: Complete (builder thread, pull request #42). On a screen
+under 900 pixels wide the layout has one column: the top bar and the globe
+stage each have the whole width, and an open side panel is drawn over the
+stage, the sections panel from the left edge and the details panel from
+the right, as tall as the stage and never wider than the screen. One block
+in the layout's style sheet; no component changed. Exactly the 6 planned
+files (the style sheet, the new `frontend/e2e/narrow.spec.ts` with 26
+tests, README.md, ARCHITECTURE.md, TESTING.md, CHANGELOG.md); all are
+identical to the planner's trial. No existing test changed.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  631 passed, 0 failed, 0 skipped." Browser tests: 113 (87 before, 26
+  new, at 320, 360, 390, 768 and 899 pixels wide and at 900).
+- Planted defects: 11 of 11 detected by the browser tests: no narrow
+  layout at all; the line drawn at 800 pixels, and at 900; the panels
+  under the stage; a panel wider than the screen; the details panel at
+  the left; the three columns kept; the old areas kept; the panels in
+  areas of their own; a panel half as tall as the stage; a stage that
+  scrolls sideways.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44393965951, the pull request's commit (`3dd2bfd`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 631 passed, 0 failed, 0 skipped.", with 113
+  browser tests on both machines; "Build the site", "Publish the site"
+  and "Check the published site" skipped.
+- Run 44396093299, for `main` after the merge (`4f2f611`): all five jobs
+  green, the gates with the same two closing lines on both machines, the
+  site republished, and the log of "Check the published site" ending
+  "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- Before the plan, the planner's trial (pull request #41, closed without
+  merging) ran the same six files on both machines: 631 tests, green.
+
+Unit and integration tests: 518/518 passed (repository 40, script tests
+164, backend 115, frontend 199). Browser tests: 113/113 passed.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the browser tests passed on Linux and
+on Windows; the deployment succeeded and the published site is the site
+that was built.
+
+Overall applicable tests: 631/631 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: this task changes only where an open panel is drawn. On
+a phone the published site is not yet better to use: both panels are open
+when the page opens and cover the stage, and the top bar is still cut off,
+with the Details button out of reach. The next two tasks deal with that.
+The tests open the page as a visitor who closed a panel earlier in the
+session, because that button cannot be reached yet. The builder reported
+every prove-it step of the plan, test for test, and no deviation (Node
+22.23.5 locally).
+
+Commit: `4f2f611` (squash merge of pull request #42).
+
+Next task: FND-039 – Narrow screens: the top bar fits.

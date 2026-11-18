@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 42 | 36 |
+| 1 | Foundation (FND) | 42 | 37 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-038 – Narrow screens: an open panel lies over the globe.
+**Current task:** FND-039 – Narrow screens: the top bar fits.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -706,7 +706,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-037.md`
 
 ### FND-038 – Narrow screens: an open panel lies over the globe
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** On a narrow screen the globe stage is never squeezed by the side panels: it keeps the whole width, and an open panel lies over it.
 - **Description:** A screen under 900 pixels wide is a narrow one: a phone, or a tablet held upright. There the layout has one column: the top bar and the globe stage each have the whole width, and an open side panel is drawn over the stage, the sections panel from the left edge and the details panel from the right, as tall as the stage and never wider than the screen. From 900 pixels on nothing changes. Style sheet only. Measured by the planner on `main` at 390 by 844 pixels before this task: the layout is 580 pixels wide, the stage has a width of 0 and the Details button lies outside the screen. Added by PLAN-008 after the owner opened the published site on a phone on 2026-11-17 and found it not usable there; narrowed by PLAN-009 to where an open panel is drawn. After this task alone, on a phone, both panels are still open when the page opens and cover the stage, and the top bar is still cut off: FND-039 and FND-040 follow at once. The planner's trial has 26 browser tests at five narrow widths and at 900 pixels, and detects 11 of 11 planted defects.
 - **Acceptance criteria:**
@@ -717,22 +717,30 @@ Windows 11. No database and no globe yet.
   5. No existing test changed, and all pass.
   6. `python scripts/check.py` reports 19 of 19 gates and 631 tests (browser tests 113); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** browser tests at five narrow widths and at 900 pixels (26 new, 113 in all); the existing desktop tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #42 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 631 passed, 0 failed, 0 skipped.", exit code 0 (browser tests 113); 11 of 11 planted defects in the style sheet detected by the browser tests (no narrow layout, the line at 800 or at 900 pixels, the panels under the stage, a panel wider than the screen, the details panel at the left, the panels in columns of their own, a panel half as tall as the stage, a stage that scrolls sideways). On GitHub, read by the planner from the runs and job logs: run 44393965951 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 631 passed, 0 failed, 0 skipped." with 113 browser tests, the three jobs after the gates skipped; run 44396093299 for `main` after the merge, all five jobs green, the gates with the same two closing lines on both machines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 631 / 0 tests (repository 40, script tests 164, backend 115, frontend unit 199, browser 113); all 19 gates passed, locally and on both machines on GitHub; 11 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-18. All 6 files are identical to the planner's trial. On a phone the published site is not yet better to use: both panels are open when the page opens and cover the stage, and the top bar is still cut off. FND-039 and FND-040 follow at once.
+- **Commit:** `4f2f611`
 - **Plan:** `docs/plans/FND-038.md`
 
 ### FND-039 – Narrow screens: the top bar fits
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** On a narrow screen nothing in the top bar is cut off or out of reach.
-- **Description:** On a narrow screen the top bar takes the lines it needs: first the name between the two panel buttons, then the data status and the date, each piece whole; the tagline gives way. From 900 pixels on the bar is unchanged: one line, with the tagline. Style sheet only. Added by PLAN-008, placed by PLAN-009 between FND-038 and FND-040: it needs a layout no wider than the screen, and FND-040's buttons must be in reach. The planner's trial has 28 browser tests and detects 16 of 16 planted defects.
-- **Acceptance criteria:** at 320, 360, 390, 768 and 899 pixels wide every control and piece of information in the top bar is whole, inside the bar and inside the screen, and none lies over another; from 360 pixels on, the first line holds the name between the two buttons, with the buttons at the two edges, and the information starts right under it; the tagline is not shown there; at 900 pixels the bar has one line, 48 pixels tall, with the tagline; no existing test changes.
-- **Tests required:** browser tests at five narrow widths and at 900 pixels that measure every piece of the top bar; the existing desktop tests unchanged; planted defects; the full run on both machines.
+- **Description:** On a narrow screen (under 900 pixels) the top bar takes the lines it needs instead of one fixed line: first the name between the two panel buttons, Sections at the left edge and Details at the right, then the data status and the date on a line of their own, each piece whole, sharing a line where both fit (a tablet held upright) and taking one each where they do not (a phone); the tagline gives way. The globe stage starts under the bar, however tall it is (99 pixels at phone widths, 78 at 768). From 900 pixels on the bar is unchanged: one line of 48 pixels, with the tagline. Style sheet only; the order of the elements in the page does not change. Added by PLAN-008, placed by PLAN-009 between FND-038 and FND-040: it needs a layout no wider than the screen, and FND-040's buttons must be in reach. Before this task the Details button lies outside the screen at 390 pixels. After it, on a phone, both panels are still open when the page opens: FND-040 follows at once. The planner's trial has 28 browser tests at five narrow widths and at 900 pixels, and detects 16 of 16 planted defects.
+- **Acceptance criteria:**
+  1. At 320, 360, 390, 768 and 899 pixels wide, each of the two buttons, the name, the data status and the date is whole, on one line, inside the top bar and inside the screen, and none lies over another.
+  2. There, the tagline is not shown.
+  3. From 360 pixels on, the first line holds the name between the two buttons, with the Sections button at the left edge and the Details button at the right edge, and the information starts right under that line at the left edge.
+  4. At 360 and 390 pixels the data status and the date each have a line; at 768 and 899 pixels they share one.
+  5. At 900 pixels the bar has one line, 48 pixels tall, with the tagline, in the order Sections, name, data status, date, Details.
+  6. No test that exists today changed, and all pass.
+  7. `python scripts/check.py` reports 19 of 19 gates and 659 tests (browser tests 141); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** browser tests at five narrow widths and at 900 pixels that measure every piece of the top bar (28 new, 141 in all); the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines, because the text is drawn with another font on Windows; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-039.md`
 
 ### FND-040 – Narrow screens: the panels start closed, one open at a time
 - **Status:** NOT STARTED
