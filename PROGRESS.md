@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-036 – Remove the audit exception that is no longer needed (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 33 of 232
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (557 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; one advisory, for a build tool, is accepted until 2026-12-17 in `frontend/audit-exceptions.json`. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). No globe and no data store yet.
+- **Current task:** FND-035 – A check that compares the published site with the site that was built (`NOT STARTED`, the planner is writing its plan)
+- **Tasks verified:** 34 of 232
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (557 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). No globe and no data store yet.
 
 ## Reports
 
@@ -2480,3 +2480,62 @@ FND-019. Phase 1 has 40 tasks and the project 232. No requirement was
 dropped.
 
 Next task: FND-036 – Remove the audit exception that is no longer needed.
+
+### FND-036 – Remove the audit exception that is no longer needed (2026-11-18)
+
+TASK: FND-036 – Remove the audit exception that is no longer needed
+
+Implementation: Complete (builder thread, pull request #37). The list of
+exceptions in `frontend/audit-exceptions.json` is empty, and the changelog
+says that the one exception was removed and why. Exactly the 2 planned
+files; both are identical to the planner's trial. No test changed: none
+depended on the exception.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  557 passed, 0 failed, 0 skipped." The audit gate printed "npm audit
+  reports 0 advisories." and "Dependency audit passed."
+- Three wrong results, each detected: with the exception left in, the
+  audit gate fails with "the exception for GHSA-fc5q-39xc-vjpf (picomatch)
+  is no longer needed: remove it"; with the list itself gone the audit
+  "could not be judged"; with the file unformatted the frontend's format
+  gate fails and names it.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44360270319, the pull request's commit (`f5655b1`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 557 passed, 0 failed, 0 skipped."; "Build the
+  site" and "Publish the site" skipped.
+- Run 44361547750, for `main` after the merge (`9663dfa`): all four jobs green,
+  the gates with the same two closing lines on both machines, and the
+  site republished ("Created deployment for
+  9663dfa385b5aa0ec0b1ec6869468cb1957a12e4", "Reported success!").
+- Run 44359969370, for the planning commit before it (`1a6c18f`): red in
+  the audit gate, as expected; nothing was published from it.
+
+Unit and integration tests: 470/470 passed (repository 34, script tests
+122, backend 115, frontend 199). Browser tests: 87/87 passed.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the browser tests passed on Linux and
+on Windows; the deployment succeeded.
+
+Overall applicable tests: 557/557 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: why the advisory is no longer reported is not known to
+the planner (its page cannot be reached from the planning environment). If
+it is reported again, the audit gate fails and names it, and the decision
+about an exception is made again then. The builder reported no deviation
+(Node 22.23.5 locally).
+
+Commit: `9663dfa` (squash merge of pull request #37).
+
+Next task: FND-035 – A check that compares the published site with the
+site that was built.
