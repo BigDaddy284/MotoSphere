@@ -142,6 +142,15 @@ wide, each button exactly in the middle of the bar's first line, and the
 top bar no taller for it. The same tests with a mouse check that the sizes
 stay as they were.
 
+The test browser has no bars that come and go, so no test can show what
+the layout does under a phone's address bar. The tests check what can be
+checked: that the style sheets, as the browser received them, ask for the
+height of the visible screen (`frontend/e2e/height.spec.ts`), that the
+layout is exactly as tall as the screen at phone size, turned on its side,
+and at desktop size, and, as a unit test, that no style sheet measures by
+the height of the whole screen. The effect on a real phone is confirmed by
+the owner on the published site.
+
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.
 
