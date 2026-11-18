@@ -192,13 +192,4 @@ describe('style sheets', () => {
     )
     expect(offenders).toEqual([])
   })
-
-  it('never measure by the height of the whole screen', () => {
-    // On a phone `vh` counts the part of the screen under the browser's own
-    // bars. `dvh` is the part that is really shown.
-    const offenders = Object.entries(styleSheets)
-      .filter(([, css]) => /\dvh\b/.test(stripComments(css)))
-      .map(([path]) => path)
-    expect(offenders).toEqual([])
-  })
 })

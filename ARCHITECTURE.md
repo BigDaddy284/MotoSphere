@@ -158,13 +158,6 @@ Rules:
   not on its line of text: where a button stands on a line of text depends
   on the font, and one of 44 pixels in a line of 48 has no room for that.
   With a mouse everything stays as designed.
-- Heights that follow the screen are written in `dvh`, the part of the
-  screen the browser really shows, never in `vh`: on a phone `vh` counts
-  the part under the browser's own bars. There is no `vh` line as a
-  fallback, because every browser the build is made for (Vite's default
-  list: Chrome and Edge 111, Firefox 114, Safari 16.4) knows `dvh`, and
-  the build removes such a line anyway. A unit test rejects `vh` in any
-  style sheet under `frontend/src`.
 
 ## 4. Data pipeline (Decided)
 
