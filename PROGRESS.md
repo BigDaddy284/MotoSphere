@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-041 – Touch screens: controls a finger can hit (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 39 of 234
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (688 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. No globe and no data store yet.
+- **Current task:** FND-042 – Phones: the layout follows the visible height (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 40 of 234
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (696 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. No globe and no data store yet.
 
 ## Reports
 
@@ -2967,3 +2967,76 @@ deviation (Node 22.23.5 locally).
 Commit: `29c6dd2` (squash merge of pull request #46).
 
 Next task: FND-041 – Touch screens: controls a finger can hit.
+
+### FND-041 – Touch screens: controls a finger can hit (2026-11-18)
+
+TASK: FND-041 – Touch screens: controls a finger can hit
+
+Implementation: Complete (builder thread, pull request #48). Where the
+main way of pointing is a finger (`@media (pointer: coarse)`: a phone or a
+tablet, whatever its width), the two buttons in the top bar and the nine
+sections are 44 pixels tall instead of 31 and 40: one new token,
+`--size-touch-target`, and one small rule in each of the two style sheets.
+There the buttons also stand in the middle of the bar's first line, not on
+its line of text, so the top bar keeps its height with every font. With a
+mouse nothing changes. Style sheets only: no component changed. Exactly
+the 9 planned files; all are identical to the planner's trial. No existing
+test changed.
+
+What the trial on GitHub found: the planner's first design left the tall
+buttons on the bar's line of text. All 696 tests passed locally. On
+GitHub's machines, which draw the page with other fonts, the buttons
+reached half a pixel out of the bar and made the bar on a phone half a
+pixel taller: 3 of 696 tests failed on Linux and on Windows alike (run
+44412617685). Where a button stands on a line of text depends on the font.
+The buttons were centred instead, the tests now check their exact place,
+and the corrected trial passed on both machines (pull request #47, run
+44415567218) before the plan was written.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  696 passed, 0 failed, 0 skipped." Frontend unit tests: 211 (unchanged in
+  number; the list of agreed tokens got one name). Browser tests: 166 (158
+  before, 8 new).
+- Planted defects: 10 in the three style sheets, 10 of 10 detected by the
+  browser tests, and the token removed, detected by 2 unit tests.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44417318012, the pull request's commit (`edf7300`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 696 passed, 0 failed, 0 skipped.", with 211
+  frontend unit tests and 166 browser tests on both machines; "Build the
+  site", "Publish the site" and "Check the published site" skipped.
+- Run 44418757631, for `main` after the merge (`93150ef`): all five jobs
+  green, the gates with the same two closing lines on both machines, the
+  site republished, and the log of "Check the published site" ending
+  "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+
+Unit and integration tests: 530/530 passed (repository 40, script tests
+164, backend 115, frontend 211). Browser tests: 166/166 passed.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the browser tests passed on Linux and
+on Windows, with and without a touch screen; the deployment succeeded and
+the published site is the site that was built.
+
+Overall applicable tests: 696/696 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the tests run in a desktop browser that is told it has a
+touch screen: whether a finger hits the controls comfortably on a real phone
+is for the owner to see on the published site. A laptop with a touch screen
+and a mouse keeps the mouse sizes, because its main way of pointing is the
+mouse. The layout's height does not yet follow a phone browser's own bars
+(FND-042). The builder reported every prove-it step of the plan, test for
+test, and no deviation (Node 22.23.5 locally).
+
+Commit: `93150ef` (squash merge of pull request #48).
+
+Next task: FND-042 – Phones: the layout follows the visible height.
