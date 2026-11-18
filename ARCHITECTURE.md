@@ -154,7 +154,10 @@ Rules:
   every control is at least 44 pixels tall (the token
   `--size-touch-target`), and the browser tests check that none is
   narrower than that. A new control gets that rule in its own style sheet.
-  With a mouse the sizes stay as designed.
+  With a mouse the sizes stay as designed. The buttons in the top bar then
+  stand in the middle of its first line, not on its line of text: where a
+  button stands on a line of text depends on the font, and one of 44
+  pixels in a line of 48 has no room for that.
 
 ## 4. Data pipeline (Decided)
 
