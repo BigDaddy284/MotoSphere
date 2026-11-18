@@ -150,6 +150,14 @@ Rules:
   remembered: loading the page again shows the globe. On a wide screen each
   panel starts open and the user's choice is remembered for the session
   (`frontend/src/layout/useSidePanels.ts`).
+- Where the main way of pointing is a finger (`@media (pointer: coarse)`),
+  every control is at least 44 pixels tall (the token
+  `--size-touch-target`), and the browser tests check that none is
+  narrower than that. A new control gets that rule in its own style sheet.
+  The buttons in the top bar stand in the middle of its first line there,
+  not on its line of text: where a button stands on a line of text depends
+  on the font, and one of 44 pixels in a line of 48 has no room for that.
+  With a mouse everything stays as designed.
 
 ## 4. Data pipeline (Decided)
 
