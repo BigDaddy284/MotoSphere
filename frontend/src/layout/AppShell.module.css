@@ -5,7 +5,9 @@
     'sections stage details';
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-rows: var(--size-top-bar) minmax(0, 1fr);
-  height: 100vh;
+  /* As tall as the part of the screen the browser really shows: a phone's
+     browser shows and hides its own bars. */
+  height: 100dvh;
   overflow: hidden;
 }
 
