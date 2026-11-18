@@ -84,6 +84,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - After each deployment a job runs that comparison against the published
   site, so a deployment that leaves the site broken or stale fails the run
   (FND-037).
+- Narrow screens (under 900 pixels wide: a phone, or a tablet held upright):
+  the globe stage keeps the whole width, and an open side panel lies over
+  it (FND-038).
 
 ### Removed
 
