@@ -665,15 +665,21 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-036.md`
 
 ### FND-035 – A check that compares the published site with the site that was built
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** One command says whether an address serves exactly the site that was built, and says what differs when it does not.
-- **Description:** A script, `python scripts/live.py <site.tar> <address>`, with the Python standard library only. It reads the built site from the archive the deployment hands over, asks the address for every file in it (and for the address itself, which must be the page), and compares each answer with the built file: the status, the kind of content and every byte. A site that is missing a file, serves an older one or serves the wrong kind of content fails, with each difference named. It waits and tries again for up to five minutes, because a new deployment takes a moment to reach visitors. Narrowed by PLAN-008 from "Check the published site after each deployment": the job that runs it is FND-037. The planner's trial has 41 tests against a stand-in server on this computer and detects 43 of 43 planted defects.
-- **Acceptance criteria:** against a stand-in server the script passes for the built site and fails, naming the file, for a missing page, a missing file, a changed file and a wrong kind of content; an address that is not `https` (other than this computer's own), an archive that is not a site, and a site that cannot be reached within the waiting time all fail with a plain sentence and no traceback; it follows no redirect and reads no file outside the archive's own list.
-- **Tests required:** script tests against a local stand-in server (the cases above, the waiting and trying again, the program run as a whole); the tooling type check, lint and format; planted defects; the full run on both machines.
+- **Description:** A script, `python scripts/live.py <site.tar> <address>`, with the Python standard library only. It reads the built site from the tar the deployment hands over, asks the address for every file in it (and for the address itself, which must be the page), and compares each answer with the built file: the status, the kind of content and every byte. A site that is missing a file, serves an older one or serves the wrong kind of content fails, with each difference named. It tries again every 10 seconds for up to five minutes, because a new deployment takes a moment to reach visitors, and sends one line per try at once. Narrowed by PLAN-008 from "Check the published site after each deployment": the job that runs it is FND-037. The planner's trial has 42 tests against a stand-in server on this computer and detects 44 of 44 planted defects. In a trial on GitHub (pull request #36, closed without merging) the script compared the real published site with a fresh build: 6 of 7 files identical with the right content types, and the data manifest different, as it had to be, because the trial's export was newer. The same trial made the tests eight times faster on Windows (26 seconds to 3).
+- **Acceptance criteria:**
+  1. Against a stand-in server the script passes for the built site and says how many files it compared.
+  2. It fails, naming the file, for a missing file, a moved file (a redirect), a changed file, an older data manifest, a script served as text, and an address that shows another page.
+  3. It tries again every 10 seconds for up to 5 minutes, one line per try, each sent at once; when the time is over it fails.
+  4. It fails in a plain sentence, with exit code 1 and no traceback, when the address is not `https` (other than this computer's own) or carries more than an address, when the tar is not a built site, and when the site gives no answer for the whole waiting time. It reads nothing outside the tar's own list of files.
+  5. `python scripts/check.py` reports 19 of 19 gates and 599 tests (script tests 164); on the pull request both gates jobs are green (Linux and Windows) and the two publishing jobs are skipped.
+- **Tests required:** script tests against a local stand-in server (164 in all, 42 new); the tooling type check, lint and format; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-035.md`
 
 ### FND-037 – Run the check of the published site after each deployment
 - **Status:** NOT STARTED
