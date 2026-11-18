@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 40 | 36 |
+| 1 | Foundation (FND) | 42 | 36 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-038 – Phone screens: the globe keeps the screen.
+**Current task:** FND-038 – Narrow screens: an open panel lies over the globe.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -57,7 +57,13 @@ two: the check itself (FND-035) and the job that runs it (FND-037). One
 task was added before them (FND-036), when the advisory was no longer
 reported on 2026-11-18 and its exception had to go. Three tasks were added
 for phone screens (FND-038 to FND-040), after the owner opened the
-published site on a phone.
+published site on a phone; the planner's trial made them five (FND-038 to
+FND-042). The first was split into where an open panel is drawn (FND-038)
+and which panels are open (FND-040), with the top bar between them
+(FND-039), because each needs the one before it. The last was split into
+controls a finger can hit (FND-041) and the height of the layout
+(FND-042), because only the first of the two can be shown in the test
+browser.
 
 Added tasks are listed where they fall in dependency order, so task numbers
 in Phase 1 are not strictly ascending.
@@ -699,34 +705,63 @@ Windows 11. No database and no globe yet.
 - **Commit:** `6f68e76`
 - **Plan:** `docs/plans/FND-037.md`
 
-### FND-038 – Phone screens: the globe keeps the screen
+### FND-038 – Narrow screens: an open panel lies over the globe
+- **Status:** IN PROGRESS
+- **Objective:** On a narrow screen the globe stage is never squeezed by the side panels: it keeps the whole width, and an open panel lies over it.
+- **Description:** A screen under 900 pixels wide is a narrow one: a phone, or a tablet held upright. There the layout has one column: the top bar and the globe stage each have the whole width, and an open side panel is drawn over the stage, the sections panel from the left edge and the details panel from the right, as tall as the stage and never wider than the screen. From 900 pixels on nothing changes. Style sheet only. Measured by the planner on `main` at 390 by 844 pixels before this task: the layout is 580 pixels wide, the stage has a width of 0 and the Details button lies outside the screen. Added by PLAN-008 after the owner opened the published site on a phone on 2026-11-17 and found it not usable there; narrowed by PLAN-009 to where an open panel is drawn. After this task alone, on a phone, both panels are still open when the page opens and cover the stage, and the top bar is still cut off: FND-039 and FND-040 follow at once. The planner's trial has 26 browser tests at five narrow widths and at 900 pixels, and detects 11 of 11 planted defects.
+- **Acceptance criteria:**
+  1. At 320, 360, 390, 768 and 899 pixels wide, the top bar and the globe stage each have the whole width of the screen, with both panels open, with one open and with none.
+  2. There, an open sections panel lies over the stage from the left edge and an open details panel from the right edge, each as tall as the stage, on top of it, and never wider than the screen.
+  3. There, the page itself does not scroll, sideways or down.
+  4. At 900 pixels wide the panels stand beside the stage, as on any wider screen.
+  5. No existing test changed, and all pass.
+  6. `python scripts/check.py` reports 19 of 19 gates and 631 tests (browser tests 113); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** browser tests at five narrow widths and at 900 pixels (26 new, 113 in all); the existing desktop tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-038.md`
+
+### FND-039 – Narrow screens: the top bar fits
 - **Status:** NOT STARTED
-- **Objective:** On a phone the globe area is not squeezed away by the side panels.
-- **Description:** On a narrow screen (a phone held upright) the two side panels start closed, and an opened panel lies over the globe area instead of taking its width; only one is open at a time. On a wide screen nothing changes. Added by PLAN-008: the owner opened the published site on a phone on 2026-11-17 and found it not usable there; the design asks for a responsive interface and no task covered it.
-- **Acceptance criteria:** at 390 by 844 pixels the globe area has the full width when the page opens; each button opens its panel over the globe area and closes it again; opening one panel closes the other; nothing scrolls sideways; at desktop size every existing test still passes unchanged.
-- **Tests required:** unit tests for the panel state; browser tests at phone size and at desktop size; the full run on both machines.
+- **Objective:** On a narrow screen nothing in the top bar is cut off or out of reach.
+- **Description:** On a narrow screen the top bar takes the lines it needs: first the name between the two panel buttons, then the data status and the date, each piece whole; the tagline gives way. From 900 pixels on the bar is unchanged: one line, with the tagline. Style sheet only. Added by PLAN-008, placed by PLAN-009 between FND-038 and FND-040: it needs a layout no wider than the screen, and FND-040's buttons must be in reach. The planner's trial has 28 browser tests and detects 16 of 16 planted defects.
+- **Acceptance criteria:** at 320, 360, 390, 768 and 899 pixels wide every control and piece of information in the top bar is whole, inside the bar and inside the screen, and none lies over another; from 360 pixels on, the first line holds the name between the two buttons, with the buttons at the two edges, and the information starts right under it; the tagline is not shown there; at 900 pixels the bar has one line, 48 pixels tall, with the tagline; no existing test changes.
+- **Tests required:** browser tests at five narrow widths and at 900 pixels that measure every piece of the top bar; the existing desktop tests unchanged; planted defects; the full run on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
 
-### FND-039 – Phone screens: the top bar fits
+### FND-040 – Narrow screens: the panels start closed, one open at a time
 - **Status:** NOT STARTED
-- **Objective:** On a phone nothing in the top bar is cut off.
-- **Description:** On a narrow screen the top bar shows the name, the two panel buttons, the data status and the date without cutting any of them; what does not fit in one line (the tagline first) gives way or moves to a second line. Added by PLAN-008.
-- **Acceptance criteria:** at 360 and at 390 pixels wide every control and piece of information in the top bar is fully inside the screen and readable; nothing scrolls sideways; at desktop size the bar is unchanged.
-- **Tests required:** browser tests at both phone widths that measure each element against the screen; the existing desktop tests unchanged; the full run on both machines.
+- **Objective:** On a narrow screen the page opens with the globe in view, and a panel covers it only when the user asks for it.
+- **Description:** On a narrow screen both side panels start closed, whatever was chosen on a wide screen. A button opens its panel over the globe stage and closes it again, and opening one panel closes the other. Nothing is remembered there, so loading the page again shows the globe. On a wide screen nothing changes: the panels start open and the session remembers the choice. Changing the width across 900 pixels (turning a tablet) switches between the two at once. One place tells the script what a narrow screen is, and a test ties it to the style sheet's. Split from FND-038 by PLAN-009.
+- **Acceptance criteria:** at 390 by 844 pixels the page opens with both panels closed, both buttons saying so, and the globe stage on top everywhere under the top bar; each button opens its panel and closes it again; opening one panel closes the other; after loading the page again both are closed; what was chosen on a wide screen is untouched by anything done on a narrow one; changing the width across 900 pixels switches at once; at desktop sizes every existing test passes unchanged.
+- **Tests required:** unit tests for the panel state, with a stand-in for the width of the screen; browser tests at phone size, at desktop size and across a change of width; planted defects; the full run on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
 
-### FND-040 – Phone screens: full height and fingers
+### FND-041 – Touch screens: controls a finger can hit
 - **Status:** NOT STARTED
-- **Objective:** On a phone the layout fills the visible screen, and every control can be hit with a finger.
-- **Description:** The layout's height follows the part of the screen the phone's browser really shows (its own bars come and go), and buttons and section links are at least 44 pixels tall on a touch screen. Added by PLAN-008.
-- **Acceptance criteria:** at phone size the layout is exactly as tall as the visible screen and the page itself does not scroll; every button and section link measures at least 44 pixels in height there; desktop sizes are unchanged.
-- **Tests required:** browser tests at phone size that measure the layout and each control; the existing desktop tests unchanged; the full run on both machines.
+- **Objective:** On a touch screen every control is big enough to be hit with a finger.
+- **Description:** Where the main way of pointing is a finger, the two panel buttons and the section links are at least 44 pixels tall. With a mouse nothing changes. Added by PLAN-008 as part of FND-040; a task of its own since PLAN-009.
+- **Acceptance criteria:** in a browser with a touch screen, at phone size and at desktop size, every button in the top bar and every section link measures at least 44 pixels in height, and nothing in the top bar is cut off or lies over anything else; with a mouse every size is as before and every existing test passes unchanged.
+- **Tests required:** browser tests with and without a touch screen that measure each control; the existing tests unchanged; planted defects; the full run on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-042 – Phones: the layout follows the visible height
+- **Status:** NOT STARTED
+- **Objective:** On a phone the layout is as tall as the part of the screen the browser really shows, so its lower edge is never under the browser's own bars.
+- **Description:** A phone's browser shows and hides its own bars, and the height the layout uses today is the tallest of the two. The layout asks for the height that follows the bars, and keeps today's as the fallback for a browser that does not know it. Added by PLAN-008 as part of FND-040; a task of its own since PLAN-009, because the test browser has no bars that come and go: there the two heights are equal, so the tests can show that nothing changed and that the style sheet asks for the right height, and only a real phone can show the rest.
+- **Acceptance criteria:** the layout's style sheet asks for the height that follows the browser's bars, after the plain height as its fallback, and the page's own minimum height does the same; in the test browser the layout is exactly as tall as the screen at every tested size and the page itself does not scroll; every existing test passes unchanged. The effect on a real phone is confirmed by the owner on the published site and recorded as such, not as a test result.
+- **Tests required:** unit tests that read the style sheets; browser tests at phone and desktop sizes that measure the layout's height; planted defects; the full run on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
