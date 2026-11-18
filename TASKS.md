@@ -764,15 +764,23 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-040.md`
 
 ### FND-041 – Touch screens: controls a finger can hit
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** On a touch screen every control is big enough to be hit with a finger.
-- **Description:** Where the main way of pointing is a finger, the two panel buttons and the section links are at least 44 pixels tall. With a mouse nothing changes. Added by PLAN-008 as part of FND-040; a task of its own since PLAN-009.
-- **Acceptance criteria:** in a browser with a touch screen, at phone size and at desktop size, every button in the top bar and every section link measures at least 44 pixels in height, and nothing in the top bar is cut off or lies over anything else; with a mouse every size is as before and every existing test passes unchanged.
-- **Tests required:** browser tests with and without a touch screen that measure each control; the existing tests unchanged; planted defects; the full run on both machines.
+- **Description:** Where the main way of pointing is a finger (`@media (pointer: coarse)`: a phone or a tablet, whatever its width), the two panel buttons and the nine sections are at least 44 pixels tall: one new token, `--size-touch-target`, and one small rule in each of the two style sheets. There the buttons also stand in the middle of the bar's first line instead of on its line of text: the line is 48 pixels tall, and the planner's first trial showed on GitHub's machines that a tall button set on the line of text reaches out of the bar with some fonts. So the bar keeps its height. With a mouse nothing changes (buttons 31 pixels, sections 40). Style sheets only. Added by PLAN-008 as part of FND-040; a task of its own since PLAN-009. The planner's trial has 8 new browser tests, with and without a touch screen, and detects 10 of 10 planted defects.
+- **Acceptance criteria:**
+  1. With a touch screen, at 390 by 844 and at 1366 by 768 pixels, each of the two buttons in the top bar is 44 pixels tall, at least 44 wide, and exactly in the middle of the first line of the bar.
+  2. There, each of the nine sections is 44 pixels tall, at least 44 wide, and follows right under the one before.
+  3. With a touch screen the top bar is no taller than with a mouse: 48 pixels on a wide screen, and on a phone the same height as with a mouse.
+  4. With a mouse, at both sizes, the buttons are 31 pixels tall and the sections 40, as before.
+  5. The height is one token, `--size-touch-target`, and the unit test of the agreed tokens knows it.
+  6. No existing test changed, and all pass.
+  7. `python scripts/check.py` reports 19 of 19 gates and 696 tests (frontend unit tests 211, browser tests 166); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** browser tests with and without a touch screen, at phone and at desktop size, that measure each control and the top bar (8 new, 166 in all); the unit test of the agreed tokens; the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-041.md`
 
 ### FND-042 – Phones: the layout follows the visible height
 - **Status:** NOT STARTED
