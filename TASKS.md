@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 35 | 33 |
+| 1 | Foundation (FND) | 40 | 33 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-035 – Check the published site after each deployment.
+**Current task:** FND-036 – Remove the audit exception that is no longer needed.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -52,7 +52,12 @@ GitHub Pages task was split into two: the application served from the
 site's path (FND-022) and the deployment itself (FND-034). One task was
 added before them (FND-033), after a security advisory for a build tool
 started failing the dependency audit on 2026-11-17. Checking the published
-site after each deployment became a task of its own (FND-035).
+site after each deployment became a task of its own (FND-035), and then
+two: the check itself (FND-035) and the job that runs it (FND-037). One
+task was added before them (FND-036), when the advisory was no longer
+reported on 2026-11-18 and its exception had to go. Three tasks were added
+for phone screens (FND-038 to FND-040), after the owner opened the
+published site on a phone.
 
 Added tasks are listed where they fall in dependency order, so task numbers
 in Phase 1 are not strictly ascending.
@@ -643,12 +648,72 @@ Windows 11. No database and no globe yet.
 - **Commit:** `fbfe689`
 - **Plan:** `docs/plans/FND-034.md`
 
-### FND-035 – Check the published site after each deployment
+### FND-036 – Remove the audit exception that is no longer needed
+- **Status:** IN PROGRESS
+- **Objective:** The dependency audit passes again because the exception it no longer needs is gone, and no other exception takes its place.
+- **Description:** On 2026-11-18 `npm audit` no longer reports the picomatch advisory (GHSA-fc5q-39xc-vjpf) for which an exception was recorded a day earlier (FND-033): its report holds 0 advisories for the same lock file, and the npm registry's list of advisories for picomatch no longer holds it. The audit fails on an exception that nothing reports any more, as designed, so the last gate fails on `main` and on every pull request until the exception is removed. `main` was green at `c04a5db`; nothing in the repository changed. The list of exceptions becomes empty and the changelog says so. Added by PLAN-008.
+- **Acceptance criteria:**
+  1. `frontend/audit-exceptions.json` holds an empty list of exceptions and nothing else.
+  2. `python scripts/check.py` reports 19 of 19 gates and 557 tests, and the audit gate prints "npm audit reports 0 advisories." and "Dependency audit passed."
+  3. On the pull request both gates jobs are green (Linux and Windows) and the two publishing jobs are skipped.
+  4. Only `frontend/audit-exceptions.json` and `CHANGELOG.md` changed.
+- **Tests required:** the full run of all 19 gates (no test changes: none depends on the exception); three wrong results tried by hand (the exception left in, the list itself gone, the file unformatted); the workflow run on the pull request; the run for `main` after the merge, which also republishes the site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-036.md`
+
+### FND-035 – A check that compares the published site with the site that was built
+- **Status:** NOT STARTED
+- **Objective:** One command says whether an address serves exactly the site that was built, and says what differs when it does not.
+- **Description:** A script, `python scripts/live.py <site.tar> <address>`, with the Python standard library only. It reads the built site from the archive the deployment hands over, asks the address for every file in it (and for the address itself, which must be the page), and compares each answer with the built file: the status, the kind of content and every byte. A site that is missing a file, serves an older one or serves the wrong kind of content fails, with each difference named. It waits and tries again for up to five minutes, because a new deployment takes a moment to reach visitors. Narrowed by PLAN-008 from "Check the published site after each deployment": the job that runs it is FND-037. The planner's trial has 41 tests against a stand-in server on this computer and detects 43 of 43 planted defects.
+- **Acceptance criteria:** against a stand-in server the script passes for the built site and fails, naming the file, for a missing page, a missing file, a changed file and a wrong kind of content; an address that is not `https` (other than this computer's own), an archive that is not a site, and a site that cannot be reached within the waiting time all fail with a plain sentence and no traceback; it follows no redirect and reads no file outside the archive's own list.
+- **Tests required:** script tests against a local stand-in server (the cases above, the waiting and trying again, the program run as a whole); the tooling type check, lint and format; planted defects; the full run on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-037 – Run the check of the published site after each deployment
 - **Status:** NOT STARTED
 - **Objective:** A deployment that leaves the published site broken or stale turns the run red.
-- **Description:** After "Publish the site", a further job looks at the live address (`https://bigdaddy284.github.io/MotoSphere/`) from GitHub's machine: the page answers and is the application, the files it names load from under the site's path, and the data manifest is the one this run exported. Added by PLAN-007: FND-034 proves that GitHub accepted the deployment, not what a visitor gets, and the planner's environment cannot reach the address to look.
-- **Acceptance criteria:** the job is green on a real deployment and its log shows what it found; it fails when the page, a file the page names or the manifest is missing, when the manifest is older than the run, and when the address cannot be reached; it has no right to write anything.
-- **Tests required:** tests for the check itself against a local stand-in server (healthy, missing page, missing file, stale manifest, wrong content type, unreachable); repository checks for the new job's rules; the run for `main` after the merge.
+- **Description:** After "Publish the site", a further job takes the site this run built and runs FND-035's check against the live address (`https://bigdaddy284.github.io/MotoSphere/`) from GitHub's machine. It can only read. Split from FND-035 by PLAN-008. FND-034 proves that GitHub accepted the deployment, not what a visitor gets, and the planner's environment cannot reach the address to look.
+- **Acceptance criteria:** the job runs for a change to `main` only, after the deployment, and has no right to write anything; it is green on a real deployment and its log shows how many files it compared; the address it checks is the one the documents give, with the site's path from `frontend/site.ts`; every rule of the workflow still holds for all four jobs.
+- **Tests required:** repository checks for the new job's rules, with planted defects; the full run on both machines; the run for `main` after the merge, where the job runs for the first time.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-038 – Phone screens: the globe keeps the screen
+- **Status:** NOT STARTED
+- **Objective:** On a phone the globe area is not squeezed away by the side panels.
+- **Description:** On a narrow screen (a phone held upright) the two side panels start closed, and an opened panel lies over the globe area instead of taking its width; only one is open at a time. On a wide screen nothing changes. Added by PLAN-008: the owner opened the published site on a phone on 2026-11-17 and found it not usable there; the design asks for a responsive interface and no task covered it.
+- **Acceptance criteria:** at 390 by 844 pixels the globe area has the full width when the page opens; each button opens its panel over the globe area and closes it again; opening one panel closes the other; nothing scrolls sideways; at desktop size every existing test still passes unchanged.
+- **Tests required:** unit tests for the panel state; browser tests at phone size and at desktop size; the full run on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-039 – Phone screens: the top bar fits
+- **Status:** NOT STARTED
+- **Objective:** On a phone nothing in the top bar is cut off.
+- **Description:** On a narrow screen the top bar shows the name, the two panel buttons, the data status and the date without cutting any of them; what does not fit in one line (the tagline first) gives way or moves to a second line. Added by PLAN-008.
+- **Acceptance criteria:** at 360 and at 390 pixels wide every control and piece of information in the top bar is fully inside the screen and readable; nothing scrolls sideways; at desktop size the bar is unchanged.
+- **Tests required:** browser tests at both phone widths that measure each element against the screen; the existing desktop tests unchanged; the full run on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-040 – Phone screens: full height and fingers
+- **Status:** NOT STARTED
+- **Objective:** On a phone the layout fills the visible screen, and every control can be hit with a finger.
+- **Description:** The layout's height follows the part of the screen the phone's browser really shows (its own bars come and go), and buttons and section links are at least 44 pixels tall on a touch screen. Added by PLAN-008.
+- **Acceptance criteria:** at phone size the layout is exactly as tall as the visible screen and the page itself does not scroll; every button and section link measures at least 44 pixels in height there; desktop sizes are unchanged.
+- **Tests required:** browser tests at phone size that measure the layout and each control; the existing desktop tests unchanged; the full run on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
