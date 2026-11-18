@@ -96,6 +96,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - On a touch screen the buttons in the top bar and the sections are 44
   pixels tall, so that a finger can hit them; with a mouse nothing changes
   (FND-041).
+- The layout is as tall as the part of the screen the browser really
+  shows, so that on a phone its lower edge is not under the browser's own
+  bars (FND-042).
 
 ### Removed
 

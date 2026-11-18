@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-042 – Phones: the layout follows the visible height (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 40 of 234
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (696 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. No globe and no data store yet.
+- **Current task:** FND-019 – Windows scripts for local use (`NOT STARTED`; it needs the owner's Windows 11 PC for its last check)
+- **Tasks verified:** 40 of 234 (FND-042 has passed every test and waits for the owner's check on a real phone)
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (702 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. No globe and no data store yet.
 
 ## Reports
 
@@ -3040,3 +3040,75 @@ test, and no deviation (Node 22.23.5 locally).
 Commit: `93150ef` (squash merge of pull request #48).
 
 Next task: FND-042 – Phones: the layout follows the visible height.
+
+### FND-042 – Phones: the layout follows the visible height (2026-11-18)
+
+TASK: FND-042 – Phones: the layout follows the visible height
+
+Implementation: Complete (builder thread, pull request #50). The
+layout's height and the page's least height are `100dvh` instead of
+`100vh`: the part of the screen the browser really shows, which follows a
+phone browser's own bars as they come and go. There is no `100vh` line as
+a fallback: every browser the build is made for knows `dvh`, and the build
+removes such a line anyway. A new unit test rejects `vh` in any style
+sheet under `frontend/src`. Style sheets only: no component changed.
+Exactly the 8 planned files; all are identical to the planner's trial. No
+existing test changed. This is the last of the five tasks for narrow
+screens (PLAN-009).
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  702 passed, 0 failed, 0 skipped." Frontend unit tests: 212 (211 before,
+  1 new). Browser tests: 171 (166 before, 5 new).
+- The built style sheet read: `height:100dvh` twice, no `vh` height.
+- Planted defects: 10 in the two style sheets, 10 of 10 detected by the
+  browser tests; the 3 that bring `vh` back are also detected by the new
+  unit test.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44420719471, the pull request's commit (`bc18774`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 702 passed, 0 failed, 0 skipped.", with 212
+  frontend unit tests and 171 browser tests on both machines; "Build the
+  site", "Publish the site" and "Check the published site" skipped.
+- Run 44423224253, for `main` after the merge (`608e741`): all five jobs
+  green, the gates with the same two closing lines on both machines, the
+  site republished, and the log of "Check the published site" ending
+  "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- Before the plan, the planner's trial (pull request #49, closed without
+  merging) ran the same eight files on both machines: 702 tests, green.
+
+Unit and integration tests: 531/531 passed (repository 40, script tests
+164, backend 115, frontend 212). Browser tests: 171/171 passed.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the browser tests passed on Linux and
+on Windows; the deployment succeeded and the published site is the site
+that was built.
+
+Overall applicable tests: 702/702 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: BLOCKED – EXTERNAL DEPENDENCY. Acceptance criteria 1 to 5 are
+verified. Criterion 6, the effect on a real phone, needs the owner's phone
+and was asked for on 2026-11-18; the task is not counted as verified until
+the owner's answer is recorded.
+
+Known limitations: the test browser is a desktop browser. It has no bars
+that come and go, and `100dvh` and `100vh` are the same number in it. The
+tests show that the style sheets ask for the right height, that the layout
+is exactly as tall as the screen at every tested size, and that nothing else
+changed. That the lower edge of the layout stays in view on a real phone
+while its browser shows its bars is for the owner to confirm on the
+published site (acceptance criterion 6); it is recorded as the owner's
+confirmation when given, not as a test result. The builder reported every
+prove-it step of the plan, test for test, and no deviation (Node 22.23.5
+locally).
+
+Commit: `608e741` (squash merge of pull request #50).
+
+Next task: FND-019 – Windows scripts for local use.

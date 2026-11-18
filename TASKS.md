@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-042 – Phones: the layout follows the visible height.
+**Current task:** FND-019 – Windows scripts for local use.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -783,7 +783,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-041.md`
 
 ### FND-042 – Phones: the layout follows the visible height
-- **Status:** IN PROGRESS
+- **Status:** BLOCKED – EXTERNAL DEPENDENCY
 - **Objective:** On a phone the layout is as tall as the part of the screen the browser really shows, so its lower edge is never under the browser's own bars.
 - **Description:** A phone's browser shows and hides its own bars, and the height the layout used until now (`100vh`) is measured as if they were hidden. The layout's height and the page's least height become `100dvh`, the height that follows the bars. There is no `100vh` line as a fallback, although this task's first wording asked for one: the planner's trial showed that the build is made for browsers that all know `dvh` (Vite's default list: Chrome and Edge 111, Firefox 114, Safari and iOS 16.4), that its minifier therefore removes such a line as dead code, and that a browser old enough to need it would not run the application's script either. A unit test rejects `vh` in any style sheet under `frontend/src`. Style sheets only. Added by PLAN-008 as part of FND-040; a task of its own since PLAN-009, because the test browser has no bars that come and go: there the two heights are equal, so the tests can show that the style sheets ask for the right height and that nothing else changed, and only a real phone can show the rest. The planner's trial has 1 new unit test and 5 new browser tests, and detects 10 of 10 planted defects.
 - **Acceptance criteria:**
@@ -794,10 +794,10 @@ Windows 11. No database and no globe yet.
   5. `python scripts/check.py` reports 19 of 19 gates and 702 tests (frontend unit tests 212, browser tests 171); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   6. The effect on a real phone is confirmed by the owner on the published site and recorded as such, not as a test result.
 - **Tests required:** a unit test that reads every style sheet (1 new, 212 in all); browser tests that read the rules the browser received and measure the layout at phone size, turned on its side, and at desktop size (5 new, 171 in all); the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #50 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 702 passed, 0 failed, 0 skipped.", exit code 0 (frontend unit tests 212, browser tests 171); the built style sheet read: it holds `height:100dvh` twice (the layout's height and the page's least height) and no `vh` height; 10 planted defects in the two style sheets, 10 of 10 detected by the browser tests, and the 3 of them that bring `vh` back also by the new unit test. On GitHub, read by the planner from the runs and job logs: run 44420719471 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 702 passed, 0 failed, 0 skipped." with 212 frontend unit tests and 171 browser tests, the three jobs after the gates skipped; run 44423224253 for `main` after the merge, all five jobs green, the gates with the same two closing lines on both machines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 702 / 0 tests (repository 40, script tests 164, backend 115, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 10 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Criteria 1 to 5 verified by the planner on 2026-11-18: every applicable test passed, all 8 files are identical to the planner's trial, and no existing test changed. Not fully verified: acceptance criterion 6, the effect on a real phone, is open. The blocker: the test browser has no bars that come and go, so only the owner, with a real phone, can confirm on the published site that the lower edge of the layout stays in view while the browser shows its bars. The owner was asked on 2026-11-18. The task stays blocked, and is not counted as verified, until that confirmation is recorded here.
+- **Commit:** `608e741`
 - **Plan:** `docs/plans/FND-042.md`
 
 ### FND-019 – Windows scripts for local use
