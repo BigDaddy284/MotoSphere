@@ -98,6 +98,7 @@ const EXPECTED_TOKENS = [
   '--size-top-bar',
   '--size-sections-panel',
   '--size-details-panel',
+  '--size-touch-target',
   '--radius-sm',
   '--radius-md',
   '--radius-lg',
