@@ -156,3 +156,10 @@
     justify-self: end;
   }
 }
+
+/* A touch screen: the buttons are tall enough for a finger. */
+@media (pointer: coarse) {
+  .toggle {
+    min-height: var(--size-touch-target);
+  }
+}

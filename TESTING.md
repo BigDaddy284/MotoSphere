@@ -135,6 +135,12 @@ The test environment of the unit tests has no screen, so
 knows how wide the screen is. Every unit test starts with a wide screen; a
 test changes the width with `showScreen(pixels)`.
 
+The browser tests also run with a touch screen
+(`frontend/e2e/touch.spec.ts`), at phone and at desktop size: every button
+in the top bar and every section must be 44 pixels tall and at least as
+wide, and the top bar no taller for it. The same tests with a mouse check
+that the sizes stay as they were.
+
 Before the backend unit tests, `uv sync --locked` (run in `backend/`) installs
 the locked environment, including the `motosphere` package itself.
 
