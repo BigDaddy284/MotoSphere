@@ -96,9 +96,7 @@ today's date, both in the language and time zone of your browser; the date
 changes at midnight. The sections panel lists the
 application's sections, and one can be chosen with the mouse or the keyboard;
 there is no globe or data yet. The Sections and Details buttons in the top bar
-close and open the side panels. On a narrow screen (under 900 pixels wide: a
-phone, or a tablet held upright) an open side panel lies over the globe area
-instead of standing beside it. Press Ctrl+C to stop the development server.
+close and open the side panels. Press Ctrl+C to stop the development server.
 
 The icon files in `frontend/public/` (`favicon.svg`, `favicon.ico` and
 `apple-touch-icon.png`) are generated from the designs in `docs/design/icon/`

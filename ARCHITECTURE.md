@@ -138,11 +138,6 @@ Rules:
   in the path.
 - Anything shipped to the browser is public. No secret may be placed in the
   frontend or in a published file.
-- A screen under 900 pixels wide is a narrow one (a phone, or a tablet held
-  upright). There the globe stage keeps the whole width and an open side
-  panel lies over it; from 900 pixels on, the panels stand beside the stage.
-  The width is written once, in the layout's style sheet
-  (`frontend/src/layout/AppShell.module.css`).
 
 ## 4. Data pipeline (Decided)
 
