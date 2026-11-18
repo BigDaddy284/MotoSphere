@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 42 | 37 |
+| 1 | Foundation (FND) | 42 | 38 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-039 – Narrow screens: the top bar fits.
+**Current task:** FND-040 – Narrow screens: the panels start closed, one open at a time.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -724,7 +724,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-038.md`
 
 ### FND-039 – Narrow screens: the top bar fits
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** On a narrow screen nothing in the top bar is cut off or out of reach.
 - **Description:** On a narrow screen (under 900 pixels) the top bar takes the lines it needs instead of one fixed line: first the name between the two panel buttons, Sections at the left edge and Details at the right, then the data status and the date on a line of their own, each piece whole, sharing a line where both fit (a tablet held upright) and taking one each where they do not (a phone); the tagline gives way. The globe stage starts under the bar, however tall it is (99 pixels at phone widths, 78 at 768). From 900 pixels on the bar is unchanged: one line of 48 pixels, with the tagline. Style sheet only; the order of the elements in the page does not change. Added by PLAN-008, placed by PLAN-009 between FND-038 and FND-040: it needs a layout no wider than the screen, and FND-040's buttons must be in reach. Before this task the Details button lies outside the screen at 390 pixels. After it, on a phone, both panels are still open when the page opens: FND-040 follows at once. The planner's trial has 28 browser tests at five narrow widths and at 900 pixels, and detects 16 of 16 planted defects.
 - **Acceptance criteria:**
@@ -736,22 +736,32 @@ Windows 11. No database and no globe yet.
   6. No test that exists today changed, and all pass.
   7. `python scripts/check.py` reports 19 of 19 gates and 659 tests (browser tests 141); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** browser tests at five narrow widths and at 900 pixels that measure every piece of the top bar (28 new, 141 in all); the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines, because the text is drawn with another font on Windows; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #44 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 659 passed, 0 failed, 0 skipped.", exit code 0 (browser tests 141); 16 of 16 planted defects in the style sheet detected by the browser tests (the bar kept to one line or to its fixed height, room between the lines, the wide gaps kept, the tagline kept, the information before the Details button or on the first line, pieces that wrap or run together, no room between or under them, lines as tall as the bar, an indented piece, the Details button right after the name, and two that change the wide bar). On GitHub, read by the planner from the runs and job logs: run 44399079910 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 659 passed, 0 failed, 0 skipped." with 141 browser tests, the three jobs after the gates skipped; run 44403512767 for `main` after the merge, all five jobs green, the gates with the same two closing lines on both machines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 659 / 0 tests (repository 40, script tests 164, backend 115, frontend unit 199, browser 141); all 19 gates passed, locally and on both machines on GitHub; 16 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-18. All 5 files are identical to the planner's trial. On a phone both panels are still open when the page opens and cover the stage; both buttons are now in reach to close them. FND-040 follows at once.
+- **Commit:** `ad55c37`
 - **Plan:** `docs/plans/FND-039.md`
 
 ### FND-040 – Narrow screens: the panels start closed, one open at a time
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** On a narrow screen the page opens with the globe in view, and a panel covers it only when the user asks for it.
-- **Description:** On a narrow screen both side panels start closed, whatever was chosen on a wide screen. A button opens its panel over the globe stage and closes it again, and opening one panel closes the other. Nothing is remembered there, so loading the page again shows the globe. On a wide screen nothing changes: the panels start open and the session remembers the choice. Changing the width across 900 pixels (turning a tablet) switches between the two at once. One place tells the script what a narrow screen is, and a test ties it to the style sheet's. Split from FND-038 by PLAN-009.
-- **Acceptance criteria:** at 390 by 844 pixels the page opens with both panels closed, both buttons saying so, and the globe stage on top everywhere under the top bar; each button opens its panel and closes it again; opening one panel closes the other; after loading the page again both are closed; what was chosen on a wide screen is untouched by anything done on a narrow one; changing the width across 900 pixels switches at once; at desktop sizes every existing test passes unchanged.
-- **Tests required:** unit tests for the panel state, with a stand-in for the width of the screen; browser tests at phone size, at desktop size and across a change of width; planted defects; the full run on both machines.
+- **Description:** On a narrow screen (under 900 pixels) both side panels start closed, whatever was chosen on a wide screen. A button opens its panel over the globe stage and closes it again, and opening one panel closes the other. Nothing is remembered there and nothing is written to the session's memory, so loading the page again shows the globe. On a wide screen nothing changes: the panels start open and the session remembers the choice. Changing the width across 900 pixels (turning a tablet) switches between the two at once, and what was chosen on the wide screen is there again afterwards. One module tells the script what a narrow screen is (`frontend/src/layout/narrowScreen.ts`), and a unit test ties it to the style sheet's; a new hook (`useSidePanels.ts`) holds both behaviours, and the markup is unchanged. The unit tests get a stand-in for the width of the screen. Nothing closes a panel but its own button and the other panel's: what choosing a section does to the panel on a phone is decided with the first section that shows something. Split from FND-038 by PLAN-009. The planner's trial has 12 new unit tests and 17 new browser tests, and detects 17 of 17 planted defects.
+- **Acceptance criteria:**
+  1. At 320, 360, 390, 768 and 899 pixels wide the page opens with both panels closed, both buttons saying so, and the globe stage on top in the middle of the screen, also when the session remembers both panels open.
+  2. There, each button opens its panel over the stage and closes it again.
+  3. There, opening one panel closes the other, and its button says so.
+  4. There, after the page is loaded again both panels are closed, and nothing was written to the session's memory.
+  5. When the width crosses 900 pixels the page follows at once, in both directions, without being loaded again.
+  6. What was chosen on a wide screen is untouched by anything done on a narrow one: it is there again when the screen is wide again, and after the page is loaded again.
+  7. At 900 pixels and more nothing changes: every existing unit test and every browser test in the other files passes unchanged. In `frontend/e2e/narrow.spec.ts` three existing tests open the panels with the buttons instead of through the session's memory, which has no effect on a narrow screen any more; no assertion in them is removed or loosened.
+  8. The line between narrow and wide is written once for the script, and a unit test fails when it differs from the style sheet's.
+  9. `python scripts/check.py` reports 19 of 19 gates and 688 tests (frontend unit tests 211, browser tests 158); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** unit tests for the panel state and for the hook that follows the screen, with a stand-in for the width of the screen (12 new, 211 in all); browser tests at five narrow widths, at desktop size and across a change of width (17 new, 158 in all); planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-040.md`
 
 ### FND-041 – Touch screens: controls a finger can hit
 - **Status:** NOT STARTED
