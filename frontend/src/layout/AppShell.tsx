@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import styles from './AppShell.module.css'
-import { useSidePanels } from './useSidePanels.ts'
+import { usePanelOpen } from './usePanelOpen.ts'
 
 const SECTIONS_PANEL_ID = 'sections-panel'
 const DETAILS_PANEL_ID = 'details-panel'
@@ -20,11 +20,11 @@ interface AppShellProps {
  * The fixed regions of the screen: a top bar, the sections panel on the left,
  * the globe stage in the centre and the details panel on the right. The stage
  * always gets the largest share of the screen, and takes the room of a side
- * panel that the user closes with its button in the top bar. On a narrow
- * screen the stage has the whole width, and an open panel lies over it.
+ * panel that the user closes with its button in the top bar.
  */
 export function AppShell({ name, tagline, info, sections }: AppShellProps) {
-  const { sections: sectionsPanel, details: detailsPanel } = useSidePanels()
+  const [sectionsOpen, toggleSections] = usePanelOpen('sections')
+  const [detailsOpen, toggleDetails] = usePanelOpen('details')
 
   return (
     <div className={styles.shell}>
@@ -32,9 +32,9 @@ export function AppShell({ name, tagline, info, sections }: AppShellProps) {
         <button
           type="button"
           className={styles.toggle}
-          aria-expanded={sectionsPanel.open}
+          aria-expanded={sectionsOpen}
           aria-controls={SECTIONS_PANEL_ID}
-          onClick={sectionsPanel.toggle}
+          onClick={toggleSections}
         >
           Sections
         </button>
@@ -44,9 +44,9 @@ export function AppShell({ name, tagline, info, sections }: AppShellProps) {
         <button
           type="button"
           className={styles.toggle}
-          aria-expanded={detailsPanel.open}
+          aria-expanded={detailsOpen}
           aria-controls={DETAILS_PANEL_ID}
-          onClick={detailsPanel.toggle}
+          onClick={toggleDetails}
         >
           Details
         </button>
@@ -55,7 +55,7 @@ export function AppShell({ name, tagline, info, sections }: AppShellProps) {
         id={SECTIONS_PANEL_ID}
         className={styles.sections}
         aria-label="Sections"
-        hidden={!sectionsPanel.open}
+        hidden={!sectionsOpen}
       >
         {sections}
       </nav>
@@ -64,7 +64,7 @@ export function AppShell({ name, tagline, info, sections }: AppShellProps) {
         id={DETAILS_PANEL_ID}
         className={styles.details}
         aria-label="Details"
-        hidden={!detailsPanel.open}
+        hidden={!detailsOpen}
       >
         <p className={styles.hint}>Select something on the globe to see its details here.</p>
       </aside>
