@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 42 | 39 |
+| 1 | Foundation (FND) | 42 | 40 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-041 – Touch screens: controls a finger can hit.
+**Current task:** FND-042 – Phones: the layout follows the visible height.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -764,7 +764,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-040.md`
 
 ### FND-041 – Touch screens: controls a finger can hit
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** On a touch screen every control is big enough to be hit with a finger.
 - **Description:** Where the main way of pointing is a finger (`@media (pointer: coarse)`: a phone or a tablet, whatever its width), the two panel buttons and the nine sections are at least 44 pixels tall: one new token, `--size-touch-target`, and one small rule in each of the two style sheets. There the buttons also stand in the middle of the bar's first line instead of on its line of text: the line is 48 pixels tall, and the planner's first trial showed on GitHub's machines that a tall button set on the line of text reaches out of the bar with some fonts. So the bar keeps its height. With a mouse nothing changes (buttons 31 pixels, sections 40). Style sheets only. Added by PLAN-008 as part of FND-040; a task of its own since PLAN-009. The planner's trial has 8 new browser tests, with and without a touch screen, and detects 10 of 10 planted defects.
 - **Acceptance criteria:**
@@ -776,10 +776,10 @@ Windows 11. No database and no globe yet.
   6. No existing test changed, and all pass.
   7. `python scripts/check.py` reports 19 of 19 gates and 696 tests (frontend unit tests 211, browser tests 166); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** browser tests with and without a touch screen, at phone and at desktop size, that measure each control and the top bar (8 new, 166 in all); the unit test of the agreed tokens; the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #48 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 696 passed, 0 failed, 0 skipped.", exit code 0 (frontend unit tests 211, browser tests 166); 10 planted defects in the three style sheets, 10 of 10 detected by the browser tests; the token removed, detected by 2 unit tests. On GitHub, read by the planner from the runs and job logs: run 44417318012 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 696 passed, 0 failed, 0 skipped." with 211 frontend unit tests and 166 browser tests, the three jobs after the gates skipped; run 44418757631 for `main` after the merge, all five jobs green, the gates with the same two closing lines on both machines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 696 / 0 tests (repository 40, script tests 164, backend 115, frontend unit 211, browser 166); all 19 gates passed, locally and on both machines on GitHub; 11 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-18. All 9 files are identical to the planner's trial. No existing test changed. The planner's first trial failed on GitHub's machines only (3 of 696 tests, on Linux and on Windows): with their fonts the tall buttons, set on the bar's line of text, reached half a pixel out of the bar. The design was corrected before the plan was written, and the tests now check the exact place of the buttons. Whether a finger hits the controls comfortably on a real phone is for the owner to see on the published site.
+- **Commit:** `93150ef`
 - **Plan:** `docs/plans/FND-041.md`
 
 ### FND-042 – Phones: the layout follows the visible height
