@@ -56,10 +56,6 @@ Served = dict[str, tuple[int, str, bytes]]
 class StandInHandler(http.server.BaseHTTPRequestHandler):
     """Answers with what the test put into the server's `served` table."""
 
-    # An answer leaves in one piece. Sent as headers first and content after,
-    # each answer takes a tenth of a second on Windows.
-    wbufsize = 64 * 1024
-
     def do_GET(self) -> None:
         served: Served = self.server.served  # type: ignore[attr-defined]
         self.server.asked.append(self.path)  # type: ignore[attr-defined]

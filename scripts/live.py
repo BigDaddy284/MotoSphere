@@ -18,6 +18,7 @@ carried out.
 """
 
 import argparse
+import functools
 import sys
 import tarfile
 import time
@@ -82,12 +83,17 @@ class _NoRedirects(urllib.request.HTTPRedirectHandler):
         return None
 
 
+@functools.cache
+def _opener() -> urllib.request.OpenerDirector:
+    """One opener for every fetch: making one reads this computer's certificates."""
+    return urllib.request.build_opener(_NoRedirects)
+
+
 def fetch(url: str) -> Answer:
     """Fetch an address once. An answer that is not 200 is still an answer."""
-    opener = urllib.request.build_opener(_NoRedirects)
     request = urllib.request.Request(url, headers={"Cache-Control": "no-cache"})  # noqa: S310
     try:
-        with opener.open(request, timeout=TIMEOUT_SECONDS) as response:
+        with _opener().open(request, timeout=TIMEOUT_SECONDS) as response:
             kind = response.headers.get_content_type()
             return Answer(response.status, kind, response.read())
     except urllib.error.HTTPError as error:
