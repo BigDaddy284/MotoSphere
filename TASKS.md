@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 41 | 15 |
+| 2 | Data store and published data (DAT, PUB) | 41 | 16 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-030 – Text that must not be empty.
+**Current task:** DAT-033 – A column without its check for empty text is named.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1161,7 +1161,7 @@ that check is DAT-033, which follows it.
 - **Plan:** `docs/plans/DAT-032.md`
 
 ### DAT-030 – Text that must not be empty
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A column whose text must not be empty refuses empty text in the store itself, and every model says so in the same way.
 - **Description:** Added on 2026-11-19 (PLAN-017): the last quarter of the old "DAT-005 – Model conventions: keys, times and names"; the check itself since PLAN-020, with the rule that names a column without it as DAT-033. One new module, `motosphere.db.texts`. A model says of a column that its text must not be empty with the column's type, `Mapped[NotEmpty]`; to Python it is a `str`, in the table it is TEXT, and `Base` gives the table a check for it when the model is defined, named `ck_<table>_<column>_not_empty` by the naming rule (DAT-005), so that SQLite itself refuses the row, whoever writes it. Settled in the planner's trial: empty is text with no characters and text with nothing but white space, and white space is the 29 characters Python calls so (the ones `str.strip` takes off, the space that cannot be broken among them), written into the check by their numbers in Unicode, so that the check is the same text on every machine; text that is not empty is stored as it was given, with the white space around it, because the store does not tidy text; a column that may be without a value (`Mapped[NotEmpty | None]`) gets the same check and holds no value or text that is not empty; a column of a time gets no check of its form, and no task follows for it, because a check in a table is for what the models cannot promise and through the models a time cannot have another form (DAT-028). Where it ends is tested or written down: a character Python does not call white space is content to the check, also one that cannot be seen; a column that a subclass of a model adds to its parent's table and a table made without a model get no check from `Base`, which is what DAT-033 names. No existing test changes. No table, no migration, no new package. The planner's trial has 32 new tests and detects 35 of 35 planted defects.
 - **Acceptance criteria:**
@@ -1173,10 +1173,10 @@ that check is DAT-033, which follows it.
   6. A `Mapped[str]` column takes empty text, as before. `WHITE_SPACE` is exactly the characters Python calls white space.
   7. No existing test changed. The type check passes with no `ignore` and the lint with no `noqa`. `python scripts/check.py` reports 19 of 19 gates and 1064 tests (backend tests 434); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 32 new tests: 6 unit tests (the list of white space against Python's; the text of the check, also for a column named with a word of SQL; its name before and after the naming rule; the type in a table) and 26 integration tests with two models of the tests' own in a real SQLite file (the columns and the checks as the file says them; text that is not empty, in six kinds; empty text, in nine kinds, with its unit of work; each white space character alone and around text; plain SQL; a change in three ways; a column that may be without a value; a check for every such column; a model that says something of its table; text that may be empty). Fifteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #87 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1064 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 434: 402 before, 32 new); 35 planted defects in the two modules, 35 of 35 detected, the plan's fifteen prove-it steps among them with the results the plan gives; the 159 planted defects of DAT-032 again, 159 of 159 detected. On GitHub, read by the planner from the runs and job logs: run 44520686616 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1064 passed, 0 failed, 0 skipped.", with 434 backend tests on both machines, the three jobs after the gates skipped; run 44523329480 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1064 / 0 tests (repository 41, script tests 206, backend 434, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 194 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 8 files are identical to the planner's trial. No existing test changed and no package was added. Twenty-six of the new tests make the tables of two models of the tests' own in a real SQLite file, on Linux and on Windows, and ask the file: it has one check for each column whose text must not be empty, named by the naming rule and letter for letter the text the tests expect; it refuses text with no characters and text of nothing but white space, each of the 29 white space characters alone among them, through a model and with plain SQL, on storing and on changing, and names the check; and it stores text that is not empty as it was given. No new file of the task holds a character beyond ASCII.
+- **Commit:** `2dba882`
 - **Plan:** `docs/plans/DAT-030.md`
 
 ### DAT-033 – A column without its check for empty text is named
