@@ -10,6 +10,7 @@ from motosphere.core.settings import ENV_PREFIX, Environment, LogLevel, Settings
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 ENV_EXAMPLE = BACKEND_DIR / ".env.example"
+README = BACKEND_DIR.parent / "README.md"
 
 
 def _write_dotenv(directory: Path, content: str) -> None:
@@ -29,7 +30,7 @@ def _active_env_example_names() -> set[str]:
 
 
 def test_settings_are_exactly_the_documented_ones() -> None:
-    assert set(Settings.model_fields) == {"environment", "log_level"}
+    assert set(Settings.model_fields) == {"environment", "log_level", "store_path"}
 
 
 def test_defaults_without_environment() -> None:
@@ -157,3 +158,65 @@ def test_env_example_values_equal_defaults(tmp_path: Path) -> None:
     shutil.copyfile(ENV_EXAMPLE, tmp_path / ".env")
 
     assert Settings().model_dump() == defaults
+
+
+def test_the_store_is_kept_in_the_store_folder_by_default() -> None:
+    assert Settings().store_path == Path("store/motosphere.sqlite3")
+
+
+def test_the_store_path_comes_from_the_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    elsewhere = tmp_path / "elsewhere" / "data.sqlite3"
+    monkeypatch.setenv("MOTOSPHERE_STORE_PATH", str(elsewhere))
+
+    assert Settings().store_path == elsewhere
+
+
+def test_the_store_path_comes_from_the_dotenv_file(tmp_path: Path) -> None:
+    _write_dotenv(tmp_path, "MOTOSPHERE_STORE_PATH=other/place.sqlite3\n")
+
+    assert Settings().store_path == Path("other/place.sqlite3")
+
+
+def test_spaces_around_the_store_path_are_dropped_and_spaces_inside_it_stay(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MOTOSPHERE_STORE_PATH", "  my store/data.sqlite3  ")
+
+    assert Settings().store_path == Path("my store/data.sqlite3")
+
+
+@pytest.mark.parametrize("value", ["", "   ", "\t"])
+def test_an_empty_store_path_is_rejected(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+    monkeypatch.setenv("MOTOSPHERE_STORE_PATH", value)
+
+    with pytest.raises(ValidationError, match="store_path") as error:
+        Settings()
+
+    assert "the path of the data store must not be empty" in str(error.value)
+
+
+@pytest.mark.parametrize("value", [None, "elsewhere/data.sqlite3"], ids=["default", "set"])
+def test_reading_the_settings_creates_no_store(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, value: str | None
+) -> None:
+    if value is not None:
+        monkeypatch.setenv("MOTOSPHERE_STORE_PATH", value)
+
+    settings = Settings()
+
+    assert not settings.store_path.exists()
+    assert list(tmp_path.iterdir()) == []
+
+
+def _as_written(value: object) -> str:
+    return value.as_posix() if isinstance(value, Path) else str(value)
+
+
+def test_readme_lists_every_setting_with_its_default() -> None:
+    readme = README.read_text(encoding="utf-8")
+
+    for name, value in Settings().model_dump().items():
+        row = f"| `{ENV_PREFIX}{name.upper()}` | `{_as_written(value)}` |"
+        assert readme.count(row) == 1, row
