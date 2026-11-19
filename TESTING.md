@@ -285,6 +285,24 @@ caller unchanged; a row without its parent ends the whole unit; one
 connection is used and closed, and the file can then be removed; a commit
 part-way is refused; and a session cannot be used after its unit has ended.
 
+## Migrations
+
+`tests/integration/test_migrations.py` runs the migration runner on the
+real SQLite file the fixture `store` gives each test; nothing in it is a
+mock. The migrations are the tests' own, small ones that make and rename
+tables. It checks what `migrate` promises ([DATABASE.md](DATABASE.md)):
+every migration is applied in order, and only those a store lacks;
+migrating twice changes nothing; the version is there when the store is
+opened again; a migration that fails, or is stopped from outside, leaves
+the store at the version before it and its error reaches the caller
+unchanged; a migration and its version are one transaction; and a store
+whose version the code does not know is refused in plain words and left as
+it is. One test brings an empty store to the newest schema with the
+pipeline's real list of migrations, and so tests every migration that is
+ever added. Three more build a table anew inside a migration while rows
+point to it, which is how a migration makes a change SQLite cannot make in
+place.
+
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`
