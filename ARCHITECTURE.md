@@ -72,13 +72,12 @@ MotoSphere/
 │   ├── src/motosphere/
 │   │   ├── core/            settings, logging, shared utilities
 │   │   ├── cli/             the `python -m motosphere` commands
-│   │   ├── db/              engine, session, models, migrations glue
+│   │   ├── db/              engine, units of work, migrations, models
 │   │   ├── geo/             coordinates, map tiles, clustering
 │   │   ├── services/        business rules (validation, matching, history)
 │   │   ├── collectors/      source adapter framework and adapters
 │   │   ├── publish/         export models and writers for published files
 │   │   └── admin/           review decisions and corrections
-│   ├── migrations/          schema migrations
 │   └── tests/               unit/ and integration/
 ├── frontend/                Vite + React + TypeScript project
 │   ├── src/                 code, with unit tests next to it
@@ -211,6 +210,12 @@ pipeline's command line. The settings and logging modules stay.
   is committed as a whole when it ends and taken back as a whole when it
   fails, with the error passed on as it was raised and the connection
   closed either way. A unit cannot commit part-way (DATABASE.md).
+- **The schema changes only by migrations**, run by a small runner of the
+  project's own, `migrate` in `motosphere.db.migrations` (DAT-004). The
+  migrations are functions in one list, a store keeps the number of the
+  last one it has had, and each is one transaction with that number: kept
+  as a whole or not at all. There is no way back; an earlier state is an
+  earlier snapshot. Alembic was weighed and not taken (DATABASE.md).
 - **What the store relies on in SQLite** is named in one module,
   `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
   FTS5 and the JSON functions among them. Its tests run against the real
