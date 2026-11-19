@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 40 | 15 |
+| 2 | Data store and published data (DAT, PUB) | 41 | 15 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -872,7 +872,9 @@ fourth (PLAN-017): the old DAT-005 is DAT-005, DAT-028, DAT-029 and
 DAT-030, and DAT-026 follows the four. The fifth (PLAN-018): DAT-029 is
 the key alone, and the timestamps are DAT-031, which follows it. The sixth
 (PLAN-019): DAT-031 is the timestamps themselves, and naming a table
-without them is DAT-032, which follows it.
+without them is DAT-032, which follows it. The seventh (PLAN-020): DAT-030
+is the check for text that must not be empty, and naming a column without
+that check is DAT-033, which follows it.
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -1159,11 +1161,30 @@ without them is DAT-032, which follows it.
 - **Plan:** `docs/plans/DAT-032.md`
 
 ### DAT-030 – Text that must not be empty
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** A column whose text must not be empty refuses empty text in the store itself, and every model says so in the same way.
-- **Description:** Added on 2026-11-19 (PLAN-017): the last quarter of the old "DAT-005 – Model conventions: keys, times and names". Many columns to come are names that mean nothing when they are empty. The base of all models gets one way for a model to say that a column's text must not be empty: the column is required, and its table gets a check, named by the naming rule (DAT-005), so that SQLite itself refuses the row, whoever writes it. What counts as empty (no characters, or nothing but white space) and whether text is stored without the spaces around it is settled in the planner's trial. The trial also settles whether a column of a time gets a check of its form in the same way (DAT-028 left the form unchecked in the table); if it does, that is a task of its own. `DATABASE.md` states the rule. Models of the tests' own prove it; no table is added.
-- **Acceptance criteria:** empty text is refused by the store itself, also when the row is written past the models, and the error names the check; text with content is stored as it was given; the check's name follows the naming rule and is the same on Linux and on Windows; a column that may be empty is as before.
-- **Tests required:** unit tests; integration tests against a real SQLite file, also with rows written in plain SQL; planted defects (the check left out, a check without the rule's name); the full run of all gates on both machines.
+- **Description:** Added on 2026-11-19 (PLAN-017): the last quarter of the old "DAT-005 – Model conventions: keys, times and names"; the check itself since PLAN-020, with the rule that names a column without it as DAT-033. One new module, `motosphere.db.texts`. A model says of a column that its text must not be empty with the column's type, `Mapped[NotEmpty]`; to Python it is a `str`, in the table it is TEXT, and `Base` gives the table a check for it when the model is defined, named `ck_<table>_<column>_not_empty` by the naming rule (DAT-005), so that SQLite itself refuses the row, whoever writes it. Settled in the planner's trial: empty is text with no characters and text with nothing but white space, and white space is the 29 characters Python calls so (the ones `str.strip` takes off, the space that cannot be broken among them), written into the check by their numbers in Unicode, so that the check is the same text on every machine; text that is not empty is stored as it was given, with the white space around it, because the store does not tidy text; a column that may be without a value (`Mapped[NotEmpty | None]`) gets the same check and holds no value or text that is not empty; a column of a time gets no check of its form, and no task follows for it, because a check in a table is for what the models cannot promise and through the models a time cannot have another form (DAT-028). Where it ends is tested or written down: a character Python does not call white space is content to the check, also one that cannot be seen; a column that a subclass of a model adds to its parent's table and a table made without a model get no check from `Base`, which is what DAT-033 names. No existing test changes. No table, no migration, no new package. The planner's trial has 32 new tests and detects 35 of 35 planted defects.
+- **Acceptance criteria:**
+  1. A column a model calls `Mapped[NotEmpty]` is TEXT in a strict table and must be there; one called `Mapped[NotEmpty | None]` may be without a value. The file has one check for each such column, named by the naming rule, with exactly the text the tests expect, and none for any other column.
+  2. Text that is not empty is stored as it was given, also with white space around it.
+  3. Empty text (no characters, or nothing but white space) is refused by SQLite with the name of the check, and the unit of work it was part of stores nothing; each of the 29 white space characters alone is refused.
+  4. A row written with plain SQL and a change to empty text, in three ways, are refused, and the row stays as it was.
+  5. A column that may be without a value takes none and refuses empty text; a column whose model says more of it, one named with a word of SQL and one of a model that says something of its table each have their check.
+  6. A `Mapped[str]` column takes empty text, as before. `WHITE_SPACE` is exactly the characters Python calls white space.
+  7. No existing test changed. The type check passes with no `ignore` and the lint with no `noqa`. `python scripts/check.py` reports 19 of 19 gates and 1064 tests (backend tests 434); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 32 new tests: 6 unit tests (the list of white space against Python's; the text of the check, also for a column named with a word of SQL; its name before and after the naming rule; the type in a table) and 26 integration tests with two models of the tests' own in a real SQLite file (the columns and the checks as the file says them; text that is not empty, in six kinds; empty text, in nine kinds, with its unit of work; each white space character alone and around text; plain SQL; a change in three ways; a column that may be without a value; a check for every such column; a model that says something of its table; text that may be empty). Fifteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-030.md`
+
+### DAT-033 – A column without its check for empty text is named
+- **Status:** NOT STARTED
+- **Objective:** `broken_rules` names a column whose text must not be empty and whose table has no check for it, and so the test that holds the real schema to the rules fails on such a column.
+- **Description:** Added on 2026-11-19 (PLAN-020): the second half of what PLAN-017 called "DAT-030 – Text that must not be empty". `Base` gives the table of a model a check for every column whose text must not be empty (DAT-030), when the model is defined. Two kinds of column get none, both tried in the planner's trial of DAT-030: one that a subclass of a model adds to its parent's table, and one of a table made without a model. `broken_rules` gets one more rule and one more sentence: every column of the type `NotEmptyText` must have the check `not_empty` gives. Whether a check of that name that says something else is named too is settled in the planner's trial. `DATABASE.md` says that the rule is held. No table is added.
+- **Acceptance criteria:** `broken_rules` gives one plain sentence that names the table and the column, for a column without the check, of a table made without a model and of one a subclass of a model adds to its parent's table; it gives an empty list for the real schema and for the models of the tests; the sentences of a table keep one order; the same on Linux and on Windows.
+- **Tests required:** unit tests of the rule, one case for each way; the models of the integration tests break no rule; planted defects (each condition of the rule left out; the rule left out); the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
