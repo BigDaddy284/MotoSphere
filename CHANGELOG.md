@@ -185,6 +185,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   no, and SQLite itself refuses any other number in it, by a check.
   Only `True` and `False` are stored: a number and a word are refused,
   not taken for one of them (DAT-035).
+- A column whose value is one of a list, `motosphere.db.lists`: the list
+  is a `StrEnum`, a model says `mapped_column(OneOf(TheList))`, the table
+  holds the list's texts, and SQLite itself refuses any other text in the
+  column, by a check that names them. Only a value of the list is
+  stored: text is refused, also text that is spelled like one
+  (DAT-036).
 
 ### Removed
 

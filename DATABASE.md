@@ -240,6 +240,10 @@ these rules:
 - **A column that is yes or no holds 1 or 0 and no other number**
   (DAT-035). A model says `Mapped[bool]` of such a column, and `Base`
   gives its table the check the type brings. See "Yes or no" below.
+- **A column whose value is one of a list holds a text of that list and
+  no other** (DAT-036). A model says `mapped_column(OneOf(TheList))` of
+  such a column, and `Base` gives its table the check the type brings,
+  which names the texts. See "One of a list" below.
 - **Constraints and indexes are named by one rule** (`NAMING`), so that a
   migration can name what it changes, and so that the names are the same
   on every machine:
@@ -451,6 +455,95 @@ Where this ends:
   table.append_constraint(yes_or_no("active"))
   ```
 
+## One of a list
+
+What kind of source this is, how a run ended, how sure a record is: much
+of what the store holds is one of a few values that the code knows. Such
+a list is said once, in the code, and the table refuses every text that
+is not on it, whoever writes the row (DAT-036, `motosphere.db.lists`).
+
+A list is a `StrEnum`. Its values are the texts that are stored:
+
+```python
+class Surface(StrEnum):
+    SAND = "sand"
+    HARD_PACK = "hard pack"
+```
+
+A model says the list with the column's type:
+
+```python
+surface: Mapped[Surface] = mapped_column(OneOf(Surface))
+shade: Mapped[Shade | None] = mapped_column(OneOf(Shade))
+```
+
+- **In the table the column is TEXT, with a check that names the texts**
+  in the order of the list, which `Base` adds when the model is defined.
+  The check is named after its column, `ck_<table>_<column>_one_of`, by
+  the naming rule, and reads:
+
+  ```
+  CONSTRAINT ck_track_surface_one_of CHECK (surface IN ('sand', 'hard pack'))
+  ```
+
+- **To Python the column is a value of the list**, and only such a value
+  is stored. Text is refused before anything is written, also text that
+  is spelled like a value, and so is a value of another list, with a
+  `TypeError` that says what it was given:
+  `Only a value of the list Surface is stored in this column, not str: 'sand'.`
+  A question is held to the same: rows are asked for with
+  `Track.surface == Surface.SAND`, not with the text.
+- **SQLite refuses any other text**, on storing and on changing, in a row
+  written with plain SQL too, and the refusal names the check:
+  `CHECK constraint failed: ck_track_surface_one_of`. The texts are
+  compared letter for letter: `'Sand'` and `'sand '` are not on the list.
+  The unit of work the row was part of is taken back as a whole.
+- **Each column keeps its own list.** Two lists may have a text in
+  common; each column reads it as the value of its own.
+- **A text may have any characters**: a quote, a percent sign, a letter
+  beyond ASCII. It is written into the check as text.
+- **A column that may be without a value** (`Surface | None`) holds no
+  value or a value of the list. That is how "not known" is said, so a
+  list with an empty value is refused when the type is made, and so is
+  one with nothing on it, and anything that is not a `StrEnum`.
+- **Any other text column is as before**: `Mapped[str]` is TEXT without a
+  check.
+
+A model has to name the type. One that says only
+`surface: Mapped[Surface]` gets SQLAlchemy's own type for a list, which
+is none of the four a strict table takes, and SQLite refuses to make the
+table (`unknown datatype`). So the slip cannot go unnoticed: the test
+that holds the models and the migrations together makes every table.
+
+What a change to a list means:
+
+- **A value more, a value less or a value spelled another way is a change
+  to the schema.** The check names the texts, so the table the models
+  describe is another table, and the test that holds the models and the
+  migrations together fails until a migration builds the table anew with
+  the new check (see "The models and the migrations agree"). A migration
+  that takes a value off a list first says what becomes of the rows that
+  have it.
+- **The order of the list is part of the check** too, so a list is not
+  put in another order without need. A new value goes at the end.
+- **The name of a value is not stored**, only its text: a value can be
+  given another name in the code without a migration.
+
+Where this ends:
+
+- Rows sorted by such a column come in the order of the texts, by the
+  alphabet, not in the order of the list.
+- A text that is read through the type and is not on its list is refused
+  (`The store holds what is not on the list Surface: 'mud'.`), not read
+  as something else. A table that has its check never holds one.
+- As for every type that brings a check, a column that a subclass of a
+  model adds to its parent's table, and a table made without a model, get
+  no check from `Base` (see "Column types that bring a check" below):
+
+  ```python
+  table.append_constraint(one_of("surface", Surface))
+  ```
+
 ## Column types that bring a check
 
 A column of the store has one of four types (see "The rules every table
@@ -498,7 +591,8 @@ A model can only say a type by the column's Python type
 (`mapped_column(TheType)`).
 
 The types that bring a check so far: `NotEmptyText`, text that must not
-be empty, and `YesOrNo`, yes or no (both above).
+be empty, `YesOrNo`, yes or no, and `OneOf`, a value of a list (all
+above).
 
 Where this ends is the same for every such type: `Base` gives the check
 when a model is defined, so a column that a subclass of a model adds to
