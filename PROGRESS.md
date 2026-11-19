@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 2 – Data store and published data (Phase 1 – Foundation is complete)
-- **Current task:** DAT-003 – A real, separate store for every test (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 46 of 236
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (828 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; no command uses either yet, and there is no table (`DATABASE.md`). No globe yet.
+- **Current task:** DAT-004 – Schema migrations (`NOT STARTED`, the planner is trialling it and writing its plan)
+- **Tasks verified:** 47 of 236
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (834 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; no command uses the store yet, and there is no table (`DATABASE.md`). No globe yet.
 
 ## Reports
 
@@ -3722,3 +3722,77 @@ ten prove-it steps, with the same failing tests, and names no deviation.
 Commit: `ba0dd65` (squash merge of pull request #61).
 
 Next task: DAT-003 – A real, separate store for every test.
+
+### DAT-003 – A real, separate store for every test (2026-11-19)
+
+TASK: DAT-003 – A real, separate store for every test
+
+Implementation: Complete (builder thread, pull request #63). One pytest
+fixture, `store`, in `backend/tests/conftest.py`. It opens `store.sqlite3`
+in the test's own temporary folder through `open_store` and gives the test
+the engine: a real, empty store that is nobody else's. It remembers every
+connection taken from the engine. When the test has ended, it closes those
+that are still open, so that the file can be removed on Windows too, and
+fails with "Connections to its store that the test left open: N. They were
+closed for it.", which pytest reports as an error at the end of that test.
+A connection that was dropped without being closed counts too. pytest's
+own `pytester` is switched on to test what the fixture does after a test.
+Exactly the 5 planned files; all are identical to the planner's trial. No
+existing test changed, and nothing under `backend/src`.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18 with SQLite 3.53.1,
+SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  834 passed, 0 failed, 0 skipped." Backend tests: 204 (198 before, 6
+  new). The type check passes with no ignore.
+- Planted defects: 15 in the fixture, 15 of 15 detected by the new tests,
+  the plan's eleven prove-it steps among them, each with the result the
+  plan gives.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44451398431, the pull request's commit (`aab379e`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 834 passed, 0 failed, 0 skipped.", with 204
+  backend tests on both machines; "Build the site", "Publish the site"
+  and "Check the published site" skipped.
+- Run 44452427141, for `main` after the merge (`b555379`): all five
+  jobs green at the first attempt, both gates jobs with the same two
+  closing lines, the site republished, and the log of "Check the
+  published site" ending
+  "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+
+Unit and integration tests: 663/663 passed (repository 41, script tests
+206, backend 204, frontend 212). Browser tests: 171/171 passed.
+Database tests: the fixture's store is a real SQLite file opened through
+`open_store`, on Linux and on Windows; no mock of a database is used. One
+of the 6 new tests lets pytest run 16 tests by itself in a process of its
+own and reads the outcome: 16 passed, 4 errors, and the four sentences.
+Those 16 are not counted among the 834.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the deployment succeeded and the
+published site is the site that was built. The task changes nothing a
+user sees.
+
+Overall applicable tests: 834/834 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the existing tests of the store and of units of work keep
+their own helpers and do not use the fixture; they count connections
+themselves. The tests are not run in a random order: nothing is shared
+between two tests that use the fixture, so their order cannot matter, and no
+package for random order was added. A connection that is made around the
+engine (Python's `sqlite3` called directly on the file) is not seen by the
+fixture. The planner's trial first detected 14 of 15 planted defects, and
+one test was extended before the plan was written. The builder's report
+gives the same counts for the full run and the same result for each of the
+eleven prove-it steps, and names no deviation.
+
+Commit: `b555379` (squash merge of pull request #63).
+
+Next task: DAT-004 – Schema migrations.
