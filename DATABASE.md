@@ -208,6 +208,15 @@ these rules:
   in a table of its own, `sqlite_sequence`; a copy of the store that is to
   keep the promise has to keep that table too (the snapshot, DAT-019 and
   DAT-020).
+- **A row says when it was first stored and when it was last changed**, in
+  the last two columns of every table, `created_at` and `updated_at`
+  (DAT-031). A model does not name them; `Base` gives them. They are
+  times as the store keeps a time (see "Times" below), and the store's
+  code sets them, not the table and not the caller: a new row gets the
+  moment the store's clock says, the same moment in both columns, and a
+  row that is changed gets a new `updated_at` and keeps its `created_at`.
+  A row that is stored again as it was keeps both. See "When a row was
+  stored and changed" below.
 - **A column has one of the types a strict table takes**: INTEGER, REAL,
   TEXT or BLOB. A model that gives only the Python type of a column gets
   the right one: an `int` is INTEGER, a `str` TEXT, a `float` REAL and
@@ -239,8 +248,8 @@ was named by hand. A test holds the real schema to it with every change.
 
 There is no model yet, and so no table. The rules are proven with two
 models of the tests' own, which are kept in a schema apart from the real
-one. The rules for a table's timestamps (DAT-031) and for text that must
-not be empty (DAT-030) follow.
+one. `broken_rules` does not yet name a table without the two times
+(DAT-032), and the rule for text that must not be empty (DAT-030) follows.
 
 ## Times
 
@@ -282,6 +291,42 @@ whether it should is settled with the checks of DAT-030.
 Times UTC cannot say in the years 1 to 9999 are refused. A column for a
 date without a time of day needs a type of its own, which comes with the
 first table that has such a column.
+
+## When a row was stored and changed
+
+Every table has the columns `created_at` and `updated_at` (DAT-031). Both
+must be there in every row, and the table gives neither a value of its
+own: the store's code does, when it runs the statement that stores or
+changes the row.
+
+- **The store has one clock**, `now()` in `motosphere.db.times`, which
+  says the moment it is, in UTC. It is asked once for every row that is
+  stored, once for every row that is changed through its model, and once
+  for a statement that changes many rows at once.
+- **A new row** gets that moment as `created_at` and as `updated_at`: the
+  same moment, not two readings of the clock. So a row that was never
+  changed is one whose two times are the same.
+- **A changed row** gets a new `updated_at`. Its `created_at` stays. A row
+  whose values are set to what they already are is not changed: both
+  times stay, and the clock is not asked.
+- **A row may be stored with times of its own**, and keeps them; with only
+  a `created_at` of its own, it was last changed then. The store that is
+  built again from its text files (DAT-020) stores its rows that way.
+- This holds for rows stored and changed through a model and through
+  SQLAlchemy's `insert` and `update` of a model, one row or many.
+
+Two ways of writing go past it, and neither is used by the store's code:
+
+- **Plain SQL.** A row written with plain SQL has to say both times itself,
+  or SQLite refuses it ("NOT NULL constraint failed"). A change written
+  with plain SQL leaves `updated_at` as it was.
+- **A statement that stores a row or changes the one that is there**
+  (`INSERT … ON CONFLICT DO UPDATE`). When it changes a row, `updated_at`
+  stays as it was: SQLAlchemy does not set it there. The first code that
+  uses such a statement has to set `updated_at` in it.
+
+A test sets the clock with the fixture `clock` (`TESTING.md`), so that it
+knows every moment the store was told.
 
 ## What the store relies on in SQLite
 

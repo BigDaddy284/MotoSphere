@@ -67,7 +67,10 @@ def test_the_models_of_these_tests_break_no_rule() -> None:
 
 @pytest.mark.parametrize(
     ("table", "others"),
-    [("proof_thing", ["name"]), ("proof_part", ["thing_id", "name"])],
+    [
+        ("proof_thing", ["name", "created_at", "updated_at"]),
+        ("proof_part", ["thing_id", "name", "created_at", "updated_at"]),
+    ],
     ids=["a model that says nothing of its table", "a model that says something of its table"],
 )
 def test_the_key_is_the_first_column_and_a_whole_number(
@@ -126,7 +129,11 @@ def test_a_row_written_past_the_model_gets_a_key_that_was_never_given(made: Engi
     remove(made, 2)
 
     with made.begin() as connection:
-        connection.exec_driver_sql("INSERT INTO proof_thing (name) VALUES ('third')")
+        # A row written with plain SQL says its two times itself.
+        connection.exec_driver_sql(
+            "INSERT INTO proof_thing (name, created_at, updated_at) VALUES ('third', "
+            "'2026-11-19T08:00:00.000000+00:00', '2026-11-19T08:00:00.000000+00:00')"
+        )
         keys = connection.exec_driver_sql("SELECT id FROM proof_thing ORDER BY id").scalars().all()
 
     assert keys == [1, 3]

@@ -56,6 +56,11 @@ class ProofItem(Proof):
     picture: Mapped[bytes | None]
 
 
+# A row written with plain SQL says its two times itself, in the two "?" of its
+# statement: only the store's code sets them.
+A_TIME = "2026-11-19T08:00:00.000000+00:00"
+
+
 @pytest.fixture
 def made(store: Engine) -> Engine:
     """The store, with the two tables of the tests made in it."""
@@ -78,10 +83,13 @@ def test_the_tables_of_models_are_strict_in_the_store(made: Engine) -> None:
 @pytest.mark.parametrize(
     "statement",
     [
-        "INSERT INTO proof_owner (name) VALUES (x'00ff')",
-        "INSERT INTO proof_item (owner_id, number, place) VALUES (1, 'seven', 'a place')",
-        "INSERT INTO proof_item (owner_id, number, place, length) VALUES (1, 7, 'a place', 'long')",
-        "INSERT INTO proof_item (owner_id, number, place, picture) VALUES (1, 7, 'a place', 1.5)",
+        "INSERT INTO proof_owner (name, created_at, updated_at) VALUES (x'00ff', ?, ?)",
+        "INSERT INTO proof_item (owner_id, number, place, created_at, updated_at) "
+        "VALUES (1, 'seven', 'a place', ?, ?)",
+        "INSERT INTO proof_item (owner_id, number, place, length, created_at, updated_at) "
+        "VALUES (1, 7, 'a place', 'long', ?, ?)",
+        "INSERT INTO proof_item (owner_id, number, place, picture, created_at, updated_at) "
+        "VALUES (1, 7, 'a place', 1.5, ?, ?)",
     ],
     ids=[
         "bytes as text",
@@ -92,10 +100,14 @@ def test_the_tables_of_models_are_strict_in_the_store(made: Engine) -> None:
 )
 def test_a_value_that_is_not_of_its_columns_type_is_refused(made: Engine, statement: str) -> None:
     with made.begin() as connection:
-        connection.exec_driver_sql("INSERT INTO proof_owner (id, name) VALUES (1, 'the owner')")
+        connection.exec_driver_sql(
+            "INSERT INTO proof_owner (id, name, created_at, updated_at) "
+            "VALUES (1, 'the owner', ?, ?)",
+            (A_TIME, A_TIME),
+        )
 
     with pytest.raises(IntegrityError) as refused, made.begin() as connection:
-        connection.exec_driver_sql(statement)
+        connection.exec_driver_sql(statement, (A_TIME, A_TIME))
 
     assert isinstance(refused.value.orig, sqlite3.IntegrityError)
     assert "cannot store" in str(refused.value.orig)
@@ -117,6 +129,8 @@ def test_python_types_become_the_column_types_a_strict_table_takes(made: Engine)
         "place": "TEXT",
         "length": "REAL",
         "picture": "BLOB",
+        "created_at": "TEXT",
+        "updated_at": "TEXT",
     }
 
 
