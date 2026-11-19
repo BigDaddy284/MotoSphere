@@ -116,6 +116,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Units of work, `unit_of_work`: what the pipeline writes to the data store
   is kept as a whole when the work ends and taken back as a whole when it
   fails, and a unit cannot commit part-way (DAT-022).
+- For the backend's tests, a fixture that gives every test a real data
+  store of its own and reports a test that leaves a connection to it open
+  (DAT-003).
 
 ### Removed
 
