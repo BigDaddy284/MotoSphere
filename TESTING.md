@@ -273,18 +273,6 @@ connection is closed after use and the file can then be removed (which is
 what fails on Windows when one is left open); and each way the store can be
 refused gives its one plain sentence and writes nothing.
 
-## Units of work
-
-`tests/integration/test_work.py` does units of work on a real SQLite file
-in the test's own temporary folder, opened through `open_store`; nothing in
-it is a mock. Its two small tables are the test's own. It checks what
-`unit_of_work` promises ([DATABASE.md](DATABASE.md)): work that ends is
-there for the next unit and when the store is opened again; work that fails
-leaves no row and no new table, whatever ended it; the error reaches the
-caller unchanged; a row without its parent ends the whole unit; one
-connection is used and closed, and the file can then be removed; a commit
-part-way is refused; and a session cannot be used after its unit has ended.
-
 ## The tools a computer needs
 
 `python scripts/tools.py` says whether a computer has the five tools the

@@ -113,9 +113,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the pipeline's way to its database: foreign keys enforced on every
   connection, failed work taken back as a whole, no connection left open,
   and a plain sentence when the store cannot be opened (DAT-021).
-- Units of work, `unit_of_work`: what the pipeline writes to the data store
-  is kept as a whole when the work ends and taken back as a whole when it
-  fails, and a unit cannot commit part-way (DAT-022).
 
 ### Removed
 

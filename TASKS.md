@@ -908,15 +908,25 @@ here although their numbers do not.
 - **Plan:** `docs/plans/DAT-021.md`
 
 ### DAT-022 – Units of work
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Everything the pipeline writes to the store is written in units of work, each of which is kept as a whole or not at all.
-- **Description:** One function gives a session for a unit of work on the opened store (DAT-021). When the work ends the unit is committed; when the work raises, everything it did is taken back and the error reaches the caller unchanged; its connection is closed either way. The last third of the old DAT-002 (PLAN-013).
-- **Acceptance criteria:** committed work is there for a later unit of work and after the store has been opened again; work that fails part-way leaves nothing behind, neither rows nor a new table; the error that ended the work reaches the caller unchanged; a row that breaks a foreign key ends the whole unit; after a unit of work no connection is open.
-- **Tests required:** integration tests against a real SQLite file (commit, failure part-way, the error, a broken foreign key, nothing left open); planted defects; the full run of all gates on both machines.
+- **Description:** One new module, `motosphere.db.work`, with one function, `unit_of_work(store)`, used in a `with` statement on the engine `open_store` returned (DAT-021). It gives an SQLAlchemy session for one piece of work. When the block ends the work is committed as a whole; when it raises, everything it did is taken back and the error reaches the caller as it was raised; the connection is closed either way. A unit that calls `commit()` itself is refused in one plain sentence, and one that called `rollback()` cannot go on. The session cannot be used after its unit has ended, and what the work read or wrote can still be read then. No new package, no fixture, no table or model of the application. The last third of the old DAT-002 (PLAN-013). The planner's trial has 18 new tests against a real SQLite file and detects 16 of 16 planted defects.
+- **Acceptance criteria:**
+  1. Work done in `with unit_of_work(store) as work:` is committed when the block ends, rows that were only added included. It is there for the next unit of work and when the store is opened again.
+  2. Work that raises leaves nothing behind, neither a row nor a new table, whether an ordinary exception ended it or one that is not (as Ctrl+C is). The store can be worked on afterwards.
+  3. The error that ended the work reaches the caller as the same object.
+  4. A row that breaks a foreign key ends the whole unit, whether its statement was sent at once or the row is written when the unit ends.
+  5. A unit of work uses one connection and closes it, when the work ends and when it fails; the file can be removed afterwards, on Windows too.
+  6. A unit that calls `commit()` is refused with "A unit of work is kept as a whole when it ends; it cannot be committed part-way." and nothing of it is kept. A unit that called `rollback()` cannot go on, and nothing of it is kept.
+  7. After the unit has ended, what it read or wrote can be read without a new connection, and the session refuses to be used.
+  8. The type check passes with SQLAlchemy's own types and no `ignore`.
+  9. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 828 tests (backend tests 198); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** backend integration tests against a real SQLite file in the test's own folder (18 new): work kept for the next unit and for a reopened store, rows that were only added, a row and a new table of failed work, the store after failed work, the error unchanged, work stopped from outside, a broken foreign key at once and at the end, one connection closed after work that ends and work that fails, the file removed afterwards, a commit part-way, work that took itself back, what was written and read still readable, the session after its unit; the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-022.md`
 
 ### DAT-003 – A real, separate store for every test
 - **Status:** NOT STARTED
