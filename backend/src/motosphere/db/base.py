@@ -26,13 +26,17 @@ A model is a class that describes one table. Every model is a subclass of
   that is not one in every column whose model says so;
 - has its constraints and indexes named by one rule, :data:`NAMING`, so
   that a migration can name what it changes and the names are the same on
-  every machine. The key has no name: SQLite writes it with its column.
+  every machine. The key has no name: SQLite writes it with its column;
+- gives each of its constraints and indexes a name of its own. SQLite
+  takes a table with two checks of one name, and what it then says when
+  it refuses a row does not tell which of the two refused it.
 
 :func:`broken_rules` says in plain words which tables of a schema break a
 rule, and which columns are without the check their type brings. A test
 holds the real schema to it.
 """
 
+from collections import Counter
 from datetime import datetime
 from typing import Any, ClassVar
 
@@ -189,19 +193,20 @@ def _without_their_check(table: Table) -> list[tuple[str, WithItsCheck]]:
     The check is the one the column's type gives
     (:class:`motosphere.db.checks.WithItsCheck`): of the name the naming
     rule gives it, and of the same text. A check of another name, and one
-    of that name that says something else, do not count.
+    of that name that says something else, do not count. Where a table
+    has two checks of that name, one of them with that text is enough,
+    whichever comes first: that there are two is another rule's to say.
     """
-    checks = {
-        str(check.name): _as_sqlite_is_given_it(check)
-        for check in table.constraints
-        if isinstance(check, CheckConstraint)
-    }
+    checks: dict[str, set[str]] = {}
+    for check in table.constraints:
+        if isinstance(check, CheckConstraint):
+            checks.setdefault(str(check.name), set()).add(_as_sqlite_is_given_it(check))
     without: list[tuple[str, WithItsCheck]] = []
     for column in table.columns:
         if isinstance(column.type, WithItsCheck):
             its_check = column.type.check_for(column.name)
             name = NAMING["ck"] % {"table_name": table.name, "constraint_name": its_check.name}
-            if checks.get(name) != _as_sqlite_is_given_it(its_check):
+            if _as_sqlite_is_given_it(its_check) not in checks.get(name, set()):
                 without.append((column.name, column.type))
     return without
 
@@ -211,9 +216,10 @@ def broken_rules(schema: MetaData) -> list[str]:
 
     A table must be strict, its key must be the one every table has, it
     must have the two times every table has, every column of it whose type
-    brings a check must have that check, and every other constraint and
-    every index of it must have its name from the naming rule, not one
-    given by hand. A schema that keeps the rules gives an empty list.
+    brings a check must have that check, every other constraint and every
+    index of it must have its name from the naming rule, not one given by
+    hand, and no two of them may have the same name. A schema that keeps
+    the rules gives an empty list.
     """
     breaks: list[str] = []
     for table in sorted(schema.tables.values(), key=lambda table: table.name):
@@ -245,5 +251,12 @@ def broken_rules(schema: MetaData) -> list[str]:
             f"The table {table.name} has a name given by hand, {name}: "
             "constraints and indexes are named by the naming rule."
             for name in by_hand
+        )
+        times_given = Counter(str(one.name) for one in named)
+        breaks.extend(
+            f"The table {table.name} gives the name {name} to {count} of its constraints and "
+            "indexes: each must have a name of its own."
+            for name, count in sorted(times_given.items())
+            if count > 1
         )
     return breaks
