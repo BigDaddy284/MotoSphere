@@ -83,7 +83,7 @@ MotoSphere/
 ├── frontend/                Vite + React + TypeScript project
 │   ├── src/                 code, with unit tests next to it
 │   └── e2e/                 Playwright browser tests
-├── scripts/                 setup, check and local-run scripts
+├── scripts/                 check scripts (Python, standard library only)
 ├── tests/repo/              repository-wide checks (stdlib only)
 ├── .github/workflows/       checks, scheduled collection, Pages deployment
 ├── docs/

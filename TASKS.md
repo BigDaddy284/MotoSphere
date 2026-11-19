@@ -26,8 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-001 – Data store research and decision record. Phase 1 is complete; Phase 2 is written out
-in full task entries before this task starts.
+**Current task:** DAT-001 – Data store research and decision record.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -84,11 +83,12 @@ was built by then and stays.
 Added tasks are listed where they fall in dependency order, so task numbers
 in Phase 1 are not strictly ascending.
 
-Phase 1 is specified in full below. Phases 2–13 are listed as an ordered
-roadmap of named tasks; each phase is expanded into full task entries (with
-acceptance criteria and required tests) before its first task starts, and any
-task that turns out too large to test thoroughly is split further at that
-point. Task counts above therefore grow rather than shrink.
+Phases 1 and 2 are specified in full below (Phase 2 since PLAN-012).
+Phases 3–13 are listed as an ordered roadmap of named tasks; each phase is
+expanded into full task entries (with acceptance criteria and required
+tests) before its first task starts, and any task that turns out too large
+to test thoroughly is split further at that point. Task counts above
+therefore grow rather than shrink, unless the owner takes work out.
 
 ---
 
@@ -837,44 +837,328 @@ Windows 11. No database and no globe yet.
 
 ---
 
-# Roadmap – Phases 2 to 13
+# Phase 2 – Data store and published data (DAT, PUB)
+
+Written out in full by PLAN-012. The pipeline gets a real store (SQLite) and
+publishes real files from it. Every task that touches the store is tested
+against a real SQLite file, never a mock. A task's details are settled by
+the planner's trial before its plan is written, and a task that proves too
+large to test thoroughly is split then.
+
+### DAT-001 – Data store research and decision record
+- **Status:** NOT STARTED
+- **Objective:** Decide, with evidence, what the data store may rely on: which SQLite features every machine that runs the pipeline has, where the store is kept between scheduled runs, and which size limits bound it.
+- **Description:** A module, `motosphere.db.sqlite`, names the least SQLite version and the features the store relies on, and says in plain words what a given SQLite lacks. Its tests run against the real SQLite of the Python that runs the pipeline, so the gates prove it on Linux and on Windows for every change. `ARCHITECTURE.md` §5 and `DATABASE.md` record the decisions with their sources: the features found on each machine, where the store is kept between runs (compared: text files in a `data` branch, the database file as a release asset, a workflow cache), GitHub's documented limits for files, repositories, Pages and releases, and the sizes at which the decision is looked at again. No table and no connection module yet.
+- **Acceptance criteria:** the module reports nothing missing on GitHub's Linux and Windows machines and on the planner's; an SQLite that is too old or lacks a required feature is reported by name; the least version is one every machine meets; every figure in the decision record names the page it was read from and the day; the open question in `ARCHITECTURE.md` §5 is closed.
+- **Tests required:** unit tests with stand-in connections for an old SQLite and for each missing feature; tests against the real SQLite on each machine; planted defects; the full run of all gates; the workflow run on the pull request, on both machines; the run for `main` after the merge.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-002 – Store settings and connection module
+- **Status:** NOT STARTED
+- **Objective:** The pipeline opens its store through one module, and every connection enforces foreign keys.
+- **Description:** A setting for the store's path (`MOTOSPHERE_STORE_PATH`), validated like the others. One module makes the SQLAlchemy engine and the unit of work for it: foreign keys are switched on for every connection, a unit of work commits as a whole or not at all, and an SQLite that lacks what DAT-001 requires is refused in plain words before anything is written. Adds SQLAlchemy 2 to the pipeline (locked). No table of the application yet.
+- **Acceptance criteria:** a row that breaks a foreign key is refused on the first connection and on every later one; work that fails part-way leaves nothing behind; the path setting rejects an empty value and creates no file until the store is opened; an SQLite below the least version is refused with one plain sentence; the type check passes with SQLAlchemy's own types (no ignores).
+- **Tests required:** unit tests of the setting; integration tests against a real SQLite file (foreign keys on several connections, commit and rollback, the refusal); planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-003 – A real, separate store for every test
+- **Status:** NOT STARTED
+- **Objective:** Every database test gets its own real SQLite file and can never see another test's data.
+- **Description:** A pytest fixture creates a store in the test's own temporary folder through DAT-002's module, hands it to the test and closes it afterwards, so that the file can be removed on Windows too. The store is never replaced by a mock (CLAUDE.md §3, `ARCHITECTURE.md` §5).
+- **Acceptance criteria:** two tests that write the same key both pass, in either order; the file exists on disk during the test and is closed after it; the fixture works unchanged on Linux and on Windows; a test that leaves a transaction open does not break the next test.
+- **Tests required:** tests of the fixture itself, run in random order within the file; the full run of all gates on both machines; planted defects (a shared file, a store left open).
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-004 – Schema migrations
+- **Status:** NOT STARTED
+- **Objective:** The store's schema is built and changed only by numbered migrations, each of which can be applied and taken back.
+- **Description:** Migration tooling for SQLite (the tool is chosen in the planner's trial: Alembic with batch operations, or a small runner of its own if that proves simpler and as safe), a first, empty migration, and two commands of the pipeline's command line: bring the store to the newest schema, and say which schema a store has. The store records its schema version.
+- **Acceptance criteria:** an empty store is brought to the newest schema and says so; every migration can be taken back, down to an empty store; applying twice changes nothing; a store newer than the code is refused in plain words; a test fails when a model and the migrated schema differ.
+- **Tests required:** integration tests against a real SQLite file: up, down, up again, the commands run for real; a drift test; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-005 – Model conventions: keys, times and names
+- **Status:** NOT STARTED
+- **Objective:** Every table follows the same rules for its key, its timestamps and the names of its constraints, and a test holds every table to them.
+- **Description:** The declarative base for all models: a whole-number primary key named `id`, `created_at` and `updated_at` in UTC set by the store's code, one naming rule for indexes and constraints (so migrations can name what they change), strict column types, and text checked for emptiness where it must not be empty. `DATABASE.md` states the rules. One small table used only by the tests proves them.
+- **Acceptance criteria:** the test walks every table of the schema and fails on one that breaks a rule; timestamps are stored with their offset and come back as aware UTC times; a time without an offset is refused; constraint names are the same on Linux and on Windows.
+- **Tests required:** unit tests of the rules; integration tests against a real SQLite file; planted defects (a table without timestamps, an unnamed constraint, a naive time); the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-006 – Information sources table
+- **Status:** NOT STARTED
+- **Objective:** The store knows every source of information: who it is, how it may be used and how it is doing (DESIGN §7.3).
+- **Description:** Table, model and migration for sources: name, website, category (the twelve of DESIGN §7.1), kinds of information offered, collection method (DESIGN §7.2), how often it is scanned, last attempted and last successful scan, reliability, current health, last error, usage restrictions, terms and licence, and whether it is switched on. A new source starts switched off. The source's country is added with the countries table (DAT-011). `DATABASE.md` documents the table.
+- **Acceptance criteria:** a source can be stored and read back with every field; two sources cannot share a name or a website; a category or method outside the lists is refused; a website that is not an https or http address is refused; the migration can be taken back.
+- **Tests required:** integration tests against a real SQLite file for every rule above; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-007 – Data collection runs table
+- **Status:** NOT STARTED
+- **Objective:** Every collection run is recorded: which source, when, how it ended and what it changed.
+- **Description:** Table, model and migration for runs: the source, start and end, outcome (running, succeeded, failed, interrupted), counts of records seen, added, changed and unchanged, and the error in plain words when it failed. A run left `running` by a job that died is marked interrupted by the next start, so recovery after an interrupted job (CLAUDE.md §13) has a record to work from.
+- **Acceptance criteria:** a run belongs to exactly one source and cannot outlive it unnoticed (a source with runs cannot be deleted); a run cannot end before it started; counts cannot be negative; runs left running are marked interrupted and nothing else is touched.
+- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-008 – Provenance on every collected record
+- **Status:** NOT STARTED
+- **Objective:** Every collected record says where it came from, when, how, and how far it can be trusted (DESIGN §8).
+- **Description:** One reusable set of columns for collected records: source, source address, collected at, published at where known, last verified at, extraction method, confidence (a fixed list) and verification status (a fixed list that tells official information from independently published information, CLAUDE.md §11). Unknown values are null, never invented. A test table proves the set; the real tables use it from DAT-011 on.
+- **Acceptance criteria:** a record without a source or without a collection time is refused; confidence and verification status accept only their listed values; a published date may be unknown; a source that records refer to cannot be deleted; the convention test of DAT-005 knows which tables must carry provenance and fails on one that does not.
+- **Tests required:** unit tests of the lists; integration tests against a real SQLite file; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-009 – Record change history
+- **Status:** NOT STARTED
+- **Objective:** A change to a collected record is added to its history, never written over it.
+- **Description:** Table, model and migration for changes: which record, which field, the old and the new value, when, which collection run or which person's decision caused it. One function writes a change and its history in the same unit of work, so neither exists without the other. Historical values keep their original dates (CLAUDE.md §11).
+- **Acceptance criteria:** changing a field through the function leaves one history row with the old and new value; a change that sets the same value leaves none; history rows cannot be edited or deleted through the model; a failed change leaves neither the change nor the history.
+- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-010 – Review queue
+- **Status:** NOT STARTED
+- **Objective:** Conflicting or doubtful information waits for a person's decision and is never merged by itself.
+- **Description:** Table, model and migration for review items: what is in doubt (a possible duplicate, two sources that disagree, a value outside its rules), the records and sources involved, the state (open, accepted, rejected), who decided and when, and a note that never leaves the store. One function opens an item, and opening the same doubt twice gives one item.
+- **Acceptance criteria:** an item names at least one record and why it is in doubt; the same doubt opened twice is one item; a decided item keeps its decision and cannot be reopened silently; the note is not in any published model.
+- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-011 – Countries table
+- **Status:** NOT STARTED
+- **Objective:** The store holds countries, so that everything else can say where it is.
+- **Description:** Table, model and migration for countries: the ISO 3166-1 two-letter and three-letter codes, the English short name, and provenance. Sources gain their country here (the column DAT-006 left out). No rows yet: they come with DAT-012.
+- **Acceptance criteria:** codes are stored in capitals and refused in any other form or length; two countries cannot share a code; a source's country must exist; the migration can be taken back.
+- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-012 – Countries reference data
+- **Status:** NOT STARTED
+- **Objective:** The countries of ISO 3166-1 are in the store, from a source whose licence allows it, with that source recorded.
+- **Description:** The planner's trial finds and records the source and its licence in `DATA_SOURCES.md` before the plan is written; if none allows redistribution the task is `BLOCKED – EXTERNAL DEPENDENCY`. A reference file in the repository with its origin and licence beside it, the source registered in the store, and a command that loads the file: countries are added or updated through the history of DAT-009, never deleted, and a second load changes nothing. Nothing is fetched while the command runs.
+- **Acceptance criteria:** after loading, the store holds exactly the countries of the file, each with provenance naming the source; loading twice leaves the same rows and no new history; a changed name in the file becomes one change with history; a malformed file is refused whole and the store is unchanged.
+- **Tests required:** unit tests of the file's reader; integration tests against a real SQLite file with the real reference file and with damaged ones; the command run for real; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-013 – Regions table
+- **Status:** NOT STARTED
+- **Objective:** A country can be divided into regions (a state, a county, a province), so that a track can say where in the country it is.
+- **Description:** Table, model and migration for regions: the country, the name, the ISO 3166-2 code where one exists, an optional parent region, and provenance. No reference rows: regions arrive with the records that need them.
+- **Acceptance criteria:** a region belongs to exactly one country; two regions of one country cannot share a code or, under the same parent, a name; a region's parent is in the same country; a country with regions cannot be deleted.
+- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-014 – Racing disciplines
+- **Status:** NOT STARTED
+- **Objective:** The store knows the kinds of racing, and a new kind is a new row, not a new design (DESIGN §2.1).
+- **Description:** Table, model and migration for disciplines (a stable key, a name, a short description, an order for display), and the seven of DESIGN §2.1 as reference rows added by the migration: outdoor motocross, supercross, amateur motocross, youth and junior motocross, veteran and masters racing, enduro, hard enduro.
+- **Acceptance criteria:** the seven disciplines exist after the migration, each once; a key is lower-case words joined by hyphens and cannot be reused; taking the migration back removes them; adding an eighth needs no change to any other table.
+- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-015 – Organisations table
+- **Status:** NOT STARTED
+- **Objective:** The store holds the bodies behind the sport: governing bodies, clubs, promoters and organisers.
+- **Description:** Table, model and migration for organisations: name, kind (a fixed list), country, region where known, website, public contact details as published (an organisation's, never a private person's), and provenance. Identities that may be the same are not merged: they go to the review queue (DAT-010).
+- **Acceptance criteria:** an organisation has a name, a kind and a country; a kind outside the list is refused; a website must be an http or https address; two organisations with the same name in the same country are both kept, and a review item can name the pair.
+- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-016 – Tracks table with validated coordinates
+- **Status:** NOT STARTED
+- **Objective:** The store holds tracks with a position that is checked, and can find the tracks inside a rectangle of the map quickly.
+- **Description:** Table, model and migration for tracks: name, country, region where known, latitude and longitude in WGS 84, how exact the position is, disciplines, status (open, closed, unknown), surface and facilities as published, website, the organisation that runs it, and provenance. A position is both numbers or neither. An index serves lookups by bounding box, including boxes that cross the 180th meridian; which kind of index (ordinary or R*Tree) is decided by measurement in the planner's trial.
+- **Acceptance criteria:** a latitude outside -90 to 90 or a longitude outside -180 to 180 is refused; one coordinate without the other is refused; a position of exactly 0, 0 is refused (a common sign of a missing value, and open sea); a bounding-box query returns exactly the tracks inside, across the 180th meridian too, and uses the index; no coordinate is ever invented.
+- **Tests required:** integration tests against a real SQLite file, with boundary and antimeridian cases and a check of the query plan; a measurement with 100,000 generated positions, used only to choose the index and never stored; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-017 – Track aliases
+- **Status:** NOT STARTED
+- **Objective:** A track can be known under several names, and a search by any of them finds it.
+- **Description:** Table, model and migration for other names of a track: the name, what kind it is (former name, local-language name, common short name), the language where known, and provenance. Names are compared without regard to case, accents and surrounding space, by one function that later tasks reuse for duplicate detection.
+- **Acceptance criteria:** a track cannot have the same alias twice, compared that way; an alias cannot equal the track's own name; deleting is not offered, and an alias proven wrong is ended through history; a lookup by alias returns the track.
+- **Tests required:** unit tests of the comparison (case, accents, scripts other than Latin left as they are); integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-018 – Media references
+- **Status:** NOT STARTED
+- **Objective:** The store can point to photographs and other media at their source, with credit and licence, without copying them (DESIGN §14).
+- **Description:** Table, model and migration for media references: what it shows (a track or an organisation, for now), the address of the page it is on and of the file, the kind, credit, licence, and provenance. Only references are stored. A file is never downloaded or republished by this task; whether one may ever be shown is decided by its licence in a later phase.
+- **Acceptance criteria:** a reference belongs to exactly one record; addresses must be http or https; a reference without a licence is kept as `unknown` and is not exported as showable; nothing in the task fetches a file.
+- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-019 – Snapshot: the store written as text files
+- **Status:** NOT STARTED
+- **Objective:** The whole store can be written out as text files that are the same, byte for byte, whenever the store is the same.
+- **Description:** A command writes every table to text files in a folder: one record per line, records and fields in a fixed order, UTF-8, Unix line ends, with the schema version and a list of the files and their hashes, and reports the snapshot's size. Large tables are divided into files by a rule that depends only on the data. This is the form in which the store is kept between scheduled runs (DAT-001's decision), so a change to the store shows as a small, readable difference.
+- **Acceptance criteria:** writing the same store twice gives identical files, on Linux and on Windows alike; one changed record changes one line; no file comes near GitHub's file size limit, by a margin the plan states; the folder is written completely or not at all; internal notes are included (this is the store, not the published data) and the folder says so.
+- **Tests required:** unit tests of the ordering and the encoding; integration tests against a real SQLite file with every table filled, comparing bytes across two writes and across the two machines by hash; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-020 – Snapshot: the store rebuilt from text files
+- **Status:** NOT STARTED
+- **Objective:** A store rebuilt from its snapshot is the same store, and the round trip is proven.
+- **Description:** A command builds a new store from a snapshot folder: the schema is brought to the snapshot's version, the records are loaded, and the schema is then brought to the newest version. Every file is checked against its hash first. A snapshot that is damaged, incomplete or newer than the code is refused whole.
+- **Acceptance criteria:** store → snapshot → store → snapshot gives identical snapshot files; every table, key and history row survives; foreign keys hold in the rebuilt store; a changed, missing or extra file is refused in plain words and no store is left behind; a snapshot of an older schema is rebuilt and migrated.
+- **Tests required:** integration tests against real SQLite files with every table filled, including a snapshot made at an earlier schema version; damaged snapshots; the two commands run for real; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### PUB-001 – Published data layout and manifest of files
+- **Status:** NOT STARTED
+- **Objective:** The published data has a fixed layout, and the manifest lists every file with its hash, so the browser can tell exactly what it should receive.
+- **Description:** The layout of the published folder is decided and documented (`ARCHITECTURE.md` §6): which files exist, how they are named so that a changed file has a new address, and the format version. The manifest gains the list of files with size and content hash, and record counts. The export writes through the store for the first time; with an empty store it publishes the manifest and nothing else. The frontend's manifest reader accepts the new format and still refuses one it does not know.
+- **Acceptance criteria:** the manifest lists exactly the files in the folder, with correct sizes and hashes; a file not listed or a listed file missing fails the export; the format version changes and the frontend refuses the old one in plain words; the check of the published site (FND-035) still passes after deployment.
+- **Tests required:** unit tests of the manifest model; integration tests of the export against a real store; frontend unit tests of the reader; browser tests against freshly exported data; planted defects; the full run of all gates on both machines; the run for `main` with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### PUB-002 – Data contract: one schema for both sides
+- **Status:** NOT STARTED
+- **Objective:** What the pipeline publishes and what the frontend expects are the same thing by construction.
+- **Description:** A JSON Schema is generated from the export's Pydantic models and committed; the frontend's types are generated from that schema and committed. A gate fails when either is out of date, and the frontend checks the manifest it receives against the schema's rules, not against hand-written ones.
+- **Acceptance criteria:** changing an export model without regenerating fails a gate, on both machines, with a message that names the command to run; the generated files are identical on Linux and on Windows; the frontend refuses a manifest that breaks the schema.
+- **Tests required:** unit tests on both sides; a gate test with a deliberately stale schema; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### PUB-003 – Countries file
+- **Status:** NOT STARTED
+- **Objective:** The countries in the store are published for the browser.
+- **Description:** The export writes one file with the countries that have at least one published record or are needed to name one, in a fixed order, listed in the manifest and checked against the contract. Internal fields stay in the store.
+- **Acceptance criteria:** the file holds exactly those countries, each with its codes and name; it is listed in the manifest with the right hash; the same store gives the same bytes; with no countries the file is not written and the manifest says so.
+- **Tests required:** integration tests of the export against a real store; contract validation; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### PUB-004 – Track list files
+- **Status:** NOT STARTED
+- **Objective:** The browser can list tracks country by country without downloading them all.
+- **Description:** The export writes track lists in chunks by country, each chunk under a size the plan states, with the fields a list needs (name, place, position, disciplines, status) and a pointer to the detail file. Only tracks whose verification status allows publication are exported.
+- **Acceptance criteria:** every publishable track is in exactly one chunk; no chunk exceeds the stated size; a track that is not publishable is in none; chunks and their order are the same for the same store; every chunk passes the contract.
+- **Tests required:** integration tests of the export against a real store with generated tracks (used only in tests, never published); contract validation; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### PUB-005 – Track detail files
+- **Status:** NOT STARTED
+- **Objective:** Everything publishable about one track is in one small file the browser fetches when the track is opened.
+- **Description:** The export writes one detail file per track (or per small group, if the trial shows too many files): the track's fields, its other names, its organisation, media references that may be shown, and for every value its source and how far it is verified. Text from sources is exported as text and nothing else.
+- **Acceptance criteria:** a detail file holds exactly the publishable fields; every value names its source; internal notes, review items and raw responses appear in no file (a test searches the whole published folder for marker values planted in them); markup in a source's text is exported as inert text.
+- **Tests required:** integration tests of the export against a real store; a leak test with planted markers; contract validation; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### PUB-006 – Map tile files
+- **Status:** NOT STARTED
+- **Objective:** The globe can load only the markers in view: tracks are published per map tile and zoom level.
+- **Description:** The export writes tile files in a standard tile scheme chosen and documented in the planner's trial: at close zoom levels the tracks themselves, at wide zoom levels counts per cell, computed at export time. Empty tiles are not written, and the manifest tells the browser which exist.
+- **Acceptance criteria:** every publishable track with a position is in exactly one tile at each close zoom level; the counts at each wide level add up to the number of tracks; tracks at the poles and at the 180th meridian land in the right tile; no tile exceeds the stated size; the same store gives the same bytes.
+- **Tests required:** unit tests of the tile arithmetic against published reference values; integration tests of the export against a real store with generated positions (tests only); contract validation; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### PUB-007 – Export validation
+- **Status:** NOT STARTED
+- **Objective:** Nothing is published that breaks the contract or carries something internal.
+- **Description:** The export ends with a check of the whole published folder: every file is listed in the manifest and matches its hash, every file passes the contract, sizes are within their limits, and no internal field is present. A failure stops the export before anything replaces the previous published data, and the deployment job runs the same check.
+- **Acceptance criteria:** a file that breaks the contract, an unlisted file, a wrong hash, an oversized file and a planted internal value each stop the export with a message naming the file; the previous published folder is untouched after a failed export; the gates and the deployment both run the check.
+- **Tests required:** integration tests of each failure against a real store and folder; repository checks that the workflow runs the check; planted defects; the full run of all gates on both machines; the run for `main` with its deployment.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### PUB-008 – Frontend data access layer
+- **Status:** NOT STARTED
+- **Objective:** The frontend has one way to fetch published files: checked against the manifest, kept while the page is open, and honest about loading and failure.
+- **Description:** A data module in the frontend: it asks for a file by the name the manifest gives, checks what arrives against the contract, keeps what it has loaded for the visit, never asks twice for the same file at once, and gives every caller the same three states (loading, loaded, failed) with a friendly message. The countries file is its first user, shown nowhere yet; the first screen that uses it comes with the track directory.
+- **Acceptance criteria:** a file is fetched once however many parts of the page ask for it; a file that breaks the contract or is not in the manifest is a failure, not data; a failed request can be tried again; nothing outside the site's own data folder is ever requested.
+- **Tests required:** frontend unit tests with a stand-in fetch; browser tests against freshly exported data from a real store, including a missing and a damaged file; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+---
+
+# Roadmap – Phases 3 to 13
 
 Ordered by dependency. Every item is one task and will get a full entry like
 those above before its phase starts.
-
-## Phase 2 – Data store and published data
-
-Data store
-- DAT-001 Data store research and decision record (SQLite features on Windows and Linux, keeping data between scheduled runs, size limits)
-- DAT-002 Store settings and engine/session module (SQLite, foreign keys enforced)
-- DAT-003 Isolated test-database fixture (real SQLite file per test)
-- DAT-004 Schema migration infrastructure (upgrade and downgrade tested)
-- DAT-005 Model conventions: keys, timestamps, constraint naming
-- DAT-006 Information sources table (source registry core)
-- DAT-007 Data collection runs table
-- DAT-008 Provenance columns and confidence/verification enumerations
-- DAT-009 Record change-history table
-- DAT-010 Review queue table
-- DAT-011 Countries table
-- DAT-012 Countries reference data import (ISO 3166, licence verified)
-- DAT-013 Regions table
-- DAT-014 Racing disciplines table and reference data
-- DAT-015 Organisations table (governing bodies, clubs, promoters)
-- DAT-016 Tracks table with validated coordinates and bounding-box index
-- DAT-017 Track aliases table
-- DAT-018 Media references table
-- DAT-019 Snapshot: write the store to deterministic text files
-- DAT-020 Snapshot: rebuild the store from text files (round trip proven)
-
-Published data
-- PUB-001 Published data layout, versioning and manifest file list with content hashes
-- PUB-002 Data contract: JSON Schema from the export models and generated frontend types
-- PUB-003 Countries file
-- PUB-004 Track list files (in chunks, by country)
-- PUB-005 Track detail files
-- PUB-006 Map tile files (tracks by tile and zoom level)
-- PUB-007 Export validation (every published file checked against the contract; nothing internal exported)
-- PUB-008 Frontend data access layer (loading, caching, error states)
 
 ## Phase 3 – Interactive 3D Earth
 
