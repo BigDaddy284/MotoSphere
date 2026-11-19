@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 2 – Data store and published data (Phase 1 – Foundation is complete)
-- **Current task:** DAT-033 – A column without its check for empty text is named (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 59 of 248
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (1064 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (the list is still empty); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, and only `migrate` writes to it; there is a base for all models, which makes every table strict and names its constraints and indexes by one rule, and a test that holds every table to that; a time is stored as text in one form, in UTC with its offset written out, a time without an offset is refused, and a model's `datetime` column gets that type from the base; every model gets its key from the base, a whole number `id` that SQLite never gives twice, and the two times `created_at` and `updated_at`, which the store's code sets from the store's one clock; the test that holds every table to the rules names a table without that key or without those two times; a model can say of a column that its text must not be empty, and SQLite itself then refuses empty text in it, also text of nothing but white space; there is no model and no table yet (`DATABASE.md`). No globe yet.
+- **Current task:** DAT-026 – The models and the migrated schema agree (`NOT STARTED`, the planner is trialling it and writing its plan)
+- **Tasks verified:** 60 of 248
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (1074 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (the list is still empty); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, and only `migrate` writes to it; there is a base for all models, which makes every table strict and names its constraints and indexes by one rule, and a test that holds every table to that; a time is stored as text in one form, in UTC with its offset written out, a time without an offset is refused, and a model's `datetime` column gets that type from the base; every model gets its key from the base, a whole number `id` that SQLite never gives twice, and the two times `created_at` and `updated_at`, which the store's code sets from the store's one clock; the test that holds every table to the rules names a table without that key or without those two times; a model can say of a column that its text must not be empty, and SQLite itself then refuses empty text in it, also text of nothing but white space, and the test that holds every table to the rules names such a column whose table is without the check for it; there is no model and no table yet (`DATABASE.md`). No globe yet.
 
 ## Reports
 
@@ -5120,3 +5120,76 @@ results, and no deviation from the plan; the builder's Node was 22.23.5.
 Commit: `2dba882` (squash merge of pull request #87).
 
 Next task: DAT-033 – A column without its check for empty text is named.
+
+### DAT-033 – A column without its check for empty text is named (2026-11-19)
+
+TASK: DAT-033 – A column without its check for empty text is named
+
+Implementation: Complete (builder thread, pull request #89).
+`broken_rules` has one more rule and one more sentence: every column
+whose text must not be empty must have the check `not_empty` gives for
+it, of the name the naming rule gives and of the same text as SQLite is
+given it when the table is made. A check of another name does not count,
+and neither does one of that name that says something else; the same
+check written with the table's own column, or as text, counts. The
+sentence names the table and the column and stands between the times and
+the names given by hand. `Base` and `motosphere.db.texts` did not change.
+There is no model and no table yet. Exactly the 7 planned files; all are
+identical to the planner's trial. One existing test got one more column
+and one more sentence. No new package.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18 with SQLite 3.53.1,
+SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  1074 passed, 0 failed, 0 skipped." Backend tests: 444 (434 before, 10
+  new).
+- Planted defects in the new rule: 26, and 26 of 26 detected, among them
+  the plan's fifteen prove-it steps, with the results the plan gives. The
+  194 planted defects of DAT-030 again: 194 of 194 detected.
+- None of the three code files holds a character beyond ASCII.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44530337496, the pull request's commit (`e4b2de6`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 1074 passed, 0 failed, 0 skipped.", with 444
+  backend tests on both machines; "Build the site", "Publish the site"
+  and "Check the published site" skipped.
+- Run 44534139253, for `main` after the merge (`6739c16`): all five
+  jobs green at the first attempt, both gates jobs with the same two
+  closing lines, the site republished, and the log of "Check the
+  published site" ending
+  "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+
+Unit and integration tests: 903/903 passed (repository 41, script tests
+206, backend 444, frontend 212). Browser tests: 171/171 passed.
+Database tests: the new integration test makes a table in a real SQLite
+file and asks the file what it holds and what it refuses, on Linux and on
+Windows; no mock of a database is used.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the deployment succeeded and the
+published site is the site that was built. The task changes nothing a
+user sees.
+
+Overall applicable tests: 1074/1074 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: `Base` gives no check to a column that a subclass of a
+model adds to its parent's table, nor to a table made without a model: the
+rule names the column, and its table has to be given the check by hand
+(`DATABASE.md` says how). The rule sees the models, not the store: that a
+store built by the migrations has the same checks is for DAT-026, the next
+task, and a migration has to write the check itself. The rule compares the
+text of a check as SQLAlchemy writes it for SQLite; a check that refuses the
+same text in other words is named. The builder's report gave the same
+numbers as the planner's run, all fifteen prove-it steps with the plan's
+results, and no deviation from the plan; the builder's Node was 22.23.5.
+
+Commit: `6739c16` (squash merge of pull request #89).
+
+Next task: DAT-026 – The models and the migrated schema agree.
