@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 34 | 8 |
+| 2 | Data store and published data (DAT, PUB) | 35 | 8 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-025 – Command: say which schema a store has.
+**Current task:** DAT-027 – Say which migrations a store lacks.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -865,7 +865,9 @@ the old DAT-002 is DAT-002, DAT-021 and DAT-022, which follow one another
 here although their numbers do not. The second (PLAN-014): the old DAT-004
 is DAT-004, DAT-023, DAT-024, DAT-025 and, after DAT-005, DAT-026.
 PLAN-014 also decided that no migration has a way back; the tasks that add
-tables test their migration from the version before it.
+tables test their migration from the version before it. The third
+(PLAN-016): DAT-025 needs a way to ask which migrations a store lacks
+without migrating it, and that is DAT-027, which stands before it.
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -1023,6 +1025,24 @@ tables test their migration from the version before it.
 - **Verification status:** Verified by the planner on 2026-11-19. All 10 files are identical to the planner's trial. No existing test changed and no package was added. Four of the new tests run the real command in a process of its own, on Linux and on Windows, with the pipeline's own list of migrations, which is still empty: there the command makes an empty file at version 0. That the command gives a store the migrations it lacks, and says from which version to which, is tested in the test's process with a list of the test's own in the place of the pipeline's, against a real SQLite file; no process of its own has run the command with migrations yet, and the first task that adds one (DAT-006) will. An error inside a migration is not caught by the command, by decision. The command is not yet part of any scheduled run.
 - **Commit:** `f209739`
 - **Plan:** `docs/plans/DAT-024.md`
+
+### DAT-027 – Say which migrations a store lacks
+- **Status:** IN PROGRESS
+- **Objective:** One function says which migrations a store lacks, writes nothing, and refuses exactly the stores `migrate` refuses.
+- **Description:** A new function, `pending(store)`, in `motosphere.db.migrations`. It returns the numbers of the migrations the store lacks, in order: all of them for a new store, none for a store that is up to date. It only reads. It refuses what `migrate` refused until now, with `SchemaError` and the same two sentences, which move into it unchanged: a file that is not a store of MotoSphere's (DAT-023), and a store at a version the history does not know (DAT-004). `migrate` asks `pending` and applies exactly the migrations it names; its transaction, the mark and the version are as before, and nothing it does changes. So the question "would this store be migrated, and by what?" has one answer in one place, and the command that says which schema a store has (DAT-025) can ask it without writing. No command, no sentence and no existing test changes. No new package. The planner's trial has 10 new tests and detects 74 of 74 planted defects.
+- **Acceptance criteria:**
+  1. `pending` names all migrations for a new store, those after the ones a store has had for a store that has had some, and none for a store that is up to date. Without a history it asks the store's own, `MIGRATIONS`, as it is at that moment.
+  2. Asking commits nothing, and the file is byte for byte as before.
+  3. `migrate` applies exactly the migrations `pending` named.
+  4. A store `migrate` refuses (a table and no mark, the mark of another application, a newer store, a version below zero) is refused by `pending` with `SchemaError` in the same words, and is byte for byte as before.
+  5. No existing test changed, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  6. `python scripts/check.py` reports 19 of 19 gates and 886 tests (backend tests 256); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 10 new integration tests against a real SQLite file (what a new store lacks, one that has had some, one that is up to date; that asking writes nothing; the store's own history; that migrating applies what was named; four stores that are refused, each in the words `migrate` uses and each left as it is); all existing tests of the runner and of the command `migrate` unchanged; twelve planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-027.md`
 
 ### DAT-025 – Command: say which schema a store has
 - **Status:** NOT STARTED
