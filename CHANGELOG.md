@@ -174,6 +174,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   where the schema the models describe and the one the migrations build
   differ: it compares the statements SQLite keeps for each table and
   index, word for word (DAT-026).
+- A column type can bring the check for its column, `WithItsCheck` in
+  `motosphere.db.checks`: `Base` gives that check to the table of every
+  model with such a column, and `broken_rules` names a column whose
+  table is without it, in the type's own words. Text that must not be
+  empty is the first such type, and the next needs no change to either
+  (DAT-034).
 
 ### Removed
 
