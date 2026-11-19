@@ -989,15 +989,22 @@ tables test their migration from the version before it.
 - **Plan:** `docs/plans/DAT-004.md`
 
 ### DAT-023 – Only a store of MotoSphere's is migrated
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** A file that is not a MotoSphere data store is never migrated: it is refused in plain words and left as it is.
-- **Description:** The store's file is marked as MotoSphere's with a number of the project's own in the field SQLite gives applications for this (`application_id`). `migrate` marks an empty file (no table, version 0, no mark) before it does anything else, migrates a file that has the mark, and refuses every other file: an SQLite database that has tables and no mark, or the mark of another application. The details are settled in the planner's trial. Without this, a store path that names somebody else's database would have MotoSphere's tables built into it.
-- **Acceptance criteria:** an empty file is marked and migrated; a marked store is migrated, also after it was opened again; a database with tables and no mark, and one with another mark, are each refused with one plain sentence and are byte for byte as before; the mark and the version are written in the same transaction as the first migration, or neither is.
-- **Tests required:** integration tests against a real SQLite file, with a database made by plain SQLite as the one that is not MotoSphere's; planted defects; the full run of all gates on both machines.
+- **Description:** A store's file carries a mark: the number 1299141488 (the letters "MoSp", `APPLICATION_ID` in `motosphere.db.migrations`), in the field SQLite gives applications to say whose a database is (`application_id`). `migrate` looks at the file before anything else. A file with the mark is migrated. A file with no mark and nothing in it (no table, no view, version 0) is a new store, and gets the mark in the transaction of its first migration, so a file has the mark and its first version together or neither. Every other file is refused with `SchemaError` and one sentence that names the file and says why, before anything is written: a file with the mark of another application, and a file with no mark that has a table, a view or a version. The mark is looked at before the version, so the file of another program is never taken for a newer store. A new store that lacks no migration is still not written to. Marking a new file in a transaction of its own, before the first migration, was weighed and not taken. `open_store` and `schema_version` do not change. No new package.
+- **Acceptance criteria:**
+  1. The first migration of a new store marks the file: bytes 68 to 71 of the file are "MoSp". A store that carries the mark is migrated, also after it was opened again.
+  2. The mark is written in the transaction of the first migration: three migrations of a new store are three commits, and a first migration that fails leaves the file byte for byte as it was. A new store that lacks no migration is not written to.
+  3. A file with no mark that has a table, a view or a version, and a file with the mark of another application, are each refused with `SchemaError` and one exact sentence that names the file and says why, and each is byte for byte as before.
+  4. A file with a version beyond the history and no mark is told that it is not MotoSphere's, not that it is newer; a marked store at a version the history does not know is refused as before.
+  5. No existing test changed but one line of one test (it marks its file first), and all pass.
+  6. `python scripts/check.py` reports 19 of 19 gates and 858 tests (backend tests 228); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 7 new integration tests against a real SQLite file, in which the files that are not MotoSphere's are made with SQLite alone; fourteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-023.md`
 
 ### DAT-024 – Command: bring the store to the newest schema
 - **Status:** NOT STARTED
