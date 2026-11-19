@@ -502,51 +502,6 @@ sum over such a column is read as yes or no, or refused. A word and a
 number with a fraction, written with plain SQL, are refused because the
 table is strict. The model is kept in a schema of its own.
 
-## One of a list
-
-`backend/tests/unit/test_db_lists.py` tests the type without a store,
-with lists of its own: that a value is stored as its plain text and read
-back as the value itself; each kind of thing that is refused on the way
-in (text that is spelled like a value, text that is not on the list, a
-value of another list with the same text, a number) with its whole
-sentence, and on the way out (six kinds); that no value stays no value;
-that the type is TEXT in a table; the text of the check as SQLite is
-given it, in the order of the list, for a column named with a word of
-SQL, for texts with the characters SQL has a use for and in large
-letters, and for a list with two names for one value; its name before
-and after the naming rule; that the type brings exactly that check for
-its own list, with its two words for `broken_rules`; what is refused as
-a list (five kinds of thing that are not one, a list with nothing on it,
-a list with an empty value in four kinds); and the sentence of
-`broken_rules` for a table made by hand, until the table has the check,
-which the check for another list does not end.
-
-`backend/tests/integration/test_lists.py` has three lists of its own and
-a model with a column for each, two of which may be without a value, and
-a text column of no list. It makes the table in a real SQLite file and
-asks the file which columns there are and reads the three checks as the
-file says them, letter for letter. Then it stores rows and reads with
-plain SQL, past the model, what the file holds: every value of a list is
-stored as its text and comes back as the value; so is a text with a
-quote, two quotes, a percent sign, a colon, a question mark, a
-backslash, large letters and a letter beyond ASCII; no value is stored
-as none; two columns that hold the same text each read it as the value
-of their own list, and each refuses what is on the other's list only; a
-change is stored; what is not a value of the list is refused in four
-kinds, and the row stored with it in the same unit of work is not there
-either; text that is not on the list, written with plain SQL, is refused
-with the name of the check, in seven kinds, and so is a change to one;
-rows are found by a value, by several and by no value; a question with
-text is refused; and rows sorted by such a column come by the alphabet.
-Three more tests are
-of what could go wrong unseen: two statements that differ in the list
-only each keep their own list (SQLAlchemy keeps statements it has seen);
-a second model of the same table whose list has a value less refuses the
-row that still has it when it is read; and a model that names its list
-and not the type gets a table SQLite refuses to make. The letter beyond
-ASCII is written in the tests as its number, not as itself, so that an
-editor cannot change it.
-
 ## Column types that bring a check
 
 `backend/tests/integration/test_checks.py` has a column type of its own
