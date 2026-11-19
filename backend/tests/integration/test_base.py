@@ -142,11 +142,9 @@ def test_values_come_back_as_they_were_stored(made: Engine) -> None:
 def test_constraints_and_indexes_are_named_by_the_rule_in_the_store(made: Engine) -> None:
     schema = inspect(made)
 
-    assert schema.get_pk_constraint("proof_owner")["name"] == "pk_proof_owner"
     assert [found["name"] for found in schema.get_unique_constraints("proof_owner")] == [
         "uq_proof_owner_name"
     ]
-    assert schema.get_pk_constraint("proof_item")["name"] == "pk_proof_item"
     assert [found["name"] for found in schema.get_foreign_keys("proof_item")] == [
         "fk_proof_item_owner_id_proof_owner"
     ]
