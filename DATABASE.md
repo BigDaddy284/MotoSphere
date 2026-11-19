@@ -163,16 +163,14 @@ so they cannot come to disagree about a store. The file is byte for byte
 the same afterwards, and nothing is made beside it.
 
 SQLite can add, rename and drop a column and rename a table in place. For
-any other change the table is built anew. A change made in place must leave
-the table as its model makes it, which a column added in place does not (see
-"The models and the migrations agree"). A migration can build a table anew
-inside its transaction while other tables point to the table and foreign
-keys stay on: it asks SQLite to check them only when the transaction ends
-(`PRAGMA defer_foreign_keys = ON`, which lasts for that transaction), copies
-the table aside, drops it, makes it anew under its own name, fills it again
-and drops the copy. If a row that is pointed to was lost on the way, the
-commit is refused and the store is as it was before. The tests do exactly
-this on every machine the gates run on.
+any other change the table is built anew. A migration can do that inside
+its transaction while other tables point to the table and foreign keys
+stay on: it asks SQLite to check them only when the transaction ends
+(`PRAGMA defer_foreign_keys = ON`, which lasts for that transaction),
+copies the table aside, drops it, makes it anew under its own name, fills
+it again and drops the copy. If a row that is pointed to was lost on the
+way, the commit is refused and the store is as it was before. The tests
+do exactly this on every machine the gates run on.
 
 The mark was chosen on 2026-11-19 (DAT-023). SQLite's own list of the
 marks it knows (`magic.txt` in its source, read that day) names Fossil,
@@ -410,82 +408,6 @@ Two ways of writing go past it, and neither is used by the store's code:
 
 A test sets the clock with the fixture `clock` (`TESTING.md`), so that it
 knows every moment the store was told.
-
-## The models and the migrations agree
-
-The models say what the store's tables are, to the code that reads and
-writes rows. The migrations build the tables, in every store there is.
-One test holds the two together (DAT-026): it brings an empty store to
-the newest schema with `migrate`, makes the tables of the models in a
-second store, and asks `differences` in `motosphere.db.compare` where the
-two differ. It runs with every change, so a model cannot change without a
-migration, nor a migration without its model.
-
-- **What is compared** are the statements by which SQLite itself says
-  each table and index is made, which it keeps in the file
-  (`sqlite_master`), and those of a view or a trigger, should there ever
-  be one. What SQLite keeps for itself is left out: everything whose name
-  begins with `sqlite_`, which no other name may.
-- **Two statements are the same when they are the same words in the same
-  order.** How the words are spaced and where the lines end, large and
-  small letters, quotes around a name and comments make no difference.
-  Text in single quotes is compared letter for letter. So a migration is
-  plain SQL written by hand, and it does no harm that SQLite puts the name
-  of a table in quotes once the table has been renamed.
-- **Everything a statement says counts**: the columns and their order;
-  the type of each, whether it may be without a value, and a value of its
-  own; the key, and that it is never given twice; every constraint with
-  its name, its columns and its text; that the table is strict; and of an
-  index its name, its table, its columns in their order, whether it lets
-  no two rows be alike, and whether it is over some rows only.
-- **`differences` gives one sentence** for each table or index that
-  differs, kind by kind and name by name: `Only the models have the table
-  rider.`, `Only the migrations have the index ix_rider_name.`, or, for
-  one that both have, the words of both from where they first differ:
-
-  ```
-  The table rider is not the same in both. Where they first differ, the models say `number integer not null , name text ...` and the migrations say `number text not null , name text ...`.
-  ```
-
-  The words begin where the column or constraint begins that differs, and
-  are shown in the form in which they are compared.
-
-What follows for a migration:
-
-- **It writes a table as its model makes it**: the key first, the model's
-  columns in their order, the two times last, then the constraints as
-  SQLAlchemy writes them. The quickest way to the statement is to let
-  SQLAlchemy write it from the model once and to copy it into the
-  migration as text, so that the migration does not depend on the model
-  afterwards:
-
-  ```python
-  print(CreateTable(Rider.__table__).compile(dialect=sqlite.dialect()))
-  ```
-
-  (`CreateIndex` does the same for an index.)
-- **A column is added by building the table anew.** SQLite can add a
-  column in place, but it then stands after the columns the table had,
-  and the last two columns of every model are the two times. See "How the
-  schema changes" for how a table is built anew while rows point to it.
-- **A constraint or an index gets a new name by building it anew.** A
-  column renamed in place keeps the old names of its constraints, and the
-  models name them after the new one.
-
-Where this ends:
-
-- The test compares the newest schema only. That a store which stopped at
-  an earlier version reaches it is what the tests of `migrate` prove.
-- The test sees the models whose modules have been imported. The task
-  that adds the first model sees to it that all are (DAT-006).
-- What a model cannot say is not compared yet: a search index and an
-  index of places, which SQLite builds as tables of its own kind with
-  further tables beneath them. The task that adds the first decides how
-  the two are held together there.
-
-There is no model and no migration yet, so both stores are empty today.
-That the comparison can fail is proven with two models and migrations of
-the tests' own (`TESTING.md`).
 
 ## What the store relies on in SQLite
 

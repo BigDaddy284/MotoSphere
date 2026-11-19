@@ -464,59 +464,6 @@ be empty. `broken_rules` names that column; the test then gives the
 table the check, `broken_rules` names nothing, and the real SQLite file
 has the check and refuses empty text in the column (DAT-033).
 
-## The models and the migrations agree
-
-`backend/tests/integration/test_compare.py` begins with the test that
-holds the real models to the real migrations: it brings the store of the
-fixture to the newest schema with `migrate`, makes the tables of
-`Base.metadata` in a second real file, and `differences` must find
-nothing. It passes today because there is neither a model nor a migration
-yet, and it is the test that fails when one is added without the other.
-When it fails, its message is what `differences` found, one sentence to a
-line.
-
-The other tests prove that the comparison can fail. They have two models
-of their own, in a schema of their own, with the parts the tables of the
-store are made of (the key and the two times from `Base`, text that must not
-be empty, a column that may be without a value, a name that is a word of
-SQL, a unique constraint, two checks, a foreign key and two indexes), and
-migrations written by hand as plain SQL. Both stores are real SQLite
-files in every test.
-
-- A migration written by hand builds what the models say, and so do the
-  statements SQLAlchemy writes for the models, run as text.
-- How a statement is written makes no difference, in eight ways: on one
-  line, with tabs and the line ends of Windows, in small letters, with
-  names in quotes of each of the three kinds, with a name in other
-  letters, with a comment to the end of a line, and with two comments
-  between words, one of them over two lines. A table that was given its
-  name later, which SQLite then keeps in quotes, is the same table.
-- A quote written twice inside quotes does not end them, in three ways:
-  in text, and in a name in quotes of two kinds. The same letters as two
-  texts or two names side by side are not the same statement.
-- What only one of the two has is named, in nine ways: a table, an index, a
-  view and a trigger, all the models have where the migrations build nothing
-  (the table in which SQLite keeps the keys given so far is then in one
-  store only, and is not named), a view where the models have a table, and a
-  table whose name only begins like those SQLite keeps for itself.
-- A table or an index that differs is named with the place, in twenty ways,
-  each one change to the migration: a column that only one has, of another
-  type, that may be without a value in one only, with a value of its own; a
-  key that may be given twice; two columns the other way round; a constraint
-  that only one has, over the same columns the other way round, of another
-  name; a check that says something else; text in single quotes in other
-  letters and with another space; a foreign key that does more, and one that
-  only the models have; a table that is not strict; and an index that lets
-  no two rows be alike, over the same columns the other way round, and over
-  some rows only. The sentence is written out in each test. In some, more
-  words follow those shown in one statement only, and in one a statement has
-  exactly as many words as are shown, and so promises no more.
-- A column added to a table in place does not stand where the models
-  have it, and is named.
-- The sentences come kind by kind and name by name; the tables SQLite
-  keeps for itself are not compared; and comparing leaves both files byte
-  for byte as they were.
-
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`

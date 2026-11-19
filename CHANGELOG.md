@@ -169,11 +169,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   table does not have the check for it: a column of a table made without
   a model, and one that a subclass of a model adds to its parent's table
   (DAT-033).
-- A test that holds the models and the migrations together, and
-  `differences` in `motosphere.db.compare`, which says in plain words
-  where the schema the models describe and the one the migrations build
-  differ: it compares the statements SQLite keeps for each table and
-  index, word for word (DAT-026).
 
 ### Removed
 
