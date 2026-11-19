@@ -429,30 +429,6 @@ another form into the file with plain SQL and expects the refusal when the
 model reads it. A naive time (one without an offset) is made in a test
 with `.replace(tzinfo=None)`, since the lint refuses to write one out.
 
-## Text that must not be empty
-
-`backend/tests/unit/test_db_texts.py` tests the check without a store:
-that the list of white space is exactly what Python calls white space
-(every character there is is asked) and what `str.strip` takes off, the
-text of the check as SQLite is given it, also for a column named with a
-word of SQL, its name before and after the naming rule, and that the type
-is TEXT in a table.
-
-`backend/tests/integration/test_texts.py` has two models of its own, one
-of which says something of its table itself, and makes their tables in a
-real SQLite file. It asks the file which columns there are and reads the
-checks as the file says them, by name and letter for letter. Then it
-stores rows: text that is not empty comes back as it was given, in six
-kinds; empty text is refused with the name of the check, in nine kinds,
-and the row stored with it in the same unit of work is not there either;
-each of the 29 white space characters alone is refused, and each is kept
-around text; a row written with plain SQL and a change in three ways are
-refused; a column that may be without a value takes none and refuses
-empty text; every such column has a check of its own; and text that may
-be empty is stored empty, as before. The odd characters are written in
-the tests as their numbers, not as themselves, so that an editor cannot
-change them.
-
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`

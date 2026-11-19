@@ -14,8 +14,6 @@ A model is a class that describes one table. Every model is a subclass of
   becomes INTEGER, a ``str`` TEXT, a ``float`` REAL and ``bytes`` BLOB, and
   a ``datetime`` becomes the store's own type for a time
   (:class:`motosphere.db.times.UtcDateTime`), which is TEXT in the table;
-- refuses empty text in every column whose model says that its text must
-  not be empty (:data:`motosphere.db.texts.NotEmpty`), by a check;
 - has its constraints and indexes named by one rule, :data:`NAMING`, so
   that a migration can name what it changes and the names are the same on
   every machine. The key has no name: SQLite writes it with its column.
@@ -33,7 +31,6 @@ from sqlalchemy.schema import conv
 from sqlalchemy.types import TypeEngine
 
 from motosphere.db import times
-from motosphere.db.texts import NotEmpty, NotEmptyText, not_empty
 from motosphere.db.times import UtcDateTime
 
 __all__ = ["NAMING", "Base", "broken_rules"]
@@ -74,11 +71,10 @@ class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING)
     # What a column is when its model gives only the Python type. An int and
     # bytes become INTEGER and BLOB without being named here.
-    type_annotation_map: ClassVar[dict[Any, type[TypeEngine[Any]]]] = {
+    type_annotation_map: ClassVar[dict[type, type[TypeEngine[Any]]]] = {
         str: Text,
         float: REAL,
         datetime: UtcDateTime,
-        NotEmpty: NotEmptyText,
     }
 
     # The key of every table, and its first column. A model does not name it.
@@ -92,8 +88,7 @@ class Base(DeclarativeBase):
         """Make the table of a new model strict and its key one that is never given twice.
 
         Both are done here and not left to the model, so that a model keeps
-        them whatever else it says of its table. A column whose text must
-        not be empty gets its check here too.
+        them whatever else it says of its table.
         """
         super().__init_subclass__(**kwargs)
         table = cls.__dict__.get("__table__")
@@ -103,9 +98,6 @@ class Base(DeclarativeBase):
             # row to the next new row, and what pointed to the old row by its
             # key (its history, where it came from) would point to the new one.
             table.dialect_options["sqlite"]["autoincrement"] = True
-            for column in table.columns:
-                if isinstance(column.type, NotEmptyText):
-                    table.append_constraint(not_empty(column.name))
 
 
 def _has_the_key(table: Table) -> bool:

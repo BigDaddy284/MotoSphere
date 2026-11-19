@@ -225,10 +225,6 @@ these rules:
   column of another type ("unknown datatype"); SQLAlchemy's own types for
   text, for numbers with a fraction, for yes and no and for times are four
   such.
-- **Text that must not be empty is refused when it is empty**, by the
-  table itself (DAT-030). A model says `Mapped[NotEmpty]` of such a
-  column, and `Base` gives its table a check for it. See "Text that must
-  not be empty" below.
 - **Constraints and indexes are named by one rule** (`NAMING`), so that a
   migration can name what it changes, and so that the names are the same
   on every machine:
@@ -263,8 +259,7 @@ clock is what a model gets from `Base` by not naming the two columns.
 
 There is no model yet, and so no table. The rules are proven with two
 models of the tests' own, which are kept in a schema apart from the real
-one. `broken_rules` does not yet name a column whose text must not be
-empty and that has no check (DAT-033).
+one. The rule for text that must not be empty (DAT-030) follows.
 
 ## Times
 
@@ -300,67 +295,12 @@ The store holds this one form only. Text in any other form in a column of
 a time (a time in another offset, one without its fraction, SQLite's own
 `2026-11-19 08:26:04`) can only get there past the models, and is refused
 when it is read, with a sentence that shows the text: a wrong time is not
-passed on as if it were right. The table itself does not check the form,
-and that is settled (DAT-030): a check in a table is for what the models
-cannot promise, and through the models a time cannot have another form.
+passed on as if it were right. The table itself does not check the form;
+whether it should is settled with the checks of DAT-030.
 
 Times UTC cannot say in the years 1 to 9999 are refused. A column for a
 date without a time of day needs a type of its own, which comes with the
 first table that has such a column.
-
-## Text that must not be empty
-
-Much of the store's text is names: of a track, a rider, a source. A name
-that is empty means nothing, and a page shows it as a gap. So a column
-whose text must not be empty says so, and the table refuses empty text
-itself, whoever writes the row (DAT-030, `motosphere.db.texts`).
-
-A model says it with the column's type:
-
-```python
-name: Mapped[NotEmpty]
-nickname: Mapped[NotEmpty | None]
-```
-
-- **In the table the column is TEXT, with a check**, which `Base` adds
-  when the model is defined. The check is named after its column,
-  `ck_<table>_<column>_not_empty`, by the naming rule, and reads:
-
-  ```
-  CONSTRAINT ck_rider_name_not_empty CHECK (trim(name, char(9, 10, 11, 12, 13, 28, 29, 30, 31, 32, 133, 160, 5760, 8192, 8193, 8194, 8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288)) != '')
-  ```
-
-- **Empty is text with no characters, and text with nothing but white
-  space.** White space is the 29 characters Python calls so, the ones
-  `str.strip` takes off, each written in the check by its number in
-  Unicode: the space, the tab and the ends of a line among them, and the
-  space that cannot be broken (160), which web pages are full of. So text
-  is empty to the table exactly when `text.strip()` is empty in Python.
-  The numbers are written out in the code, `WHITE_SPACE`, so that the
-  check is the same text on every machine; a test holds the list to
-  Python's.
-- **SQLite refuses the row**, on storing and on changing, through a model
-  or with plain SQL, and the refusal names the check:
-  `CHECK constraint failed: ck_rider_name_not_empty`. The unit of work the
-  row was part of is taken back as a whole.
-- **Text that is not empty is stored as it was given**, with the white
-  space it has around it. The store does not tidy text; whoever collects
-  it does, before it is stored.
-- **A column that may be without a value** (`NotEmpty | None`) holds no
-  value or text that is not empty, and never empty text: "not known" is
-  said in one way only.
-- **Any other text column is as before**: a model that says `Mapped[str]`
-  gets TEXT without a check, and empty text is stored.
-
-Where this ends:
-
-- A character that Python does not call white space is content to the
-  check, also one that cannot be seen: the space without width (U+200B)
-  is one, and a test says so.
-- `Base` adds the check to the table of a model when the model is
-  defined. A column that a subclass of a model adds to its parent's table
-  gets none, and neither does a table made without a model. Naming such a
-  column is `broken_rules`' and follows (DAT-033).
 
 ## When a row was stored and changed
 

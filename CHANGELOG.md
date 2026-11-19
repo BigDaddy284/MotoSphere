@@ -160,11 +160,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `broken_rules` names a table without the two times every table has:
   one whose `created_at` or `updated_at` is missing, or is not as `Base`
   gives it (DAT-032).
-- Text that must not be empty, `motosphere.db.texts`: a model says
-  `Mapped[NotEmpty]` of a column, and its table gets a check, named by
-  the naming rule, by which SQLite itself refuses text with no characters
-  and text with nothing but white space, whoever writes the row. Text
-  that is not empty is stored as it was given (DAT-030).
 
 ### Removed
 
