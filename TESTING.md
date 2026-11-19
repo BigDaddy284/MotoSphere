@@ -91,6 +91,16 @@ an HTTP error response. A test about a failure names the problems it expects
 with `expectProblem`; it then fails if one of them does not happen, and still
 fails on any other. The rule has tests of its own (`e2e/fixtures.spec.ts`).
 
+A browser test waits for what it checks. A check that does not wait, on
+something the test collected while the page ran (the requests it recorded
+or held back, the problems the page reported), is right only for what must
+have happened before the thing the test waited for last: by the time the
+page shows the data, it has asked for it. Where there is no such order, the
+test waits for the value itself (`expect.poll`). One test did not
+(FND-043): it expected the request for the data to have arrived as soon as
+the page said "Loading data…", which the page says before it asks, and so
+it could fail by chance.
+
 The build under test is served under `/MotoSphere/`, the path the site has on
 GitHub Pages (`frontend/site.ts`), and nothing is served at the root of the
 test server. A browser test therefore writes addresses relative to the site
