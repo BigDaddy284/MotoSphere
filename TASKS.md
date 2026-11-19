@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 42 | 41 |
+| 1 | Foundation (FND) | 45 | 41 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-019 – Windows scripts for local use.
+**Current task:** FND-019 – Local use: a check of the tools a computer needs.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -63,7 +63,12 @@ and which panels are open (FND-040), with the top bar between them
 (FND-039), because each needs the one before it. The last was split into
 controls a finger can hit (FND-041) and the height of the layout
 (FND-042), because only the first of the two can be shown in the test
-browser.
+browser. The Windows task (FND-019) became four (PLAN-010): a check of the
+tools a computer needs (FND-019), the built site served on this computer
+(FND-043), one command that builds the site and opens it (FND-044), and
+the commands a Windows user starts (FND-045). The first three are Python,
+written once for every system and tested on Linux and on GitHub's Windows
+machine; only the last needs the owner's Windows 11 PC.
 
 Added tasks are listed where they fall in dependency order, so task numbers
 in Phase 1 are not strictly ascending.
@@ -800,12 +805,53 @@ Windows 11. No database and no globe yet.
 - **Commit:** `608e741`
 - **Plan:** `docs/plans/FND-042.md`
 
-### FND-019 – Windows scripts for local use
+### FND-019 – Local use: a check of the tools a computer needs
+- **Status:** IN PROGRESS
+- **Objective:** One command says whether a computer has the tools MotoSphere needs, which version of each it found, and where to get one that is missing, too old or broken.
+- **Description:** A script, `python scripts/tools.py`, with the Python standard library only. It looks at five tools in the order a new computer needs them (Python, Git, uv, Node.js, npm), asks each for its version by its full path, and writes one line for each: found, missing, too old or broken, with the place to get it. Python's least version is read from `backend/pyproject.toml` and Node.js's from `frontend/package.json`, the files where uv and npm read them, so each is written once. "Python" is the Python that runs the script. A Python older than 3.12 is told so in one plain sentence before it reaches lines it cannot run. The script installs nothing and changes nothing, and it is not a gate: a gate whose tool is missing fails by itself. Narrowed by PLAN-010 from "Windows scripts for local use", which became four tasks; this one is Python and is tested on Linux and on GitHub's Windows machine. The planner's trial has 42 new tests and detects 26 of 26 planted defects.
+- **Acceptance criteria:**
+  1. `python scripts/tools.py` lists Python, Git, uv, Node.js and npm, in that order, each with the version it found, and Python and Node.js with the least version the project asks for; it ends with how many of the five are ready. The exit code is 0 only when all five are.
+  2. A tool that is missing, older than its least version or broken (it cannot be started, stops with an error, gives no answer within 30 seconds or does not say its version) is named as such, with the place to get it, and the exit code is 1.
+  3. The least versions are read from `backend/pyproject.toml` and `frontend/package.json`. A file that is missing or unreadable, or that names no least version in the form `>=1.2`, ends the check with one plain sentence and exit code 1.
+  4. A Python older than 3.12 gets one plain sentence and exit code 1, not an error trace.
+  5. The script uses the Python standard library only, installs nothing and changes nothing.
+  6. No existing test changed, and all pass.
+  7. `python scripts/check.py` reports 19 of 19 gates and 744 tests (script tests 206); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** script tests (42 new, 206 in all): lines the real tools printed, the real Python asked for its version, stand-ins for a tool that is missing, too old or broken, the script run for real on the computer that runs the tests (all five tools ready) and once with a search path that holds no tool, and an older Python; the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-019.md`
+
+### FND-043 – Local use: the built site served on this computer
+- **Status:** NOT STARTED
+- **Objective:** One command serves the built site on this computer, at the same path as the published site, so the browser shows exactly what GitHub Pages would.
+- **Description:** A script with the Python standard library only. It serves `frontend/dist` under `/MotoSphere/` at an address of this computer only (127.0.0.1), never to the network, and names each file's kind of content itself, because on Windows the system's own list can name a script file wrongly. It says in plain words when the site is not built yet or the port is taken, and stops at Ctrl+C. `scripts/live.py` (FND-035) is the judge: the served site must be the built one, file for file and byte for byte. Added by PLAN-010. The details are settled by the planner's trial before the plan is written.
+- **Acceptance criteria:** the served site is exactly the built one (status, kind of content and bytes of every file), under the site's path and not at the root; the server answers this computer only; a missing build and a taken port each end with one plain sentence; nothing outside `frontend/dist` can be read through it; stopping it leaves no process behind.
+- **Tests required:** script tests on Linux and on GitHub's Windows machine against the real server on this computer, with `scripts/live.py`'s comparison; planted defects; the full run of all gates; the workflow run on the pull request, on both machines; the run for `main` after the merge.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-044 – Local use: one command builds the site and opens it
+- **Status:** NOT STARTED
+- **Objective:** One command takes a fresh copy of the repository to the application in the browser, and Ctrl+C stops it with nothing left running.
+- **Description:** A Python script that checks the tools (FND-019), installs the project's own packages where they are missing, exports the published data, builds the site, serves it (FND-043) and opens the browser at its address. Each step says what it is doing in plain words, and a step that fails stops the run and says which. It never touches the tools themselves: a missing tool is the user's to get from the place FND-019 names. Added by PLAN-010. If the trial shows it too large to test thoroughly, it is split further.
+- **Acceptance criteria:** from a clean checkout on a computer with the five tools, the one command ends with the application served and the browser asked to open it; a second start is faster and gives the same site; a failing step ends the run with a plain sentence and a failing exit code; Ctrl+C stops the server, and no process of the run is left behind.
+- **Tests required:** script tests with stand-ins for each step and for the browser; the command run for real on Linux and on GitHub's Windows machine up to the served site, compared with the built site by `scripts/live.py`; stopping and the processes left afterwards; planted defects; the full run of all gates; the workflow run on the pull request, on both machines; the run for `main` after the merge.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-045 – Local use: the commands for Windows 11
 - **Status:** NOT STARTED
 - **Objective:** Use MotoSphere on Windows 11 without GitHub, with one command per job.
-- **Description:** PowerShell scripts to set up the tools, run all checks, and export the data and open the application locally (and stop it again); README documents prerequisites, first-time setup and each command.
-- **Acceptance criteria:** on a real Windows 11 machine, a clean checkout reaches a working application in the browser by following the README only; stopping leaves no process behind.
-- **Tests required:** script checks runnable anywhere (PowerShell syntax parse, documented commands exist); end-to-end verification on Windows 11. If no Windows machine is reachable the task is `BLOCKED – EXTERNAL DEPENDENCY`, not passed.
+- **Description:** The commands a Windows user starts, in `scripts/`: check the tools, start the application (and stop it again), and run all checks. Each only starts the Python script that does the work. `ARCHITECTURE.md` §12 names PowerShell files; Windows 11 as installed refuses to run PowerShell files, so the planner's trial decides between them and command files that need no setting changed, and the decision is recorded there. README gets a Windows section: what to install and from where (with Windows's own commands for it), first-time setup, and each command, including how to stop. Added by PLAN-010; it keeps the acceptance of the task it replaces.
+- **Acceptance criteria:** on a real Windows 11 machine, a clean checkout reaches a working application in the browser by following the README only; stopping leaves no process behind; every command the README names exists and runs on GitHub's Windows machine.
+- **Tests required:** repository checks that every documented command exists and only starts its Python script; the commands run on GitHub's Windows machine; end-to-end verification on the owner's Windows 11 PC. Until that PC has been reached the task is `BLOCKED – EXTERNAL DEPENDENCY`, not passed.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified

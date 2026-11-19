@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 1 – Foundation
-- **Current task:** FND-019 – Windows scripts for local use (`NOT STARTED`; it needs the owner's Windows 11 PC for its last check)
-- **Tasks verified:** 41 of 234
+- **Current task:** FND-019 – Local use: a check of the tools a computer needs (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 41 of 237
 - **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (702 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. No globe and no data store yet.
 
 ## Reports
@@ -3140,3 +3140,67 @@ that day; other phones were not looked at.
 Commit: `608e741` (the task's commit, unchanged).
 
 Next task: FND-019 – Windows scripts for local use.
+
+### PLAN-010 – Starting MotoSphere on a Windows 11 PC, in four tasks (2026-11-19)
+
+Not a development task: no application code changed.
+
+FND-019, "Windows scripts for local use", was one task: scripts to set up
+the tools, run all checks, export the data, open the application and stop
+it again, accepted on a real Windows 11 machine. That is four things, and
+only the last of them needs that machine. `ARCHITECTURE.md` §12 already
+says how they divide: what a user starts on Windows is a thin command, and
+the work behind it is Python, written once and tested on Linux and on
+GitHub's Windows machine by the gates. So:
+
+1. FND-019 – Local use: a check of the tools a computer needs. One
+   command says which of Python, Git, uv, Node.js and npm a computer has,
+   and where to get what is missing. It only looks.
+2. FND-043 – Local use: the built site served on this computer. The
+   published site has no server of its own to start, so local use needs a
+   small one, for this computer only, that serves exactly what GitHub
+   Pages would. `scripts/live.py` can judge that.
+3. FND-044 – Local use: one command builds the site and opens it, and
+   Ctrl+C stops it with nothing left running.
+4. FND-045 – Local use: the commands for Windows 11, with the README's
+   Windows section. It keeps the old task's acceptance: a clean checkout
+   on a real Windows 11 machine reaches the application by following the
+   README only. It stays BLOCKED – EXTERNAL DEPENDENCY until the owner's
+   PC has been reached.
+
+Two things are decided in later plans, after their trials, and not here:
+whether the Windows commands are PowerShell files, as §12 says today, or
+command files (Windows 11 as installed refuses to run PowerShell files);
+and whether FND-044 is small enough as one task.
+
+What changed against the old wording: the scripts do not install Python,
+Git, uv or Node.js for the user. The check names what is missing and where
+to get it, and the README will give Windows's own commands for it. The
+project's own packages are installed by the start command. Running all
+checks is `python scripts/check.py`, which exists and runs on Windows
+since FND-032.
+
+What the planner tried for FND-019 (Linux, Python 3.13.18, Node 22.23.4,
+npm 10.9.9, uv 0.11.32), on `main` at `c0c693a`:
+
+- 42 new script tests, all passing. The full run: 19 of 19 gates passed,
+  "Tests: 744 passed, 0 failed, 0 skipped." (script tests 206).
+- The script on this computer: five tools found, "5 of 5 tools are
+  ready.", exit code 0. With Python 3.11: one plain sentence, exit code 1.
+- 26 of 26 planted defects detected. The first try detected 25 (a lone
+  number was read as a version), and one test was added. One more test
+  was rewritten because it could not fail where "python" on the search
+  path is the Python that runs the tests.
+- In trial pull request #51 (closed without merging), exactly these six
+  files ran on GitHub (run 44426691356): "All gates (Linux)" and
+  "All gates (Windows)" green, each log ending `19 of 19 gates passed.`
+  and `Tests: 744 passed, 0 failed, 0 skipped.`, with 206 script tests on
+  both machines; "Build the site", "Publish the site" and "Check the
+  published site" skipped. One of the tests runs the script for real and
+  passes only when all five tools are ready, so on the Windows machine the
+  script found npm, which is a command file there, and got its version.
+
+Order from here: FND-019, FND-043, FND-044, FND-045. Phase 1 has 45 tasks
+and the project 237. No requirement was dropped.
+
+Next task: FND-019 – Local use: a check of the tools a computer needs.
