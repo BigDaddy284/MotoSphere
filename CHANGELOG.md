@@ -102,10 +102,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `python scripts/tools.py` says whether a computer has the tools MotoSphere
   needs: the version of each it found, and where to get one that is missing,
   too old or broken (FND-019).
-- The data store's first decisions (`DATABASE.md`): what it relies on in
-  SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
-  gates run on, and where the store is kept between scheduled runs
-  (DAT-001).
 
 ### Removed
 
