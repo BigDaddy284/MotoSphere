@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 39 | 13 |
+| 2 | Data store and published data (DAT, PUB) | 40 | 13 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -870,7 +870,9 @@ tables test their migration from the version before it. The third
 without migrating it, and that is DAT-027, which stands before it. The
 fourth (PLAN-017): the old DAT-005 is DAT-005, DAT-028, DAT-029 and
 DAT-030, and DAT-026 follows the four. The fifth (PLAN-018): DAT-029 is
-the key alone, and the timestamps are DAT-031, which follows it.
+the key alone, and the timestamps are DAT-031, which follows it. The sixth
+(PLAN-019): DAT-031 is the timestamps themselves, and naming a table
+without them is DAT-032, which follows it.
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -1120,11 +1122,31 @@ the key alone, and the timestamps are DAT-031, which follows it.
 - **Plan:** `docs/plans/DAT-029.md`
 
 ### DAT-031 – Every table's timestamps
+- **Status:** IN PROGRESS
+- **Objective:** Every row of every table says when it was first stored and when it was last changed, in two columns a model gets without naming them, and the store's code sets them from one clock that a test can set.
+- **Description:** Added on 2026-11-19 (PLAN-018): the second half of what PLAN-017 called "DAT-029 – Every table's key and timestamps"; the timestamps themselves since PLAN-019, with the rule that names a table without them as DAT-032. The store gets one clock, `now()` in `motosphere.db.times`. `Base` gives every model the columns `created_at` and `updated_at`, the last two of its table: times as DAT-028 stores them, required, with no value from the table itself. The store's code sets them when the statement runs that stores or changes a row: a new row gets one reading of the clock in both columns, a changed row gets a new `updated_at` and keeps its `created_at`, and a row whose values are set to what they already are keeps both. A row may be stored with times of its own, which the rebuild from a snapshot (DAT-020) needs. A test sets the clock with the new fixture `clock`, which is the list of the moments the clock said, a second apart. Where it ends is tested and written down: a row written with plain SQL without its times is refused, and a change written with plain SQL or by `INSERT … ON CONFLICT DO UPDATE` leaves `updated_at` as it was; the store's code uses neither. Twelve tests (six functions) of DAT-005, DAT-028 and DAT-029 change, because they write rows with plain SQL or list the columns of a table; the plan gives the reason for each. No table, no migration, no new package. The planner's trial has 20 new tests and detects 135 of 135 planted defects.
+- **Acceptance criteria:**
+  1. A model that names no time has `created_at` and `updated_at` as the last two columns of its table: TEXT, required, and the table gives them no value of its own.
+  2. A new row has the one moment the clock said in both columns, in the store's form, and the clock was asked once; read through the model, both are aware UTC times.
+  3. A changed row has a new `updated_at` and its old `created_at`; a row stored again as it was keeps both and the clock is not asked; only the row that changed gets a new time.
+  4. Rows stored together in each of three ways get one moment of their own each, in both columns; rows changed in one unit of work each get a moment of their own; rows changed by one statement all get that statement's moment.
+  5. A row stored with times of its own keeps them; with only a `created_at` of its own, its `updated_at` is the same.
+  6. A row written with plain SQL without its times is refused; a change written with plain SQL, and one by `INSERT … ON CONFLICT DO UPDATE`, leave `updated_at` as it was, and the tests say so.
+  7. `now()` says the moment it is, in UTC; with the fixture `clock` it says what the fixture promises, and without it a row gets the moment it is. The type check passes with no `ignore` and the lint with no `noqa`.
+  8. `python scripts/check.py` reports 19 of 19 gates and 1013 tests (backend tests 383); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 18 new integration tests with a model of the tests' own that names no time, in a real SQLite file, read with plain SQL (the columns; a new row; a changed row; a row stored again as it was; rows stored together in three ways; rows changed in one unit of work and by one statement; times of a row's own; plain SQL without the times; a change with plain SQL and by `ON CONFLICT DO UPDATE`; the real clock); 2 new unit tests of the clock; the twelve existing tests that change, brought in line. Sixteen planted defects by the builder and the planner's own, all of DAT-028's and DAT-029's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-031.md`
+
+### DAT-032 – A table without its timestamps is named
 - **Status:** NOT STARTED
-- **Objective:** Every table says when each of its rows was first stored and when it was last changed, and a test holds every table to that.
-- **Description:** Added on 2026-11-19 (PLAN-018): the second half of what PLAN-017 called "DAT-029 – Every table's key and timestamps". What every model gets from the base without naming it: `created_at` and `updated_at`, times as DAT-028 stores them, set by the store's code and not by the database or by the caller. `broken_rules` learns the rule, so the test that holds the real schema to the rules fails on a table without them. Settled in the planner's trial: how a test sets the time (a clock the store's code asks), that the two are the same moment for a new row, what counts as a change (whether a row stored again unchanged keeps its `updated_at`), and what a row written past the models gets. `DATABASE.md` states the rule. Models of the tests' own prove it; no table is added.
-- **Acceptance criteria:** a model has `created_at` and `updated_at` without naming them; a new row gets both, the same moment, from the store's code; a changed row gets a later `updated_at` and keeps its `created_at`; a table without them is named by `broken_rules`; the same on Linux and on Windows.
-- **Tests required:** unit tests of the rule; integration tests against a real SQLite file with a clock the test sets; planted defects (a table without timestamps, a time set by the database, `created_at` changed by an update); the full run of all gates on both machines.
+- **Objective:** `broken_rules` names a table that does not have the two times every table has, and so the test that holds the real schema to the rules fails on such a table.
+- **Description:** Added on 2026-11-19 (PLAN-019): the second half of what PLAN-018 called "DAT-031 – Every table's timestamps". A model gets `created_at` and `updated_at` from `Base` (DAT-031), but a model can name them itself, and a table can be made without a model. `broken_rules` gets one more rule and one more sentence: a table must have both columns, each a time as the store keeps one, required, with no value from the table itself and with a value from the store's code; `updated_at` must be set anew when a row changes, and `created_at` must not. The tables that the unit tests of `broken_rules` make by hand get the two times, as they got the key in DAT-029. `DATABASE.md` says that the rule is held. No table is added.
+- **Acceptance criteria:** `broken_rules` gives one plain sentence for a table without the two times, in each way a table can be without them (a column missing, of another type, one that may be empty, one the table sets itself, one the store's code does not set, an `updated_at` that is not set anew, a `created_at` that is); it gives an empty list for the real schema and for the models of the tests; the sentences of a table keep one order; the same on Linux and on Windows.
+- **Tests required:** unit tests of the rule, one case for each way; the models of the integration tests break no rule; planted defects (each condition of the rule left out; the rule left out); the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified

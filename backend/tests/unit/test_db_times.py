@@ -9,7 +9,6 @@ from typing import Any
 import pytest
 from sqlalchemy.dialects import sqlite
 
-from motosphere.db import times
 from motosphere.db.times import UtcDateTime, from_text, to_text
 
 A_TIME = datetime(2026, 11, 19, 8, 26, 4, 123456, tzinfo=UTC)
@@ -236,25 +235,3 @@ def test_the_column_type_leaves_no_time_as_no_time() -> None:
 
 def test_the_column_type_is_text_in_the_table() -> None:
     assert str(UtcDateTime().compile(dialect=sqlite.dialect())) == "TEXT"
-
-
-def test_the_stores_clock_says_the_moment_it_is_in_utc() -> None:
-    before = datetime.now(UTC)
-    moment = times.now()
-    after = datetime.now(UTC)
-
-    assert before <= moment <= after
-    assert moment.utcoffset() == timedelta(0)
-    assert from_text(to_text(moment)) == moment
-
-
-def test_a_set_clock_says_a_second_more_each_time_and_tells_the_test(clock: list[datetime]) -> None:
-    first = datetime(2026, 11, 19, 8, 0, tzinfo=UTC)
-
-    assert clock == []
-    assert [times.now(), times.now(), times.now()] == [
-        first,
-        first + timedelta(seconds=1),
-        first + timedelta(seconds=2),
-    ]
-    assert clock == [first, first + timedelta(seconds=1), first + timedelta(seconds=2)]

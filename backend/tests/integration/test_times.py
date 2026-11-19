@@ -75,8 +75,6 @@ def test_a_models_time_is_the_stores_own_type_and_text_in_a_strict_table(made: E
         "id": ("INTEGER", True),
         "seen_at": ("TEXT", True),
         "checked_at": ("TEXT", False),
-        "created_at": ("TEXT", True),
-        "updated_at": ("TEXT", True),
     }
 
 
@@ -182,11 +180,7 @@ def test_text_put_into_the_store_in_another_form_is_refused_when_it_is_read(
     made: Engine, text: str
 ) -> None:
     with made.begin() as connection:
-        # The row's own two times are in the store's form; only seen_at is not.
-        connection.exec_driver_sql(
-            "INSERT INTO proof_visit (seen_at, created_at, updated_at) VALUES (?, ?, ?)",
-            (text, ITS_TEXT, ITS_TEXT),
-        )
+        connection.exec_driver_sql("INSERT INTO proof_visit (seen_at) VALUES (?)", (text,))
 
     with (
         pytest.raises(ValueError, match="in the store's form") as refused,

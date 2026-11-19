@@ -12,9 +12,6 @@ be read without this code: by a person, and by SQLite's own date functions.
 
 A time that does not say which offset it has is refused: nothing can tell
 which moment it means.
-
-:func:`now` is the store's clock. What the store's code needs the present
-moment for, it asks this one function, so that a test can set the clock.
 """
 
 from contextlib import suppress
@@ -24,12 +21,7 @@ from typing import override
 from sqlalchemy import Dialect, Text
 from sqlalchemy.types import TypeDecorator
 
-__all__ = ["UtcDateTime", "from_text", "now", "to_text"]
-
-
-def now() -> datetime:
-    """Say which moment it is, in UTC. This is the store's clock."""
-    return datetime.now(UTC)
+__all__ = ["UtcDateTime", "from_text", "to_text"]
 
 
 def to_text(moment: datetime) -> str:

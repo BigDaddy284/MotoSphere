@@ -227,11 +227,8 @@ pipeline's command line. The settings and logging modules stay.
   have the types a strict table takes, and its constraints and indexes are
   named by one rule. Its key is one whole-number column, `id`, which the
   base gives and whose values SQLite never gives twice, also not after a
-  row is deleted (DAT-029). Its last two columns, `created_at` and
-  `updated_at`, say when a row was first stored and when it was last
-  changed; the base gives them too, and the store's code sets them from
-  the store's one clock (DAT-031). `broken_rules` names a table that
-  breaks a rule, and a test holds the schema to it (DATABASE.md).
+  row is deleted (DAT-029). `broken_rules` names a table that breaks a
+  rule, and a test holds the schema to it (DATABASE.md).
 - **A time is stored in one form**, as text: in UTC, with its offset
   written out and the whole fraction of its second, for example
   `2026-11-19T08:26:04.123456+00:00` (`motosphere.db.times`, DAT-028). The
