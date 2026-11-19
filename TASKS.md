@@ -1007,15 +1007,22 @@ tables test their migration from the version before it.
 - **Plan:** `docs/plans/DAT-023.md`
 
 ### DAT-024 – Command: bring the store to the newest schema
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** One command of the pipeline's command line brings the store the settings name to the newest schema and says what it did.
-- **Description:** A command of `python -m motosphere` (its name is settled in the planner's trial) that opens the store at `MOTOSPHERE_STORE_PATH` through `open_store`, calls `migrate`, and says in plain words which migrations it applied, or that the store was up to date. A store that cannot be opened or brought up to date gives its one plain sentence and an exit code other than 0, with no traceback. It is the first command that uses the store. `README.md` names it.
-- **Acceptance criteria:** where there is no file, the store is made at the newest schema and the command says so; a second run says the store is up to date and changes nothing; a store that is refused gives its sentence on the error output, an exit code other than 0 and no traceback, and is left as it is; the command is in the command line's help.
-- **Tests required:** integration tests that run the real command in a process of its own against a real SQLite file; unit tests of what it prints; planted defects; the full run of all gates on both machines.
+- **Description:** The command is `python -m motosphere migrate`, in one new module, `motosphere.cli.migrate`, built like the `export` command. It takes no argument: the store is the file `MOTOSPHERE_STORE_PATH` names. It makes the path whole, opens the store with `open_store` (which makes the file and its folder if they are not there), calls `migrate`, and writes one sentence to standard output, with the file's whole path: "A new data store was made: … is at schema version N.", "The data store was brought up to date: … went from schema version A to B." or "The data store is up to date: … is at schema version N." The sentences are one function by itself, `report`. A store that cannot be opened (`StoreError`) or that is refused (`SchemaError`) gives its own sentence on standard error, with nothing before or after it, nothing on standard output and the exit code 1, and is left as it is. An error inside a migration is not caught: it is a fault in the code, and the store stays at the version before that migration. It is the first command that uses the store and the first code that reads `MOTOSPHERE_STORE_PATH`. The pipeline's list of migrations is still empty, so today the command makes an empty file at version 0. No log line and no new package.
+- **Acceptance criteria:**
+  1. The command is in the command line's help, has a help of its own that names `MOTOSPHERE_STORE_PATH`, and takes no argument.
+  2. Where there is no file, the store is made, with its folder, at the newest schema, and the command says so on standard output; exit code 0 and nothing on standard error. A second run says the store is up to date, and the file is byte for byte as before.
+  3. A store that lacks migrations is given them, and the command says from which version to which. The file is named with its whole path, also when the setting is a relative path.
+  4. The database of another program, a store newer than the code and a file that is no database each give exactly one line on standard error, their own sentence, nothing on standard output and the exit code 1, and the file is byte for byte as before.
+  5. An error inside a migration reaches the caller as it was raised, and the store stays at the version before that migration.
+  6. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 876 tests (backend tests 246); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 18 new tests: 4 that run the real command in a process of its own against a real SQLite file, with the pipeline's own list of migrations; 6 that call the command in the test's process with a list of migrations of the test's own (the pipeline's is empty), against a real SQLite file; 8 unit tests of what it says and of its help. Fifteen planted defects by the builder and the planner's own; the command run by hand; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-024.md`
 
 ### DAT-025 – Command: say which schema a store has
 - **Status:** NOT STARTED
