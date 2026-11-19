@@ -245,7 +245,11 @@ pipeline's command line. The settings and logging modules stay.
   column too: a model says `bool`, the table holds the whole number 1 or
   0, and SQLite refuses any other (DAT-035). And so is a column whose
   value is one of a list the code knows: the list is a `StrEnum`, the
-  table holds its texts, and the check names them (DAT-036).
+  table holds its texts, and the check names them (DAT-036). And so is a
+  column that is a web address: a model says `WebAddress`, the table
+  holds text, and the check refuses text that does not begin with
+  `https://` or `http://` and go on with the name of a site, and text
+  with white space in it (DAT-037).
   `broken_rules` names a table that breaks a rule, a table without the
   key or without the two times among them (DAT-032), and a column whose
   type brings a check and whose table is without it (DAT-033), and a test
