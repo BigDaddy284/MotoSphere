@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 34 | 6 |
+| 2 | Data store and published data (DAT, PUB) | 34 | 7 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-023 – Only a store of MotoSphere's is migrated.
+**Current task:** DAT-024 – Command: bring the store to the newest schema.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -989,7 +989,7 @@ tables test their migration from the version before it.
 - **Plan:** `docs/plans/DAT-004.md`
 
 ### DAT-023 – Only a store of MotoSphere's is migrated
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A file that is not a MotoSphere data store is never migrated: it is refused in plain words and left as it is.
 - **Description:** A store's file carries a mark: the number 1299141488 (the letters "MoSp", `APPLICATION_ID` in `motosphere.db.migrations`), in the field SQLite gives applications to say whose a database is (`application_id`). `migrate` looks at the file before anything else. A file with the mark is migrated. A file with no mark and nothing in it (no table, no view, version 0) is a new store, and gets the mark in the transaction of its first migration, so a file has the mark and its first version together or neither. Every other file is refused with `SchemaError` and one sentence that names the file and says why, before anything is written: a file with the mark of another application, and a file with no mark that has a table, a view or a version. The mark is looked at before the version, so the file of another program is never taken for a newer store. A new store that lacks no migration is still not written to. Marking a new file in a transaction of its own, before the first migration, was weighed and not taken. `open_store` and `schema_version` do not change. No new package.
 - **Acceptance criteria:**
@@ -1000,10 +1000,10 @@ tables test their migration from the version before it.
   5. No existing test changed but one line of one test (it marks its file first), and all pass.
   6. `python scripts/check.py` reports 19 of 19 gates and 858 tests (backend tests 228); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 7 new integration tests against a real SQLite file, in which the files that are not MotoSphere's are made with SQLite alone; fourteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #69 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 858 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 228: 221 before, 7 new); 62 planted defects in the module, 62 of 62 detected (the 34 of DAT-004, fitted to the new loop, and 28 new ones, the plan's fourteen prove-it steps among them with the results the plan gives). On GitHub, read by the planner from the runs and job logs: run 44464487081 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 858 passed, 0 failed, 0 skipped.", the three jobs after the gates skipped; run 44465474527 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 858 / 0 tests (repository 41, script tests 206, backend 228, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 62 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 6 files are identical to the planner's trial. No package was added. One existing test changed by one line (it marks its file before it gives it the version -1, because a file with a version and no mark is now refused for its missing mark); no other existing test changed. The 7 new tests run against the real SQLite file the fixture `store` gives each test, on Linux and on Windows; the files that are not MotoSphere's are made with SQLite alone, and each is compared byte for byte before and after the refusal. The list of migrations is still empty, so today no file is marked by the pipeline: a new store that lacks no migration is not written to. `open_store` still opens any SQLite database, and `schema_version` reads any; only `migrate` refuses. What the command that says which schema a store has will say about a file that is not MotoSphere's is DAT-025's to settle.
+- **Commit:** `c745c4b`
 - **Plan:** `docs/plans/DAT-023.md`
 
 ### DAT-024 – Command: bring the store to the newest schema

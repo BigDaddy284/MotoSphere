@@ -313,6 +313,15 @@ ever added. Three more build a table anew inside a migration while rows
 point to it, which is how a migration makes a change SQLite cannot make in
 place.
 
+Seven tests are for the mark that says a file is a store of MotoSphere's.
+The files that are not MotoSphere's are made with SQLite alone, as another
+program would make them: one with a table, one with a view, one with a
+version and one with the mark of another application. Each must be refused
+with its exact sentence, and the file must be byte for byte as it was. The
+others read the mark where SQLite keeps it, in four bytes of the file's
+header, and check that a first migration that fails, and a store that
+lacks no migration, leave a new file exactly as it was.
+
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`
