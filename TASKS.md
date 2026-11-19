@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 46 | 22 |
+| 2 | Data store and published data (DAT, PUB) | 46 | 23 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-038 – No two constraints of one name in a table.
+**Current task:** DAT-006 – Information sources table.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1304,7 +1304,7 @@ of one name in a table, which the trial of DAT-037 showed to be missing.
 - **Plan:** `docs/plans/DAT-037.md`
 
 ### DAT-038 – No two constraints of one name in a table
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The test that holds every table to the rules names a table that has two constraints of the same name.
 - **Description:** Added on 2026-11-19 (PLAN-022), found while DAT-037 was trialled. SQLite takes a table with two checks of one name and keeps both, and when it refuses a row it says the one name, which does not tell which of the two refused it. And `broken_rules` looked for the check of a column by its name: with two checks of that name it went by the one it came to last, and the order in which it comes to them is not fixed, as SQLAlchemy keeps the constraints of a table as a set. One more rule in `broken_rules`, the last it says of each table: a name that more than one constraint or index of the table has is named once, with how many have it, and several such names come by the alphabet. Settled in the planner's trial: every constraint but the key and every index is counted, in one count, which is the list the rule of the names given by hand already goes by; indexes are counted although SQLite itself refuses two of one name, so that the test of the models says it in plain words before anything is made; a name given by hand to two constraints is named for both reasons; the same name in two tables is not a name given twice, as the count is made table by table; and for a column with two checks of the name of its own check, the column has its check if either of the two is that check, whatever their order. One code file changes, `base.py`; tests are added to the two files that test it and no existing test changes. No new module, no table, no migration, no new package. The planner's trial has 16 new tests and detects 372 of 372 planted defects.
 - **Acceptance criteria:**
@@ -1316,10 +1316,10 @@ of one name in a table, which the trial of DAT-037 showed to be missing.
   6. A schema that keeps the rules gives an empty list as before: no existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
   7. `python scripts/check.py` reports 19 of 19 gates and 1325 tests (backend tests 695); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 11 new unit tests in four functions, with tables made by hand, whose constraints are given in an order the test decides; 5 new integration tests in three functions, with two models that break the rule, against a real SQLite file; every existing test, unchanged. Twelve planted defects by the builder and the planner's own, all of DAT-034's, DAT-035's and DAT-037's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #101 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1325 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 695: 679 before, 16 new); 29 planted defects in the new rule and in `_without_their_check`, 29 of 29 detected, the plan's twelve prove-it steps among them with the results the plan gives; and the 343 planted defects of DAT-034, DAT-035 and DAT-037 again, 343 of 343 detected, every one with the result of the planner's trial. On GitHub, read by the planner from the runs and job logs: run 44595561773 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1325 passed, 0 failed, 0 skipped.", with 695 backend tests on both machines, the three jobs after the gates skipped; run 44599851033 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1325 / 0 tests (repository 41, script tests 206, backend 695, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 372 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 7 files are identical to the planner's trial. No existing test changed, and no package was added. The 5 integration tests make the tables of two models that break the rule in a real SQLite file, on Linux and on Windows: SQLite takes a table with two checks of one name and refuses a row by either with the same words, it refuses a second index of one name, and `broken_rules` names both models.
+- **Commit:** `e8e165c`
 - **Plan:** `docs/plans/DAT-038.md`
 
 ### DAT-006 – Information sources table
