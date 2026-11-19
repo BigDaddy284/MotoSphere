@@ -230,9 +230,12 @@ pipeline's command line. The settings and logging modules stay.
   row is deleted (DAT-029). Its last two columns, `created_at` and
   `updated_at`, say when a row was first stored and when it was last
   changed; the base gives them too, and the store's code sets them from
-  the store's one clock (DAT-031). `broken_rules` names a table that
-  breaks a rule, a table without the key or without the two times among
-  them (DAT-032), and a test holds the schema to it (DATABASE.md).
+  the store's one clock (DAT-031). A column whose model says that its
+  text must not be empty gets a check from the base, and SQLite refuses
+  empty text in it, also text of nothing but white space (DAT-030).
+  `broken_rules` names a table that breaks a rule, a table without the
+  key or without the two times among them (DAT-032), and a test holds the
+  schema to it (DATABASE.md).
 - **A time is stored in one form**, as text: in UTC, with its offset
   written out and the whole fraction of its second, for example
   `2026-11-19T08:26:04.123456+00:00` (`motosphere.db.times`, DAT-028). The
