@@ -222,12 +222,11 @@ these rules:
 - **A column has one of the types a strict table takes**: INTEGER, REAL,
   TEXT or BLOB. A model that gives only the Python type of a column gets
   the right one: an `int` is INTEGER, a `str` TEXT, a `float` REAL and
-  `bytes` BLOB, a `datetime` is the store's own type for a time, which is
-  TEXT (see "Times" below), and a `bool` is the store's own type for yes
-  or no, which is INTEGER (see "Yes or no" below). SQLite refuses to make
-  a strict table with a column of another type ("unknown datatype");
-  SQLAlchemy's own types for text, for numbers with a fraction, for yes
-  and no and for times are four such.
+  `bytes` BLOB, and a `datetime` is the store's own type for a time, which
+  is TEXT (see "Times" below). SQLite refuses to make a strict table with a
+  column of another type ("unknown datatype"); SQLAlchemy's own types for
+  text, for numbers with a fraction, for yes and no and for times are four
+  such.
 - **A column whose type brings a check has that check** (DAT-034). Some
   of what the store promises of a column is narrower than any type of a
   strict table, and is kept by a check in the table. The column's type
@@ -237,9 +236,6 @@ these rules:
   table itself (DAT-030). It is the first such type: a model says
   `Mapped[NotEmpty]` of such a column, and `Base` gives its table the
   check the type brings. See "Text that must not be empty" below.
-- **A column that is yes or no holds 1 or 0 and no other number**
-  (DAT-035). A model says `Mapped[bool]` of such a column, and `Base`
-  gives its table the check the type brings. See "Yes or no" below.
 - **Constraints and indexes are named by one rule** (`NAMING`), so that a
   migration can name what it changes, and so that the names are the same
   on every machine:
@@ -387,70 +383,6 @@ Where this ends:
   table.append_constraint(not_empty("maker"))
   ```
 
-## Yes or no
-
-Whether a source is switched on, whether a result is official: much of
-what the store holds is yes or no. A strict table has no type for it, so
-the store keeps it as a whole number, 1 for yes and 0 for no, and the
-table refuses every other number itself, whoever writes the row (DAT-035,
-`motosphere.db.yes_no`).
-
-A model says it with the column's Python type:
-
-```python
-active: Mapped[bool]
-official: Mapped[bool | None]
-```
-
-- **In the table the column is INTEGER, with a check**, which `Base` adds
-  when the model is defined. The check is named after its column,
-  `ck_<table>_<column>_yes_or_no`, by the naming rule, and reads:
-
-  ```
-  CONSTRAINT ck_source_active_yes_or_no CHECK (active IN (0, 1))
-  ```
-
-- **To Python the column is `True` or `False`**, and only these two are
-  stored. A number, a word and every other value is refused before
-  anything is written, with a `TypeError` that says what it was given:
-  `Only yes or no (True or False) is stored as yes or no, not str: 'no'.`
-  Python takes much for true or false that is neither, the word "no"
-  among it, so nothing is taken for them. A question is held to the same:
-  rows are asked for with `True` and `False`
-  (`Source.active.is_(True)`), not with 1 and 0.
-- **SQLite refuses another number**, on storing and on changing, in a row
-  written with plain SQL too, and the refusal names the check:
-  `CHECK constraint failed: ck_source_active_yes_or_no`. The unit of work
-  the row was part of is taken back as a whole.
-- **What the file holds is always the whole number 1 or 0.** A strict
-  table stores what can be a whole number without loss as that number:
-  the text `'1'` and the number `1.0`, written with plain SQL, are stored
-  as 1. What cannot, the word `'yes'` among it, the table refuses because
-  the column is INTEGER.
-- **A column that may be without a value** (`bool | None`) holds no
-  value, yes or no. No value means "not known", which is not no.
-- **A value of the model's own** (`mapped_column(default=False)`) is
-  stored as its number too.
-- **Any other whole-number column is as before**: a model that says
-  `Mapped[int]` gets INTEGER without a check.
-
-Where this ends:
-
-- What is read through the type is read as yes or no, and a number that
-  is neither is refused when it is read
-  (`The store holds what is neither yes (1) nor no (0): 2.`), not taken
-  for yes. The table never holds one. But SQLAlchemy reads a sum over
-  such a column (`func.sum`) through the column's type too, so a sum is
-  refused, or comes back as yes or no. To count the rows that are yes,
-  ask for them: `select(func.count()).where(Source.active.is_(True))`.
-- As for every type that brings a check, a column that a subclass of a
-  model adds to its parent's table, and a table made without a model, get
-  no check from `Base` (see "Column types that bring a check" below):
-
-  ```python
-  table.append_constraint(yes_or_no("active"))
-  ```
-
 ## Column types that bring a check
 
 A column of the store has one of four types (see "The rules every table
@@ -498,7 +430,7 @@ A model can only say a type by the column's Python type
 (`mapped_column(TheType)`).
 
 The types that bring a check so far: `NotEmptyText`, text that must not
-be empty, and `YesOrNo`, yes or no (both above).
+be empty (above).
 
 Where this ends is the same for every such type: `Base` gives the check
 when a model is defined, so a column that a subclass of a model adds to

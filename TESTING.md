@@ -470,38 +470,6 @@ be empty. `broken_rules` names that column; the test then gives the
 table the check, `broken_rules` names nothing, and the real SQLite file
 has the check and refuses empty text in the column (DAT-033).
 
-## Yes or no
-
-`backend/tests/unit/test_db_yes_no.py` tests the type without a store:
-that yes is said as the whole number 1 and no as 0, and read back from
-them; each kind of value that is refused on the way in (the numbers 1 and
-0, the word "no", empty text, a number with a fraction) with its whole
-sentence, and on the way out (two, less than nothing, 1.0, text, Python's
-`True`); that no value stays no value; that the type is INTEGER in a
-table; the text of the check as SQLite is given it, also for a column
-named with a word of SQL, and its name before and after the naming rule;
-that the type brings exactly that check, with its two words for
-`broken_rules`; and the sentence of `broken_rules` for a table made by
-hand, until the table has the check.
-
-`backend/tests/integration/test_yes_no.py` has a model of its own with
-three such columns, one that may be without a value and one with a value
-of its own, and a whole number that is not yes or no. It makes the table
-in a real SQLite file and asks the file which columns there are and reads
-the three checks as the file says them, letter for letter. Then it stores
-rows and reads with plain SQL, past the model, what the file holds and of
-which kind it is: yes and no are the whole numbers 1 and 0 and come back
-as `True` and `False`; no value is stored as none; a change is stored;
-what is neither `True` nor `False` is refused in five kinds, and the row
-stored with it in the same unit of work is not there either; another
-number written with plain SQL is refused with the name of the check, in
-five ways, and so is a change to one; what SQLite takes for one of the
-two numbers is stored as that number, in four ways; rows are found by
-yes, by no and by no value; a question with a number is refused; and a
-sum over such a column is read as yes or no, or refused. A word and a
-number with a fraction, written with plain SQL, are refused because the
-table is strict. The model is kept in a schema of its own.
-
 ## Column types that bring a check
 
 `backend/tests/integration/test_checks.py` has a column type of its own

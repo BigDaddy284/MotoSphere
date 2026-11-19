@@ -180,11 +180,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   table is without it, in the type's own words. Text that must not be
   empty is the first such type, and the next needs no change to either
   (DAT-034).
-- A column that is yes or no, `motosphere.db.yes_no`: a model says
-  `Mapped[bool]`, the table holds the whole number 1 for yes and 0 for
-  no, and SQLite itself refuses any other number in it, by a check.
-  Only `True` and `False` are stored: a number and a word are refused,
-  not taken for one of them (DAT-035).
 
 ### Removed
 

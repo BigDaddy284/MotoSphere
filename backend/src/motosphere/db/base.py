@@ -11,17 +11,13 @@ A model is a class that describes one table. Every model is a subclass of
   changed, in its last two columns, ``created_at`` and ``updated_at``,
   which the store's code sets from the store's clock;
 - has columns of the few types a strict table takes: a Python ``int``
-  becomes INTEGER, a ``str`` TEXT, a ``float`` REAL and ``bytes`` BLOB, a
-  ``datetime`` becomes the store's own type for a time
-  (:class:`motosphere.db.times.UtcDateTime`), which is TEXT in the table,
-  and a ``bool`` the store's own type for yes or no
-  (:class:`motosphere.db.yes_no.YesOrNo`), which is INTEGER;
+  becomes INTEGER, a ``str`` TEXT, a ``float`` REAL and ``bytes`` BLOB, and
+  a ``datetime`` becomes the store's own type for a time
+  (:class:`motosphere.db.times.UtcDateTime`), which is TEXT in the table;
 - has the check of every column whose type brings one
   (:class:`motosphere.db.checks.WithItsCheck`). Text that must not be
   empty is such a type (:data:`motosphere.db.texts.NotEmpty`), and so the
-  table refuses empty text in every column whose model says so; yes or no
-  is another, and so the table refuses every number but 1 and 0 in a
-  column that is a ``bool``;
+  table refuses empty text in every column whose model says so;
 - has its constraints and indexes named by one rule, :data:`NAMING`, so
   that a migration can name what it changes and the names are the same on
   every machine. The key has no name: SQLite writes it with its column.
@@ -54,7 +50,6 @@ from motosphere.db import times
 from motosphere.db.checks import WithItsCheck
 from motosphere.db.texts import NotEmpty, NotEmptyText
 from motosphere.db.times import UtcDateTime
-from motosphere.db.yes_no import YesOrNo
 
 __all__ = ["NAMING", "Base", "broken_rules"]
 
@@ -98,7 +93,6 @@ class Base(DeclarativeBase):
         str: Text,
         float: REAL,
         datetime: UtcDateTime,
-        bool: YesOrNo,
         NotEmpty: NotEmptyText,
     }
 
