@@ -165,10 +165,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the naming rule, by which SQLite itself refuses text with no characters
   and text with nothing but white space, whoever writes the row. Text
   that is not empty is stored as it was given (DAT-030).
-- `broken_rules` names a column whose text must not be empty and whose
-  table does not have the check for it: a column of a table made without
-  a model, and one that a subclass of a model adds to its parent's table
-  (DAT-033).
 
 ### Removed
 
