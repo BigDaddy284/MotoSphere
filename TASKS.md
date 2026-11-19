@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 38 | 11 |
+| 2 | Data store and published data (DAT, PUB) | 38 | 12 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-028 – Times in the store.
+**Current task:** DAT-029 – Every table's key and timestamps.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1083,7 +1083,7 @@ DAT-030, and DAT-026 follows the four.
 - **Plan:** `docs/plans/DAT-005.md`
 
 ### DAT-028 – Times in the store
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A time is stored in one way in every table: in UTC and with its offset; it comes back as an aware UTC time, and a time without an offset is refused.
 - **Description:** Added on 2026-11-19 (PLAN-017): the second quarter of the old "DAT-005 – Model conventions: keys, times and names". A strict table has no type for a time (DAT-005: SQLite refuses SQLAlchemy's DATETIME there), so the store keeps a time as text in one form, `2026-11-19T08:26:04.123456+00:00`: always in UTC, always with its offset written out, always with the six digits of the fraction of its second. Every text has the same length, so the order of the texts is the order of the times, and the text can be read without the code, by a person and by SQLite's own date functions. One new module, `motosphere.db.times`: `to_text` says a time in the form and refuses what is not a time, a time without an offset (also one whose zone gives none) and a time UTC cannot say in the years 1 to 9999, each with one plain sentence; `from_text` reads text in the form as an aware UTC time and refuses text in any other form, also when it could be read as a time; `UtcDateTime` is the column type built from the two, TEXT in the table. `Base` gives the type to every column a model says is a `datetime`. Settled in the planner's trial: a time is kept to the microsecond, as Python has it, so nothing is lost; and the table itself does not check the form in this task: text in another form can only be written past the models, is refused when it is read, and whether the table should refuse it too is settled with the checks of DAT-030. Models of the tests' own prove it; no table is added. No new package. The planner's trial has 47 new tests and detects 49 of 49 planted defects.
 - **Acceptance criteria:**
@@ -1094,10 +1094,10 @@ DAT-030, and DAT-026 follows the four.
   5. A model's `Mapped[datetime]` column has the store's type and is TEXT in a strict table. The type check passes with no `ignore` and the lint with no `noqa`.
   6. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 976 tests (backend tests 346); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 47 new tests: 32 unit tests of the form (a UTC time; four other offsets; the length of every text; the order of the texts; a time without an offset and a zone that gives none; a time UTC cannot say; a date, text and a number given as a time; reading; the first and the last time; twelve texts nearly in the form; what is not text; the column type) and 15 integration tests with a model of the tests' own in a real SQLite file (the column's type in the strict table; the stored text read with plain SQL, in five offsets; no time; a refused time and its unit of work; sorting and finding in the database; a question with a time without an offset; SQLite's own date functions; text of another form written with plain SQL). Sixteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #79 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 976 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 346: 299 before, 47 new); 49 planted defects in the two modules, 49 of 49 detected, the plan's sixteen prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 44490006014 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 976 passed, 0 failed, 0 skipped.", with 346 backend tests on both machines, the three jobs after the gates skipped; run 44491341132 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 976 / 0 tests (repository 41, script tests 206, backend 346, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 49 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 8 files are identical to the planner's trial. No existing test changed and no package was added. Fifteen of the new tests store times through a model of the tests' own in a real SQLite file, on Linux and on Windows, and read the text the file holds with plain SQL: it is the one form, in UTC, for the same moment given in five offsets. A time without an offset is refused and takes its unit of work with it. SQLite's own date functions read the text as the same moment on both machines, whose SQLite differs. The table itself does not check the form: text of another form written past the models is refused when it is read, which three tests show, and whether the table should refuse it too is settled with DAT-030.
+- **Commit:** `ce823a0`
 - **Plan:** `docs/plans/DAT-028.md`
 
 ### DAT-029 – Every table's key and timestamps
