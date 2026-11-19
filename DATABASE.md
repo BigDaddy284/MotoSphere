@@ -187,48 +187,6 @@ The mark never changes: a store with another one would be refused.
 The decision is looked at again if the store ever moves to a database
 server (ARCHITECTURE.md §4).
 
-## The rules every table keeps
-
-A model is a class that describes one table. Every model is a subclass of
-`Base` in `motosphere.db.base` (DAT-005), and through it every table keeps
-these rules:
-
-- **A table is strict.** In an ordinary table SQLite stores whatever it is
-  given: the text "seven" in a column of whole numbers. In a strict table
-  it refuses a value that is not of its column's type. `Base` makes the
-  table of every model strict, whatever else the model says of its table.
-- **A column has one of the types a strict table takes**: INTEGER, REAL,
-  TEXT or BLOB. A model that gives only the Python type of a column gets
-  the right one: an `int` is INTEGER, a `str` TEXT, a `float` REAL and
-  `bytes` BLOB. SQLite refuses to make a strict table with a column of
-  another type ("unknown datatype"); SQLAlchemy's own types for text, for
-  numbers with a fraction, for yes and no and for times are four such.
-- **Constraints and indexes are named by one rule** (`NAMING`), so that a
-  migration can name what it changes, and so that the names are the same
-  on every machine:
-
-  | What | Its name | For example |
-  |---|---|---|
-  | The key | `pk_<table>` | `pk_item` |
-  | A foreign key | `fk_<table>_<columns>_<table it points to>` | `fk_item_owner_id_owner` |
-  | A unique constraint | `uq_<table>_<columns>` | `uq_item_owner_id_number` |
-  | A check | `ck_<table>_<what the model calls it>` | `ck_item_number_positive` |
-  | An index | `ix_<table>_<columns>` | `ix_item_place` |
-
-  A check has no columns to be named after, so its model gives the last
-  part of the name. A check without one is refused when its table is
-  defined.
-
-`broken_rules(schema)` says in plain words which tables of a schema break
-a rule: a table that is not strict (one made without a model can be), and
-a constraint or an index that was named by hand. A test holds the real
-schema to it with every change.
-
-There is no model yet, and so no table. The rules are proven with two
-models of the tests' own, which are kept in a schema apart from the real
-one. The rules for a table's key and timestamps, for times and for text
-that must not be empty follow (DAT-028 to DAT-030).
-
 ## What the store relies on in SQLite
 
 SQLite is not one program. Every Python carries its own, built with its own

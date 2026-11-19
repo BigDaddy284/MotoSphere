@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 35 | 10 |
+| 2 | Data store and published data (DAT, PUB) | 38 | 10 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-005 – Model conventions: keys, times and names.
+**Current task:** DAT-005 – The base of all models: strict tables and one naming rule.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -867,7 +867,9 @@ is DAT-004, DAT-023, DAT-024, DAT-025 and, after DAT-005, DAT-026.
 PLAN-014 also decided that no migration has a way back; the tasks that add
 tables test their migration from the version before it. The third
 (PLAN-016): DAT-025 needs a way to ask which migrations a store lacks
-without migrating it, and that is DAT-027, which stands before it.
+without migrating it, and that is DAT-027, which stands before it. The
+fourth (PLAN-017): the old DAT-005 is DAT-005, DAT-028, DAT-029 and
+DAT-030, and DAT-026 follows the four.
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -1062,12 +1064,52 @@ without migrating it, and that is DAT-027, which stands before it.
 - **Commit:** `c590ec0`
 - **Plan:** `docs/plans/DAT-025.md`
 
-### DAT-005 – Model conventions: keys, times and names
+### DAT-005 – The base of all models: strict tables and one naming rule
+- **Status:** IN PROGRESS
+- **Objective:** Every table of the data store is strict, has columns of the types a strict table takes, and has its constraints and indexes named by one rule; and a test holds every table to that.
+- **Description:** The first quarter of the old "DAT-005 – Model conventions: keys, times and names" (PLAN-017). One new module, `motosphere.db.base`. `Base` is the class every model is a subclass of; there is no model yet, the first comes with DAT-006. `Base` makes the table of every model strict when the model is defined, so SQLite refuses a value that is not of its column's type, and a model cannot leave that out, also not by saying something else of its table. A strict table takes INTEGER, REAL, TEXT and BLOB: `Base` makes a model's `str` TEXT and its `float` REAL (SQLAlchemy's own types for them are refused by SQLite in a strict table); `int` and `bytes` are INTEGER and BLOB already. One naming rule, `NAMING`: `pk_<table>`, `fk_<table>_<columns>_<table it points to>`, `uq_<table>_<columns>`, `ck_<table>_<what the model calls it>`, `ix_<table>_<columns>`, so a migration can name what it changes; a check without a name is refused when its table is defined. `broken_rules(schema)` says in plain sentences which tables are not strict and which constraints and indexes were named by hand, table by table and name by name. One test holds the real schema to it, and passes today because there is no table. The tests' own models are subclasses of `Base` with a schema of their own, so the real schema never holds them. No table, no migration, no new package. Times (DAT-028), the key and the timestamps (DAT-029) and text that must not be empty (DAT-030) follow. The planner's trial has 18 new tests and detects 41 of 41 planted defects.
+- **Acceptance criteria:**
+  1. The table of a model is strict in the store, also when the model says something of its table itself; a value that is not of its column's type is refused by SQLite.
+  2. A model's `int`, `str`, `float` and `bytes` columns are INTEGER, TEXT, REAL and BLOB in the store, and values come back as they were stored.
+  3. In the store, the key, a foreign key, a unique constraint, a check and two indexes of the tests' models have exactly the names the rule gives, on Linux and on Windows. A check without a name is refused when its table is defined.
+  4. `broken_rules` gives an empty list for a schema that keeps the rules, and otherwise one sentence for each table that is not strict and for each key, unique constraint, foreign key or index named by hand, table by table and name by name.
+  5. `broken_rules(Base.metadata)` is empty, and `Base.metadata` holds no table of the tests'. The type check passes with no `ignore` and the lint with no `noqa`.
+  6. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 929 tests (backend tests 299); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 18 new tests: 9 unit tests of `broken_rules` and of the naming rule (the real schema; a schema that keeps the rules; a table that is not strict; a key, a unique constraint, a foreign key and an index named by hand; the order of the sentences; a check without a name) and 9 integration tests that make two models' tables in a real SQLite file and read the file itself (the tables are strict; four values of the wrong type refused; the column types; values back as stored; the eight names). Fifteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-005.md`
+
+### DAT-028 – Times in the store
 - **Status:** NOT STARTED
-- **Objective:** Every table follows the same rules for its key, its timestamps and the names of its constraints, and a test holds every table to them.
-- **Description:** The declarative base for all models: a whole-number primary key named `id`, `created_at` and `updated_at` in UTC set by the store's code, one naming rule for indexes and constraints (so migrations can name what they change), strict column types, and text checked for emptiness where it must not be empty. `DATABASE.md` states the rules. One small table used only by the tests proves them.
-- **Acceptance criteria:** the test walks every table of the schema and fails on one that breaks a rule; timestamps are stored with their offset and come back as aware UTC times; a time without an offset is refused; constraint names are the same on Linux and on Windows.
-- **Tests required:** unit tests of the rules; integration tests against a real SQLite file; planted defects (a table without timestamps, an unnamed constraint, a naive time); the full run of all gates on both machines.
+- **Objective:** A time is stored in one way in every table: in UTC and with its offset; it comes back as an aware UTC time, and a time without an offset is refused.
+- **Description:** Added on 2026-11-19 (PLAN-017): the second quarter of the old "DAT-005 – Model conventions: keys, times and names". A strict table has no type for a time (DAT-005: SQLite refuses SQLAlchemy's DATETIME there), so the base of all models gets a column type of the store's own for one, and `Base` gives it to every column a model says is a `datetime`. It takes only a time that has an offset, turns it to UTC and stores it as text of one form with the offset written out, so that the order of the texts is the order of the times and the file can be read without the code. A time without an offset is refused before anything is stored. What comes back is an aware UTC time. Whether the table itself also checks the form of the text, and how fine a time is kept, is settled in the planner's trial. `DATABASE.md` states the rule. Models of the tests' own prove it; no table is added.
+- **Acceptance criteria:** a time with an offset other than UTC is stored as the same moment in UTC and comes back as an aware UTC time; a time without an offset is refused and nothing is stored; the text in the file has one form and its offset, and sorting the texts sorts the times; the same on Linux and on Windows.
+- **Tests required:** unit tests of the type; integration tests against a real SQLite file that read the stored text itself; planted defects (a time without an offset taken, the offset dropped, a time stored in its own zone); the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-029 – Every table's key and timestamps
+- **Status:** NOT STARTED
+- **Objective:** Every table has the same key and says when each of its rows was first stored and last changed, and a test holds every table to that.
+- **Description:** Added on 2026-11-19 (PLAN-017): the third quarter of the old "DAT-005 – Model conventions: keys, times and names". What every model gets from the base without naming it: a whole-number primary key named `id`, and `created_at` and `updated_at`, times as DAT-028 stores them, set by the store's code and not by the database or by the caller. `broken_rules` (DAT-005) learns the two rules, so the test that holds the real schema to the rules fails on a table without them. Settled in the planner's trial: whether a key may be given again after its row is deleted (SQLite does that unless told otherwise, and change history and provenance will point at rows by their key), and how a test sets the time. If the key and the timestamps prove to be two things to test, the task is split then. `DATABASE.md` states the rules. Models of the tests' own prove them; no table is added.
+- **Acceptance criteria:** a model has `id`, `created_at` and `updated_at` without naming them; a new row gets both times, equal, from the store's code; a changed row gets a later `updated_at` and keeps its `created_at`; a table without the key or without a timestamp is named by `broken_rules`; the same on Linux and on Windows.
+- **Tests required:** unit tests of the rules; integration tests against a real SQLite file; planted defects (a table without timestamps, a key of another name, a time set by the database); the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-030 – Text that must not be empty
+- **Status:** NOT STARTED
+- **Objective:** A column whose text must not be empty refuses empty text in the store itself, and every model says so in the same way.
+- **Description:** Added on 2026-11-19 (PLAN-017): the last quarter of the old "DAT-005 – Model conventions: keys, times and names". Many columns to come are names that mean nothing when they are empty. The base of all models gets one way for a model to say that a column's text must not be empty: the column is required, and its table gets a check, named by the naming rule (DAT-005), so that SQLite itself refuses the row, whoever writes it. What counts as empty (no characters, or nothing but white space) and whether text is stored without the spaces around it is settled in the planner's trial. `DATABASE.md` states the rule. Models of the tests' own prove it; no table is added.
+- **Acceptance criteria:** empty text is refused by the store itself, also when the row is written past the models, and the error names the check; text with content is stored as it was given; the check's name follows the naming rule and is the same on Linux and on Windows; a column that may be empty is as before.
+- **Tests required:** unit tests; integration tests against a real SQLite file, also with rows written in plain SQL; planted defects (the check left out, a check without the rule's name); the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified

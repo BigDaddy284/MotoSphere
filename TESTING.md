@@ -354,26 +354,6 @@ without a file look for the file and its folder afterwards. Each store
 `migrate` refuses is given to both commands, and what `schema` says must
 be what `migrate` says, word for word.
 
-## The rules every table keeps
-
-`backend/tests/integration/test_base.py` has two models of its own,
-subclasses of the real `Base`, and makes their tables in a real SQLite
-file. It then asks the file, not the models: that both tables are strict
-(the one whose model says something of its table too), that a value of
-the wrong type is refused in four ways, which type each column has, and
-what every constraint and index is called. The names are written out in
-the test, so they are checked on Linux and on Windows. The two models are
-kept in a schema of their own, so the real schema never sees them.
-
-`backend/tests/unit/test_db_base.py` tests `broken_rules` with tables made
-for each test: a schema that keeps the rules, a table that is not strict,
-a key, a unique constraint, a foreign key and an index named by hand, the
-order of the sentences, and that a check without a name is refused when
-its table is defined. One test there holds the real schema to the rules:
-`broken_rules(Base.metadata)` must be empty. It passes today because
-there is no table yet, and it is the test that fails when a table is
-added that breaks a rule.
-
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`
