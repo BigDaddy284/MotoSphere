@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 2 – Data store and published data (Phase 1 – Foundation is complete)
-- **Current task:** DAT-025 – Command: say which schema a store has (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 52 of 242
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with three commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); and `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (886 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (the list is still empty); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` is the only command that uses the store, and there is no table (`DATABASE.md`). No globe yet.
+- **Current task:** DAT-005 – Model conventions: keys, times and names (`NOT STARTED`, the planner is trialling it and writing its plan)
+- **Tasks verified:** 53 of 242
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (911 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (the list is still empty); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, only `migrate` writes to it, and there is no table (`DATABASE.md`). No globe yet.
 
 ## Reports
 
@@ -4319,3 +4319,87 @@ where the plan names 22.23.4).
 Commit: `3a0ed18` (squash merge of pull request #73).
 
 Next task: DAT-025 – Command: say which schema a store has.
+
+### DAT-025 – Command: say which schema a store has (2026-11-19)
+
+TASK: DAT-025 – Command: say which schema a store has
+
+Implementation: Complete (builder thread, pull request #75). The
+pipeline's command line has a fourth command, `python -m motosphere
+schema`, in the new module `motosphere.cli.schema`. It says in one
+sentence on standard output, with the file's whole path, which schema the
+store the setting `MOTOSPHERE_STORE_PATH` names has: that it is up to
+date, how many migrations it lacks (with its version and the newest), or
+that there is no store. It never writes: where there is no file it does
+not open one, and otherwise it asks `pending` (DAT-027), which only
+reads. A store that cannot be opened, or that `migrate` would refuse,
+gives the same sentence as there on standard error and the same exit code
+1. Exactly the 10 planned files; all are identical to the planner's
+trial. No new package.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18 with SQLite 3.53.1,
+SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  911 passed, 0 failed, 0 skipped." Backend tests: 281 (256 before, 25
+  new).
+- Planted defects in the command: 62, and 62 of 62 detected, among them
+  the plan's seventeen prove-it steps, with the results the plan gives.
+  Seven of the 62 are ways of writing where the command must not (making
+  the file or its folder, migrating the store, marking it, leaving a file
+  beside it).
+- By hand, in an empty folder: `schema` said "There is no data store: …
+  does not exist." and the folder stayed empty; after `migrate` it said
+  "The data store is up to date: … is at schema version 0."; a folder and
+  a database made by SQLite alone were each refused in one line with the
+  exit code 1, and the database was byte for byte as before.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44479205716, the pull request's commit (`e85b041`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 911 passed, 0 failed, 0 skipped.", with 281
+  backend tests on both machines; "Build the site", "Publish the site"
+  and "Check the published site" skipped.
+- Run 44481346796, for `main` after the merge (`c590ec0`): all five
+  jobs green at the first attempt, both gates jobs with the same two
+  closing lines, the site republished, and the log of "Check the
+  published site" ending
+  "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+
+Unit and integration tests: 740/740 passed (repository 41, script tests
+206, backend 281, frontend 212). Browser tests: 171/171 passed.
+Database tests: 16 of the new tests run the command against a real
+SQLite file, on Linux and on Windows; no mock of a database is used.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the real command was run in a
+process of its own by four tests on both machines, and by hand; the
+deployment succeeded and the published site is the site that was built.
+The task changes nothing a user sees.
+
+Overall applicable tests: 911/911 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the pipeline's list of migrations is still empty, so a
+process of its own has only run the command where no migration is lacking;
+that it says how many a store lacks is tested in the test's process, with a
+list of the test's own and a real SQLite file, and the first task that adds
+a migration (DAT-006) runs the real command with it. Where there is no store
+the exit code is 0, by decision: the code 1 means that the file there is
+refused, which is what `migrate` would say of it. The command looks whether
+the file is there and then opens it; a file made by another process between
+the two is opened like any other, and one removed between the two would be
+made empty by `open_store`, which this task did not guard against. A
+database of another program that is in its write-ahead mode was tried by
+hand by the planner (refused, nothing made beside it) but is not a test. The
+builder reported the same numbers, all seventeen prove-it steps with the
+results the plan names, the commands by hand with the same sentences, and no
+deviation from the plan.
+
+Commit: `c590ec0` (squash merge of pull request #75).
+
+Next task: DAT-005 – Model conventions: keys, times and names.
