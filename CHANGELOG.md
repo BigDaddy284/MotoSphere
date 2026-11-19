@@ -133,3 +133,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   in picomatch (GHSA-fc5q-39xc-vjpf, recorded on 2026-11-17): a day later
   `npm audit` no longer reported the advisory, and the audit failed until
   the exception was taken out. No exception is recorded now (FND-036).
+
+### Fixed
+
+- A browser test that could fail by chance. The test of "Loading data…"
+  expected the request for the data to have arrived as soon as the page
+  said so, and the page says so before it asks. The test now waits for the
+  request (FND-043).
