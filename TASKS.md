@@ -929,15 +929,23 @@ here although their numbers do not.
 - **Plan:** `docs/plans/DAT-022.md`
 
 ### DAT-003 – A real, separate store for every test
-- **Status:** NOT STARTED
-- **Objective:** Every database test gets its own real SQLite file and can never see another test's data.
-- **Description:** A pytest fixture creates a store in the test's own temporary folder through DAT-021's module, hands it to the test and closes it afterwards, so that the file can be removed on Windows too. The store is never replaced by a mock (CLAUDE.md §3, `ARCHITECTURE.md` §5).
-- **Acceptance criteria:** two tests that write the same key both pass, in either order; the file exists on disk during the test and is closed after it; the fixture works unchanged on Linux and on Windows; a test that leaves a transaction open does not break the next test.
-- **Tests required:** tests of the fixture itself, run in random order within the file; the full run of all gates on both machines; planted defects (a shared file, a store left open).
+- **Status:** IN PROGRESS
+- **Objective:** Every database test gets its own real SQLite file and can never see another test's data, and a test that leaves a connection to its store open fails for that reason itself.
+- **Description:** One pytest fixture, `store`, in `backend/tests/conftest.py`. It opens `store.sqlite3` in the test's own temporary folder through `open_store` (DAT-021) and gives the test the engine: a real, empty store that is nobody else's, never a mock (CLAUDE.md §3, `ARCHITECTURE.md` §5). The fixture remembers every connection taken from the engine. When the test has ended, it closes those that are still open, so that the file can be removed on Windows too, and fails with "Connections to its store that the test left open: N. They were closed for it.", which pytest reports as an error at the end of that test. What the fixture does after a test is tested by letting pytest run a small file of tests in a process of its own (pytest's `pytester`, no new package). No existing test changes. The planner's trial has 6 new tests and detects 15 of 15 planted defects.
+- **Acceptance criteria:**
+  1. A test that asks for `store` gets the engine of a real SQLite file, `store.sqlite3` in its own temporary folder, opened through `open_store` (a row without its parent is refused), and empty.
+  2. Three tests that each expect an empty store and write the same key all pass. Nothing is shared between them, so their order cannot matter.
+  3. A test that leaves connections open, one or two, through a session, or by dropping a connection without closing it, is reported by pytest as an error at the end of that test, with the sentence and the right number; a connection the test closed itself is not counted.
+  4. Every connection that was left open is closed by the time the next test runs, and the store's file can be removed, on Windows too. The next test has a store of its own.
+  5. A test that closes what it opened is not reported.
+  6. The type check passes with no `ignore`.
+  7. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 834 tests (backend tests 204); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** tests of the fixture itself against a real SQLite file (6 new): an empty store and the same key three times, the file in the test's own folder, the store opened the pipeline's way, and one test in which pytest runs 16 tests by itself (four that leave connections open, one that follows a leaking test, one that closes what it opened, and ten that say each connection was closed and each file can be removed); the existing tests unchanged; planted defects (a shared file, connections not closed, a test not reported, among others); the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-003.md`
 
 ### DAT-004 – Schema migrations
 - **Status:** NOT STARTED
