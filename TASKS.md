@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 46 | 21 |
+| 2 | Data store and published data (DAT, PUB) | 46 | 22 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-037 – A column that is a web address.
+**Current task:** DAT-038 – No two constraints of one name in a table.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1283,7 +1283,7 @@ of one name in a table, which the trial of DAT-037 showed to be missing.
 - **Plan:** `docs/plans/DAT-036.md`
 
 ### DAT-037 – A column that is a web address
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A model can say that a column holds a web address, and the store refuses text that is not one.
 - **Description:** Added on 2026-11-19 (PLAN-021). A source has a website (DAT-006), every collected record says at which address it was found (DAT-008), and a page makes a link of such an address. One new module, `motosphere.db.web`, with the column type `WebAddressText`, the fourth type that brings its check (DAT-034) and built like text that must not be empty: TEXT in the table, with a check named `ck_<table>_<column>_web_address`. A model says the column's Python type, `Mapped[WebAddress]`, and `Base` gets one entry in the list by which a Python type becomes a column type; the rule by which `Base` gives checks, and `broken_rules`, do not change. Settled in the planner's trial, exactly what the check refuses: text that does not begin with `https://` or `http://`, in small or in large letters; text that does not go on with the name of a site, with at least one character that is not `/`, `?` or `#`; text with white space anywhere, by the store's own list of white space; and text with a character that has the number 0, behind which SQLite's `GLOB` does not look, which the trial found. The check is written with `GLOB`, which tells small letters from large ones on every machine, and not with `LIKE`, whose way with them can be changed for a connection. An address is stored as it was given: the store does not tidy it and does not ask the network whether it leads anywhere, so `https://.` passes, and two spellings of one address are two addresses; `DATABASE.md` says where the check ends and tests hold it there. Nothing is checked in Python: there is one rule, in the table. No existing test changes, no table, no migration, no new package. The planner's trial has 70 new tests and detects 343 of 343 planted defects.
 - **Acceptance criteria:**
@@ -1297,10 +1297,10 @@ of one name in a table, which the trial of DAT-037 showed to be missing.
   8. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
   9. `python scripts/check.py` reports 19 of 19 gates and 1309 tests (backend tests 679); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 8 new unit tests, of the check as SQLite is given it, of its name, of the type and of the entry in the list of `Base`; 62 new integration tests in thirteen functions, with a model that has three such columns, against a real SQLite file that is read with plain SQL, past the model; every existing test, unchanged. Thirteen planted defects by the builder and the planner's own, all of DAT-034's and DAT-035's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #99 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1309 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 679: 609 before, 70 new); 53 planted defects in the new module and the new line of `base.py`, 53 of 53 detected, the plan's thirteen prove-it steps among them with the results the plan gives; and the 243 planted defects of DAT-034 and the 47 of DAT-035 again, 290 of 290 detected. On GitHub, read by the planner from the runs and job logs: run 44583394967 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1309 passed, 0 failed, 0 skipped.", with 679 backend tests on both machines, the three jobs after the gates skipped; run 44587743156 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1309 / 0 tests (repository 41, script tests 206, backend 679, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 343 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 8 files are identical to the planner's trial. No existing test changed, and no package was added. The 62 integration tests make the table of a model in a real SQLite file and read with plain SQL, past the model, what the file holds, on Linux and on Windows: a web address is stored as it was given, and SQLite itself refuses text that does not begin as one or has white space in it.
+- **Commit:** `a029d83`
 - **Plan:** `docs/plans/DAT-037.md`
 
 ### DAT-038 – No two constraints of one name in a table
