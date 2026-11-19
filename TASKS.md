@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 39 | 12 |
+| 2 | Data store and published data (DAT, PUB) | 39 | 13 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-029 – Every table's key.
+**Current task:** DAT-031 – Every table's timestamps.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1102,7 +1102,7 @@ the key alone, and the timestamps are DAT-031, which follows it.
 - **Plan:** `docs/plans/DAT-028.md`
 
 ### DAT-029 – Every table's key
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Every table has the same key, one whole-number column `id` that a model gets without naming it, and SQLite never gives a key twice; a test holds every table to that.
 - **Description:** Added on 2026-11-19 (PLAN-017) as "DAT-029 – Every table's key and timestamps"; the key alone since PLAN-018, with the timestamps as DAT-031. Records will be pointed at by their key: by their history, by where they were collected from, by the review queue. SQLite, left alone, gives the key of a deleted last row to the next new row, and the history of the deleted row would become the history of a row it has nothing to do with. So `Base` gives every model its key, the first column `id`, and asks SQLite for keys that are never given twice (AUTOINCREMENT), in the place where it makes the table strict, so that a model cannot leave it out. SQLAlchemy writes such a key with its column, where it has no name; the `pk` line of the naming rule goes, and nothing is lost by it, since SQLite cannot change a key by name and reports a broken key by table and column. `broken_rules` gets one more rule and one more sentence: a table must have exactly this key (not none, not one of another name, of several columns, not a whole number, not the key of another table, not one that may be given twice). A row may be stored with a key of its own, and later keys come after it, which the rebuild from a snapshot needs. SQLite keeps the last key of each table in `sqlite_sequence`; DAT-019 and DAT-020 keep it across a snapshot. Three tests of DAT-005 change with the rule, for reasons the plan gives one by one. No table, no migration, no new package. The planner's trial has 17 new tests and detects 63 of 63 planted defects.
 - **Acceptance criteria:**
@@ -1113,10 +1113,10 @@ the key alone, and the timestamps are DAT-031, which follows it.
   5. Constraints other than the key, and indexes, are held to the naming rule as before. The type check passes with no `ignore` and the lint with no `noqa`.
   6. `python scripts/check.py` reports 19 of 19 gates and 993 tests (backend tests 363); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 12 new integration tests with two models of the tests' own that name no key, in a real SQLite file (which column is the key; how the file writes it; the next key; a deleted last row; every row deleted; the store closed; a row written with plain SQL; a row with a key of its own; each table's own count); the unit tests of `broken_rules` brought in line with the rule, 14 where there were 9, six of them tables without the key; the 9 integration tests of DAT-005 less two lines that expected the key's name. Fifteen planted defects by the builder and the planner's own, DAT-005's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #81 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 993 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 363: 346 before, 17 new); 63 planted defects in the module, 63 of 63 detected, the plan's fifteen prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 44495734597 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 993 passed, 0 failed, 0 skipped.", with 363 backend tests on both machines, the three jobs after the gates skipped; run 44497086816 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 993 / 0 tests (repository 41, script tests 206, backend 363, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 63 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 8 files are identical to the planner's trial. No package was added. Three tests of DAT-005 changed with the rule, as the plan says and for the reasons it gives, and 39 of DAT-005's 41 planted defects were planted again and detected (the other two gave the key another name, and the key has no name now). Twelve of the new tests store rows through two models of the tests' own in a real SQLite file, on Linux and on Windows: the key is the first column, the file writes it `id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT`, and a key is not given again after the last row was deleted, after every row was deleted, after the store was closed, or to a row written with plain SQL. `broken_rules` names a table without the key in each of six shapes.
+- **Commit:** `6916daa`
 - **Plan:** `docs/plans/DAT-029.md`
 
 ### DAT-031 – Every table's timestamps
