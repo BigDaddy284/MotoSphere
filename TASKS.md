@@ -888,15 +888,24 @@ here although their numbers do not.
 - **Plan:** `docs/plans/DAT-002.md`
 
 ### DAT-021 – Opening the store
-- **Status:** NOT STARTED
-- **Objective:** The pipeline opens its store through one module, every connection enforces foreign keys, and an SQLite that lacks what the store relies on is refused before anything is written.
-- **Description:** Adds SQLAlchemy 2 to the pipeline (locked). One module makes the engine for the path of DAT-002. It asks `missing()` of DAT-001 first and refuses in plain words; it makes the store's folder if it is not there; foreign keys are switched on for every connection; transactions are SQLite's own, so that a change to the schema is taken back with everything else when work fails (the setting SQLAlchemy documents for Python 3.12 and newer); a path that cannot be a store (a folder, a file that is not an SQLite database) is refused in plain words. No connection stays open after use, so the file can be removed on Windows too. No table of the application yet. The second third of the old DAT-002 (PLAN-013).
-- **Acceptance criteria:** a row that breaks a foreign key is refused on the first connection, on every later one and on two that are open at once; an SQLite below the least version is refused with one plain sentence, and no file and no folder is made; work on a connection that fails part-way leaves nothing behind, a new table included; a path that is a folder, and a file that is not a database, are refused in plain words; the type check passes with SQLAlchemy's own types (no ignores).
-- **Tests required:** integration tests against a real SQLite file (foreign keys on several connections, a failed piece of work, the refusals, nothing left open); planted defects; the full run of all gates on both machines.
+- **Status:** IN PROGRESS
+- **Objective:** The pipeline opens its store through one function; every connection enforces foreign keys, work that fails is taken back as a whole, and an SQLite that lacks what the store relies on is refused before anything is written.
+- **Description:** Adds SQLAlchemy 2 to the pipeline (`sqlalchemy>=2.1`, locked at 2.1.9; no other new package). One module, `motosphere.db.store`, with `open_store(path)` and `StoreError`. The function asks `missing()` of DAT-001 first and refuses with everything the SQLite lacks in one sentence, before it touches the disk. It makes the path whole, makes the store's folder if it is not there, and returns the engine. Foreign keys are switched on for every connection in the engine's `connect` event. Transactions are SQLite's own (`autocommit=False`, the setting SQLAlchemy documents for Python 3.12 and newer), so a new table is taken back with the rest of a failed piece of work. No connection is kept open after use (`NullPool`). A path that is a folder, a folder that cannot be made and a file that is not an SQLite database are refused in plain words. No session, no fixture, no table of the application yet. The second third of the old DAT-002 (PLAN-013). The planner's trial has 19 new tests against a real SQLite file and detects 28 of 28 planted defects.
+- **Acceptance criteria:**
+  1. `open_store(path)` returns an engine for the SQLite file at `path`. A file that is not there is created with its folder; a relative path is taken from the current folder at that moment and the engine keeps to that file.
+  2. A row that breaks a foreign key is refused on the first connection, on every later one, on two that are open at once, and after the store has been opened again. A row that keeps it is accepted.
+  3. Work on a connection that fails part-way leaves nothing behind, neither a row nor a new table. Work that is not committed is not kept. Committed work is there when the store is opened again.
+  4. Every connection is closed when its work is done, and the file can be removed afterwards, on Windows too.
+  5. An SQLite that lacks what DAT-001 names is refused with one sentence that holds everything it lacks, and no file and no folder is made.
+  6. A path that is a folder, a folder that cannot be made, and a file that is not an SQLite database are each refused with one plain sentence that names the whole path; the file that is not a database is left as it was.
+  7. The type check passes with SQLAlchemy's own types and no `ignore`.
+  8. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 810 tests (backend tests 180); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** backend integration tests against a real SQLite file in the test's own folder (19 new): the file and its folder, a relative path, foreign keys on the first, later, simultaneous and reopened connections, a row that is accepted, committed work, a row and a new table of failed work, uncommitted work, every connection closed, the file removed after use, and the four refusals with their sentences; the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-021.md`
 
 ### DAT-022 – Units of work
 - **Status:** NOT STARTED

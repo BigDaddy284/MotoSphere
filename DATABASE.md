@@ -21,38 +21,6 @@ SQLite keeps beside one, wherever they are: the file itself is never
 committed. What is kept between runs is the text written out from it (see
 "Where the store is kept between runs").
 
-## Opening the store
-
-One function opens the store: `open_store(path)` in `motosphere.db.store`.
-It returns the SQLAlchemy engine for the file, and nothing else in the
-pipeline connects to it. What it promises:
-
-- **An SQLite that lacks something is refused first.** The function asks
-  `missing()` (see "What the store relies on in SQLite") before it touches
-  the disk. If the answer is not empty, the store is not opened and nothing
-  is written.
-- **Every connection enforces foreign keys.** SQLite leaves them off unless
-  each new connection switches them on, so the engine does that for every
-  connection it makes.
-- **Transactions are SQLite's own.** A connection is always inside a
-  transaction, and work that fails is taken back as a whole, a new table or
-  another change to the schema included. (Python's older way of handling
-  SQLite transactions keeps a change to the schema even when the work
-  around it is taken back. The engine uses the way Python 3.12 brought,
-  `autocommit=False`, which SQLAlchemy documents for SQLite.)
-- **No connection is kept open.** A connection is closed when its work is
-  done, so a store that is not in use is a closed file, which Windows needs
-  before the file can be moved or removed.
-- **The path is made whole when the store is opened.** A relative path is
-  taken from the current folder at that moment and the engine keeps to that
-  file. A file that is not there yet is created, empty, with its folder.
-
-When the store cannot be opened the function raises `StoreError` with one
-plain sentence that begins "The data store cannot be opened:" and names the
-reason: what the SQLite lacks, a path that is a folder, a folder that
-cannot be made, or a file that is not an SQLite database (the file is left
-as it was).
-
 ## What the store relies on in SQLite
 
 SQLite is not one program. Every Python carries its own, built with its own

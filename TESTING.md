@@ -261,18 +261,6 @@ what it accepted) and checks that each is reported in plain words. Two of
 its tests compare the module with `DATABASE.md`, so the decision record and
 the code cannot drift apart.
 
-## Opening the data store
-
-`tests/integration/test_store.py` opens a real SQLite file in the test's own
-temporary folder through `open_store`, the function the pipeline uses, and
-nothing in it is a mock. It checks what the function promises
-([DATABASE.md](DATABASE.md)): a row without its parent is refused on the
-first connection, on later ones, on two at once and after the store is
-opened again; work that fails is taken back, a new table included; every
-connection is closed after use and the file can then be removed (which is
-what fails on Windows when one is left open); and each way the store can be
-refused gives its one plain sentence and writes nothing.
-
 ## The tools a computer needs
 
 `python scripts/tools.py` says whether a computer has the five tools the

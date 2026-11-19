@@ -200,12 +200,6 @@ pipeline's command line. The settings and logging modules stay.
 - **Where the file is** is one setting, `MOTOSPHERE_STORE_PATH`, by default
   `backend/store/motosphere.sqlite3`. Git ignores that folder and every
   `*.sqlite3` file (DAT-002).
-- **One function opens the store**, `open_store` in `motosphere.db.store`
-  (DAT-021). It returns the SQLAlchemy engine. Every connection enforces
-  foreign keys and uses SQLite's own transactions, so failed work is taken
-  back as a whole, a change to the schema included; no connection is kept
-  open after use; and an SQLite that lacks what the store relies on is
-  refused before anything is written (DATABASE.md).
 - **What the store relies on in SQLite** is named in one module,
   `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
   FTS5 and the JSON functions among them. Its tests run against the real
