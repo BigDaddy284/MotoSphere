@@ -121,11 +121,8 @@ test.describe('data status', () => {
     })
     await page.goto('./')
 
-    // The page says "Loading data…" from its first drawing and asks for the
-    // data a moment later. So the test first waits until the request is held
-    // back, and only then reads what the page says in the meantime.
-    await expect.poll(() => held.length, 'requests for the manifest, held back').toBe(1)
     await expect(dataStatus(page)).toHaveText('Loading data…')
+    expect(held).toHaveLength(1)
 
     await held[0]?.()
     await expect(dataStatus(page)).toHaveText(/^Data updated /)
