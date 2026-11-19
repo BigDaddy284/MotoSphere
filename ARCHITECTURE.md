@@ -206,6 +206,11 @@ pipeline's command line. The settings and logging modules stay.
   back as a whole, a change to the schema included; no connection is kept
   open after use; and an SQLite that lacks what the store relies on is
   refused before anything is written (DATABASE.md).
+- **Everything is written in units of work**, `unit_of_work` in
+  `motosphere.db.work` (DAT-022): a session on the opened store whose work
+  is committed as a whole when it ends and taken back as a whole when it
+  fails, with the error passed on as it was raised and the connection
+  closed either way. A unit cannot commit part-way (DATABASE.md).
 - **What the store relies on in SQLite** is named in one module,
   `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
   FTS5 and the JSON functions among them. Its tests run against the real
