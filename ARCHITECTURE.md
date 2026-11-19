@@ -222,6 +222,11 @@ pipeline's command line. The settings and logging modules stay.
   store the settings name, and is the first command that uses the store
   (DAT-024). The command `python -m motosphere schema` says which schema
   that store has and writes nothing (DAT-025, DATABASE.md).
+- **Every table keeps the same rules**, through the base of all models,
+  `Base` in `motosphere.db.base` (DAT-005): a table is strict, its columns
+  have the types a strict table takes, and its constraints and indexes are
+  named by one rule. `broken_rules` names a table that breaks one, and a
+  test holds the schema to it (DATABASE.md).
 - **What the store relies on in SQLite** is named in one module,
   `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
   FTS5 and the JSON functions among them. Its tests run against the real
