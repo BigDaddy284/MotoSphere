@@ -99,6 +99,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The layout is as tall as the part of the screen the browser really
   shows, so that on a phone its lower edge is not under the browser's own
   bars (FND-042).
+- `python scripts/tools.py` says whether a computer has the tools MotoSphere
+  needs: the version of each it found, and where to get one that is missing,
+  too old or broken (FND-019).
 
 ### Removed
 
