@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 42 | 42 |
-| 2 | Data store and published data (DAT, PUB) | 28 | 0 |
+| 2 | Data store and published data (DAT, PUB) | 28 | 1 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-001 – Data store research and decision record.
+**Current task:** DAT-002 – Store settings and connection module.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -846,7 +846,7 @@ the planner's trial before its plan is written, and a task that proves too
 large to test thoroughly is split then.
 
 ### DAT-001 – Data store research and decision record
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Decide, with evidence, what the data store may rely on: which SQLite features every machine that runs the pipeline has, where the store is kept between scheduled runs, and which size limits bound it.
 - **Description:** A module, `motosphere.db.sqlite`, names the least SQLite version (3.45.0) and the six features the store relies on (enforced foreign keys, strict tables, RETURNING, the JSON functions, R*Tree, FTS5), and its function `missing()` says in plain words what a given SQLite lacks. Each feature is proven by statements a database must accept and, for two, one it must then refuse, in an empty database of its own in memory. Its tests run against the real SQLite of the Python that runs the pipeline, so the gates prove it on Linux and on Windows for every change; a lesser SQLite is stood in for by the real one made to behave like it, never by a mock. `DATABASE.md` becomes the decision record, with its sources: what the planner's probe found on each machine (SQLite 3.45.1 on GitHub's Linux, 3.49.1 on GitHub's Windows, 3.53.1 on the planner's; Geopoly and the `dbstat` table are not everywhere), where the store is kept between runs (text files in a `data` branch, with the database file as a release asset in reserve; a workflow cache or artifact does not last), GitHub's documented limits, and the sizes at which the decision is looked at again. `ARCHITECTURE.md` §5 loses its open question. No table and no connection module yet. The planner's trial has 36 new tests and detects 33 of 33 planted defects.
 - **Acceptance criteria:**
@@ -860,10 +860,10 @@ large to test thoroughly is split then.
   8. No existing test changed, and all pass.
   9. `python scripts/check.py` reports 19 of 19 gates and 780 tests (backend tests 151); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** backend unit tests with the real SQLite made to behave like a lesser one (33 new): an older version, a build without each feature, one that enforces nothing, everything lacking at once, a database of its own for each feature, the decision record compared with the module; backend integration tests against the machine's own SQLite (3 new); the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #55 (Linux, Python 3.13.18 with SQLite 3.53.1, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 780 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 151: 115 before, 36 new); 33 planted defects in the module and the decision record, 33 of 33 detected by the new tests, the plan's twelve prove-it steps among them with the counts the plan gives. On GitHub, read by the planner from the runs and job logs: run 44435455047 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 780 passed, 0 failed, 0 skipped." with 151 backend tests, the three jobs after the gates skipped; run 44436500524 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 780 / 0 tests (repository 40, script tests 206, backend 151, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 33 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 8 files are identical to the planner's trial. No existing test changed. The three integration tests ran against each machine's own SQLite: 3.53.1 on the planner's, and on GitHub's machines the Pythons of the planner's probe (3.12.16 on Linux, 3.12.10 on Windows, read from the logs), whose SQLite the probe read as 3.45.1 and 3.49.1; the runs themselves do not print the SQLite version. The planner's trial first detected 30 of 33 planted defects: the statements for RETURNING and for the JSON functions could be replaced unnoticed, so one parametrized test was added (a build without each feature), and one planted defect that changed nothing was replaced by one that does. Every figure in `DATABASE.md` about GitHub's limits was read by the planner from GitHub's documentation on 2026-11-19 and names its page. The job that writes the `data` branch does not exist yet; it is planned with the first task that collects real records.
+- **Commit:** `a71f880`
 - **Plan:** `docs/plans/DAT-001.md`
 
 ### DAT-002 – Store settings and connection module
