@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 42 | 42 |
-| 2 | Data store and published data (DAT, PUB) | 30 | 1 |
+| 2 | Data store and published data (DAT, PUB) | 30 | 2 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-002 – Store path setting.
+**Current task:** DAT-021 – Opening the store.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -869,7 +869,7 @@ here although their numbers do not.
 - **Plan:** `docs/plans/DAT-001.md`
 
 ### DAT-002 – Store path setting
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The pipeline knows where its data store's file is from one validated setting, and a store's file can never be committed by accident.
 - **Description:** One new setting, `store_path` (`MOTOSPHERE_STORE_PATH` in the environment or in `backend/.env`), a path, by default `store/motosphere.sqlite3` in the `backend` folder. An empty value is refused in plain words when the settings are read; spaces around a value are dropped. Reading the settings creates no file and no folder. Git ignores `backend/store/` and every `*.sqlite3` file with the files SQLite keeps beside one, anywhere; a repository check reads the default from `backend/.env.example` and fails if Git would not ignore it. A new test holds the README's table of settings to the code. Nothing opens the store yet (DAT-021). This is the first third of the old "DAT-002 – Store settings and connection module" (PLAN-013). The planner's trial has 11 new tests and detects 22 of 22 planted defects.
 - **Acceptance criteria:**
@@ -881,10 +881,10 @@ here although their numbers do not.
   6. `python scripts/check.py` reports 19 of 19 gates and 791 tests (repository checks 41, backend tests 161); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   7. Only the nine planned files changed; of the existing tests only `test_settings_are_exactly_the_documented_ones` changed, in what it expects.
 - **Tests required:** backend unit tests of the setting (10 new: the default, the environment, the `.env` file, spaces, an empty value in three forms, nothing created with the default and with a set value, the README's table); one new repository check (the default place is ignored) and four more sample paths in an existing one; the existing tests; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #57 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 791 passed, 0 failed, 0 skipped.", exit code 0 (repository checks 41: 40 before, 1 new; backend tests 161: 151 before, 10 new); 22 planted defects in the setting, the example file, the ignore file and the README, 22 of 22 detected, the plan's ten prove-it steps among them with the counts the plan gives. On GitHub, read by the planner from the runs and job logs: run 44439304001 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 791 passed, 0 failed, 0 skipped." with 41 repository checks and 161 backend tests, the three jobs after the gates skipped; run 44440230084 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 791 / 0 tests (repository 41, script tests 206, backend 161, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 22 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 9 files are identical to the planner's trial. One existing test changed, in what it expects: `test_settings_are_exactly_the_documented_ones` lists the settings and gained the new one. The planner's trial first detected 21 of 22 planted defects: a setting that made the store's folder while being read went unnoticed for a set value, and the test was extended to read one. Nothing opens the store yet, so no file is made by anything in the project.
+- **Commit:** `8b77706`
 - **Plan:** `docs/plans/DAT-002.md`
 
 ### DAT-021 – Opening the store

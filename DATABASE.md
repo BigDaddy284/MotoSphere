@@ -9,6 +9,18 @@ No schema exists yet. The store is an SQLite file used by the data pipeline
 ([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its first decisions are recorded
 below (task DAT-001).
 
+## Where the store's file is
+
+The store is one SQLite file. Its path is the setting
+`MOTOSPHERE_STORE_PATH`, by default `store/motosphere.sqlite3` in the
+`backend` folder (README.md, "Configuration"). An empty path is refused when
+the settings are read. Reading the settings creates no file and no folder.
+
+Git ignores `backend/store/` and every `*.sqlite3` file with the files
+SQLite keeps beside one, wherever they are: the file itself is never
+committed. What is kept between runs is the text written out from it (see
+"Where the store is kept between runs").
+
 ## What the store relies on in SQLite
 
 SQLite is not one program. Every Python carries its own, built with its own
