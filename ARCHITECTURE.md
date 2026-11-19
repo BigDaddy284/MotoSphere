@@ -218,7 +218,9 @@ pipeline's command line. The settings and logging modules stay.
   earlier snapshot. Alembic was weighed and not taken. Only a store of
   MotoSphere's is migrated: the first migration marks the file, and a file
   that has anything in it and not that mark is refused and left as it is
-  (DAT-023, DATABASE.md).
+  (DAT-023). The command `python -m motosphere migrate` runs it on the
+  store the settings name, and is the first command that uses the store
+  (DAT-024, DATABASE.md).
 - **What the store relies on in SQLite** is named in one module,
   `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
   FTS5 and the JSON functions among them. Its tests run against the real

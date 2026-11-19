@@ -322,6 +322,21 @@ others read the mark where SQLite keeps it, in four bytes of the file's
 header, and check that a first migration that fails, and a store that
 lacks no migration, leave a new file exactly as it was.
 
+The command `migrate` is tested in three places. `test_command_line.py`
+runs it in a process of its own, with the pipeline's own list of
+migrations: a store that is not there is made, a second run changes
+nothing, and the database of another program and a file that is no
+database are each refused with one line on standard error, the exit code 1
+and the file byte for byte as it was. The pipeline's list is still empty,
+and a process of its own cannot be given another, so
+`tests/integration/test_migrate_command.py` calls the command in the
+test's process with a list of the test's own in the place of the
+pipeline's; the store is a real file there too, and nothing else is
+replaced. It checks each of the three sentences, a store newer than the
+code, and that an error inside a migration reaches the caller.
+`tests/unit/test_cli_migrate.py` checks the sentences by themselves and
+the command's help.
+
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`
