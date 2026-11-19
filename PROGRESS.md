@@ -7,7 +7,7 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 2 – Data store and published data (Phase 1 – Foundation is complete)
-- **Current task:** DAT-001 – Data store research and decision record (`NOT STARTED`; Phase 1 is complete, and the planner is writing Phase 2 out in full task entries first)
+- **Current task:** DAT-001 – Data store research and decision record (`NOT STARTED`, the planner is writing its plan)
 - **Tasks verified:** 42 of 234
 - **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (744 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. No globe and no data store yet.
 
@@ -3331,5 +3331,46 @@ Windows for every change.
 Next: Phase 2, the data store and the published data. Its 28 tasks are
 named in the roadmap and are written out in full entries, with acceptance
 criteria and required tests, before the first of them starts.
+
+Next task: DAT-001 – Data store research and decision record.
+
+### PLAN-012 – Phase 2 written out in full (2026-11-19)
+
+Not a development task: no application code changed.
+
+Phase 2, the data store and the published data, was a list of 28 named
+tasks in the roadmap. It now has a full entry for each in `TASKS.md`:
+objective, description, acceptance criteria and required tests. The order
+and the numbers are the roadmap's; several names were made plainer.
+Nothing was added and nothing dropped: 20 tasks for the store (DAT-001 to
+DAT-020) and 8 for the published data (PUB-001 to PUB-008).
+
+What the entries settle, beyond the roadmap's names:
+
+- Every task that touches the store is tested against a real SQLite file,
+  on Linux and on Windows. The store is never replaced by a mock.
+- The store's package is `motosphere.db`, as `ARCHITECTURE.md` §2 names it.
+- Sources come before countries, because the countries' reference data
+  must name its source. The source's own country is added with the
+  countries table (DAT-011).
+- Collected records are never deleted or written over: a change goes
+  through the history (DAT-009), a doubt through the review queue
+  (DAT-010), and both exist before the first collected table.
+- No row of reference data enters the store without its source and licence
+  recorded first (DAT-012). If no source allows it, the task is blocked,
+  not worked around.
+- Tests may generate positions and tracks to measure and to exercise the
+  export. Generated records are never stored outside a test and never
+  published (CLAUDE.md §11).
+- Where a choice needs a measurement or a trial (the migration tool, the
+  kind of index for positions, the tile scheme), the entry says so, and
+  the planner's trial settles it before that task's plan is written.
+
+One correction rides along: `ARCHITECTURE.md` §2 still described
+`scripts/` as holding setup and local-run scripts. After PLAN-011 it holds
+the check scripts only.
+
+Phase 1 has 42 tasks, all verified; Phase 2 has 28, none started. The
+project has 234.
 
 Next task: DAT-001 – Data store research and decision record.
