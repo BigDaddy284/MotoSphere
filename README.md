@@ -97,6 +97,17 @@ file that is not a MotoSphere data store is refused in one sentence and left
 as it is; the exit code is then 1. The store has no tables yet, so today the
 command makes an empty file.
 
+To see which schema the data store has, without changing anything:
+
+```
+uv run python -m motosphere schema
+```
+
+It says in one sentence that the store is up to date, how many changes to its
+schema it lacks, or that there is no store yet (it makes none). A file that
+`migrate` would refuse is refused here in the same sentence, with the exit
+code 1.
+
 ## Running the frontend
 
 Prerequisites: [Node.js](https://nodejs.org/) 22.12 or newer, which includes
