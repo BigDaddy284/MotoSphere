@@ -367,12 +367,23 @@ kept in a schema of their own, so the real schema never sees them.
 
 `backend/tests/unit/test_db_base.py` tests `broken_rules` with tables made
 for each test: a schema that keeps the rules, a table that is not strict,
-a key, a unique constraint, a foreign key and an index named by hand, the
-order of the sentences, and that a check without a name is refused when
-its table is defined. One test there holds the real schema to the rules:
+six tables without the key every table has (no key, a key of another
+name, of two columns, of text, one that is the key of another table, and
+one that may be given twice), a unique constraint, a foreign key and an
+index named by hand, the order of the sentences, and that a check without
+a name is refused when its table is defined. One test there holds the real schema to the rules:
 `broken_rules(Base.metadata)` must be empty. It passes today because
 there is no table yet, and it is the test that fails when a table is
 added that breaks a rule.
+
+`backend/tests/integration/test_key.py` has two models that name no key,
+one of which says something of its table itself, and makes their tables
+in a real SQLite file. It asks the file which column is the key and how
+the key is written, and then deletes rows and stores new ones: the key of
+a deleted last row is not given again, nor any key after every row is
+deleted, nor after the store was closed, nor to a row written with plain
+SQL past the model. A row stored with a key of its own keeps it, and
+later keys come after it.
 
 ## Times in the store
 
