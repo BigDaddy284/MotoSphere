@@ -197,6 +197,17 @@ these rules:
   given: the text "seven" in a column of whole numbers. In a strict table
   it refuses a value that is not of its column's type. `Base` makes the
   table of every model strict, whatever else the model says of its table.
+- **A table has the same key as every other**: one whole-number column
+  named `id`, its first column. A model does not name it; `Base` gives it.
+  SQLite gives a new row the next key, and **never gives a key twice**
+  (the key is written `PRIMARY KEY AUTOINCREMENT`). Without that, SQLite
+  gives the key of a deleted last row to the next new row, and what
+  pointed to the old row by its key, its history or where it came from,
+  would point to the new one. A row may be stored with a key of its own,
+  and later keys come after it. SQLite keeps the last key each table gave
+  in a table of its own, `sqlite_sequence`; a copy of the store that is to
+  keep the promise has to keep that table too (the snapshot, DAT-019 and
+  DAT-020).
 - **A column has one of the types a strict table takes**: INTEGER, REAL,
   TEXT or BLOB. A model that gives only the Python type of a column gets
   the right one: an `int` is INTEGER, a `str` TEXT, a `float` REAL and
@@ -211,7 +222,6 @@ these rules:
 
   | What | Its name | For example |
   |---|---|---|
-  | The key | `pk_<table>` | `pk_item` |
   | A foreign key | `fk_<table>_<columns>_<table it points to>` | `fk_item_owner_id_owner` |
   | A unique constraint | `uq_<table>_<columns>` | `uq_item_owner_id_number` |
   | A check | `ck_<table>_<what the model calls it>` | `ck_item_number_positive` |
@@ -219,17 +229,18 @@ these rules:
 
   A check has no columns to be named after, so its model gives the last
   part of the name. A check without one is refused when its table is
-  defined.
+  defined. The key has no name: SQLite writes it with its column, and
+  nothing can change a key but building the table anew.
 
 `broken_rules(schema)` says in plain words which tables of a schema break
-a rule: a table that is not strict (one made without a model can be), and
-a constraint or an index that was named by hand. A test holds the real
-schema to it with every change.
+a rule: a table that is not strict (one made without a model can be), a
+table without the key every table has, and a constraint or an index that
+was named by hand. A test holds the real schema to it with every change.
 
 There is no model yet, and so no table. The rules are proven with two
 models of the tests' own, which are kept in a schema apart from the real
-one. The rules for a table's key and timestamps and for text that must not
-be empty follow (DAT-029 and DAT-030).
+one. The rules for a table's timestamps (DAT-031) and for text that must
+not be empty (DAT-030) follow.
 
 ## Times
 
