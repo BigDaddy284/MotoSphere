@@ -239,6 +239,11 @@ values you need. The example file lists every setting with its default value.
 |---|---|---|
 | `MOTOSPHERE_ENVIRONMENT` | `development` | Where MotoSphere is running: development, test or production. |
 | `MOTOSPHERE_LOG_LEVEL` | `INFO` | How much detail is written to the log: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
+| `MOTOSPHERE_STORE_PATH` | `store/motosphere.sqlite3` | Where the data store is kept: the path of an SQLite file. A relative path starts in the backend folder. |
 
 Values for `MOTOSPHERE_ENVIRONMENT` and `MOTOSPHERE_LOG_LEVEL` are not
 case-sensitive.
+
+The data store is one SQLite file. Reading the settings does not create it.
+Git ignores the `backend/store/` folder and every `*.sqlite3` file, so a
+store is never committed by accident.

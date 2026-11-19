@@ -38,6 +38,11 @@ test-results/
 logs/
 .cache/
 
+# The data store (an SQLite file) and the files SQLite keeps beside it; never committed.
+/backend/store/
+*.sqlite3
+*.sqlite3-*
+
 # --- Editors and operating systems ---
 .idea/
 .vscode/
