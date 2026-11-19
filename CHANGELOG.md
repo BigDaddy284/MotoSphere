@@ -123,6 +123,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   changed only by numbered migrations, each kept as a whole with the
   store's new version or not at all, and a store the code does not know is
   refused in plain words. No new package (DAT-004).
+- The mark of a MotoSphere data store: the first migration marks the
+  store's file as MotoSphere's, and a file that has anything in it and not
+  that mark is never migrated. It is refused in plain words and left byte
+  for byte as it was (DAT-023).
 
 ### Removed
 
