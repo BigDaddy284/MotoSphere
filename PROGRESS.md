@@ -6,10 +6,10 @@ references are copied from real output, never estimated.
 
 ## Current state
 
-- **Phase:** 2 – Data store and published data (Phase 1 – Foundation is complete)
-- **Current task:** DAT-004 – The migration runner (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 47 of 240
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (834 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; no command uses the store yet, and there is no table (`DATABASE.md`). No globe yet.
+- **Phase:** 2 – Data store and published data (Phase 1 – Foundation has one repair of a test open, FND-043)
+- **Current task:** FND-043 – The loading test waits for its request (`NOT STARTED`, the planner is trialling it and writing its plan)
+- **Tasks verified:** 48 of 241
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (851 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (the list is still empty); no command uses the store yet, and there is no table (`DATABASE.md`). No globe yet.
 
 ## Reports
 
@@ -3872,3 +3872,120 @@ What the planner tried for DAT-004 (Linux, Python 3.13.18 with SQLite
 Phase 2 has 34 tasks, 5 verified, and the project 240.
 
 Next task: DAT-004 – The migration runner.
+
+### DAT-004 – The migration runner (2026-11-19)
+
+TASK: DAT-004 – The migration runner
+
+Implementation: Complete (builder thread, pull request #65). One new
+module, `motosphere.db.migrations`. A migration is a function that is
+given a connection; the migrations stand in one tuple, `MIGRATIONS`,
+oldest first, and the place of a migration in it is its number. The tuple
+is empty: the first table comes with DAT-006. `schema_version(store)`
+reads the number of the last migration a store has had from the file
+itself (SQLite's `user_version`). `migrate(store)` applies the migrations
+the store lacks, in order, each in one transaction together with its
+number, and returns the numbers. A store whose version the list does not
+know (newer than the code, or below zero) is refused with `SchemaError`
+and one plain sentence, and left as it is. The error of a failed migration
+reaches the caller unchanged. `DATABASE.md` has the new section "How the
+schema changes" with the decision for a runner of the project's own and
+against Alembic. Exactly the 6 planned files; all are identical to the
+planner's trial. No existing test changed, and no package was added.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18 with SQLite 3.53.1,
+SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  851 passed, 0 failed, 0 skipped." Backend tests: 221 (204 before, 17
+  new). The type check passes with no ignore and the lint with no noqa.
+- Planted defects: 34 in the module, 34 of 34 detected by the new tests,
+  the plan's thirteen prove-it steps among them, each with the result the
+  plan gives.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44456115927, the pull request's commit (`29fdcae`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 851 passed, 0 failed, 0 skipped.", with 221
+  backend tests on both machines; "Build the site", "Publish the site"
+  and "Check the published site" skipped.
+- Run 44457687600, for `main` after the merge (`c5e4687`): all five
+  jobs green at the first attempt, both gates jobs with the same two
+  closing lines, the site republished, and the log of "Check the
+  published site" ending
+  "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+
+Unit and integration tests: 680/680 passed (repository 41, script tests
+206, backend 221, frontend 212). Browser tests: 171/171 passed.
+Database tests: the 17 new tests run the runner on the real SQLite file
+the fixture `store` gives each test, on Linux and on Windows; no mock of
+a database is used. Three of them build a table anew inside a migration
+while rows of another table point to it.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the deployment succeeded and the
+published site is the site that was built. The task changes nothing a
+user sees.
+
+Overall applicable tests: 851/851 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the list of migrations is empty and no command calls
+`migrate` yet (DAT-024, DAT-025); the store still has no table. `migrate`
+does not yet ask whether the file is a store of MotoSphere's at all
+(DAT-023). A migration that commits by itself fails, and what it did before
+its commit is kept without a version; the test that brings an empty store to
+the newest schema with the real list fails for such a migration, so it
+cannot be merged. No migration has a way back: an earlier state of the store
+is an earlier snapshot (PLAN-014). The builder reported no deviation in the
+files (its Node.js was 22.23.5). Its first full local run failed in one
+browser test that this task does not touch, and its second, with nothing
+changed, passed; what the planner found is in PLAN-015 below, and repairing
+that test is the next task.
+
+Commit: `c5e4687` (squash merge of pull request #65).
+
+Next task: FND-043 – The loading test waits for its request.
+
+### PLAN-015 – A browser test that could fail by chance is repaired first (2026-11-19)
+
+Not a development task: no application code changed.
+
+The builder of DAT-004 reported that its first full local run failed in
+one browser test that DAT-004 does not touch, and that the second run,
+with no file changed, passed:
+
+    [chromium] › e2e/status.spec.ts:117:3 › data status › says the data
+    is loading until it arrives
+    Error: expect(received).toHaveLength(expected)
+    Expected length: 1
+    Received length: 0
+
+What the planner found, on the frontend as it is on `main` (DAT-004
+changed nothing under `frontend`):
+
+- The test (from FND-028) holds the request for the manifest back, waits
+  until the page says "Loading data…" and then expects, at once and
+  without waiting, that the request has arrived. The page says "Loading
+  data…" from its first drawing; the request is sent a moment later and
+  reaches the test later still. Nearly always the request is there first.
+- Repeated 450 times by itself (150 times with the usual workers, 300
+  times with 12 workers on 4 processors), the test passed 450 times.
+- With the page's request made to start 0.4 seconds late, the test as it
+  is failed with exactly the builder's message, and the same test waiting
+  for the request passed.
+
+So the page is right and the test can fail by chance. It did not fail in
+the planner's run of DAT-004 nor on GitHub's two machines, and DAT-004
+stands as verified. But a test that can fail by chance is a defect, and it
+is not left for later (CLAUDE.md §3): a new task, FND-043 – The loading test waits for its request,
+is the next task, before the store goes on with DAT-023. The other browser
+tests are searched for the same pattern in its trial.
+
+Phase 1 has 43 tasks, 42 verified, and the project 241.
+
+Next task: FND-043 – The loading test waits for its request.

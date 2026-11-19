@@ -12,8 +12,8 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 42 | 42 |
-| 2 | Data store and published data (DAT, PUB) | 34 | 5 |
+| 1 | Foundation (FND) | 43 | 42 |
+| 2 | Data store and published data (DAT, PUB) | 34 | 6 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-004 – The migration runner.
+**Current task:** FND-043 – The loading test waits for its request.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -835,6 +835,17 @@ Windows 11. No database and no globe yet.
 - **Commit:** `fb8b6ed`
 - **Plan:** `docs/plans/FND-019.md`
 
+### FND-043 – The loading test waits for its request
+- **Status:** NOT STARTED
+- **Objective:** The browser test "says the data is loading until it arrives" passes or fails for what the page does, never for the moment at which it looks.
+- **Description:** Added on 2026-11-19 (PLAN-015), after the builder of DAT-004 saw this test of FND-028 fail once in a full local run and pass in the next, with nothing changed. The test holds the request for the manifest back, waits for "Loading data…" and then, at once, expects that the request has arrived. The page shows "Loading data…" from its first drawing, and the request is sent a moment later, so the test can look before the request is there: "Expected length: 1, Received length: 0". The planner made that happen every time by letting the page's request start 0.4 seconds late. The test is changed to wait for the request and then check that the page still says "Loading data…". Only the test changes; the page is right. The details are settled in the planner's trial.
+- **Acceptance criteria:** with a request that starts late the test as it is fails every time and the changed test passes every time; the changed test still fails when the page does not say "Loading data…" while the request is held, and when the page never asks for the manifest; no other test changes, and all pass.
+- **Tests required:** the changed browser test, repeated; the late request as a prove-it step; planted defects in the page (no loading text, no request); a search of the browser tests for the same pattern; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
 ---
 
 # Phase 2 – Data store and published data (DAT, PUB)
@@ -951,7 +962,7 @@ tables test their migration from the version before it.
 - **Plan:** `docs/plans/DAT-003.md`
 
 ### DAT-004 – The migration runner
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store's schema is built and changed only by numbered migrations, each kept as a whole with the store's new version or not at all.
 - **Description:** One new module, `motosphere.db.migrations`. A migration is a function that is given a connection and changes the schema. The migrations stand in one tuple, `MIGRATIONS`, oldest first, and the place of a migration in it is its number; the tuple is empty until the first table (DAT-006). `schema_version(store)` reads the number of the last migration a store has had, which is kept in the file itself (SQLite's `user_version`; a new store is at 0). `migrate(store)` applies the migrations the store lacks, in order, each in one transaction together with its number, and returns the numbers. A store whose version the list does not know is refused with `SchemaError` and one plain sentence, and left as it is. The tool was chosen in the planner's trial: a runner of the project's own, not Alembic, which would add three packages for abilities the store does not use (the comparison is in `DATABASE.md`, "How the schema changes"). No migration has a way back: an earlier state of the store is an earlier snapshot in the `data` branch (PLAN-014). No command (DAT-024, DAT-025), no check that the file is a store of MotoSphere's (DAT-023), no model (DAT-005), no new package. The planner's trial has 17 new tests and detects 34 of 34 planted defects.
 - **Acceptance criteria:**
@@ -965,10 +976,10 @@ tables test their migration from the version before it.
   8. A migration can build anew a table that rows of another table point to, inside its transaction and with foreign keys on; foreign keys are enforced afterwards; and if it loses a row that is pointed to, it is refused and the store is as it was before.
   9. The type check passes with no `ignore` and the lint with no `noqa`. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 851 tests (backend tests 221); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** integration tests against the real SQLite file the fixture `store` gives each test (17 new), with migrations of the tests' own: order, repetition, a store that lacks only some, the version after the store is opened again, a migration that fails (two ways) and the store going on afterwards, one commit for each migration, both refusals with their sentence, a migration that commits by itself, the real list, and a table built anew while rows point to it (kept, enforced afterwards, refused when a row is lost); the existing tests unchanged; planted defects (migrations applied again or in the wrong order, the version not written or written apart from its migration, a failed migration kept or passed over, a store that should be refused and is not, among others); the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #65 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 851 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 221: 204 before, 17 new); 34 planted defects in the module, 34 of 34 detected by the new tests, the plan's thirteen prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 44456115927 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 851 passed, 0 failed, 0 skipped." with 221 backend tests, the three jobs after the gates skipped; run 44457687600 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 851 / 0 tests (repository 41, script tests 206, backend 221, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 34 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 6 files are identical to the planner's trial. No existing test changed and no package was added. The 17 new tests run the runner on the real SQLite file the fixture `store` gives each test, on Linux and on Windows; nothing is a mock, and the fixture reported no connection left open. The list of migrations is empty, so the store still has no table; the test that brings an empty store to the newest schema with the real list passes with nothing to apply and will test every migration that is added. A migration that commits by itself fails and leaves what it did before its commit without a version; one test pins that, and the test with the real list keeps such a migration from being merged. Three tests build a table anew inside a migration while rows point to it, on GitHub's SQLite 3.45.1 and 3.49.1 too. No migration has a way back (PLAN-014).
+- **Commit:** `c5e4687`
 - **Plan:** `docs/plans/DAT-004.md`
 
 ### DAT-023 – Only a store of MotoSphere's is migrated
