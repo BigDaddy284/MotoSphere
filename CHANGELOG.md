@@ -138,6 +138,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   whether the data store is up to date, how many migrations it lacks, or
   that there is no store, and changes nothing. A store `migrate` would
   refuse is refused in the same words (DAT-025).
+- The base of all models, `Base`: every table is strict, its columns have
+  the types a strict table takes, and its constraints and indexes are
+  named by one rule. `broken_rules` says which tables break a rule
+  (DAT-005).
 
 ### Removed
 

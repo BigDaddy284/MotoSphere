@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 38 | 10 |
+| 2 | Data store and published data (DAT, PUB) | 38 | 11 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-005 – The base of all models: strict tables and one naming rule.
+**Current task:** DAT-028 – Times in the store.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1065,7 +1065,7 @@ DAT-030, and DAT-026 follows the four.
 - **Plan:** `docs/plans/DAT-025.md`
 
 ### DAT-005 – The base of all models: strict tables and one naming rule
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Every table of the data store is strict, has columns of the types a strict table takes, and has its constraints and indexes named by one rule; and a test holds every table to that.
 - **Description:** The first quarter of the old "DAT-005 – Model conventions: keys, times and names" (PLAN-017). One new module, `motosphere.db.base`. `Base` is the class every model is a subclass of; there is no model yet, the first comes with DAT-006. `Base` makes the table of every model strict when the model is defined, so SQLite refuses a value that is not of its column's type, and a model cannot leave that out, also not by saying something else of its table. A strict table takes INTEGER, REAL, TEXT and BLOB: `Base` makes a model's `str` TEXT and its `float` REAL (SQLAlchemy's own types for them are refused by SQLite in a strict table); `int` and `bytes` are INTEGER and BLOB already. One naming rule, `NAMING`: `pk_<table>`, `fk_<table>_<columns>_<table it points to>`, `uq_<table>_<columns>`, `ck_<table>_<what the model calls it>`, `ix_<table>_<columns>`, so a migration can name what it changes; a check without a name is refused when its table is defined. `broken_rules(schema)` says in plain sentences which tables are not strict and which constraints and indexes were named by hand, table by table and name by name. One test holds the real schema to it, and passes today because there is no table. The tests' own models are subclasses of `Base` with a schema of their own, so the real schema never holds them. No table, no migration, no new package. Times (DAT-028), the key and the timestamps (DAT-029) and text that must not be empty (DAT-030) follow. The planner's trial has 18 new tests and detects 41 of 41 planted defects.
 - **Acceptance criteria:**
@@ -1076,10 +1076,10 @@ DAT-030, and DAT-026 follows the four.
   5. `broken_rules(Base.metadata)` is empty, and `Base.metadata` holds no table of the tests'. The type check passes with no `ignore` and the lint with no `noqa`.
   6. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 929 tests (backend tests 299); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 18 new tests: 9 unit tests of `broken_rules` and of the naming rule (the real schema; a schema that keeps the rules; a table that is not strict; a key, a unique constraint, a foreign key and an index named by hand; the order of the sentences; a check without a name) and 9 integration tests that make two models' tables in a real SQLite file and read the file itself (the tables are strict; four values of the wrong type refused; the column types; values back as stored; the eight names). Fifteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #77 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 929 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 299: 281 before, 18 new); 41 planted defects in the module, 41 of 41 detected, the plan's fifteen prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 44485008294 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 929 passed, 0 failed, 0 skipped.", with 299 backend tests on both machines, the three jobs after the gates skipped; run 44486608897 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 929 / 0 tests (repository 41, script tests 206, backend 299, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 41 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 7 files are identical to the planner's trial. No existing test changed and no package was added. Nine of the new tests make the tables of two models of the tests' own in a real SQLite file, on Linux and on Windows, and read the file itself: SQLite says the tables are strict and refuses four values of the wrong type, the columns have the types a strict table takes, and the eight names of the key, the foreign key, the unique constraints, the check and the indexes are the ones the rule gives, on both machines. The real schema has no table yet, so the test that holds it to the rules passes with nothing to look at; a planted table that breaks a rule fails it. That test sees only models whose modules have been imported, which the first task with a model (DAT-006) must see to.
+- **Commit:** `7d3c56c`
 - **Plan:** `docs/plans/DAT-005.md`
 
 ### DAT-028 – Times in the store
