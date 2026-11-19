@@ -369,17 +369,9 @@ kept in a schema of their own, so the real schema never sees them.
 for each test: a schema that keeps the rules, a table that is not strict,
 six tables without the key every table has (no key, a key of another
 name, of two columns, of text, one that is the key of another table, and
-one that may be given twice), nineteen tables without the two times every
-table has (none, one of the two missing, and for each of the two: of
-another type, one that may be empty, one the table sets itself, one the
-store's code does not set, one that is one fixed moment, one that SQLite
-is asked for; a `created_at` that is set anew at a change, an `updated_at`
-that is not, one that a change sets to one fixed moment, and one that a
-change asks SQLite for), a unique constraint, a foreign key and an index
-named by hand, the order of the sentences, and that a check without a
-name is refused when its table is defined. A table that must keep the
-rules gets its key and its two times from two helpers of the tests,
-`the_key` and `the_times`. One test there holds the real schema to the rules:
+one that may be given twice), a unique constraint, a foreign key and an
+index named by hand, the order of the sentences, and that a check without
+a name is refused when its table is defined. One test there holds the real schema to the rules:
 `broken_rules(Base.metadata)` must be empty. It passes today because
 there is no table yet, and it is the test that fails when a table is
 added that breaks a rule.

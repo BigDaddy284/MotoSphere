@@ -243,23 +243,13 @@ these rules:
 
 `broken_rules(schema)` says in plain words which tables of a schema break
 a rule: a table that is not strict (one made without a model can be), a
-table without the key every table has, a table without the two times
-every table has, and a constraint or an index that was named by hand. A
-test holds the real schema to it with every change.
-
-A table is without the two times (DAT-032) if `created_at` or `updated_at`
-is missing, is not a time as the store keeps one, may be empty, or gets a
-value from the table itself; if the store's code does not set it by
-calling a function when a row is stored (it sets none, or one fixed
-moment, or asks SQLite for the moment, which SQLite does not give in the
-store's form); if `updated_at` is not set anew in that way when a row is
-changed; or if `created_at` is set anew at all. The rule sees that the
-store's code calls a function, not which one: that it is the store's
-clock is what a model gets from `Base` by not naming the two columns.
+table without the key every table has, and a constraint or an index that
+was named by hand. A test holds the real schema to it with every change.
 
 There is no model yet, and so no table. The rules are proven with two
 models of the tests' own, which are kept in a schema apart from the real
-one. The rule for text that must not be empty (DAT-030) follows.
+one. `broken_rules` does not yet name a table without the two times
+(DAT-032), and the rule for text that must not be empty (DAT-030) follows.
 
 ## Times
 

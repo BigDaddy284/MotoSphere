@@ -115,40 +115,13 @@ def _has_the_key(table: Table) -> bool:
     )
 
 
-def _has_the_times(table: Table) -> bool:
-    """Say whether this table has the two times as every table has them.
-
-    Each is a time as the store keeps one and a row cannot be without it.
-    The table gives neither a value of its own: the store's code does, by
-    asking for it when a row is first stored, and for ``updated_at`` again
-    whenever the row is changed.
-    """
-    first = table.columns.get("created_at")
-    last = table.columns.get("updated_at")
-    return (
-        first is not None
-        and last is not None
-        and all(
-            isinstance(time.type, UtcDateTime)
-            and not time.nullable
-            and time.server_default is None
-            and time.default is not None
-            and time.default.is_callable
-            for time in (first, last)
-        )
-        and first.onupdate is None
-        and last.onupdate is not None
-        and last.onupdate.is_callable
-    )
-
-
 def broken_rules(schema: MetaData) -> list[str]:
     """Say which tables of ``schema`` break a rule, one plain sentence for each break.
 
-    A table must be strict, its key must be the one every table has, it
-    must have the two times every table has, and every other constraint and
-    every index of it must have its name from the naming rule, not one
-    given by hand. A schema that keeps the rules gives an empty list.
+    A table must be strict, its key must be the one every table has, and
+    every other constraint and every index of it must have its name from
+    the naming rule, not one given by hand. A schema that keeps the rules
+    gives an empty list.
     """
     breaks: list[str] = []
     for table in sorted(schema.tables.values(), key=lambda table: table.name):
@@ -158,12 +131,6 @@ def broken_rules(schema: MetaData) -> list[str]:
             breaks.append(
                 f"The table {table.name} does not have the key every table has: one "
                 "whole-number column named id, whose values are never given twice."
-            )
-        if not _has_the_times(table):
-            breaks.append(
-                f"The table {table.name} does not have the times every table has: "
-                "created_at and updated_at, which the store's code sets when a row is "
-                "first stored and whenever it is changed."
             )
         named: list[Constraint | Index] = [
             *(one for one in table.constraints if not isinstance(one, PrimaryKeyConstraint)),
