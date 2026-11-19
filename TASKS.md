@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 45 | 21 |
+| 2 | Data store and published data (DAT, PUB) | 46 | 22 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-037 – A column that is a web address.
+**Current task:** DAT-038 – No two constraints of one name in a table.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -877,7 +877,9 @@ is the check for text that must not be empty, and naming a column without
 that check is DAT-033, which follows it. Four tasks were added before the
 first table (PLAN-021): DAT-034 lets any column type bring the check for
 its column, and DAT-035, DAT-036 and DAT-037 are the three kinds of column
-the first table needs and the store did not have.
+the first table needs and the store did not have. One more was added
+before the first table (PLAN-022): DAT-038, a rule against two constraints
+of one name in a table, which the trial of DAT-037 showed to be missing.
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -1281,11 +1283,32 @@ the first table needs and the store did not have.
 - **Plan:** `docs/plans/DAT-036.md`
 
 ### DAT-037 – A column that is a web address
-- **Status:** NOT STARTED
+- **Status:** PASSED – VERIFIED
 - **Objective:** A model can say that a column holds a web address, and the store refuses text that is not one.
-- **Description:** Added on 2026-11-19 (PLAN-021). A source has a website (DAT-006), and every collected record says at which address it was found (DAT-008). One column type that brings its check (DAT-034): text in the table, with a check by which SQLite refuses text that does not begin with `https://` or `http://` and go on after it, whoever writes the row. An address is stored as it was given: the store does not tidy it and does not ask the network whether it exists. The planner's trial settles exactly what the check refuses, and how far a check in a table can go.
-- **Acceptance criteria:** a model says of a column that it is a web address and gets a text column with its check, named by the naming rule; an https and an http address are stored and read back as they were given; text of another kind (no scheme, another scheme, a scheme and nothing after it, empty text) is refused by SQLite with the name of the check; `broken_rules` names such a column whose table is without the check, without a change to `Base` or `broken_rules`.
-- **Tests required:** unit tests of the type and its check; integration tests against a real SQLite file for every rule above; planted defects; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-19 (PLAN-021). A source has a website (DAT-006), every collected record says at which address it was found (DAT-008), and a page makes a link of such an address. One new module, `motosphere.db.web`, with the column type `WebAddressText`, the fourth type that brings its check (DAT-034) and built like text that must not be empty: TEXT in the table, with a check named `ck_<table>_<column>_web_address`. A model says the column's Python type, `Mapped[WebAddress]`, and `Base` gets one entry in the list by which a Python type becomes a column type; the rule by which `Base` gives checks, and `broken_rules`, do not change. Settled in the planner's trial, exactly what the check refuses: text that does not begin with `https://` or `http://`, in small or in large letters; text that does not go on with the name of a site, with at least one character that is not `/`, `?` or `#`; text with white space anywhere, by the store's own list of white space; and text with a character that has the number 0, behind which SQLite's `GLOB` does not look, which the trial found. The check is written with `GLOB`, which tells small letters from large ones on every machine, and not with `LIKE`, whose way with them can be changed for a connection. An address is stored as it was given: the store does not tidy it and does not ask the network whether it leads anywhere, so `https://.` passes, and two spellings of one address are two addresses; `DATABASE.md` says where the check ends and tests hold it there. Nothing is checked in Python: there is one rule, in the table. No existing test changes, no table, no migration, no new package. The planner's trial has 70 new tests and detects 343 of 343 planted defects.
+- **Acceptance criteria:**
+  1. A model that says `Mapped[WebAddress]` of a column gets a text column with the check, named by the naming rule: the real SQLite file has the checks by name and letter for letter, for each such column and for no other.
+  2. A web address is stored and read back as it was given, in thirteen kinds: with `https` and with `http`, in small and in large letters, with a port, a path, a question and a place on the page, and with characters that `GLOB` and SQL have a use for.
+  3. Text that is not a web address is refused by SQLite with the name of the check, and nothing is stored with it, in 35 kinds: no scheme, another scheme, a scheme and nothing after it, a name that does not begin, white space before, after and in it, and a character with the number 0. Each of the 29 white space characters is refused in three places of an address.
+  4. Text that is not a web address is refused in a row written with plain SQL, in four kinds, and in a change, in three ways, and the row stays as it was. A change to another address is stored.
+  5. A column that may be without a value holds none or a web address; a column of which the model says more has its check and what the model said; a text column of any kind is as before.
+  6. `broken_rules` names such a column whose table is without the check, in the type's words, until the table has it; the rule by which `Base` gives checks, and `broken_rules`, are unchanged.
+  7. Where the check ends is held by tests: four addresses that lead nowhere are stored, and two spellings of one address are two addresses.
+  8. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  9. `python scripts/check.py` reports 19 of 19 gates and 1309 tests (backend tests 679); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 8 new unit tests, of the check as SQLite is given it, of its name, of the type and of the entry in the list of `Base`; 62 new integration tests in thirteen functions, with a model that has three such columns, against a real SQLite file that is read with plain SQL, past the model; every existing test, unchanged. Thirteen planted defects by the builder and the planner's own, all of DAT-034's and DAT-035's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** In a clean checkout of pull request #99 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1309 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 679: 609 before, 70 new); 53 planted defects in the new module and the new line of `base.py`, 53 of 53 detected, the plan's thirteen prove-it steps among them with the results the plan gives; and the 243 planted defects of DAT-034 and the 47 of DAT-035 again, 290 of 290 detected. On GitHub, read by the planner from the runs and job logs: run 44583394967 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1309 passed, 0 failed, 0 skipped.", with 679 backend tests on both machines, the three jobs after the gates skipped; run 44587743156 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1309 / 0 tests (repository 41, script tests 206, backend 679, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 343 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 8 files are identical to the planner's trial. No existing test changed, and no package was added. The 62 integration tests make the table of a model in a real SQLite file and read with plain SQL, past the model, what the file holds, on Linux and on Windows: a web address is stored as it was given, and SQLite itself refuses text that does not begin as one or has white space in it.
+- **Commit:** `a029d83`
+- **Plan:** `docs/plans/DAT-037.md`
+
+### DAT-038 – No two constraints of one name in a table
+- **Status:** NOT STARTED
+- **Objective:** The test that holds every table to the rules names a table that has two constraints of the same name.
+- **Description:** Added on 2026-11-19 (PLAN-022), found while DAT-037 was trialled. SQLite takes a table with two constraints of one name and keeps both, so a refusal then names one name for two rules. And `broken_rules` looks for the check of a column by its name: with two checks of that name, which of them it finds follows the order of a set, so its answer can differ from one run to the next. One more rule in `broken_rules`: a table has no two constraints of one name, said in a sentence that names the table and the name; and the place that looks for a column's check gives the same answer whatever the order. The planner's trial settles the exact rule, and whether it has to say anything of indexes, of which SQLite itself refuses two of one name.
+- **Acceptance criteria:** `broken_rules` names a table with two constraints of one name, once for each such name, in a plain sentence; a schema that keeps the rule gives an empty list as before; for a table with two checks that have the name of a column's own check, `broken_rules` gives the same answer in whichever order the two are given; a real SQLite file shows that SQLite takes such a table, so that the rule is needed.
+- **Tests required:** unit tests of the rule, with tables made by hand in both orders; an integration test against a real SQLite file; planted defects, the earlier ones of `base.py` among them; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
