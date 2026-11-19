@@ -7,16 +7,13 @@ environment except the ones the test sets itself.
 
 import json
 import os
-import sqlite3
 import subprocess
 import sys
-from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 
 import motosphere
 from motosphere.core.settings import ENV_PREFIX
-from motosphere.db.migrations import MIGRATIONS
 from motosphere.publish.manifest import Manifest
 
 TIMEOUT_SECONDS = 60
@@ -152,69 +149,3 @@ def test_export_into_a_file_fails_with_one_line(tmp_path: Path) -> None:
     assert len(lines) == 1, result.stderr
     assert lines[0].startswith("Export failed: cannot write to data: ")
     assert existing.read_bytes() == b"not a directory\n"
-
-
-def test_migrate_makes_the_store_where_there_is_none(tmp_path: Path) -> None:
-    store = (tmp_path / "store" / "motosphere.sqlite3").resolve()
-
-    result = _run(tmp_path, "migrate")
-
-    assert result.returncode == 0, result.stderr
-    assert result.stdout == (
-        f"A new data store was made: {store} is at schema version {len(MIGRATIONS)}.\n"
-    )
-    assert result.stderr == ""
-    assert store.is_file()
-
-
-def test_migrate_a_second_time_says_the_store_is_up_to_date_and_changes_nothing(
-    tmp_path: Path,
-) -> None:
-    store = (tmp_path / "elsewhere" / "data.sqlite3").resolve()
-    setting = {"MOTOSPHERE_STORE_PATH": str(Path("elsewhere", "data.sqlite3"))}
-    first = _run(tmp_path, "migrate", extra_env=setting)
-    before = store.read_bytes()
-
-    second = _run(tmp_path, "migrate", extra_env=setting)
-
-    assert first.returncode == 0, first.stderr
-    assert second.returncode == 0, second.stderr
-    assert second.stdout == (
-        f"The data store is up to date: {store} is at schema version {len(MIGRATIONS)}.\n"
-    )
-    assert second.stderr == ""
-    assert store.read_bytes() == before
-    assert not (tmp_path / "store").exists()
-
-
-def test_migrate_refuses_the_database_of_another_program_in_one_line(tmp_path: Path) -> None:
-    theirs = (tmp_path / "theirs.sqlite3").resolve()
-    with closing(sqlite3.connect(theirs, autocommit=True)) as connection:
-        connection.execute("CREATE TABLE theirs (id INTEGER PRIMARY KEY)")
-    before = theirs.read_bytes()
-
-    result = _run(tmp_path, "migrate", extra_env={"MOTOSPHERE_STORE_PATH": "theirs.sqlite3"})
-
-    assert result.returncode == 1
-    assert result.stdout == ""
-    assert result.stderr == (
-        f"The data store cannot be brought up to date: {theirs} is not a store of "
-        "MotoSphere's (it is not a new, empty file, and it does not carry MotoSphere's mark).\n"
-    )
-    assert theirs.read_bytes() == before
-
-
-def test_migrate_refuses_a_file_that_is_no_database_in_one_line(tmp_path: Path) -> None:
-    notes = (tmp_path / "notes.txt").resolve()
-    notes.write_bytes(b"These are notes, not a database.\n" * 40)
-
-    result = _run(tmp_path, "migrate", extra_env={"MOTOSPHERE_STORE_PATH": "notes.txt"})
-
-    assert result.returncode == 1
-    assert result.stdout == ""
-    lines = result.stderr.splitlines()
-    assert len(lines) == 1, result.stderr
-    assert lines[0].startswith(
-        f"The data store cannot be opened: {notes} cannot be read as an SQLite database ("
-    )
-    assert notes.read_bytes() == b"These are notes, not a database.\n" * 40

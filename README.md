@@ -84,19 +84,6 @@ is missing. The manifest records the version of the data format, when the data
 was generated and the MotoSphere version that generated it. There is no data to
 export yet, so it holds no record counts.
 
-To bring the data store to the newest schema:
-
-```
-uv run python -m motosphere migrate
-```
-
-The data store is the file the setting `MOTOSPHERE_STORE_PATH` names (see
-"Configuration"). The command makes it if it is not there, gives it every
-change to its schema that it lacks, and says in one sentence what it did. A
-file that is not a MotoSphere data store is refused in one sentence and left
-as it is; the exit code is then 1. The store has no tables yet, so today the
-command makes an empty file.
-
 ## Running the frontend
 
 Prerequisites: [Node.js](https://nodejs.org/) 22.12 or newer, which includes

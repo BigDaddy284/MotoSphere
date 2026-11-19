@@ -127,10 +127,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   store's file as MotoSphere's, and a file that has anything in it and not
   that mark is never migrated. It is refused in plain words and left byte
   for byte as it was (DAT-023).
-- The command `python -m motosphere migrate`: it brings the data store the
-  settings name to the newest schema, makes the store if it is not there,
-  and says in one sentence what it did. It is the first command that uses
-  the store (DAT-024).
 
 ### Removed
 

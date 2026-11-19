@@ -130,19 +130,6 @@ the first table is added. What the module promises:
   version. The test that brings an empty store to the newest schema with
   the real list fails for such a migration, so it cannot be merged.
 
-**The command.** `python -m motosphere migrate` brings the store to the
-newest schema (DAT-024). It opens the store at `MOTOSPHERE_STORE_PATH`
-with `open_store`, which makes the file if it is not there, calls
-`migrate`, and writes one sentence to standard output, with the file's
-whole path and the store's version: "A new data store was made: …", "The
-data store was brought up to date: … went from schema version 2 to 5." or
-"The data store is up to date: …". A store that cannot be opened, or that
-is refused, gives its one sentence on standard error, with nothing before
-or after it, and the exit code 1, and is left as it is. An error inside a
-migration is not caught: it is a fault in the code, its traceback is what
-whoever mends it needs, and the store stays at the version before that
-migration.
-
 SQLite can add, rename and drop a column and rename a table in place. For
 any other change the table is built anew. A migration can do that inside
 its transaction while other tables point to the table and foreign keys
