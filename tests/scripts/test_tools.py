@@ -18,6 +18,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 # The script is not an installed package, so its folder is added to the places
 # Python imports from.
@@ -188,7 +189,12 @@ class LeastVersionsTest(ProjectTest):
 
 class FindProgramTest(unittest.TestCase):
     def test_python_is_the_python_that_runs_the_script(self) -> None:
-        self.assertEqual(tools.find_program("python"), sys.executable)
+        # Whatever "python" the search path holds, it is not looked up there.
+        with mock.patch.object(shutil, "which", return_value="another-python") as which:
+            found = tools.find_program("python")
+
+        self.assertEqual(found, sys.executable)
+        which.assert_not_called()
 
     def test_finds_a_program_that_is_installed(self) -> None:
         found = tools.find_program("git")
