@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 45 | 18 |
+| 2 | Data store and published data (DAT, PUB) | 45 | 19 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-034 – A column type brings its check.
+**Current task:** DAT-035 – A column that is yes or no.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1221,7 +1221,7 @@ the first table needs and the store did not have.
 - **Plan:** `docs/plans/DAT-026.md`
 
 ### DAT-034 – A column type brings its check
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Any column type can bring the check for its column: `Base` gives that check to the table and `broken_rules` names a column whose table is without it, for every such type, so that a new type of this kind needs no change to either.
 - **Description:** Added on 2026-11-19 (PLAN-021), before the first table. Today `Base` and `broken_rules` know one type by its name, `NotEmptyText` (DAT-030, DAT-033); the first table needs three more kinds of column that are kept by a check (DAT-035 to DAT-037). One new module, `motosphere.db.checks`, with one class: a column type that brings a check is a subclass of `WithItsCheck`, beside its SQLAlchemy type, and says `check_for(name)`, the check for the column of that name, and two words for the sentence of `broken_rules`, `refuses` and `given_by`. `NotEmptyText` becomes such a type and gives the check of `not_empty`, which stays as it is. `Base` gives `column.type.check_for(column.name)` to the table of a model for every column whose type is a `WithItsCheck`, and `broken_rules` asks for the same and writes its sentence with the type's two words. Settled in the planner's trial: no existing test changes, and with only the code changed all 492 backend tests passed, which is the proof that the change keeps what was there; for text that must not be empty the sentence is letter for letter what it was; a type that says it brings a check and gives none is an error (`NotImplementedError`), when a model with a column of it is defined and when `broken_rules` is asked; the new rule is proven with a column type of the tests' own (text in large letters only), with tables made by hand and with a model in a real SQLite file. No table, no migration, no new package. The planner's trial has 12 new tests and detects 243 of 243 planted defects.
 - **Acceptance criteria:**
@@ -1233,10 +1233,10 @@ the first table needs and the store did not have.
   6. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
   7. `python scripts/check.py` reports 19 of 19 gates and 1134 tests (backend tests 504); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 7 new unit tests of `broken_rules` in four functions, with two column types of the tests' own; 1 new unit test of `NotEmptyText`; 4 new integration tests in three functions, with a model that has columns of two such types, against a real SQLite file; every existing test, unchanged. Twelve planted defects by the builder and the planner's own, all of DAT-033's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #93 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1134 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 504: 492 before, 12 new); 23 planted defects in the new rule, 23 of 23 detected, the plan's twelve prove-it steps among them with the results the plan gives; and the 220 planted defects of DAT-033 again, brought in line with the new code where they touch the changed lines, 220 of 220 detected. On GitHub, read by the planner from the runs and job logs: run 44551068881 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1134 passed, 0 failed, 0 skipped.", with 504 backend tests on both machines, the three jobs after the gates skipped; run 44554986625 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1134 / 0 tests (repository 41, script tests 206, backend 504, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 243 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 10 files are identical to the planner's trial. No existing test changed, and no package was added. For text that must not be empty nothing that can be observed is different: all 492 earlier backend tests pass as they were. The new rule is proven with a column type of the tests' own: in the unit tests with tables made by hand, and in 4 integration tests with a model and a real SQLite file, on Linux and on Windows.
+- **Commit:** `590986c`
 - **Plan:** `docs/plans/DAT-034.md`
 
 ### DAT-035 – A column that is yes or no
