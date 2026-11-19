@@ -244,6 +244,10 @@ these rules:
   no other** (DAT-036). A model says `mapped_column(OneOf(TheList))` of
   such a column, and `Base` gives its table the check the type brings,
   which names the texts. See "One of a list" below.
+- **A column that is a web address holds text that begins as one and has
+  no white space in it** (DAT-037). A model says `Mapped[WebAddress]` of
+  such a column, and `Base` gives its table the check the type brings.
+  See "A web address" below.
 - **Constraints and indexes are named by one rule** (`NAMING`), so that a
   migration can name what it changes, and so that the names are the same
   on every machine:
@@ -544,6 +548,84 @@ Where this ends:
   table.append_constraint(one_of("surface", Surface))
   ```
 
+## A web address
+
+A source has a website, and every record says at which address it was
+found. A page makes a link of such an address, so text that is not one
+must not get that far. A column that holds a web address says so, and
+the table refuses other text itself, whoever writes the row (DAT-037,
+`motosphere.db.web`).
+
+A model says it with the column's type:
+
+```python
+website: Mapped[WebAddress]
+feed: Mapped[WebAddress | None]
+```
+
+- **In the table the column is TEXT, with a check**, which `Base` adds
+  when the model is defined. The check is named after its column,
+  `ck_<table>_<column>_web_address`, by the naming rule, and reads:
+
+  ```
+  CONSTRAINT ck_source_website_web_address CHECK (((website GLOB '[Hh][Tt][Tt][Pp][Ss]://[^/?#]*') OR (website GLOB '[Hh][Tt][Tt][Pp]://[^/?#]*')) AND NOT (website GLOB '*[' || char(9, 10, 11, 12, 13, 28, 29, 30, 31, 32, 133, 160, 5760, 8192, 8193, 8194, 8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288) || ']*') AND instr(website, char(0)) = 0)
+  ```
+
+- **A web address begins with `https://` or `http://`**, in small or in
+  large letters, and goes on with the name of a site: with at least one
+  character, which is not `/`, `?` or `#`, the three that end such a
+  name. So `example.org`, `//example.org`, `https://` and
+  `https:///tracks` are refused, and so is every other scheme: `ftp:`,
+  `mailto:`, `file:`, and `javascript:`, of which a page must never make
+  a link.
+- **It has no white space anywhere**, by the store's own list of white
+  space (see "Text that must not be empty"): no space before or after
+  it, no line end, no space in it, and so not two addresses in one text
+  either. Where an address has a space, whoever collects it writes the
+  space as its number, `%20`, before it is stored.
+- **It has no character with the number 0.** SQLite's `GLOB` reads text
+  up to such a character and no further, so white space behind one would
+  go unseen.
+- **SQLite refuses the row**, on storing and on changing, through a model
+  or with plain SQL, and the refusal names the check:
+  `CHECK constraint failed: ck_source_website_web_address`. The unit of
+  work the row was part of is taken back as a whole.
+- **An address is stored as it was given.** Nothing is put in small
+  letters and nothing is taken off. The store does not tidy an address;
+  whoever collects it does, before it is stored.
+- **A column that may be without a value** (`WebAddress | None`) holds no
+  value or a web address, and never empty text.
+- **Any other text column is as before**: `Mapped[str]` is TEXT without a
+  check.
+
+The check is written with `GLOB` and not with `LIKE`, because `GLOB`
+tells small letters from large ones on every machine, and what `LIKE`
+does about them can be changed for a connection. A check must refuse the
+same text wherever the file is opened.
+
+Where this ends:
+
+- **The check does not know whether an address leads anywhere.** It holds
+  the beginning of an address to the rules and not the rest, and it does
+  not ask the network: `https://no-such-site.invalid/` and `https://.`
+  pass. Whether a site answers is found out by whoever collects from it.
+- **Two spellings of one address are two addresses to the store.**
+  `https://example.org/a`, `HTTPS://EXAMPLE.ORG/a` and
+  `https://example.org/a/` are three texts, and a question for one does
+  not find the others. Code that must find an address again brings it to
+  one spelling before it stores it.
+- A character that Python does not call white space is content to the
+  check, also one that cannot be seen: the space without width (U+200B)
+  and a control character that is not white space pass, and tests say
+  so.
+- As for every type that brings a check, a column that a subclass of a
+  model adds to its parent's table, and a table made without a model, get
+  no check from `Base` (see "Column types that bring a check" below):
+
+  ```python
+  table.append_constraint(web_address("website"))
+  ```
+
 ## Column types that bring a check
 
 A column of the store has one of four types (see "The rules every table
@@ -591,8 +673,8 @@ A model can only say a type by the column's Python type
 (`mapped_column(TheType)`).
 
 The types that bring a check so far: `NotEmptyText`, text that must not
-be empty, `YesOrNo`, yes or no, and `OneOf`, a value of a list (all
-above).
+be empty, `YesOrNo`, yes or no, `OneOf`, a value of a list, and
+`WebAddressText`, a web address (all above).
 
 Where this ends is the same for every such type: `Base` gives the check
 when a model is defined, so a column that a subclass of a model adds to
