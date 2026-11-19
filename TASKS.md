@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 49 | 23 |
+| 2 | Data store and published data (DAT, PUB) | 49 | 24 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-039 – The lists a source is described by.
+**Current task:** DAT-006 – Information sources table.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1329,7 +1329,7 @@ the runs (DAT-007), says how a source is doing.
 - **Plan:** `docs/plans/DAT-038.md`
 
 ### DAT-039 – The lists a source is described by
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The code knows the twelve kinds of source and the ten ways of collecting from one, each with the text that is stored.
 - **Description:** Added on 2026-11-19 (PLAN-023), cut out of DAT-006. One new package for the models of the store, `motosphere.db.models`, which has no model yet, and in it one new module, `motosphere.db.models.source`, with two lists, each a `StrEnum` as a column of a list takes one (DAT-036): `SourceCategory`, the twelve kinds of source of DESIGN §7.1, and `CollectionMethod`, the ten ways of collecting of DESIGN §7.2, both in the design's order. Settled in the planner's trial: the texts, which are words in small letters with one space between two, short and in the singular (`governing body`, `results database`, `html extraction`, `human submission`); and that the conditions of the design ("permitted", "where authorised") are not in the texts, because a text in a row cannot say that somebody checked: the condition is checked when a source is registered and written down with it, as `DATABASE.md` and `DATA_SOURCES.md` now say. Whether a source has one kind and one way is not settled here: the table decides (DAT-006). No table, no model, no migration, no existing test changed. The planner's trial has 29 new tests and detects 18 of 18 planted defects.
 - **Acceptance criteria:**
@@ -1340,10 +1340,10 @@ the runs (DAT-007), says how a source is doing.
   5. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
   6. `python scripts/check.py` reports 19 of 19 gates and 1354 tests (backend tests 724); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 29 new unit tests in five functions, with the texts of both lists written out a second time; every existing test, unchanged. Ten planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #103 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1354 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 724: 695 before, 29 new); 18 planted defects in the two lists, 18 of 18 detected, the plan's ten prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 44604869576 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1354 passed, 0 failed, 0 skipped.", with 724 backend tests on both machines, the three jobs after the gates skipped; run 44606475596 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1354 / 0 tests (repository 41, script tests 206, backend 724, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 18 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 8 files are identical to the planner's trial. No existing test changed, and no package was added. The task has no table: the lists are plain code, and what SQLite does with a column of a list is proven for every list by the tests of DAT-036 and comes for these two with the table (DAT-006).
+- **Commit:** `5f9a303`
 - **Plan:** `docs/plans/DAT-039.md`
 
 ### DAT-006 – Information sources table
