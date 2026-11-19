@@ -547,53 +547,6 @@ and not the type gets a table SQLite refuses to make. The letter beyond
 ASCII is written in the tests as its number, not as itself, so that an
 editor cannot change it.
 
-## A web address
-
-`backend/tests/unit/test_db_web.py` tests the type without a store: the
-text of the check as SQLite is given it, letter for letter, and for a
-column named with a word of SQL; that the white space the check names is
-the store's own list; its name before and after the naming rule; that
-the type brings exactly that check, with its two words for
-`broken_rules`; that the type is TEXT in a table; that `Base` has the
-type in its list, so that a model says it by the column's Python type;
-and the sentence of `broken_rules` for a table made by hand with two
-such columns, until each has its check.
-
-`backend/tests/integration/test_web.py` has a model with three such
-columns, one that must have a value, one that may be without, and one of
-which the model says more, and a text column of any kind. It makes the
-table in a real SQLite file and asks the file which columns there are
-and reads the three checks as the file says them, letter for letter.
-Then it stores rows and reads with plain SQL, past the model, what the
-file holds: thirteen addresses are stored as they were given, with
-`https` and with `http`, in small and in large letters, with a port, a
-path, a question and a place on the page, with a space written as its
-number, with a letter beyond ASCII, with a number for a site in both
-kinds, with one character after the scheme, and with the characters
-`GLOB` and SQL have a use for. 35 texts that are not a web address are
-each refused with the name of the check, and the row stored with them in
-the same unit of work is not there either: no characters and a space
-alone, a name without a scheme in three kinds, five other schemes, a
-scheme and nothing after it, each of the three characters that must not
-begin the name, after `https` and after `http`, a slash or two too few
-and a letter too many, words or a letter before the scheme, white space
-before, after and in it in nine kinds, two addresses in one text, and a
-character with the number 0, also with a space behind it. One test
-puts each of the 29 white space characters in three places of an address
-and finds every one refused. Four addresses that lead nowhere are
-stored, because the check does not know: a site there is not, a full
-stop for a name, a space without width and a control character. The rest
-is as for the other types: text written with plain SQL is refused, and
-so is the number 1, which a strict table stores as text; a change to
-text that is not an address is refused in three ways and the row stays
-as it was; a change to another address is stored; the column that may be
-without a value holds none or an address and has a check of its own; the
-column of which the model says more has both its check and what the
-model said; two spellings of one address are two addresses; and a text
-column of any kind is as before. The letter beyond ASCII and the
-characters that cannot be seen are written in the tests as their
-numbers, not as themselves, so that an editor cannot change them.
-
 ## Column types that bring a check
 
 `backend/tests/integration/test_checks.py` has a column type of its own

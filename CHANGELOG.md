@@ -191,11 +191,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   column, by a check that names them. Only a value of the list is
   stored: text is refused, also text that is spelled like one
   (DAT-036).
-- A column that is a web address, `motosphere.db.web`: a model says
-  `Mapped[WebAddress]`, the table holds text, and SQLite itself refuses
-  text that does not begin with `https://` or `http://` and go on with
-  the name of a site, and text with white space in it, by a check. An
-  address is stored as it was given (DAT-037).
 
 ### Removed
 

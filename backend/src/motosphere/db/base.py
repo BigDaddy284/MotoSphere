@@ -21,9 +21,7 @@ A model is a class that describes one table. Every model is a subclass of
   empty is such a type (:data:`motosphere.db.texts.NotEmpty`), and so the
   table refuses empty text in every column whose model says so; yes or no
   is another, and so the table refuses every number but 1 and 0 in a
-  column that is a ``bool``; a web address is a third
-  (:data:`motosphere.db.web.WebAddress`), and so the table refuses text
-  that is not one in every column whose model says so;
+  column that is a ``bool``;
 - has its constraints and indexes named by one rule, :data:`NAMING`, so
   that a migration can name what it changes and the names are the same on
   every machine. The key has no name: SQLite writes it with its column.
@@ -56,7 +54,6 @@ from motosphere.db import times
 from motosphere.db.checks import WithItsCheck
 from motosphere.db.texts import NotEmpty, NotEmptyText
 from motosphere.db.times import UtcDateTime
-from motosphere.db.web import WebAddress, WebAddressText
 from motosphere.db.yes_no import YesOrNo
 
 __all__ = ["NAMING", "Base", "broken_rules"]
@@ -103,7 +100,6 @@ class Base(DeclarativeBase):
         datetime: UtcDateTime,
         bool: YesOrNo,
         NotEmpty: NotEmptyText,
-        WebAddress: WebAddressText,
     }
 
     # The key of every table, and its first column. A model does not name it.
