@@ -39,6 +39,23 @@ site is then compared with what was built ([TESTING.md](TESTING.md),
 - [CHANGELOG.md](CHANGELOG.md) – significant changes and releases.
 - [docs/WORKFLOW.md](docs/WORKFLOW.md) – how tasks are planned, built, tested and merged.
 
+## What your computer needs
+
+MotoSphere needs five tools: Python 3.12 or newer,
+[Git](https://git-scm.com/downloads),
+[uv](https://docs.astral.sh/uv/getting-started/installation/) and
+[Node.js](https://nodejs.org/) 22.12 or newer, which includes npm. With
+Python installed, one command says which of them your computer has, from any
+folder of the repository:
+
+```
+python scripts/tools.py
+```
+
+It lists each tool with the version it found, and names the place to get a
+tool that is missing, too old or broken. It installs nothing and changes
+nothing. The exit code is 0 only when all five are ready.
+
 ## Running the data pipeline
 
 Prerequisites: Python 3.12 or newer and

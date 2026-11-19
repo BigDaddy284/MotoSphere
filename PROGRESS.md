@@ -6,10 +6,10 @@ references are copied from real output, never estimated.
 
 ## Current state
 
-- **Phase:** 1 – Foundation
-- **Current task:** FND-019 – Local use: a check of the tools a computer needs (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 41 of 237
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (702 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. No globe and no data store yet.
+- **Phase:** 2 – Data store and published data (Phase 1 – Foundation is complete)
+- **Current task:** DAT-001 – Data store research and decision record (`NOT STARTED`; Phase 1 is complete, and the planner is writing Phase 2 out in full task entries first)
+- **Tasks verified:** 42 of 234
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (744 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. No globe and no data store yet.
 
 ## Reports
 
@@ -3204,3 +3204,132 @@ Order from here: FND-019, FND-043, FND-044, FND-045. Phase 1 has 45 tasks
 and the project 237. No requirement was dropped.
 
 Next task: FND-019 – Local use: a check of the tools a computer needs.
+
+### FND-019 – Local use: a check of the tools a computer needs (2026-11-19)
+
+TASK: FND-019 – Local use: a check of the tools a computer needs
+
+Implementation: Complete (builder thread, pull request #52). A script,
+`python scripts/tools.py`, with the Python standard library only. It looks
+at Python, Git, uv, Node.js and npm, asks each for its version, and writes
+one line for each: found, missing, too old or broken, with the place to
+get it. The least versions of Python and Node.js are read from
+`backend/pyproject.toml` and `frontend/package.json`. A Python older than
+3.12 is told so in one plain sentence. The script installs nothing and is
+not a gate. Exactly the 6 planned files; all are identical to the
+planner's trial. No existing test changed.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  744 passed, 0 failed, 0 skipped." Script tests: 206 (164 before, 42
+  new).
+- The script itself: five tools found, "5 of 5 tools are ready.", exit
+  code 0. Started with Python 3.11: "MotoSphere needs Python 3.12 or
+  newer, and this is Python 3.11." with the place to get a newer one, exit
+  code 1.
+- Planted defects: 26 in the script, 26 of 26 detected by the new tests,
+  the plan's twelve prove-it steps among them.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44428583058, the pull request's commit (`e9650fc`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 744 passed, 0 failed, 0 skipped.", with 206
+  script tests on both machines; "Build the site", "Publish the site" and
+  "Check the published site" skipped.
+- Run 44429659797, for `main` after the merge (`fb8b6ed`), first
+  attempt: "All gates (Linux)" green with the same two closing lines. "All
+  gates (Windows)" FAILED: "18 of 19 gates passed. FAILED: Browser tests."
+  and "Tests: 743 passed, 1 failed, 0 skipped." One browser test, "layout
+  at 1920×1080 › the globe stage is the largest region", could not open
+  the page: "page.goto: net::ERR_NO_BUFFER_SPACE at
+  http://127.0.0.1:4173/MotoSphere/". The other 170 browser tests on that
+  machine passed, before and after it. The three jobs after the gates were
+  skipped, so nothing was published from that attempt.
+- The same run, second attempt (the failed job run once more, nothing
+  changed): all five jobs green, "All gates (Windows)" ending "19 of 19
+  gates passed." and "Tests: 744 passed, 0 failed, 0 skipped.", the site
+  republished, and the log of "Check the published site" ending
+  "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+
+What the failed attempt was: Windows's message for a machine that has no
+room left for one more network connection, here between the test browser
+and the test server on the same machine. The task changed no file that the
+browser tests read (two Python files and four documents). The same
+frontend files passed on GitHub's Windows machines in four other runs that
+night: the planner's trial (44425486127, 44426691356), the pull request's
+run (44428583058) and the second attempt. The planner could not find out
+more: the machine is gone when the job ends. It is recorded as a failed
+attempt, not explained away. The browser tests are not given a second try
+(`retries: 0` stays), so if it happens again it will be seen again, and
+then it becomes a task of its own.
+
+Unit and integration tests: 573/573 passed (repository 40, script tests
+206, backend 115, frontend 212). Browser tests: 171/171 passed.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the script was run for real on Linux
+by the planner and, by its tests, on GitHub's Linux and Windows machines;
+the deployment succeeded and the published site is the site that was
+built.
+
+Overall applicable tests: 744/744 passed (100%), all 19 gates passed, on
+both machines; for `main` on the Windows machine at the second attempt.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the script was not run on a Windows 11 PC, only on
+GitHub's Windows machine (Windows Server 2025), and after the owner's
+decision below no task asks for that. It looks at the five tools by name and
+at no others; the browser the browser tests need is not among them. The
+builder reported every prove-it step of the plan with the tests the plan
+names, and no deviation (Node 22.23.5 locally).
+
+Commit: `fb8b6ed` (squash merge of pull request #52).
+
+Next task: see PLAN-011 below.
+
+### PLAN-011 – No offline version: Phase 1 ends here (2026-11-19)
+
+Not a development task: no application code changed.
+
+PLAN-010 planned four tasks for starting MotoSphere on the owner's Windows
+11 PC. While the first was being built, the owner asked why anything had
+to start from that PC, since the site is hosted on GitHub. It does not
+have to: the four tasks were a second way to use MotoSphere, a private
+copy on a PC without GitHub, read by the planner from the rule that the
+application must be easy to start on Windows 11 and from the old FND-019.
+The owner was asked whether to keep them, first chose to, and a moment
+later wrote: "actually dont build the offline version".
+
+What follows from it:
+
+- FND-043, FND-044 and FND-045 are taken out of the task list. None had
+  started; no code, test or plan of theirs exists.
+- FND-019 was finished when the decision came (its pull request was open
+  and green). The owner was told it would be merged and answered with a
+  thumbs-up. It is
+  useful without an offline version: it tells anyone working on the
+  project which tools their computer lacks.
+- `ARCHITECTURE.md` §12 is rewritten in this commit, by the planner: on
+  Windows 11 MotoSphere is the published site in a browser; there are no
+  PowerShell scripts and no local start command; the commands for working
+  on the project are the same on Windows and Linux, and GitHub runs every
+  gate on both. The 40 repository checks and 206 script tests pass with
+  the rewritten document.
+- The owner's PC is not needed for any check.
+
+Phase 1 has 42 tasks again, all 42 verified, and the project 234. The
+foundation is complete: a published site on GitHub Pages with the
+application's layout, usable on a phone, a data pipeline that publishes a
+manifest, one command for every check, and GitHub running it on Linux and
+Windows for every change.
+
+Next: Phase 2, the data store and the published data. Its 28 tasks are
+named in the roadmap and are written out in full entries, with acceptance
+criteria and required tests, before the first of them starts.
+
+Next task: DAT-001 – Data store research and decision record.
