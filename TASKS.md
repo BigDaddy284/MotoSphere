@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 38 | 12 |
+| 2 | Data store and published data (DAT, PUB) | 39 | 12 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-029 – Every table's key and timestamps.
+**Current task:** DAT-029 – Every table's key.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -869,7 +869,8 @@ tables test their migration from the version before it. The third
 (PLAN-016): DAT-025 needs a way to ask which migrations a store lacks
 without migrating it, and that is DAT-027, which stands before it. The
 fourth (PLAN-017): the old DAT-005 is DAT-005, DAT-028, DAT-029 and
-DAT-030, and DAT-026 follows the four.
+DAT-030, and DAT-026 follows the four. The fifth (PLAN-018): DAT-029 is
+the key alone, and the timestamps are DAT-031, which follows it.
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -1100,12 +1101,30 @@ DAT-030, and DAT-026 follows the four.
 - **Commit:** `ce823a0`
 - **Plan:** `docs/plans/DAT-028.md`
 
-### DAT-029 – Every table's key and timestamps
+### DAT-029 – Every table's key
+- **Status:** IN PROGRESS
+- **Objective:** Every table has the same key, one whole-number column `id` that a model gets without naming it, and SQLite never gives a key twice; a test holds every table to that.
+- **Description:** Added on 2026-11-19 (PLAN-017) as "DAT-029 – Every table's key and timestamps"; the key alone since PLAN-018, with the timestamps as DAT-031. Records will be pointed at by their key: by their history, by where they were collected from, by the review queue. SQLite, left alone, gives the key of a deleted last row to the next new row, and the history of the deleted row would become the history of a row it has nothing to do with. So `Base` gives every model its key, the first column `id`, and asks SQLite for keys that are never given twice (AUTOINCREMENT), in the place where it makes the table strict, so that a model cannot leave it out. SQLAlchemy writes such a key with its column, where it has no name; the `pk` line of the naming rule goes, and nothing is lost by it, since SQLite cannot change a key by name and reports a broken key by table and column. `broken_rules` gets one more rule and one more sentence: a table must have exactly this key (not none, not one of another name, of several columns, not a whole number, not the key of another table, not one that may be given twice). A row may be stored with a key of its own, and later keys come after it, which the rebuild from a snapshot needs. SQLite keeps the last key of each table in `sqlite_sequence`; DAT-019 and DAT-020 keep it across a snapshot. Three tests of DAT-005 change with the rule, for reasons the plan gives one by one. No table, no migration, no new package. The planner's trial has 17 new tests and detects 63 of 63 planted defects.
+- **Acceptance criteria:**
+  1. A model that names no key has the column `id`, a whole number, as the first column and the key of its table, also when the model says something of its table itself; in the file the key is written `id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT`.
+  2. A key is not given again: not the key of a deleted last row, not any key after every row is deleted, not after the store was closed, and not to a row written with plain SQL past the model.
+  3. A row stored with a key of its own keeps it, and later keys come after it. Every table counts its own keys.
+  4. `broken_rules` names, with one sentence each, a table that has no key, a key of another name, of two columns, of text, one that is the key of another table, or one that may be given twice; it gives an empty list for the real schema and for the models of the tests.
+  5. Constraints other than the key, and indexes, are held to the naming rule as before. The type check passes with no `ignore` and the lint with no `noqa`.
+  6. `python scripts/check.py` reports 19 of 19 gates and 993 tests (backend tests 363); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 12 new integration tests with two models of the tests' own that name no key, in a real SQLite file (which column is the key; how the file writes it; the next key; a deleted last row; every row deleted; the store closed; a row written with plain SQL; a row with a key of its own; each table's own count); the unit tests of `broken_rules` brought in line with the rule, 14 where there were 9, six of them tables without the key; the 9 integration tests of DAT-005 less two lines that expected the key's name. Fifteen planted defects by the builder and the planner's own, DAT-005's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-029.md`
+
+### DAT-031 – Every table's timestamps
 - **Status:** NOT STARTED
-- **Objective:** Every table has the same key and says when each of its rows was first stored and last changed, and a test holds every table to that.
-- **Description:** Added on 2026-11-19 (PLAN-017): the third quarter of the old "DAT-005 – Model conventions: keys, times and names". What every model gets from the base without naming it: a whole-number primary key named `id`, and `created_at` and `updated_at`, times as DAT-028 stores them, set by the store's code and not by the database or by the caller. `broken_rules` (DAT-005) learns the two rules, so the test that holds the real schema to the rules fails on a table without them. Settled in the planner's trial: whether a key may be given again after its row is deleted (SQLite does that unless told otherwise, and change history and provenance will point at rows by their key), and how a test sets the time. If the key and the timestamps prove to be two things to test, the task is split then. `DATABASE.md` states the rules. Models of the tests' own prove them; no table is added.
-- **Acceptance criteria:** a model has `id`, `created_at` and `updated_at` without naming them; a new row gets both times, equal, from the store's code; a changed row gets a later `updated_at` and keeps its `created_at`; a table without the key or without a timestamp is named by `broken_rules`; the same on Linux and on Windows.
-- **Tests required:** unit tests of the rules; integration tests against a real SQLite file; planted defects (a table without timestamps, a key of another name, a time set by the database); the full run of all gates on both machines.
+- **Objective:** Every table says when each of its rows was first stored and when it was last changed, and a test holds every table to that.
+- **Description:** Added on 2026-11-19 (PLAN-018): the second half of what PLAN-017 called "DAT-029 – Every table's key and timestamps". What every model gets from the base without naming it: `created_at` and `updated_at`, times as DAT-028 stores them, set by the store's code and not by the database or by the caller. `broken_rules` learns the rule, so the test that holds the real schema to the rules fails on a table without them. Settled in the planner's trial: how a test sets the time (a clock the store's code asks), that the two are the same moment for a new row, what counts as a change (whether a row stored again unchanged keeps its `updated_at`), and what a row written past the models gets. `DATABASE.md` states the rule. Models of the tests' own prove it; no table is added.
+- **Acceptance criteria:** a model has `created_at` and `updated_at` without naming them; a new row gets both, the same moment, from the store's code; a changed row gets a later `updated_at` and keeps its `created_at`; a table without them is named by `broken_rules`; the same on Linux and on Windows.
+- **Tests required:** unit tests of the rule; integration tests against a real SQLite file with a clock the test sets; planted defects (a table without timestamps, a time set by the database, `created_at` changed by an update); the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -1279,7 +1298,7 @@ DAT-030, and DAT-026 follows the four.
 ### DAT-019 – Snapshot: the store written as text files
 - **Status:** NOT STARTED
 - **Objective:** The whole store can be written out as text files that are the same, byte for byte, whenever the store is the same.
-- **Description:** A command writes every table to text files in a folder: one record per line, records and fields in a fixed order, UTF-8, Unix line ends, with the schema version and a list of the files and their hashes, and reports the snapshot's size. Large tables are divided into files by a rule that depends only on the data. This is the form in which the store is kept between scheduled runs (DAT-001's decision), so a change to the store shows as a small, readable difference.
+- **Description:** A command writes every table to text files in a folder: one record per line, records and fields in a fixed order, UTF-8, Unix line ends, with the schema version and a list of the files and their hashes, and reports the snapshot's size. Large tables are divided into files by a rule that depends only on the data. This is the form in which the store is kept between scheduled runs (DAT-001's decision), so a change to the store shows as a small, readable difference. The snapshot also holds the last key each table gave (SQLite's `sqlite_sequence`, DAT-029): without it a rebuilt store would give the key of a deleted row again.
 - **Acceptance criteria:** writing the same store twice gives identical files, on Linux and on Windows alike; one changed record changes one line; no file comes near GitHub's file size limit, by a margin the plan states; the folder is written completely or not at all; internal notes are included (this is the store, not the published data) and the folder says so.
 - **Tests required:** unit tests of the ordering and the encoding; integration tests against a real SQLite file with every table filled, comparing bytes across two writes and across the two machines by hash; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
@@ -1290,8 +1309,8 @@ DAT-030, and DAT-026 follows the four.
 ### DAT-020 – Snapshot: the store rebuilt from text files
 - **Status:** NOT STARTED
 - **Objective:** A store rebuilt from its snapshot is the same store, and the round trip is proven.
-- **Description:** A command builds a new store from a snapshot folder: the schema is brought to the snapshot's version, the records are loaded, and the schema is then brought to the newest version. Every file is checked against its hash first. A snapshot that is damaged, incomplete or newer than the code is refused whole.
-- **Acceptance criteria:** store → snapshot → store → snapshot gives identical snapshot files; every table, key and history row survives; foreign keys hold in the rebuilt store; a changed, missing or extra file is refused in plain words and no store is left behind; a snapshot of an older schema is rebuilt and migrated.
+- **Description:** A command builds a new store from a snapshot folder: the schema is brought to the snapshot's version, the records are loaded, and the schema is then brought to the newest version. Every file is checked against its hash first. A snapshot that is damaged, incomplete or newer than the code is refused whole. Every row is stored with the key it had, and every table goes on counting from the last key it gave before the snapshot was made (DAT-029), so that no key is given twice across a rebuild.
+- **Acceptance criteria:** store → snapshot → store → snapshot gives identical snapshot files; every table, key and history row survives; a row deleted before the snapshot does not get its key given again after the rebuild; foreign keys hold in the rebuilt store; a changed, missing or extra file is refused in plain words and no store is left behind; a snapshot of an older schema is rebuilt and migrated.
 - **Tests required:** integration tests against real SQLite files with every table filled, including a snapshot made at an earlier schema version; damaged snapshots; the two commands run for real; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
