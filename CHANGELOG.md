@@ -196,6 +196,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   text that does not begin with `https://` or `http://` and go on with
   the name of a site, and text with white space in it, by a check. An
   address is stored as it was given (DAT-037).
+- `broken_rules` names a name that more than one constraint or index of
+  a table has, and how many have it. SQLite takes a table with two
+  checks of one name, and a refusal then does not tell which of the two
+  refused the row (DAT-038).
 
 ### Removed
 
@@ -213,3 +217,7 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   expected the request for the data to have arrived as soon as the page
   said so, and the page says so before it asks. The test now waits for the
   request (FND-043).
+- What `broken_rules` said of a column whose table has two checks of the
+  name of the column's own check. It went by whichever of the two it came
+  to last, and the order in which it comes to them is not fixed. The
+  column now has its check if either of the two is that check (DAT-038).
