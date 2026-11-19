@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 45 | 20 |
+| 2 | Data store and published data (DAT, PUB) | 45 | 21 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-036 – A column whose value is one of a list.
+**Current task:** DAT-037 – A column that is a web address.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1260,7 +1260,7 @@ the first table needs and the store did not have.
 - **Plan:** `docs/plans/DAT-035.md`
 
 ### DAT-036 – A column whose value is one of a list
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A model can say that a column's value is one of a fixed list, and the store refuses any other.
 - **Description:** Added on 2026-11-19 (PLAN-021). The first table has two columns that are each one of a short list the code knows, the category of a source and the way it is collected (DESIGN §7.1, §7.2), and the tables after it have more; as plain text, a misspelled word would be stored like any other. One new module, `motosphere.db.lists`, with the column type `OneOf`, the third type that brings its check (DAT-034): TEXT in the table, with a check that names the texts of the list in their order, `<column> IN ('sand', 'hard pack')`, named `ck_<table>_<column>_one_of`. A list is a `StrEnum`, said once, in the code, and its values are the texts that are stored. Settled in the planner's trial: a model names the type and the list, `mapped_column(OneOf(Surface))`, because there is one type for each list and SQLAlchemy makes the plain `Mapped[Surface]` enough only through a method it keeps to itself; a model that forgets gets a table SQLite refuses to make, so the slip cannot go unnoticed. Only a value of the column's own list is stored: text, also text spelled like a value, and a value of another list are refused before anything is written, with a `TypeError` that says what was given. What is read comes back as the value of the list, and text that is not on the list is refused when it is read. What is not a list is refused when the type is made: anything that is not a `StrEnum`, a list with nothing on it and a list with an empty value. A change to a list is a change to the schema, which the test that holds the models and the migrations together (DAT-026) will notice. No existing file of code or tests changes, no table, no migration, no new package. The planner's trial has 58 new tests and detects 50 of 50 planted defects, after one gap they found was closed.
 - **Acceptance criteria:**
@@ -1274,10 +1274,10 @@ the first table needs and the store did not have.
   8. No existing file of code or tests changed. The type check passes with no `ignore` and the lint with no `noqa`.
   9. `python scripts/check.py` reports 19 of 19 gates and 1239 tests (backend tests 609); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 32 new unit tests in seventeen functions, of the type, of what it stores and reads, of what it refuses to be made with, and of its check; 26 new integration tests in seventeen functions, with a model that has three such columns, against a real SQLite file that is read with plain SQL, past the model; every existing test, unchanged. Thirteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #97 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1239 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 609: 551 before, 58 new); 50 planted defects in the new module, 50 of 50 detected, the plan's thirteen prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 44574108174 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1239 passed, 0 failed, 0 skipped.", with 609 backend tests on both machines, the three jobs after the gates skipped; run 44575972489 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1239 / 0 tests (repository 41, script tests 206, backend 609, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 50 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 7 files are identical to the planner's trial. No existing file of code or tests changed, and no package was added. The 26 integration tests make the table of a model in a real SQLite file and read with plain SQL, past the model, what the file holds and of which kind it is, on Linux and on Windows: a value of a list is its text, and SQLite itself refuses any text that is not on the column's own list.
+- **Commit:** `d2b1d54`
 - **Plan:** `docs/plans/DAT-036.md`
 
 ### DAT-037 – A column that is a web address
