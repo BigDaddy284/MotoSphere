@@ -134,10 +134,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `pending`: it says which migrations a data store lacks and writes
   nothing. `migrate` applies exactly those, and both refuse the same
   stores in the same words (DAT-027).
-- The command `python -m motosphere schema`: it says in one sentence
-  whether the data store is up to date, how many migrations it lacks, or
-  that there is no store, and changes nothing. A store `migrate` would
-  refuse is refused in the same words (DAT-025).
 
 ### Removed
 

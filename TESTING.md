@@ -345,15 +345,6 @@ code, and that an error inside a migration reaches the caller.
 `tests/unit/test_cli_migrate.py` checks the sentences by themselves and
 the command's help.
 
-The command `schema` is tested in the same three places
-(`test_command_line.py`, `tests/integration/test_schema_command.py` and
-`tests/unit/test_cli_schema.py`). It must never write, so every test that
-gives it a file compares the file byte for byte afterwards, the tests of a
-store that is read also look for anything new beside it, and the tests
-without a file look for the file and its folder afterwards. Each store
-`migrate` refuses is given to both commands, and what `schema` says must
-be what `migrate` says, word for word.
-
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`

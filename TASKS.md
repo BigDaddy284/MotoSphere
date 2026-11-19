@@ -1045,15 +1045,22 @@ without migrating it, and that is DAT-027, which stands before it.
 - **Plan:** `docs/plans/DAT-027.md`
 
 ### DAT-025 – Command: say which schema a store has
-- **Status:** NOT STARTED
-- **Objective:** One command says which schema the store has and which is the newest the code knows, and changes nothing.
-- **Description:** A command of `python -m motosphere` (its name is settled in the planner's trial) that reads the version of the store at `MOTOSPHERE_STORE_PATH` and says in one plain sentence whether the store is up to date, how many migrations it lacks, that it is newer than this code, or that there is no store there. It never writes: a file that is not there is not made.
-- **Acceptance criteria:** each of the four cases gives its sentence; the store's file is byte for byte the same afterwards; where there is no file there is none afterwards either; the exit codes are stated in the plan and tested; the command is in the command line's help.
-- **Tests required:** integration tests that run the real command in a process of its own against a real SQLite file; planted defects (a command that makes the file, one that migrates); the full run of all gates on both machines.
+- **Status:** IN PROGRESS
+- **Objective:** One command says which schema the store has and whether it is the newest the code knows, and changes nothing.
+- **Description:** The command is `python -m motosphere schema`, in one new module, `motosphere.cli.schema`, built like the `migrate` command. It takes no argument: the store is the file `MOTOSPHERE_STORE_PATH` names. It never writes. Where the path names nothing it says "There is no data store: … does not exist." and makes none (it does not call `open_store`, which would). Otherwise it opens the store, asks `pending` (DAT-027), and writes one sentence to standard output, with the file's whole path: "The data store is up to date: … is at schema version N." or "The data store lacks 2 migrations: … is at schema version 3, and the newest is version 5." In these three cases the exit code is 0. A store that cannot be opened, or that `migrate` would refuse (not MotoSphere's, newer than the code), gives the same sentence as there on standard error and the same exit code 1; the two commands ask the same function, so they cannot come to disagree about a store. The exit code 2 stays what it is everywhere: wrong arguments or wrong settings. No log line, no new package. The planner's trial has 25 new tests and detects 62 of 62 planted defects.
+- **Acceptance criteria:**
+  1. The command is in the command line's help, has a help of its own that names `MOTOSPHERE_STORE_PATH`, and takes no argument.
+  2. Where there is no file, the command says so on standard output, with the exit code 0 and nothing on standard error, and afterwards there is no file and no folder for it either.
+  3. A store at the newest schema is said to be up to date; a store that lacks migrations is told how many, its version and the newest, and is not given them; exit code 0. The file is named with its whole path, also when the setting is a relative path.
+  4. A store that `migrate` would refuse gives, on standard error, exactly what `migrate` gives for it, nothing on standard output, and the exit code 1. A file that is no database, and a folder where the file should be, each give their one line and the exit code 1.
+  5. In every case with a file, the file is byte for byte as before, and nothing is made beside it.
+  6. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 911 tests (backend tests 281); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 25 new tests: 4 that run the real command in a process of its own against a real SQLite file, with the pipeline's own list of migrations; 12 that call the command in the test's process with a list of migrations of the test's own (the pipeline's is empty), against a real SQLite file, four of which give a refused file to both commands and compare what they say; 9 unit tests of what it says and of its help. Seventeen planted defects by the builder and the planner's own (a command that makes the file or its folder, one that migrates, one that leaves a file beside the store, among others); the command run by hand; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-025.md`
 
 ### DAT-005 – Model conventions: keys, times and names
 - **Status:** NOT STARTED
