@@ -367,27 +367,32 @@ kept in a schema of their own, so the real schema never sees them.
 
 `backend/tests/unit/test_db_base.py` tests `broken_rules` with tables made
 for each test: a schema that keeps the rules, a table that is not strict,
-six tables without the key every table has (no key, a key of another
-name, of two columns, of text, one that is the key of another table, and
-one that may be given twice), nineteen tables without the two times every
-table has (none, one of the two missing, and for each of the two: of
-another type, one that may be empty, one the table sets itself, one the
-store's code does not set, one that is one fixed moment, one that SQLite
-is asked for; a `created_at` that is set anew at a change, an `updated_at`
-that is not, one that a change sets to one fixed moment, and one that a
-change asks SQLite for), five columns whose text must not be empty and
-that are without their check (no check, the check under another name,
-and three checks of the right name that say something else), three ways
-of writing the check that count (as `not_empty` gives it, with the
-table's column, and as text), that the columns of a table are named in
-their order, a unique constraint, a foreign key and an index named by
-hand, the order of the sentences, and that a check without a name is
-refused when its table is defined. A table that must keep the
-rules gets its key and its two times from two helpers of the tests,
-`the_key` and `the_times`. One test there holds the real schema to the rules:
-`broken_rules(Base.metadata)` must be empty. It passes today because
-there is no table yet, and it is the test that fails when a table is
-added that breaks a rule.
+six tables without the key every table has (no key, a key of another name,
+of two columns, of text, one that is the key of another table, and one that
+may be given twice), nineteen tables without the two times every table has
+(none, one of the two missing, and for each of the two: of another type, one
+that may be empty, one the table sets itself, one the store's code does not
+set, one that is one fixed moment, one that SQLite is asked for; a
+`created_at` that is set anew at a change, an `updated_at` that is not, one
+that a change sets to one fixed moment, and one that a change asks SQLite
+for), five columns whose text must not be empty and that are without their
+check (no check, the check under another name, and three checks of the right
+name that say something else), three ways of writing the check that count
+(as `not_empty` gives it, with the table's column, and as text), that the
+columns of a table are named in their order, a unique constraint, a foreign
+key and an index named by hand, the order of the sentences, and that a check
+without a name is refused when its table is defined. Four more functions ask
+the rule about a column type of the tests' own that brings a check
+(DAT-034): a column of it is named, in that type's own words, until its
+table has the check; the check of one type does not count for a column of
+another, in four ways; columns of the two types in one table are named in
+their order, each in its own type's words; and a type that says it brings a
+check and gives none is an error, for the rule and when a model with a
+column of it is defined. A table that must keep the rules gets its key and
+its two times from two helpers of the tests, `the_key` and `the_times`. One
+test there holds the real schema to the rules: `broken_rules(Base.metadata)`
+must be empty. It passes today because there is no table yet, and it is the
+test that fails when a table is added that breaks a rule.
 
 `backend/tests/integration/test_key.py` has two models that name no key,
 one of which says something of its table itself, and makes their tables
@@ -440,8 +445,9 @@ with `.replace(tzinfo=None)`, since the lint refuses to write one out.
 that the list of white space is exactly what Python calls white space
 (every character there is is asked) and what `str.strip` takes off, the
 text of the check as SQLite is given it, also for a column named with a
-word of SQL, its name before and after the naming rule, and that the type
-is TEXT in a table.
+word of SQL, its name before and after the naming rule, that the type
+brings exactly that check, with its two words for `broken_rules`, and
+that the type is TEXT in a table.
 
 `backend/tests/integration/test_texts.py` has two models of its own, one
 of which says something of its table itself, and makes their tables in a
@@ -463,6 +469,20 @@ second is a subclass of the first and adds a column whose text must not
 be empty. `broken_rules` names that column; the test then gives the
 table the check, `broken_rules` names nothing, and the real SQLite file
 has the check and refuses empty text in the column (DAT-033).
+
+## Column types that bring a check
+
+`backend/tests/integration/test_checks.py` has a column type of its own
+that brings a check (text in large letters only) and one model with
+three columns: two of that type, one of which may be without a value,
+and between them one whose text must not be empty. It makes the table in
+a real SQLite file and asks the file: the table has the three checks, by
+name and in the order of the columns, and the two of the tests' type
+read as that type writes them. Then it stores rows: what the check
+allows is stored, also no value where the column may be without one; and
+what it refuses is refused with the name of the check, in both columns,
+and the row stored with it in the same unit of work is not there either.
+The model is kept in a schema of its own.
 
 ## The models and the migrations agree
 

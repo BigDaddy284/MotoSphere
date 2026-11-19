@@ -20,6 +20,8 @@ from typing import Annotated
 
 from sqlalchemy import CheckConstraint, Text, column, func
 
+from motosphere.db.checks import WithItsCheck
+
 __all__ = ["WHITE_SPACE", "NotEmpty", "NotEmptyText", "not_empty"]
 
 # The characters that are white space, each by its number in Unicode: the
@@ -41,8 +43,15 @@ WHITE_SPACE = (
 )
 
 
-class NotEmptyText(Text):
+class NotEmptyText(WithItsCheck, Text):
     """The column type of text that must not be empty. In the table it is TEXT."""
+
+    refuses = "empty text"
+    given_by = "not_empty"
+
+    def check_for(self, name: str) -> CheckConstraint:
+        """Give the check of :func:`not_empty` for the column called ``name``."""
+        return not_empty(name)
 
 
 # What a model says a column is: ``Mapped[NotEmpty]``. To Python and to the
