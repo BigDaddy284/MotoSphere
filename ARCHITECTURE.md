@@ -243,11 +243,13 @@ pipeline's command line. The settings and logging modules stay.
   for its column (`WithItsCheck` in `motosphere.db.checks`), and the base
   gives it to the table (DAT-034). A column that is yes or no is such a
   column too: a model says `bool`, the table holds the whole number 1 or
-  0, and SQLite refuses any other (DAT-035). `broken_rules` names a table
-  that breaks a rule, a table without the key or without the two times
-  among them (DAT-032), and a column whose type brings a check and whose
-  table is without it (DAT-033), and a test holds the schema to it
-  (DATABASE.md).
+  0, and SQLite refuses any other (DAT-035). And so is a column whose
+  value is one of a list the code knows: the list is a `StrEnum`, the
+  table holds its texts, and the check names them (DAT-036).
+  `broken_rules` names a table that breaks a rule, a table without the
+  key or without the two times among them (DAT-032), and a column whose
+  type brings a check and whose table is without it (DAT-033), and a test
+  holds the schema to it (DATABASE.md).
 - **A time is stored in one form**, as text: in UTC, with its offset
   written out and the whole fraction of its second, for example
   `2026-11-19T08:26:04.123456+00:00` (`motosphere.db.times`, DAT-028). The
