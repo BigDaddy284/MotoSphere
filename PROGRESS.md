@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 2 – Data store and published data (Phase 1 – Foundation is complete)
-- **Current task:** DAT-031 – Every table's timestamps (`NOT STARTED`, the planner is trialling it and writing its plan)
-- **Tasks verified:** 56 of 246
+- **Current task:** DAT-031 – Every table's timestamps (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 56 of 247
 - **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (993 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (the list is still empty); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, and only `migrate` writes to it; there is a base for all models, which makes every table strict and names its constraints and indexes by one rule, and a test that holds every table to that; a time is stored as text in one form, in UTC with its offset written out, a time without an offset is refused, and a model's `datetime` column gets that type from the base; every model gets its key from the base, a whole number `id` that SQLite never gives twice; there is no model and no table yet (`DATABASE.md`). No globe yet.
 
 ## Reports
@@ -4739,5 +4739,77 @@ each of the fifteen prove-it steps, and named no deviation; its Node was
 22.23.5 where the planner's is 22.23.4.
 
 Commit: `6916daa` (squash merge of pull request #81).
+
+Next task: DAT-031 – Every table's timestamps.
+
+### PLAN-019 – The timestamps first, the rule that names a table without them after (2026-11-19)
+
+Not a development task: no application code changed.
+
+PLAN-018 described "DAT-031 – Every table's timestamps" as the two
+columns and, with them, a rule in `broken_rules` that names a table
+without them. The planner's trial of the columns showed that these are two
+things to test:
+
+- The columns bring their own questions, and each took a test to settle:
+  which clock the store asks and how a test sets it, that a new row gets
+  one reading of the clock and not two, what counts as a change, what a
+  statement that stores or changes many rows does, and where the store's
+  code is not asked at all.
+- Two columns that must be there in every row reach into the tests of
+  three earlier tasks, which write rows with plain SQL or list the columns
+  of a table: twelve tests (six functions) of DAT-005, DAT-028 and DAT-029
+  change.
+- The rule would reach into a fourth file of existing tests, the tables
+  that the unit tests of `broken_rules` make by hand, and has more than
+  ten cases of its own (a column missing, of another type, one that may be
+  empty, one the table sets, one nothing sets).
+
+The rule is to choose the smaller task (CLAUDE.md §1). So:
+
+1. DAT-031 – Every table's timestamps. The clock, the two columns on
+   `Base`, and what sets them. This is the task that is planned now.
+2. DAT-032 – A table without its timestamps is named. The rule in
+   `broken_rules`. It follows. Until it is done, nothing but `Base` itself
+   sees to it that a table has the two times; there is no table yet.
+
+"DAT-030 – Text that must not be empty" and "DAT-026 – The models and the
+migrated schema agree" follow as before.
+
+What the planner tried for DAT-031 (Linux, Python 3.13.18 with SQLite
+3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv
+0.11.32), on `main` at `a34cfbe`:
+
+- With only the two modules changed, 12 of the existing tests failed, all
+  in the three files of tests that write rows with plain SQL or list the
+  columns of a table; the other 351 backend tests passed.
+- 20 new tests, 18 of them against a real SQLite file. The full run: 19
+  of 19 gates passed, "Tests: 1013 passed, 0 failed, 0 skipped." (backend
+  tests 383).
+- 135 of 135 planted defects detected: 23 new ones, all 63 of
+  DAT-029 and all 49 of DAT-028, planted again because their tests
+  changed.
+- The two times are set by the store's code when the statement runs, with
+  SQLAlchemy's `default` and `onupdate` of a column. That covers rows
+  stored and changed through a model and through `insert` and `update` of
+  a model; each is a test.
+- For a new row to get one reading of the clock, the default of
+  `updated_at` reads the value `created_at` got. SQLAlchemy's own way of
+  reading it (`get_current_parameters`) fails for a statement that stores
+  several rows at once (`KeyError`), so the function takes the row's
+  values as SQLAlchemy holds them, and three tests store two rows in three
+  ways.
+- A statement that stores a row or changes the one that is there
+  (`INSERT … ON CONFLICT DO UPDATE`) does not set `updated_at` when it
+  changes a row: tried, and a test says so. The store's code has no such
+  statement; `DATABASE.md` says that the first one has to set it.
+- In trial pull request #82 (closed without merging), exactly the twelve
+  files of the trial ran on GitHub (run 44501284214): "All gates (Linux)"
+  and "All gates (Windows)" green, each log ending `19 of 19 gates passed.`
+  and `Tests: 1013 passed, 0 failed, 0 skipped.`, with 383 backend tests on
+  both machines (Python 3.12.16 on Linux, 3.12.10 on Windows); "Build the
+  site", "Publish the site" and "Check the published site" skipped.
+
+Phase 2 has 40 tasks, 13 verified, and the project 247.
 
 Next task: DAT-031 – Every table's timestamps.
