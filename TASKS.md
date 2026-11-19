@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 41 | 17 |
+| 2 | Data store and published data (DAT, PUB) | 41 | 18 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-026 – The models and the migrated schema agree.
+**Current task:** DAT-006 – Information sources table.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1199,15 +1199,23 @@ that check is DAT-033, which follows it.
 - **Plan:** `docs/plans/DAT-033.md`
 
 ### DAT-026 – The models and the migrated schema agree
-- **Status:** NOT STARTED
-- **Objective:** A test fails whenever the models describe a schema other than the one the migrations build.
-- **Description:** One test brings an empty store to the newest schema with `migrate`, builds a second one from the models of DAT-005's base, and compares the two: tables, columns with their types and whether they may be empty, keys, constraints and indexes, by name. It runs with every change from then on, so a model cannot change without a migration, nor a migration without its model. Until DAT-006 adds the first table both stores are empty, so that the comparison can fail is proven with a small model and migration of the tests' own, differing in every way named above.
-- **Acceptance criteria:** a table, a column, a constraint or an index that only the models or only the migrations have fails the test, and the message names it; a column whose type differs, or that may be empty in one and not in the other, fails it; the real models and the real migrations agree.
-- **Tests required:** integration tests against real SQLite files; one planted difference of each kind, each detected and named; the full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Status:** PASSED – VERIFIED
+- **Objective:** A test fails whenever the models describe a schema other than the one the migrations build, and its message says in plain words where the two differ.
+- **Description:** One test brings an empty store to the newest schema with `migrate`, makes the tables of the models in a second real file, and asks one new function, `differences` in `motosphere.db.compare`, where the two differ. It runs with every change from then on, so a model cannot change without a migration, nor a migration without its model. Settled in the planner's trial: what is compared are the statements SQLite itself keeps in the file for each table, index, view and trigger (`sqlite_master`), by kind and name, because everything a table is stands in its statement (also that it is strict, that a key is never given twice, a value of its own, the text of a check, what a foreign key does, over which rows an index is), so the comparison forgets nothing and needs no list of the parts of a table; two statements are the same when they are the same words in the same order, where white space, comments, large and small letters and quotes around a name make no difference and text in single quotes is compared letter for letter; what SQLite keeps for itself (every name that begins with `sqlite_`) is left out. The sentences: `Only the models have the table X.`, `Only the migrations have the index Y.`, and for one that both have, `The table X is not the same in both. Where they first differ, the models say ... and the migrations say ....`, with the words of both from where the column or constraint begins that differs to five words after the first that differs. The order of the columns and of the constraints counts, so that a store built in one go and one brought there step by step are the same; it follows, and `DATABASE.md` says so, that a migration writes a table as its model makes it (the statements SQLAlchemy writes for a model, run as text, build the same, and a test does that) and adds a column by building the table anew, because a column SQLite adds in place stands after the two times. Until DAT-006 adds the first table both stores are empty, so that the comparison can fail is proven with two models and migrations of the tests' own. No existing file of code or tests changes. No table, no migration, no new package. The planner's trial has 48 new tests, all against real SQLite files, and detects 77 of 77 planted defects.
+- **Acceptance criteria:**
+  1. A table, an index, a view or a trigger that only the models or only the migrations have is named, with its kind, in one sentence each; the tables and indexes SQLite keeps for itself are never named.
+  2. A table or an index that both have and that differs is named in one sentence, with the words of both from where the column or constraint begins that differs, in each of twenty ways: a column that only one has, of another type, that may be without a value in one only, with a value of its own; a key that may be given twice; two columns the other way round; a constraint that only one has, over the same columns the other way round, of another name; a check that says something else; text in single quotes in other letters and with another space; a foreign key that does more, and one that only the models have; a table that is not strict; an index that lets no two rows be alike, over the same columns the other way round, and over some rows only.
+  3. How a statement is written makes no difference, in eight ways, and a table that was given its name later is the same table; a quote written twice inside quotes does not end them.
+  4. A migration written by hand builds what the models say, and so do the statements SQLAlchemy writes for the models, run as text. A column added to a table in place is named as a difference.
+  5. The sentences come kind by kind and name by name, and comparing leaves both files byte for byte as they were.
+  6. The real models and the real migrations agree. The type check passes with no `ignore` and the lint with no `noqa`.
+  7. `python scripts/check.py` reports 19 of 19 gates and 1122 tests (backend tests 492); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 48 new integration tests in 12 functions, every one with two real SQLite files: the real models against the real migrations; a migration written by hand and one written by SQLAlchemy that build what two models of the tests' own say; eight ways of writing a statement that make no difference; nine things only one of the two has; twenty single changes to a table or an index, each with its sentence written out; a column added in place; the order of the sentences; and that nothing is written. Eighteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** In a clean checkout of pull request #91 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1122 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 492: 444 before, 48 new); 77 planted defects in the new module, 77 of 77 detected, the plan's eighteen prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 44541345042 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1122 passed, 0 failed, 0 skipped.", with 492 backend tests on both machines, the three jobs after the gates skipped; run 44544063577 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1122 / 0 tests (repository 41, script tests 206, backend 492, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 77 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 6 files are identical to the planner's trial. No existing file of code or tests changed, and no package was added. Every one of the 48 new tests compares two real SQLite files, on Linux and on Windows: one whose tables SQLAlchemy made from the models and one that `migrate` built. The real models and the real migrations agree, both being empty; that the comparison can fail is proven with two models and migrations of the tests' own.
+- **Commit:** `3ea9b4f`
+- **Plan:** `docs/plans/DAT-026.md`
 
 ### DAT-006 – Information sources table
 - **Status:** NOT STARTED
