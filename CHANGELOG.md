@@ -119,10 +119,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - For the backend's tests, a fixture that gives every test a real data
   store of its own and reports a test that leaves a connection to it open
   (DAT-003).
-- The migration runner, `migrate`: the data store's schema is built and
-  changed only by numbered migrations, each kept as a whole with the
-  store's new version or not at all, and a store the code does not know is
-  refused in plain words. No new package (DAT-004).
 
 ### Removed
 

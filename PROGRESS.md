@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 2 – Data store and published data (Phase 1 – Foundation is complete)
-- **Current task:** DAT-004 – Schema migrations (`NOT STARTED`, the planner is trialling it and writing its plan)
-- **Tasks verified:** 47 of 236
+- **Current task:** DAT-004 – The migration runner (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 47 of 240
 - **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (834 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; no command uses the store yet, and there is no table (`DATABASE.md`). No globe yet.
 
 ## Reports
@@ -3796,3 +3796,79 @@ eleven prove-it steps, and names no deviation.
 Commit: `b555379` (squash merge of pull request #63).
 
 Next task: DAT-004 – Schema migrations.
+
+### PLAN-014 – Schema migrations in five tasks, and no way back (2026-11-19)
+
+Not a development task: no application code changed.
+
+"DAT-004 – Schema migrations" was one task: choose the migration tool, a
+first, empty migration, the store's schema version, two commands of the
+command line, and a test that fails when a model and the migrated schema
+differ. In the planner's trial each of these turned out to be something
+that is built, tested and committed alone, and the last of them cannot be
+tested before there is a base for models (DAT-005). The rule is to choose
+the smaller task (CLAUDE.md §1). So:
+
+1. DAT-004 – The migration runner. The list of migrations, the store's
+   version, and the function that applies what a store lacks, each
+   migration in one transaction with its version.
+2. DAT-023 – Only a store of MotoSphere's is migrated. A file that is not
+   one is refused and left as it is. This is new: the old task did not
+   have it.
+3. DAT-024 – Command: bring the store to the newest schema.
+4. DAT-025 – Command: say which schema a store has.
+5. DAT-026 – The models and the migrated schema agree. It follows DAT-005
+   in `TASKS.md`.
+
+Three things of the old task were decided otherwise, and why:
+
+- **The tool is a runner of the project's own, not Alembic.** Alembic
+  would add three packages (alembic 1.20.1, Mako 1.4.3 and MarkupSafe
+  3.0.4 on 2026-11-19, tried in a scratch copy) for abilities the store
+  does not use. The runner is about thirty lines on SQLAlchemy, and its
+  promises are tested against a real file. The comparison is in
+  `DATABASE.md` ("How the schema changes"), which the builder's pull
+  request adds.
+- **No migration has a way back.** The old task said "every migration can
+  be taken back, down to an empty store", and eleven later tasks (DAT-006
+  to DAT-018) asked for "the migration up and down". The store is rebuilt
+  from its text snapshot on every run (DAT-001's decision, DAT-020), so an
+  earlier state of the store is an earlier snapshot in the `data` branch,
+  with the code of that day. A way back would be a second function for
+  every table that is written and tested and never run on the real store,
+  and on SQLite most ways back build the table anew and throw away what
+  the newer columns held. Instead, the history only grows, a mistake in a
+  merged migration is put right by a new one, and each of those eleven
+  tasks now tests its migration "applied to a store at the version before
+  it". The three acceptance criteria that named a way back (DAT-006,
+  DAT-011, DAT-014) lost that clause and nothing else.
+- **No first, empty migration.** A store that has had no migration is at
+  version 0, and the list is empty until DAT-006 adds the first table.
+
+What the planner tried for DAT-004 (Linux, Python 3.13.18 with SQLite
+3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv
+0.11.32), on `main` at `f7b6cd1`:
+
+- 17 new tests, all passing. The full run: 19 of 19 gates passed, "Tests:
+  851 passed, 0 failed, 0 skipped." (backend tests 221).
+- 34 of 34 planted defects detected.
+- SQLite's `user_version`, set inside a transaction that fails, is taken
+  back with it; so a migration and its version can be one transaction.
+- A migration can build a table anew inside its transaction while rows of
+  another table point to it and foreign keys stay on
+  (`PRAGMA defer_foreign_keys = ON`; the table is copied aside, dropped,
+  made anew under its own name and filled again). Making the new table
+  under another name and renaming it afterwards was refused at the commit.
+  Three of the new tests do this on every machine the gates run on.
+- In trial pull request #64 (closed without merging), exactly these six
+  files ran on GitHub (run 44454811190): "All gates (Linux)" and "All gates
+  (Windows)" green, each log ending `19 of 19 gates passed.` and `Tests: 851
+  passed, 0 failed, 0 skipped.`, with 221 backend tests on both machines;
+  "Build the site", "Publish the site" and "Check the published site"
+  skipped. So GitHub's SQLite builds (3.45.1 on Linux, 3.49.1 on Windows)
+  also take the version back with a failed migration and let a migration
+  build a table anew while rows point to it.
+
+Phase 2 has 34 tasks, 5 verified, and the project 240.
+
+Next task: DAT-004 – The migration runner.
