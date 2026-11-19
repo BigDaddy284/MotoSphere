@@ -185,7 +185,7 @@ FND-007 and FND-008 are no longer part of the product. Task FND-020 removes
 them and their dependencies and turns `python -m motosphere` into the
 pipeline's command line. The settings and logging modules stay.
 
-## 5. Data store (Decided in outline; details by research task DAT-001)
+## 5. Data store (Decided)
 
 - **SQLite**, through Python's standard library driver. It is a real
   relational database with foreign keys, constraints, indexes and
@@ -196,19 +196,25 @@ pipeline's command line. The settings and logging modules stay.
 - **Geography without PostGIS.** Coordinates are stored as validated latitude
   and longitude (WGS 84). Bounding-box lookups use ordinary or R*Tree indexes;
   distances use the haversine formula in Python; map tiles and clusters are
-  computed at export time. DAT-001 confirms which SQLite features (R*Tree,
-  FTS5, JSON) are present in the Python builds we use on both platforms
-  before anything depends on them.
+  computed at export time.
+- **What the store relies on in SQLite** is named in one module,
+  `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
+  FTS5 and the JSON functions among them. Its tests run against the real
+  SQLite on every machine the gates run on. DAT-001 found all six on
+  GitHub's Linux and Windows machines, whose SQLite differs in version and
+  in build (DATABASE.md).
 - **Name matching** for duplicate detection is done in Python, with the
   library chosen in the task that first needs it.
-- **Keeping the data between runs (Open – DAT-001).** A GitHub Actions run
-  starts from nothing, so the store must be saved somewhere durable. Leading
-  candidate: after each run the store is written out as deterministic,
-  sorted text files in a dedicated `data` branch of this repository, and the
-  next run rebuilds the SQLite database from them. That gives a full,
-  reviewable history of every change for free. The alternative (keeping the
-  database file itself as a release asset) is compared in DAT-001, together
-  with repository and Pages size limits.
+- **Keeping the data between runs (Decided – DAT-001).** A GitHub Actions
+  run starts from nothing, so the store must be saved somewhere durable.
+  After each run the store is written out as deterministic, sorted text
+  files in a dedicated `data` branch of this repository, and the next run
+  rebuilds the SQLite database from them. That gives a full, reviewable
+  history of every change for free. Keeping the database file itself as a
+  release asset stays in reserve for the day the text files grow too large;
+  a workflow cache or artifact does not last. DATABASE.md has the
+  comparison, GitHub's limits and the sizes at which the decision is looked
+  at again.
 - Database tests run against a real SQLite database file. It is never
   replaced by mocks.
 - Every imported record carries provenance (source, source URL, collected-at,
