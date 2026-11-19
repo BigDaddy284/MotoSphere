@@ -2,6 +2,7 @@
 
 import os
 from collections.abc import Iterator
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ from sqlalchemy import Engine, event
 from sqlalchemy.pool import PoolProxiedConnection
 
 from motosphere.core.settings import ENV_PREFIX, get_settings
+from motosphere.db import times
 from motosphere.db.store import open_store
 
 # The tests of the `store` fixture run pytest itself (test_store_fixture.py).
@@ -51,3 +53,21 @@ def store(tmp_path: Path) -> Iterator[Engine]:
             f"Connections to its store that the test left open: {len(left_open)}. "
             "They were closed for it."
         )
+
+
+@pytest.fixture
+def clock(monkeypatch: pytest.MonkeyPatch) -> list[datetime]:
+    """Set the store's clock for this test, and give every moment it says, in order.
+
+    The set clock says 19 November 2026, 08:00 UTC, when it is first asked,
+    and one second more every time after that. So no two askings get the
+    same moment, and the test knows every moment the store was told.
+    """
+    said: list[datetime] = []
+
+    def now() -> datetime:
+        said.append(datetime(2026, 11, 19, 8, 0, tzinfo=UTC) + timedelta(seconds=len(said)))
+        return said[-1]
+
+    monkeypatch.setattr(times, "now", now)
+    return said
