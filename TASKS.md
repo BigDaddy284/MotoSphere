@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 42 | 42 |
-| 2 | Data store and published data (DAT, PUB) | 30 | 4 |
+| 2 | Data store and published data (DAT, PUB) | 30 | 5 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-003 – A real, separate store for every test.
+**Current task:** DAT-004 – Schema migrations.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -929,7 +929,7 @@ here although their numbers do not.
 - **Plan:** `docs/plans/DAT-022.md`
 
 ### DAT-003 – A real, separate store for every test
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Every database test gets its own real SQLite file and can never see another test's data, and a test that leaves a connection to its store open fails for that reason itself.
 - **Description:** One pytest fixture, `store`, in `backend/tests/conftest.py`. It opens `store.sqlite3` in the test's own temporary folder through `open_store` (DAT-021) and gives the test the engine: a real, empty store that is nobody else's, never a mock (CLAUDE.md §3, `ARCHITECTURE.md` §5). The fixture remembers every connection taken from the engine. When the test has ended, it closes those that are still open, so that the file can be removed on Windows too, and fails with "Connections to its store that the test left open: N. They were closed for it.", which pytest reports as an error at the end of that test. What the fixture does after a test is tested by letting pytest run a small file of tests in a process of its own (pytest's `pytester`, no new package). No existing test changes. The planner's trial has 6 new tests and detects 15 of 15 planted defects.
 - **Acceptance criteria:**
@@ -941,10 +941,10 @@ here although their numbers do not.
   6. The type check passes with no `ignore`.
   7. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 834 tests (backend tests 204); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** tests of the fixture itself against a real SQLite file (6 new): an empty store and the same key three times, the file in the test's own folder, the store opened the pipeline's way, and one test in which pytest runs 16 tests by itself (four that leave connections open, one that follows a leaking test, one that closes what it opened, and ten that say each connection was closed and each file can be removed); the existing tests unchanged; planted defects (a shared file, connections not closed, a test not reported, among others); the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #63 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 834 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 204: 198 before, 6 new); 15 planted defects in the fixture, 15 of 15 detected by the new tests, the plan's eleven prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 44451398431 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 834 passed, 0 failed, 0 skipped." with 204 backend tests, the three jobs after the gates skipped; run 44452427141 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 834 / 0 tests (repository 41, script tests 206, backend 204, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 15 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 5 files are identical to the planner's trial. No existing test changed and no package was added (`pytester` is part of pytest). The store the fixture gives is a real SQLite file opened through `open_store`, on Linux and on Windows; nothing is a mock. One of the 6 tests lets pytest run 16 tests by itself in a process of its own, four of which leave connections open, and reads the outcome (16 passed, 4 errors, the four sentences); those 16 are not counted among the 834. The planner's trial first detected 14 of 15 planted defects (a sentence that gave the number of all connections taken, not of those left open), and one of those tests was extended. The acceptance criterion "in either order" of the first task entry became "nothing is shared between them, so their order cannot matter": the tests are not run in a random order, and no package for that was added. The existing tests of the store and of units of work keep their own helpers.
+- **Commit:** `b555379`
 - **Plan:** `docs/plans/DAT-003.md`
 
 ### DAT-004 – Schema migrations
