@@ -109,6 +109,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A setting for where the data store's file is, `MOTOSPHERE_STORE_PATH`
   (default `store/motosphere.sqlite3` in the `backend` folder). Git ignores
   that folder and every `*.sqlite3` file (DAT-002).
+- The function that opens the data store, `open_store`, and SQLAlchemy 2 as
+  the pipeline's way to its database: foreign keys enforced on every
+  connection, failed work taken back as a whole, no connection left open,
+  and a plain sentence when the store cannot be opened (DAT-021).
 
 ### Removed
 
