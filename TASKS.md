@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 42 | 42 |
-| 2 | Data store and published data (DAT, PUB) | 30 | 5 |
+| 2 | Data store and published data (DAT, PUB) | 34 | 5 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-004 – Schema migrations.
+**Current task:** DAT-004 – The migration runner.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -845,7 +845,10 @@ against a real SQLite file, never a mock. A task's details are settled by
 the planner's trial before its plan is written, and a task that proves too
 large to test thoroughly is split then. The first such split (PLAN-013):
 the old DAT-002 is DAT-002, DAT-021 and DAT-022, which follow one another
-here although their numbers do not.
+here although their numbers do not. The second (PLAN-014): the old DAT-004
+is DAT-004, DAT-023, DAT-024, DAT-025 and, after DAT-005, DAT-026.
+PLAN-014 also decided that no migration has a way back; the tasks that add
+tables test their migration from the version before it.
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -947,12 +950,55 @@ here although their numbers do not.
 - **Commit:** `b555379`
 - **Plan:** `docs/plans/DAT-003.md`
 
-### DAT-004 – Schema migrations
+### DAT-004 – The migration runner
+- **Status:** IN PROGRESS
+- **Objective:** The store's schema is built and changed only by numbered migrations, each kept as a whole with the store's new version or not at all.
+- **Description:** One new module, `motosphere.db.migrations`. A migration is a function that is given a connection and changes the schema. The migrations stand in one tuple, `MIGRATIONS`, oldest first, and the place of a migration in it is its number; the tuple is empty until the first table (DAT-006). `schema_version(store)` reads the number of the last migration a store has had, which is kept in the file itself (SQLite's `user_version`; a new store is at 0). `migrate(store)` applies the migrations the store lacks, in order, each in one transaction together with its number, and returns the numbers. A store whose version the list does not know is refused with `SchemaError` and one plain sentence, and left as it is. The tool was chosen in the planner's trial: a runner of the project's own, not Alembic, which would add three packages for abilities the store does not use (the comparison is in `DATABASE.md`, "How the schema changes"). No migration has a way back: an earlier state of the store is an earlier snapshot in the `data` branch (PLAN-014). No command (DAT-024, DAT-025), no check that the file is a store of MotoSphere's (DAT-023), no model (DAT-005), no new package. The planner's trial has 17 new tests and detects 34 of 34 planted defects.
+- **Acceptance criteria:**
+  1. A new store is at version 0. `migrate` applies every migration in order and returns their numbers; the store is then at the newest version, and still is when it is opened again.
+  2. Migrating a second time applies nothing and changes nothing. A store that has had some of the migrations is given only those it lacks.
+  3. A migration that fails, with an ordinary error or one that is not (as Ctrl+C is), leaves the store at the version before it, with nothing of the failed migration kept; the migrations before it stay applied; the error reaches the caller as the same object; and the store goes on from there once the migration is mended.
+  4. Each migration is one transaction together with its version: three migrations are three commits.
+  5. A store newer than the list, or at a version below zero, is refused with `SchemaError` and "The data store cannot be brought up to date: its schema is version N, and this MotoSphere knows only the versions 0 to M.", and is left as it is.
+  6. `migrate(store)` without a list uses `MIGRATIONS` as it is at that moment, and one test brings an empty store to the newest schema with the real list.
+  7. A migration that commits by itself fails, and the store's version does not move.
+  8. A migration can build anew a table that rows of another table point to, inside its transaction and with foreign keys on; foreign keys are enforced afterwards; and if it loses a row that is pointed to, it is refused and the store is as it was before.
+  9. The type check passes with no `ignore` and the lint with no `noqa`. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 851 tests (backend tests 221); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** integration tests against the real SQLite file the fixture `store` gives each test (17 new), with migrations of the tests' own: order, repetition, a store that lacks only some, the version after the store is opened again, a migration that fails (two ways) and the store going on afterwards, one commit for each migration, both refusals with their sentence, a migration that commits by itself, the real list, and a table built anew while rows point to it (kept, enforced afterwards, refused when a row is lost); the existing tests unchanged; planted defects (migrations applied again or in the wrong order, the version not written or written apart from its migration, a failed migration kept or passed over, a store that should be refused and is not, among others); the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-004.md`
+
+### DAT-023 – Only a store of MotoSphere's is migrated
 - **Status:** NOT STARTED
-- **Objective:** The store's schema is built and changed only by numbered migrations, each of which can be applied and taken back.
-- **Description:** Migration tooling for SQLite (the tool is chosen in the planner's trial: Alembic with batch operations, or a small runner of its own if that proves simpler and as safe), a first, empty migration, and two commands of the pipeline's command line: bring the store to the newest schema, and say which schema a store has. The store records its schema version.
-- **Acceptance criteria:** an empty store is brought to the newest schema and says so; every migration can be taken back, down to an empty store; applying twice changes nothing; a store newer than the code is refused in plain words; a test fails when a model and the migrated schema differ.
-- **Tests required:** integration tests against a real SQLite file: up, down, up again, the commands run for real; a drift test; planted defects; the full run of all gates on both machines.
+- **Objective:** A file that is not a MotoSphere data store is never migrated: it is refused in plain words and left as it is.
+- **Description:** The store's file is marked as MotoSphere's with a number of the project's own in the field SQLite gives applications for this (`application_id`). `migrate` marks an empty file (no table, version 0, no mark) before it does anything else, migrates a file that has the mark, and refuses every other file: an SQLite database that has tables and no mark, or the mark of another application. The details are settled in the planner's trial. Without this, a store path that names somebody else's database would have MotoSphere's tables built into it.
+- **Acceptance criteria:** an empty file is marked and migrated; a marked store is migrated, also after it was opened again; a database with tables and no mark, and one with another mark, are each refused with one plain sentence and are byte for byte as before; the mark and the version are written in the same transaction as the first migration, or neither is.
+- **Tests required:** integration tests against a real SQLite file, with a database made by plain SQLite as the one that is not MotoSphere's; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-024 – Command: bring the store to the newest schema
+- **Status:** NOT STARTED
+- **Objective:** One command of the pipeline's command line brings the store the settings name to the newest schema and says what it did.
+- **Description:** A command of `python -m motosphere` (its name is settled in the planner's trial) that opens the store at `MOTOSPHERE_STORE_PATH` through `open_store`, calls `migrate`, and says in plain words which migrations it applied, or that the store was up to date. A store that cannot be opened or brought up to date gives its one plain sentence and an exit code other than 0, with no traceback. It is the first command that uses the store. `README.md` names it.
+- **Acceptance criteria:** where there is no file, the store is made at the newest schema and the command says so; a second run says the store is up to date and changes nothing; a store that is refused gives its sentence on the error output, an exit code other than 0 and no traceback, and is left as it is; the command is in the command line's help.
+- **Tests required:** integration tests that run the real command in a process of its own against a real SQLite file; unit tests of what it prints; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-025 – Command: say which schema a store has
+- **Status:** NOT STARTED
+- **Objective:** One command says which schema the store has and which is the newest the code knows, and changes nothing.
+- **Description:** A command of `python -m motosphere` (its name is settled in the planner's trial) that reads the version of the store at `MOTOSPHERE_STORE_PATH` and says in one plain sentence whether the store is up to date, how many migrations it lacks, that it is newer than this code, or that there is no store there. It never writes: a file that is not there is not made.
+- **Acceptance criteria:** each of the four cases gives its sentence; the store's file is byte for byte the same afterwards; where there is no file there is none afterwards either; the exit codes are stated in the plan and tested; the command is in the command line's help.
+- **Tests required:** integration tests that run the real command in a process of its own against a real SQLite file; planted defects (a command that makes the file, one that migrates); the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -969,12 +1015,23 @@ here although their numbers do not.
 - **Verification status:** Not verified
 - **Commit:** –
 
+### DAT-026 – The models and the migrated schema agree
+- **Status:** NOT STARTED
+- **Objective:** A test fails whenever the models describe a schema other than the one the migrations build.
+- **Description:** One test brings an empty store to the newest schema with `migrate`, builds a second one from the models of DAT-005's base, and compares the two: tables, columns with their types and whether they may be empty, keys, constraints and indexes, by name. It runs with every change from then on, so a model cannot change without a migration, nor a migration without its model. Until DAT-006 adds the first table both stores are empty, so that the comparison can fail is proven with a small model and migration of the tests' own, differing in every way named above.
+- **Acceptance criteria:** a table, a column, a constraint or an index that only the models or only the migrations have fails the test, and the message names it; a column whose type differs, or that may be empty in one and not in the other, fails it; the real models and the real migrations agree.
+- **Tests required:** integration tests against real SQLite files; one planted difference of each kind, each detected and named; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
 ### DAT-006 – Information sources table
 - **Status:** NOT STARTED
 - **Objective:** The store knows every source of information: who it is, how it may be used and how it is doing (DESIGN §7.3).
 - **Description:** Table, model and migration for sources: name, website, category (the twelve of DESIGN §7.1), kinds of information offered, collection method (DESIGN §7.2), how often it is scanned, last attempted and last successful scan, reliability, current health, last error, usage restrictions, terms and licence, and whether it is switched on. A new source starts switched off. The source's country is added with the countries table (DAT-011). `DATABASE.md` documents the table.
-- **Acceptance criteria:** a source can be stored and read back with every field; two sources cannot share a name or a website; a category or method outside the lists is refused; a website that is not an https or http address is refused; the migration can be taken back.
-- **Tests required:** integration tests against a real SQLite file for every rule above; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Acceptance criteria:** a source can be stored and read back with every field; two sources cannot share a name or a website; a category or method outside the lists is refused; a website that is not an https or http address is refused.
+- **Tests required:** integration tests against a real SQLite file for every rule above; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -985,7 +1042,7 @@ here although their numbers do not.
 - **Objective:** Every collection run is recorded: which source, when, how it ended and what it changed.
 - **Description:** Table, model and migration for runs: the source, start and end, outcome (running, succeeded, failed, interrupted), counts of records seen, added, changed and unchanged, and the error in plain words when it failed. A run left `running` by a job that died is marked interrupted by the next start, so recovery after an interrupted job (CLAUDE.md §13) has a record to work from.
 - **Acceptance criteria:** a run belongs to exactly one source and cannot outlive it unnoticed (a source with runs cannot be deleted); a run cannot end before it started; counts cannot be negative; runs left running are marked interrupted and nothing else is touched.
-- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -1007,7 +1064,7 @@ here although their numbers do not.
 - **Objective:** A change to a collected record is added to its history, never written over it.
 - **Description:** Table, model and migration for changes: which record, which field, the old and the new value, when, which collection run or which person's decision caused it. One function writes a change and its history in the same unit of work, so neither exists without the other. Historical values keep their original dates (CLAUDE.md §11).
 - **Acceptance criteria:** changing a field through the function leaves one history row with the old and new value; a change that sets the same value leaves none; history rows cannot be edited or deleted through the model; a failed change leaves neither the change nor the history.
-- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -1018,7 +1075,7 @@ here although their numbers do not.
 - **Objective:** Conflicting or doubtful information waits for a person's decision and is never merged by itself.
 - **Description:** Table, model and migration for review items: what is in doubt (a possible duplicate, two sources that disagree, a value outside its rules), the records and sources involved, the state (open, accepted, rejected), who decided and when, and a note that never leaves the store. One function opens an item, and opening the same doubt twice gives one item.
 - **Acceptance criteria:** an item names at least one record and why it is in doubt; the same doubt opened twice is one item; a decided item keeps its decision and cannot be reopened silently; the note is not in any published model.
-- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -1028,8 +1085,8 @@ here although their numbers do not.
 - **Status:** NOT STARTED
 - **Objective:** The store holds countries, so that everything else can say where it is.
 - **Description:** Table, model and migration for countries: the ISO 3166-1 two-letter and three-letter codes, the English short name, and provenance. Sources gain their country here (the column DAT-006 left out). No rows yet: they come with DAT-012.
-- **Acceptance criteria:** codes are stored in capitals and refused in any other form or length; two countries cannot share a code; a source's country must exist; the migration can be taken back.
-- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Acceptance criteria:** codes are stored in capitals and refused in any other form or length; two countries cannot share a code; a source's country must exist.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -1051,7 +1108,7 @@ here although their numbers do not.
 - **Objective:** A country can be divided into regions (a state, a county, a province), so that a track can say where in the country it is.
 - **Description:** Table, model and migration for regions: the country, the name, the ISO 3166-2 code where one exists, an optional parent region, and provenance. No reference rows: regions arrive with the records that need them.
 - **Acceptance criteria:** a region belongs to exactly one country; two regions of one country cannot share a code or, under the same parent, a name; a region's parent is in the same country; a country with regions cannot be deleted.
-- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -1061,8 +1118,8 @@ here although their numbers do not.
 - **Status:** NOT STARTED
 - **Objective:** The store knows the kinds of racing, and a new kind is a new row, not a new design (DESIGN §2.1).
 - **Description:** Table, model and migration for disciplines (a stable key, a name, a short description, an order for display), and the seven of DESIGN §2.1 as reference rows added by the migration: outdoor motocross, supercross, amateur motocross, youth and junior motocross, veteran and masters racing, enduro, hard enduro.
-- **Acceptance criteria:** the seven disciplines exist after the migration, each once; a key is lower-case words joined by hyphens and cannot be reused; taking the migration back removes them; adding an eighth needs no change to any other table.
-- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Acceptance criteria:** the seven disciplines exist after the migration, each once; a key is lower-case words joined by hyphens and cannot be reused; adding an eighth needs no change to any other table.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -1073,7 +1130,7 @@ here although their numbers do not.
 - **Objective:** The store holds the bodies behind the sport: governing bodies, clubs, promoters and organisers.
 - **Description:** Table, model and migration for organisations: name, kind (a fixed list), country, region where known, website, public contact details as published (an organisation's, never a private person's), and provenance. Identities that may be the same are not merged: they go to the review queue (DAT-010).
 - **Acceptance criteria:** an organisation has a name, a kind and a country; a kind outside the list is refused; a website must be an http or https address; two organisations with the same name in the same country are both kept, and a review item can name the pair.
-- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -1084,7 +1141,7 @@ here although their numbers do not.
 - **Objective:** The store holds tracks with a position that is checked, and can find the tracks inside a rectangle of the map quickly.
 - **Description:** Table, model and migration for tracks: name, country, region where known, latitude and longitude in WGS 84, how exact the position is, disciplines, status (open, closed, unknown), surface and facilities as published, website, the organisation that runs it, and provenance. A position is both numbers or neither. An index serves lookups by bounding box, including boxes that cross the 180th meridian; which kind of index (ordinary or R*Tree) is decided by measurement in the planner's trial.
 - **Acceptance criteria:** a latitude outside -90 to 90 or a longitude outside -180 to 180 is refused; one coordinate without the other is refused; a position of exactly 0, 0 is refused (a common sign of a missing value, and open sea); a bounding-box query returns exactly the tracks inside, across the 180th meridian too, and uses the index; no coordinate is ever invented.
-- **Tests required:** integration tests against a real SQLite file, with boundary and antimeridian cases and a check of the query plan; a measurement with 100,000 generated positions, used only to choose the index and never stored; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests required:** integration tests against a real SQLite file, with boundary and antimeridian cases and a check of the query plan; a measurement with 100,000 generated positions, used only to choose the index and never stored; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -1095,7 +1152,7 @@ here although their numbers do not.
 - **Objective:** A track can be known under several names, and a search by any of them finds it.
 - **Description:** Table, model and migration for other names of a track: the name, what kind it is (former name, local-language name, common short name), the language where known, and provenance. Names are compared without regard to case, accents and surrounding space, by one function that later tasks reuse for duplicate detection.
 - **Acceptance criteria:** a track cannot have the same alias twice, compared that way; an alias cannot equal the track's own name; deleting is not offered, and an alias proven wrong is ended through history; a lookup by alias returns the track.
-- **Tests required:** unit tests of the comparison (case, accents, scripts other than Latin left as they are); integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests required:** unit tests of the comparison (case, accents, scripts other than Latin left as they are); integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -1106,7 +1163,7 @@ here although their numbers do not.
 - **Objective:** The store can point to photographs and other media at their source, with credit and licence, without copying them (DESIGN §14).
 - **Description:** Table, model and migration for media references: what it shows (a track or an organisation, for now), the address of the page it is on and of the file, the kind, credit, licence, and provenance. Only references are stored. A file is never downloaded or republished by this task; whether one may ever be shown is decided by its licence in a later phase.
 - **Acceptance criteria:** a reference belongs to exactly one record; addresses must be http or https; a reference without a licence is kept as `unknown` and is not exported as showable; nothing in the task fetches a file.
-- **Tests required:** integration tests against a real SQLite file; the migration up and down; planted defects; the full run of all gates on both machines.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
