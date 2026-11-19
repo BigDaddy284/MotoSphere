@@ -5,6 +5,7 @@ the real schema never sees them. ``tests/integration/test_base.py`` makes
 tables in a real SQLite file.
 """
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -29,6 +30,7 @@ from sqlalchemy.schema import SchemaItem
 
 from motosphere.db import times
 from motosphere.db.base import NAMING, Base, broken_rules
+from motosphere.db.texts import WHITE_SPACE, NotEmptyText, not_empty
 from motosphere.db.times import UtcDateTime
 
 # What a table made by hand must say of itself to keep the rules. The
@@ -43,6 +45,15 @@ NO_KEY = (
 NO_TIMES = (
     "The table {} does not have the times every table has: created_at and updated_at, "
     "which the store's code sets when a row is first stored and whenever it is changed."
+)
+NO_CHECK = (
+    "The table {} does not refuse empty text in its column {}: it must have the check "
+    "that not_empty gives for the column, named by the naming rule."
+)
+# The check of a column named name, as not_empty writes it.
+ITS_CHECK = (
+    "trim(name, char(9, 10, 11, 12, 13, 28, 29, 30, 31, 32, 133, 160, 5760, 8192, 8193, 8194, "
+    "8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288)) != ''"
 )
 
 
@@ -67,6 +78,19 @@ def a_time(name: str, **said: Any) -> Column[datetime]:
 def the_times() -> list[Column[datetime]]:
     """The two times every table has."""
     return [a_time("created_at"), a_time("updated_at")]
+
+
+def given_by_not_empty(table: Table) -> None:
+    table.append_constraint(not_empty("name"))
+
+
+def written_with_the_tables_column(table: Table) -> None:
+    # A check written with a column of a table gives itself to that table.
+    CheckConstraint(func.trim(table.c.name, func.char(*WHITE_SPACE)) != "", name="name_not_empty")
+
+
+def written_as_text(table: Table) -> None:
+    table.append_constraint(CheckConstraint(ITS_CHECK, name="name_not_empty"))
 
 
 def test_the_real_schema_breaks_no_rule() -> None:
@@ -183,6 +207,83 @@ def test_a_table_without_the_times_every_table_has_is_named(columns: list[Column
 
 
 @pytest.mark.parametrize(
+    "checks",
+    [
+        [],
+        [CheckConstraint(ITS_CHECK, name="name_filled")],
+        [CheckConstraint("name != ''", name="name_not_empty")],
+        [CheckConstraint("trim(name) != ''", name="name_not_empty")],
+        [CheckConstraint(ITS_CHECK.replace("name", "title"), name="name_not_empty")],
+    ],
+    ids=[
+        "no check",
+        "its check under another name",
+        "a check of its name that takes text of white space",
+        "a check of its name that takes off spaces only",
+        "a check of its name that is of another column",
+    ],
+)
+def test_a_column_without_its_check_for_empty_text_is_named(
+    checks: list[CheckConstraint],
+) -> None:
+    schema = a_schema()
+    Table(
+        "odd_one",
+        schema,
+        the_key(),
+        Column("name", NotEmptyText),
+        Column("title", NotEmptyText),
+        *the_times(),
+        not_empty("title"),
+        *checks,
+        **KEPT,
+    )
+
+    assert broken_rules(schema) == [NO_CHECK.format("odd_one", "name")]
+
+
+@pytest.mark.parametrize(
+    "give_the_check",
+    [given_by_not_empty, written_with_the_tables_column, written_as_text],
+    ids=[
+        "the check not_empty gives",
+        "the same check written with the table's column",
+        "the same check written as text",
+    ],
+)
+def test_a_column_is_named_until_its_table_has_the_check(
+    give_the_check: Callable[[Table], None],
+) -> None:
+    schema = a_schema()
+    kept = Table("kept", schema, the_key(), Column("name", NotEmptyText), *the_times(), **KEPT)
+
+    assert broken_rules(schema) == [NO_CHECK.format("kept", "name")]
+
+    give_the_check(kept)
+
+    assert broken_rules(schema) == []
+
+
+def test_columns_without_their_check_are_named_in_the_order_of_the_columns() -> None:
+    schema = a_schema()
+    Table(
+        "odd_one",
+        schema,
+        the_key(),
+        Column("title", NotEmptyText, nullable=False),
+        Column("note", Text),
+        Column("name", NotEmptyText),
+        *the_times(),
+        **KEPT,
+    )
+
+    assert broken_rules(schema) == [
+        NO_CHECK.format("odd_one", "title"),
+        NO_CHECK.format("odd_one", "name"),
+    ]
+
+
+@pytest.mark.parametrize(
     "by_hand",
     [
         UniqueConstraint("number", name="mine"),
@@ -215,12 +316,20 @@ def test_the_breaks_are_listed_table_by_table_and_rule_by_rule() -> None:
         UniqueConstraint("a", name="first"),
         **KEPT,
     )
-    Table("aardvark", schema, the_key(), Column("a", Integer), UniqueConstraint("a", name="mine"))
+    Table(
+        "aardvark",
+        schema,
+        the_key(),
+        Column("a", Integer),
+        Column("name", NotEmptyText),
+        UniqueConstraint("a", name="mine"),
+    )
 
     assert broken_rules(schema) == [
         "The table aardvark is not strict.",
         NO_KEY.format("aardvark"),
         NO_TIMES.format("aardvark"),
+        NO_CHECK.format("aardvark", "name"),
         "The table aardvark has a name given by hand, mine: "
         "constraints and indexes are named by the naming rule.",
         "The table zebra has a name given by hand, first: "

@@ -21,13 +21,25 @@ A model is a class that describes one table. Every model is a subclass of
   every machine. The key has no name: SQLite writes it with its column.
 
 :func:`broken_rules` says in plain words which tables of a schema break a
-rule. A test holds the real schema to it.
+rule, and which columns are without the check their text must have. A test
+holds the real schema to it.
 """
 
 from datetime import datetime
 from typing import Any, ClassVar
 
-from sqlalchemy import REAL, Constraint, Index, Integer, MetaData, PrimaryKeyConstraint, Table, Text
+from sqlalchemy import (
+    REAL,
+    CheckConstraint,
+    Constraint,
+    Index,
+    Integer,
+    MetaData,
+    PrimaryKeyConstraint,
+    Table,
+    Text,
+)
+from sqlalchemy.dialects import sqlite
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.schema import conv
 from sqlalchemy.types import TypeEngine
@@ -150,11 +162,43 @@ def _has_the_times(table: Table) -> bool:
     )
 
 
+def _as_sqlite_is_given_it(check: CheckConstraint) -> str:
+    """Give the text of a check as it is written when its table is made."""
+    written = check.sqltext.compile(
+        dialect=sqlite.dialect(), compile_kwargs={"literal_binds": True, "include_table": False}
+    )
+    return str(written)
+
+
+def _without_their_check(table: Table) -> list[str]:
+    """Name the columns whose text must not be empty and that lack the check for it.
+
+    The check is the one :func:`motosphere.db.texts.not_empty` gives: of
+    the name the naming rule gives it, and of the same text. A check of
+    another name, and one of that name that says something else, do not
+    count.
+    """
+    checks = {
+        str(check.name): _as_sqlite_is_given_it(check)
+        for check in table.constraints
+        if isinstance(check, CheckConstraint)
+    }
+    without: list[str] = []
+    for column in table.columns:
+        if isinstance(column.type, NotEmptyText):
+            its_check = not_empty(column.name)
+            name = NAMING["ck"] % {"table_name": table.name, "constraint_name": its_check.name}
+            if checks.get(name) != _as_sqlite_is_given_it(its_check):
+                without.append(column.name)
+    return without
+
+
 def broken_rules(schema: MetaData) -> list[str]:
     """Say which tables of ``schema`` break a rule, one plain sentence for each break.
 
     A table must be strict, its key must be the one every table has, it
-    must have the two times every table has, and every other constraint and
+    must have the two times every table has, every column of it whose text
+    must not be empty must have its check, and every other constraint and
     every index of it must have its name from the naming rule, not one
     given by hand. A schema that keeps the rules gives an empty list.
     """
@@ -173,6 +217,12 @@ def broken_rules(schema: MetaData) -> list[str]:
                 "created_at and updated_at, which the store's code sets when a row is "
                 "first stored and whenever it is changed."
             )
+        breaks.extend(
+            f"The table {table.name} does not refuse empty text in its column {name}: "
+            "it must have the check that not_empty gives for the column, named by "
+            "the naming rule."
+            for name in _without_their_check(table)
+        )
         named: list[Constraint | Index] = [
             *(one for one in table.constraints if not isinstance(one, PrimaryKeyConstraint)),
             *table.indexes,

@@ -1,9 +1,10 @@
 """Tests of text that must not be empty, with tables made in a real SQLite file.
 
-The two models here are made for the tests. They are subclasses of the
-real ``Base``, so they prove what a model gets when it says that a
-column's text must not be empty, but they are kept in a schema of their
-own (``Proof.metadata``), so the real schema never sees them.
+The models here are made for the tests. They are subclasses of the real
+``Base``, so they prove what a model gets when it says that a column's
+text must not be empty, but they are kept in schemas of their own
+(``Proof.metadata`` and ``Family.metadata``), so the real schema never
+sees them.
 """
 
 import re
@@ -14,7 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, mapped_column
 
 from motosphere.db.base import Base, broken_rules
-from motosphere.db.texts import WHITE_SPACE, NotEmpty, NotEmptyText
+from motosphere.db.texts import WHITE_SPACE, NotEmpty, NotEmptyText, not_empty
 from motosphere.db.work import unit_of_work
 
 A_TIME = "2026-11-19T08:00:00.000000+00:00"
@@ -54,6 +55,24 @@ class ProofTeam(Proof):
 
     name: Mapped[NotEmpty]
     country: Mapped[str]
+
+
+class Family(Base):
+    """Two models with one table, in a schema of their own: the second adds a column to it."""
+
+    __abstract__ = True
+    metadata = MetaData(naming_convention=Base.metadata.naming_convention)
+
+
+class ProofMachine(Family):
+    __tablename__ = "proof_machine"
+
+    name: Mapped[NotEmpty]
+
+
+class ProofBike(ProofMachine):
+    # A column that a subclass of a model adds to the table of its parent.
+    maker: Mapped[NotEmpty | None]
 
 
 @pytest.fixture
@@ -286,3 +305,49 @@ def test_text_that_may_be_empty_is_stored_empty_as_before(made: Engine) -> None:
     with made.connect() as connection:
         notes = connection.exec_driver_sql("SELECT note FROM proof_rider ORDER BY id").scalars()
         assert list(notes) == ["", "  "]
+
+
+def test_a_column_a_subclass_adds_to_its_parents_table_is_named_until_it_is_given_its_check(
+    store: Engine,
+) -> None:
+    machines = Family.metadata.tables["proof_machine"]
+
+    assert broken_rules(Family.metadata) == [
+        "The table proof_machine does not refuse empty text in its column maker: it must "
+        "have the check that not_empty gives for the column, named by the naming rule."
+    ]
+
+    machines.append_constraint(not_empty("maker"))
+
+    assert broken_rules(Family.metadata) == []
+
+    with store.begin() as connection:
+        Family.metadata.create_all(connection)
+
+    assert "CONSTRAINT ck_proof_machine_maker_not_empty CHECK (trim(maker, char(9, " in written(
+        store, "proof_machine"
+    )
+
+    with (
+        pytest.raises(IntegrityError, match=re.escape(REFUSED.format("proof_machine_maker"))),
+        unit_of_work(store) as work,
+    ):
+        work.add(ProofBike(name="An Example", maker="\u00a0"))
+
+    with unit_of_work(store) as work:
+        work.add_all(
+            [
+                ProofBike(name="An Example", maker="An Example Maker"),
+                ProofBike(name="Another Example", maker=None),
+                ProofMachine(name="A Third Example"),
+            ]
+        )
+
+    with store.connect() as connection:
+        stored = connection.exec_driver_sql("SELECT name, maker FROM proof_machine ORDER BY id")
+
+        assert [tuple(row) for row in stored] == [
+            ("An Example", "An Example Maker"),
+            ("Another Example", None),
+            ("A Third Example", None),
+        ]
