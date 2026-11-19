@@ -22,17 +22,14 @@ from sqlalchemy import (
     Table,
     Text,
     UniqueConstraint,
-    column,
     func,
     text,
 )
 from sqlalchemy.exc import InvalidRequestError
-from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.schema import SchemaItem
 
 from motosphere.db import times
 from motosphere.db.base import NAMING, Base, broken_rules
-from motosphere.db.checks import WithItsCheck
 from motosphere.db.texts import WHITE_SPACE, NotEmptyText, not_empty
 from motosphere.db.times import UtcDateTime
 
@@ -58,30 +55,6 @@ ITS_CHECK = (
     "trim(name, char(9, 10, 11, 12, 13, 28, 29, 30, 31, 32, 133, 160, 5760, 8192, 8193, 8194, "
     "8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288)) != ''"
 )
-
-
-# The sentence for a column of the tests' own type, ShoutedText.
-NOT_SHOUTED = (
-    "The table {} does not refuse small letters in its column {}: it must have the check "
-    "that shouted gives for the column, named by the naming rule."
-)
-
-
-class ShoutedText(WithItsCheck, Text):
-    """A column type of the tests' own that brings a check: text in large letters only."""
-
-    refuses = "small letters"
-    given_by = "shouted"
-
-    def check_for(self, name: str) -> CheckConstraint:
-        return CheckConstraint(column(name) == func.upper(column(name)), name=f"{name}_shouted")
-
-
-class PromisedText(WithItsCheck, Text):
-    """A column type that says it brings a check, and gives none."""
-
-    refuses = "anything"
-    given_by = "nothing"
 
 
 def a_schema() -> MetaData:
@@ -308,99 +281,6 @@ def test_columns_without_their_check_are_named_in_the_order_of_the_columns() -> 
         NO_CHECK.format("odd_one", "title"),
         NO_CHECK.format("odd_one", "name"),
     ]
-
-
-def test_a_column_of_any_type_that_brings_a_check_is_named_until_its_table_has_the_check() -> None:
-    schema = a_schema()
-    kept = Table("kept", schema, the_key(), Column("code", ShoutedText), *the_times(), **KEPT)
-
-    assert broken_rules(schema) == [NOT_SHOUTED.format("kept", "code")]
-
-    kept.append_constraint(ShoutedText().check_for("code"))
-
-    assert [
-        str(check.name) for check in kept.constraints if isinstance(check, CheckConstraint)
-    ] == ["ck_kept_code_shouted"]
-    assert broken_rules(schema) == []
-
-
-@pytest.mark.parametrize(
-    ("of_the_code", "of_the_name", "found"),
-    [
-        (not_empty("code"), ShoutedText().check_for("name"), ["code", "name"]),
-        (
-            CheckConstraint(ITS_CHECK.replace("name", "code"), name="code_shouted"),
-            CheckConstraint("name = upper(name)", name="name_not_empty"),
-            ["code", "name"],
-        ),
-        (ShoutedText().check_for("code"), ShoutedText().check_for("name"), ["name"]),
-        (not_empty("code"), not_empty("name"), ["code"]),
-    ],
-    ids=[
-        "each has the check the other's type gives",
-        "each has the other's check under its own check's name",
-        "both have the check of the first one's type",
-        "both have the check of the second one's type",
-    ],
-)
-def test_the_check_of_one_type_does_not_count_for_a_column_of_another(
-    of_the_code: CheckConstraint, of_the_name: CheckConstraint, found: list[str]
-) -> None:
-    schema = a_schema()
-    Table(
-        "odd_one",
-        schema,
-        the_key(),
-        Column("code", ShoutedText),
-        Column("name", NotEmptyText),
-        *the_times(),
-        of_the_code,
-        of_the_name,
-        **KEPT,
-    )
-    sentences = {"code": NOT_SHOUTED, "name": NO_CHECK}
-
-    assert broken_rules(schema) == [sentences[name].format("odd_one", name) for name in found]
-
-
-def test_columns_of_several_types_are_named_in_their_order_each_in_its_types_words() -> None:
-    schema = a_schema()
-    Table(
-        "odd_one",
-        schema,
-        the_key(),
-        Column("tag", ShoutedText),
-        Column("name", NotEmptyText),
-        Column("note", Text),
-        Column("code", ShoutedText),
-        *the_times(),
-        **KEPT,
-    )
-
-    assert broken_rules(schema) == [
-        NOT_SHOUTED.format("odd_one", "tag"),
-        NO_CHECK.format("odd_one", "name"),
-        NOT_SHOUTED.format("odd_one", "code"),
-    ]
-
-
-def test_a_type_that_says_it_brings_a_check_and_gives_none_is_an_error() -> None:
-    schema = a_schema()
-    Table("odd_one", schema, the_key(), Column("code", PromisedText), *the_times(), **KEPT)
-
-    with pytest.raises(NotImplementedError):
-        broken_rules(schema)
-
-    class Proof(Base):
-        __abstract__ = True
-        metadata = a_schema()
-
-    with pytest.raises(NotImplementedError):
-
-        class ProofSign(Proof):
-            __tablename__ = "proof_sign"
-
-            code: Mapped[str] = mapped_column(PromisedText)
 
 
 @pytest.mark.parametrize(

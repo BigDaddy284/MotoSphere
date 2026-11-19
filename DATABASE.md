@@ -227,15 +227,10 @@ these rules:
   column of another type ("unknown datatype"); SQLAlchemy's own types for
   text, for numbers with a fraction, for yes and no and for times are four
   such.
-- **A column whose type brings a check has that check** (DAT-034). Some
-  of what the store promises of a column is narrower than any type of a
-  strict table, and is kept by a check in the table. The column's type
-  brings the check, and `Base` gives it to the table of every model that
-  has such a column. See "Column types that bring a check" below.
 - **Text that must not be empty is refused when it is empty**, by the
-  table itself (DAT-030). It is the first such type: a model says
-  `Mapped[NotEmpty]` of such a column, and `Base` gives its table the
-  check the type brings. See "Text that must not be empty" below.
+  table itself (DAT-030). A model says `Mapped[NotEmpty]` of such a
+  column, and `Base` gives its table a check for it. See "Text that must
+  not be empty" below.
 - **Constraints and indexes are named by one rule** (`NAMING`), so that a
   migration can name what it changes, and so that the names are the same
   on every machine:
@@ -255,9 +250,9 @@ these rules:
 `broken_rules(schema)` says in plain words which tables of a schema break
 a rule: a table that is not strict (one made without a model can be), a
 table without the key every table has, a table without the two times
-every table has, a column whose type brings a check and whose table
-does not have it, and a constraint or an index that was named by hand. A
-test holds the real schema to it with every change.
+every table has, a column whose text must not be empty and whose table
+does not have the check for it, and a constraint or an index that was
+named by hand. A test holds the real schema to it with every change.
 
 A table is without the two times (DAT-032) if `created_at` or `updated_at`
 is missing, is not a time as the store keeps one, may be empty, or gets a
@@ -269,15 +264,12 @@ changed; or if `created_at` is set anew at all. The rule sees that the
 store's code calls a function, not which one: that it is the store's
 clock is what a model gets from `Base` by not naming the two columns.
 
-A column whose type brings a check is without it (DAT-033, DAT-034)
-unless its table has the check its type gives for it: one of the name the
-naming rule gives, and of the same text, as SQLite is given it when the
-table is made. For text that must not be empty that is the check
-`not_empty` gives, `ck_<table>_<column>_not_empty`. A check of another
+A column whose text must not be empty is without its check (DAT-033)
+unless its table has the check `not_empty` gives for it: one of the name
+the naming rule gives, `ck_<table>_<column>_not_empty`, and of the same
+text, as SQLite is given it when the table is made. A check of another
 name does not count, and neither does one of that name that says
-something else, nor the check another type gives. The columns of a table
-are named in their order, each in the words of its own type: what is not
-refused, and which function gives the check.
+something else. The columns of a table are named in their order.
 
 There is no model yet, and so no table. The rules are proven with models
 of the tests' own, which are kept in schemas apart from the real one.
@@ -382,63 +374,6 @@ Where this ends:
   ```python
   table.append_constraint(not_empty("maker"))
   ```
-
-## Column types that bring a check
-
-A column of the store has one of four types (see "The rules every table
-keeps"), and much of what the store must promise of a column is narrower
-than any of them: text that is not empty is narrower than TEXT. Such a
-promise is kept by a check in the table, so that SQLite itself refuses the
-row, whoever writes it. The check comes with the column's type (DAT-034,
-`motosphere.db.checks`).
-
-A column type that brings a check is a subclass of `WithItsCheck`, beside
-its SQLAlchemy type, and says three things:
-
-```python
-class NotEmptyText(WithItsCheck, Text):
-    refuses = "empty text"
-    given_by = "not_empty"
-
-    def check_for(self, name: str) -> CheckConstraint:
-        return not_empty(name)
-```
-
-- `check_for(name)` gives the check for the column of that name. The
-  check has the last part of its name (`name_not_empty`), which the
-  naming rule completes once the check is given to a table, and belongs
-  to no table until then.
-- `refuses` and `given_by` are the words `broken_rules` uses of a column
-  that is without the check: what is not refused, and the name of the
-  function that gives the check, for whoever has to give it by hand.
-
-Everything else follows by itself, for every such type:
-
-- **`Base` gives the check to the table** of every model that has a
-  column of the type, when the model is defined.
-- **`broken_rules` names a column of the type whose table is without the
-  check**: `The table X does not refuse empty text in its column Y: it
-  must have the check that not_empty gives for the column, named by the
-  naming rule.`, with the two words of the column's own type.
-- **A type that says it brings a check and gives none is an error**
-  (`NotImplementedError`), when a model with a column of it is defined
-  and when `broken_rules` is asked about a table with one.
-
-A model can only say a type by the column's Python type
-(`Mapped[NotEmpty]`) once the type is in the list `Base` keeps for that
-(`type_annotation_map`); until then it names the type itself
-(`mapped_column(TheType)`).
-
-The types that bring a check so far: `NotEmptyText`, text that must not
-be empty (above).
-
-Where this ends is the same for every such type: `Base` gives the check
-when a model is defined, so a column that a subclass of a model adds to
-its parent's table gets none, and neither does a table made without a
-model. `broken_rules` names such a column, and its table is given the
-check by hand, as "Text that must not be empty" shows. And a migration
-writes the check itself, as it writes the rest of the table (see "The
-models and the migrations agree").
 
 ## When a row was stored and changed
 
