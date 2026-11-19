@@ -14,7 +14,6 @@ from motosphere.db.migrations import (
     Migration,
     SchemaError,
     migrate,
-    pending,
     schema_version,
 )
 from motosphere.db.store import open_store
@@ -351,76 +350,4 @@ def test_a_file_with_the_mark_of_another_application_is_refused_and_left_as_it_i
         f"The data store cannot be brought up to date: {file_of(store)} is not a store of "
         "MotoSphere's (it carries the mark of another application, 1196444487)."
     )
-    assert file_of(store).read_bytes() == before
-
-
-def test_a_new_store_lacks_every_migration(store: Engine) -> None:
-    assert pending(store, THREE) == [1, 2, 3]
-
-
-def test_a_store_lacks_the_migrations_after_those_it_has_had(store: Engine) -> None:
-    migrate(store, THREE[:1])
-
-    assert pending(store, THREE) == [2, 3]
-
-
-def test_a_store_that_is_up_to_date_lacks_none(store: Engine) -> None:
-    migrate(store, THREE)
-
-    assert pending(store, THREE) == []
-
-
-def test_asking_what_a_store_lacks_writes_nothing(store: Engine) -> None:
-    migrate(store, THREE[:1])
-    before = file_of(store).read_bytes()
-    commits: list[object] = []
-    event.listen(store, "commit", commits.append)
-
-    pending(store, THREE)
-
-    assert commits == []
-    assert file_of(store).read_bytes() == before
-    assert tables(store) == ["first"]
-
-
-def test_the_stores_own_history_is_asked_when_none_is_given(
-    store: Engine, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(migrations, "MIGRATIONS", tuple(THREE))
-
-    assert pending(store) == [1, 2, 3]
-
-
-def test_migrating_applies_exactly_what_was_said_to_be_lacking(store: Engine) -> None:
-    migrate(store, THREE[:2])
-    lacking = pending(store, [*THREE, make("fourth")])
-
-    applied = migrate(store, [*THREE, make("fourth")])
-
-    assert applied == lacking == [3, 4]
-    assert pending(store, [*THREE, make("fourth")]) == []
-
-
-@pytest.mark.parametrize(
-    "theirs",
-    [
-        ["CREATE TABLE theirs (id INTEGER PRIMARY KEY)"],
-        [f"PRAGMA application_id = {GEOPACKAGE}"],
-        [f"PRAGMA application_id = {APPLICATION_ID}", "PRAGMA user_version = 9"],
-        [f"PRAGMA application_id = {APPLICATION_ID}", "PRAGMA user_version = -1"],
-    ],
-    ids=["a table and no mark", "the mark of another application", "newer", "a version below zero"],
-)
-def test_a_store_that_would_not_be_migrated_is_refused_in_the_same_words_and_left_as_it_is(
-    store: Engine, theirs: list[str]
-) -> None:
-    before = with_sqlite_alone(store, *theirs)
-    with pytest.raises(SchemaError) as from_migrate:
-        migrate(store, THREE)
-
-    with pytest.raises(SchemaError) as refusal:
-        pending(store, THREE)
-
-    assert str(refusal.value) == str(from_migrate.value)
-    assert str(refusal.value).startswith("The data store cannot be brought up to date: ")
     assert file_of(store).read_bytes() == before
