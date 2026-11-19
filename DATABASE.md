@@ -101,23 +101,10 @@ the first table is added. What the module promises:
   the store stays at the version before it, the migrations before it stay
   applied, and the error reaches the caller as it was raised. The store
   goes on from there once the migration is mended.
-- **Only a store of MotoSphere's is migrated.** A store's file carries a
-  mark: the number 1299141488 (the letters "MoSp", `APPLICATION_ID`), in
-  the field SQLite gives applications to say whose a database is
-  (`application_id`). A new file, with nothing in it, gets the mark in the
-  transaction of its first migration, so a file has the mark and its first
-  version together or neither. A file that carries the mark is migrated.
-  Every other file is refused before anything is written, with one plain
-  sentence that begins "The data store cannot be brought up to date:",
-  names the file and says why (`SchemaError`), and is left byte for byte as
-  it was: a file with the mark of another application, and a file with no
-  mark that has a table, a view or a version. So `migrate` never changes
-  another program's database, whatever file `MOTOSPHERE_STORE_PATH` names.
 - **A version the code does not know is refused.** A store that is newer
   than the code, or whose version no migration gave, is refused with one
   plain sentence that begins "The data store cannot be brought up to
-  date:" (`SchemaError`), and is left as it is. The mark is looked at
-  first, so the file of another program is never taken for a newer store.
+  date:" (`SchemaError`), and is left as it is.
 - **The history only grows.** A migration that has been merged is not
   changed, moved or taken out, because stores and snapshots at its version
   exist. A mistake in one is put right by a new one.
@@ -139,11 +126,6 @@ copies the table aside, drops it, makes it anew under its own name, fills
 it again and drops the copy. If a row that is pointed to was lost on the
 way, the commit is refused and the store is as it was before. The tests
 do exactly this on every machine the gates run on.
-
-The mark was chosen on 2026-11-19 (DAT-023). SQLite's own list of the
-marks it knows (`magic.txt` in its source, read that day) names Fossil,
-GeoPackage, MBTiles and a few others, and 1299141488 is not among them.
-The mark never changes: a store with another one would be refused.
 
 **Decision (DAT-004):** a small runner of the project's own, not Alembic.
 

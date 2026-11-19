@@ -1,7 +1,5 @@
 """Tests of the migration runner, against a real SQLite file of the test's own."""
 
-import sqlite3
-from contextlib import closing
 from pathlib import Path
 
 import pytest
@@ -9,35 +7,14 @@ from sqlalchemy import Connection, Engine, event
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 from motosphere.db import migrations
-from motosphere.db.migrations import (
-    APPLICATION_ID,
-    Migration,
-    SchemaError,
-    migrate,
-    schema_version,
-)
+from motosphere.db.migrations import Migration, SchemaError, migrate, schema_version
 from motosphere.db.store import open_store
-
-# The mark of another application: that of an OGC GeoPackage file.
-GEOPACKAGE = 0x47504B47
 
 
 def tables(store: Engine) -> list[str]:
     with store.connect() as connection:
         found = connection.exec_driver_sql("SELECT name FROM sqlite_master ORDER BY name")
         return [str(name) for (name,) in found]
-
-
-def file_of(store: Engine) -> Path:
-    return Path(str(store.url.database))
-
-
-def with_sqlite_alone(store: Engine, *statements: str) -> bytes:
-    """Change the store's file as another program would, and return the file as it then is."""
-    with closing(sqlite3.connect(file_of(store), autocommit=True)) as connection:
-        for statement in statements:
-            connection.execute(statement)
-    return file_of(store).read_bytes()
 
 
 def make(table: str) -> Migration:
@@ -212,7 +189,6 @@ def test_a_store_newer_than_the_history_is_refused_and_left_as_it_is(store: Engi
 
 def test_a_version_no_migration_gave_is_refused_and_the_store_left_as_it_is(store: Engine) -> None:
     with store.begin() as connection:
-        connection.exec_driver_sql(f"PRAGMA application_id = {APPLICATION_ID}")
         connection.exec_driver_sql("PRAGMA user_version = -1")
 
     with pytest.raises(SchemaError) as refusal:
@@ -285,69 +261,3 @@ def test_such_a_migration_is_refused_when_it_loses_a_row_that_is_pointed_to(stor
     assert columns_of_parent(store) == ["id", "name"]
     with store.connect() as connection:
         assert connection.exec_driver_sql("SELECT id FROM parent").all() == [(1,), (2,)]
-
-
-def test_the_first_migration_marks_the_file_as_a_store_of_motospheres(store: Engine) -> None:
-    migrate(store, THREE[:1])
-
-    # Where SQLite keeps an application's mark: four bytes of the file's header.
-    assert file_of(store).read_bytes()[68:72] == b"MoSp"
-
-
-def test_a_new_store_that_lacks_no_migration_is_not_written_to(store: Engine) -> None:
-    before = file_of(store).read_bytes()
-
-    applied = migrate(store, [])
-
-    assert applied == []
-    assert file_of(store).read_bytes() == before
-
-
-def test_a_first_migration_that_fails_leaves_the_file_as_it_was(store: Engine) -> None:
-    before = file_of(store).read_bytes()
-    error = RuntimeError("the migration failed part-way")
-
-    with pytest.raises(RuntimeError):
-        migrate(store, [make_and_fail("first", error)])
-
-    assert file_of(store).read_bytes() == before
-    assert migrate(store, [make("first")]) == [1]
-
-
-@pytest.mark.parametrize(
-    "theirs",
-    [
-        ["CREATE TABLE theirs (id INTEGER PRIMARY KEY)", "INSERT INTO theirs VALUES (1)"],
-        ["CREATE VIEW theirs AS SELECT 1 AS one"],
-        ["PRAGMA user_version = 9"],
-    ],
-    ids=["a table", "a view", "a version"],
-)
-def test_a_file_that_is_not_new_and_carries_no_mark_is_refused_and_left_as_it_is(
-    store: Engine, theirs: list[str]
-) -> None:
-    before = with_sqlite_alone(store, *theirs)
-
-    with pytest.raises(SchemaError) as refusal:
-        migrate(store, THREE)
-
-    assert str(refusal.value) == (
-        f"The data store cannot be brought up to date: {file_of(store)} is not a store of "
-        "MotoSphere's (it is not a new, empty file, and it does not carry MotoSphere's mark)."
-    )
-    assert file_of(store).read_bytes() == before
-
-
-def test_a_file_with_the_mark_of_another_application_is_refused_and_left_as_it_is(
-    store: Engine,
-) -> None:
-    before = with_sqlite_alone(store, f"PRAGMA application_id = {GEOPACKAGE}")
-
-    with pytest.raises(SchemaError) as refusal:
-        migrate(store, THREE)
-
-    assert str(refusal.value) == (
-        f"The data store cannot be brought up to date: {file_of(store)} is not a store of "
-        "MotoSphere's (it carries the mark of another application, 1196444487)."
-    )
-    assert file_of(store).read_bytes() == before

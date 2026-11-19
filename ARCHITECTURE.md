@@ -215,10 +215,7 @@ pipeline's command line. The settings and logging modules stay.
   migrations are functions in one list, a store keeps the number of the
   last one it has had, and each is one transaction with that number: kept
   as a whole or not at all. There is no way back; an earlier state is an
-  earlier snapshot. Alembic was weighed and not taken. Only a store of
-  MotoSphere's is migrated: the first migration marks the file, and a file
-  that has anything in it and not that mark is refused and left as it is
-  (DAT-023, DATABASE.md).
+  earlier snapshot. Alembic was weighed and not taken (DATABASE.md).
 - **What the store relies on in SQLite** is named in one module,
   `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
   FTS5 and the JSON functions among them. Its tests run against the real
