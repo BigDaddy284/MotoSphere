@@ -94,8 +94,13 @@ the first table is added. What the module promises:
   has had is kept in the file itself, in the field SQLite gives
   applications for this (`user_version`). A new store is at version 0.
   `schema_version(store)` reads it.
+- **`pending(store)` says which migrations a store lacks**: their
+  numbers, in order. It writes nothing. A new store lacks all of them and
+  a store that is up to date lacks none. It refuses a store exactly as
+  `migrate` does, in the same words, because `migrate` asks it.
 - **`migrate(store)` gives a store the migrations it lacks**, in order, and
-  returns their numbers. A store that lacks none is not written to.
+  returns their numbers: exactly those `pending` names. A store that lacks
+  none is not written to.
 - **A migration and its version are one transaction.** A migration is kept
   as a whole, with the store's new version, or not at all. When one fails,
   the store stays at the version before it, the migrations before it stay

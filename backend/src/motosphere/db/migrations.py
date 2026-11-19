@@ -3,7 +3,8 @@
 A migration is a function that changes the schema of a store. The
 migrations stand in one list, oldest first, and the place of a migration in
 that list is its number. A store records the number of the last migration
-it has had (its schema version), and ``migrate`` gives it those it lacks.
+it has had (its schema version), ``pending`` says which it lacks, and
+``migrate`` gives it those.
 
 Only a store of MotoSphere's is migrated. Its first migration marks the
 file as MotoSphere's, and ``migrate`` refuses a file that has anything in it
@@ -20,6 +21,7 @@ __all__ = [
     "Migration",
     "SchemaError",
     "migrate",
+    "pending",
     "schema_version",
 ]
 
@@ -70,25 +72,16 @@ def _why_not_ours(store: Engine) -> str | None:
     return "it is not a new, empty file, and it does not carry MotoSphere's mark"
 
 
-def migrate(store: Engine, migrations: Sequence[Migration] | None = None) -> list[int]:
-    """Give the store every migration it lacks, in order, and return their numbers.
+def pending(store: Engine, migrations: Sequence[Migration] | None = None) -> list[int]:
+    """Say which migrations the store lacks: their numbers, in order. Nothing is written.
 
-    Each migration is one transaction together with the store's new
-    version: it is kept as a whole or not at all. When one fails, the store
-    stays at the version before it, those before it stay applied, and the
-    error reaches the caller as it was raised. A migration does not commit;
-    this function does.
-
-    Only a store of MotoSphere's is migrated: a file that carries
-    MotoSphere's mark, or a new file with nothing in it, which gets the mark
-    in the transaction of its first migration.
-
-    ``migrations`` is the whole history, oldest first; by default the
+    A store that is up to date lacks none, and a new store lacks all of
+    them. ``migrations`` is the whole history, oldest first; by default the
     store's own, ``MIGRATIONS``.
 
-    Raises ``SchemaError``, and leaves the file as it is, when the file is
-    not a store of MotoSphere's, or when the store's version is not one the
-    history knows, as that of a store newer than this code.
+    Raises ``SchemaError`` when the file is not a store of MotoSphere's, or
+    when the store's version is not one the history knows, as that of a
+    store newer than this code.
     """
     history = MIGRATIONS if migrations is None else migrations
     reason = _why_not_ours(store)
@@ -103,13 +96,38 @@ def migrate(store: Engine, migrations: Sequence[Migration] | None = None) -> lis
             f"The data store cannot be brought up to date: its schema is version {version}, "
             f"and this MotoSphere knows only the versions 0 to {len(history)}."
         )
+    return list(range(version + 1, len(history) + 1))
+
+
+def migrate(store: Engine, migrations: Sequence[Migration] | None = None) -> list[int]:
+    """Give the store every migration it lacks, in order, and return their numbers.
+
+    The migrations it lacks are those ``pending`` names. Each is one
+    transaction together with the store's new version: it is kept as a
+    whole or not at all. When one fails, the store stays at the version
+    before it, those before it stay applied, and the error reaches the
+    caller as it was raised. A migration does not commit; this function
+    does.
+
+    Only a store of MotoSphere's is migrated: a file that carries
+    MotoSphere's mark, or a new file with nothing in it, which gets the mark
+    in the transaction of its first migration.
+
+    ``migrations`` is the whole history, oldest first; by default the
+    store's own, ``MIGRATIONS``.
+
+    Raises ``SchemaError``, and leaves the file as it is, when ``pending``
+    does: the file is not a store of MotoSphere's, or the store's version
+    is not one the history knows.
+    """
+    history = MIGRATIONS if migrations is None else migrations
     applied: list[int] = []
-    for number, migration in enumerate(history[version:], start=version + 1):
+    for number in pending(store, history):
         with store.begin() as connection:
             # A new store becomes MotoSphere's with its first migration. For
             # a store that carries the mark already, this changes nothing.
             connection.exec_driver_sql(f"PRAGMA application_id = {APPLICATION_ID}")
-            migration(connection)
+            history[number - 1](connection)
             connection.exec_driver_sql(f"PRAGMA user_version = {number}")
         applied.append(number)
     return applied

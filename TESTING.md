@@ -322,6 +322,14 @@ others read the mark where SQLite keeps it, in four bytes of the file's
 header, and check that a first migration that fails, and a store that
 lacks no migration, leave a new file exactly as it was.
 
+Ten tests are for `pending`, which says what a store lacks: a new store,
+one that has had some of the migrations and one that is up to date; that
+asking commits nothing and leaves the file byte for byte as it was; that
+`migrate` then applies exactly what was named; and that each store
+`migrate` refuses (a table and no mark, the mark of another application,
+a newer store, a version below zero) is refused by `pending` in the same
+words.
+
 The command `migrate` is tested in three places. `test_command_line.py`
 runs it in a process of its own, with the pipeline's own list of
 migrations: a store that is not there is made, a second run changes
