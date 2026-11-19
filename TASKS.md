@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 41 | 16 |
+| 2 | Data store and published data (DAT, PUB) | 41 | 17 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-033 – A column without its check for empty text is named.
+**Current task:** DAT-026 – The models and the migrated schema agree.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1180,15 +1180,23 @@ that check is DAT-033, which follows it.
 - **Plan:** `docs/plans/DAT-030.md`
 
 ### DAT-033 – A column without its check for empty text is named
-- **Status:** NOT STARTED
-- **Objective:** `broken_rules` names a column whose text must not be empty and whose table has no check for it, and so the test that holds the real schema to the rules fails on such a column.
-- **Description:** Added on 2026-11-19 (PLAN-020): the second half of what PLAN-017 called "DAT-030 – Text that must not be empty". `Base` gives the table of a model a check for every column whose text must not be empty (DAT-030), when the model is defined. Two kinds of column get none, both tried in the planner's trial of DAT-030: one that a subclass of a model adds to its parent's table, and one of a table made without a model. `broken_rules` gets one more rule and one more sentence: every column of the type `NotEmptyText` must have the check `not_empty` gives. Whether a check of that name that says something else is named too is settled in the planner's trial. `DATABASE.md` says that the rule is held. No table is added.
-- **Acceptance criteria:** `broken_rules` gives one plain sentence that names the table and the column, for a column without the check, of a table made without a model and of one a subclass of a model adds to its parent's table; it gives an empty list for the real schema and for the models of the tests; the sentences of a table keep one order; the same on Linux and on Windows.
-- **Tests required:** unit tests of the rule, one case for each way; the models of the integration tests break no rule; planted defects (each condition of the rule left out; the rule left out); the full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Status:** PASSED – VERIFIED
+- **Objective:** `broken_rules` names a column whose text must not be empty and whose table does not have the check for it, and so the test that holds the real schema to the rules fails on such a column.
+- **Description:** Added on 2026-11-19 (PLAN-020): the second half of what PLAN-017 called "DAT-030 – Text that must not be empty". `Base` gives the table of a model a check for every column whose text must not be empty (DAT-030), when the model is defined. Two kinds of column get none: one that a subclass of a model adds to its parent's table, and one of a table made without a model. `broken_rules` gets one more rule and one more sentence, between the times and the names given by hand: every column of the type `NotEmptyText` must have the check `not_empty` gives for it. Settled in the planner's trial: the check must be of the name the naming rule gives it (`ck_<table>_<column>_not_empty`) and of the same text as `not_empty` writes, as SQLite is given it when the table is made, so a check of another name does not count and neither does one of that name that says something else (that one looks right by its name and lets empty text in); how the check was written does not matter, so the same check written with the table's own column, or as text, counts; the columns of a table are named in their order in the table. `Base` does not change and gives no check to a subclass's column itself: the column is named, and its table is given the check by hand, `table.append_constraint(not_empty(...))`, which `DATABASE.md` says and a test does with a real SQLite file. One existing unit test gets one more column and one more sentence, to pin where the new sentence stands; with only `base.py` changed, every existing test passed. No table, no migration, no new package. The planner's trial has 10 new tests and detects 220 of 220 planted defects.
+- **Acceptance criteria:**
+  1. `broken_rules` gives one plain sentence that names the table and the column, for a column whose text must not be empty and whose table is without its check, in each of five ways: no check; the check under another name; a check of the right name that refuses only text with no characters, one that takes off spaces only, and one that is of another column.
+  2. The column is named until its table has the check, and no longer once it has, in each of three ways of writing it: as `not_empty` gives it, with the table's own column, and as text.
+  3. The columns of a table are named in their order in the table; a column that may be without a value and one that may not are both named, and a column of ordinary text is not.
+  4. A table that breaks all five rules gets its sentences in one order: not strict, the key, the times, the column without its check, the names given by hand.
+  5. A column that a subclass of a model adds to its parent's table is named; once the table is given the check, nothing is named, the real SQLite file has the check by its name, refuses empty text in the column and takes text that is not empty and no value.
+  6. The real schema and the models of the integration tests give an empty list. The type check passes with no `ignore` and the lint with no `noqa`.
+  7. `python scripts/check.py` reports 19 of 19 gates and 1074 tests (backend tests 444); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 9 new unit tests in three functions (five ways of being without the check, three ways of writing the check that count, the order of the columns); the existing unit test of the order of the sentences, with one more column and one more sentence; 1 new integration test with two models of its own that share one table, against a real SQLite file; the models of the other integration tests break no rule, unchanged. Fifteen planted defects by the builder and the planner's own, all of DAT-030's and DAT-032's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** In a clean checkout of pull request #89 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1074 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 444: 434 before, 10 new); 26 planted defects in the new rule, 26 of 26 detected, the plan's fifteen prove-it steps among them with the results the plan gives; the 194 planted defects of DAT-030 again, 194 of 194 detected. On GitHub, read by the planner from the runs and job logs: run 44530337496 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1074 passed, 0 failed, 0 skipped.", with 444 backend tests on both machines, the three jobs after the gates skipped; run 44534139253 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1074 / 0 tests (repository 41, script tests 206, backend 444, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 220 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 7 files are identical to the planner's trial. One existing test got one more column and one more sentence, to pin where the new sentence stands; nothing was taken out of a test, and no package was added. Nine new unit tests ask the rule about tables made by hand, and one new integration test asks it about a column that a subclass of a model adds to its parent's table, gives the table the check, and then asks a real SQLite file, on Linux and on Windows: the file has the check by its name, refuses empty text in the column, and takes text that is not empty and no value.
+- **Commit:** `6739c16`
+- **Plan:** `docs/plans/DAT-033.md`
 
 ### DAT-026 – The models and the migrated schema agree
 - **Status:** NOT STARTED
