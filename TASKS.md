@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 45 | 19 |
+| 2 | Data store and published data (DAT, PUB) | 45 | 20 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-035 – A column that is yes or no.
+**Current task:** DAT-036 – A column whose value is one of a list.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1240,7 +1240,7 @@ the first table needs and the store did not have.
 - **Plan:** `docs/plans/DAT-034.md`
 
 ### DAT-035 – A column that is yes or no
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A model can say that a column is yes or no, and the store refuses anything else in it.
 - **Description:** Added on 2026-11-19 (PLAN-021). A strict table has no type for yes and no, and SQLite refuses to make one with SQLAlchemy's own (`DATABASE.md`), so a model that says `Mapped[bool]` gets a table that cannot be made. One new module, `motosphere.db.yes_no`, with the column type `YesOrNo`, the second type that brings its check (DAT-034): INTEGER in the table, with the check `<column> IN (0, 1)`, named `ck_<table>_<column>_yes_or_no`; 1 is yes and 0 is no. The first table needs it for "is this source switched on" (DAT-006). Settled in the planner's trial: a model says the plain Python type, `Mapped[bool]`, and `Base` gets one entry in the list by which a Python type becomes a column type, so no model can get SQLAlchemy's own type by leaving a word out; the rule by which `Base` gives checks, and `broken_rules`, do not change. Only `True` and `False` are stored: a number and a word are refused before anything is written, with a `TypeError` that says what was given, because Python takes much for true that is not, the word "no" among it; a question is held to the same. Only the whole numbers 1 and 0 are read: anything else that comes back through the type is refused, which happens for a sum over such a column, never for a row. A column that may be without a value holds none, yes or no, and none means "not known". What SQLite takes for one of the two numbers (the text '1', the number 1.0) a strict table stores as that whole number, so the file never holds anything else. No existing test changes, no table, no migration, no new package. The planner's trial has 47 new tests and detects 290 of 290 planted defects.
 - **Acceptance criteria:**
@@ -1253,10 +1253,10 @@ the first table needs and the store did not have.
   7. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
   8. `python scripts/check.py` reports 19 of 19 gates and 1181 tests (backend tests 551); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 20 new unit tests in twelve functions, of the two functions that say and read the number, of the type and of its check; 27 new integration tests in fifteen functions, with a model that has three such columns, against a real SQLite file that is read with plain SQL, past the model; every existing test, unchanged. Twelve planted defects by the builder and the planner's own, all of DAT-034's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #95 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1181 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 551: 504 before, 47 new); 47 planted defects in the new module and the new line of `base.py`, 47 of 47 detected, the plan's twelve prove-it steps among them with the results the plan gives; and the 243 planted defects of DAT-034 again, 243 of 243 detected. On GitHub, read by the planner from the runs and job logs: run 44563274824 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1181 passed, 0 failed, 0 skipped.", with 551 backend tests on both machines, the three jobs after the gates skipped; run 44567782784 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1181 / 0 tests (repository 41, script tests 206, backend 551, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 290 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 8 files are identical to the planner's trial. No existing test changed, and no package was added. The 27 integration tests make the table of a model in a real SQLite file and read with plain SQL, past the model, what the file holds and of which kind it is, on Linux and on Windows: yes and no are the whole numbers 1 and 0, and SQLite itself refuses any other number.
+- **Commit:** `0277051`
 - **Plan:** `docs/plans/DAT-035.md`
 
 ### DAT-036 – A column whose value is one of a list
