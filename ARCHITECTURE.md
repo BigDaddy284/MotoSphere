@@ -238,11 +238,14 @@ pipeline's command line. The settings and logging modules stay.
   changed; the base gives them too, and the store's code sets them from
   the store's one clock (DAT-031). A column whose model says that its
   text must not be empty gets a check from the base, and SQLite refuses
-  empty text in it, also text of nothing but white space (DAT-030).
-  `broken_rules` names a table that breaks a rule, a table without the
-  key or without the two times among them (DAT-032), and a column whose
-  text must not be empty and that is without its check (DAT-033), and a
-  test holds the schema to it (DATABASE.md).
+  empty text in it, also text of nothing but white space (DAT-030). The
+  check comes with the column's type: any column type can bring a check
+  for its column (`WithItsCheck` in `motosphere.db.checks`), and the base
+  gives it to the table (DAT-034). `broken_rules` names a table that
+  breaks a rule, a table without the key or without the two times among
+  them (DAT-032), and a column whose type brings a check and whose table
+  is without it (DAT-033), and a test holds the schema to it
+  (DATABASE.md).
 - **A time is stored in one form**, as text: in UTC, with its offset
   written out and the whole fraction of its second, for example
   `2026-11-19T08:26:04.123456+00:00` (`motosphere.db.times`, DAT-028). The

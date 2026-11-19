@@ -10,6 +10,7 @@ from sqlalchemy.dialects import sqlite
 from sqlalchemy.schema import conv
 
 from motosphere.db.base import NAMING
+from motosphere.db.checks import WithItsCheck
 from motosphere.db.texts import WHITE_SPACE, NotEmptyText, not_empty
 
 THE_CHECK = (
@@ -66,6 +67,19 @@ def test_the_check_is_named_after_its_column_and_by_the_naming_rule() -> None:
 
     assert check.name == "ck_owner_name_not_empty"
     assert isinstance(check.name, conv)
+
+
+def test_the_type_brings_the_check_that_not_empty_gives() -> None:
+    its_type = NotEmptyText()
+    brought = its_type.check_for("name")
+
+    assert isinstance(its_type, WithItsCheck)
+    assert brought.name == "name_not_empty"
+    assert str(
+        brought.sqltext.compile(dialect=sqlite.dialect(), compile_kwargs={"literal_binds": True})
+    ) == said("name")
+    assert its_type.refuses == "empty text"
+    assert its_type.given_by == not_empty.__name__
 
 
 def test_in_the_table_the_type_is_text() -> None:
