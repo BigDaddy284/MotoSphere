@@ -846,15 +846,25 @@ the planner's trial before its plan is written, and a task that proves too
 large to test thoroughly is split then.
 
 ### DAT-001 – Data store research and decision record
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Decide, with evidence, what the data store may rely on: which SQLite features every machine that runs the pipeline has, where the store is kept between scheduled runs, and which size limits bound it.
-- **Description:** A module, `motosphere.db.sqlite`, names the least SQLite version and the features the store relies on, and says in plain words what a given SQLite lacks. Its tests run against the real SQLite of the Python that runs the pipeline, so the gates prove it on Linux and on Windows for every change. `ARCHITECTURE.md` §5 and `DATABASE.md` record the decisions with their sources: the features found on each machine, where the store is kept between runs (compared: text files in a `data` branch, the database file as a release asset, a workflow cache), GitHub's documented limits for files, repositories, Pages and releases, and the sizes at which the decision is looked at again. No table and no connection module yet.
-- **Acceptance criteria:** the module reports nothing missing on GitHub's Linux and Windows machines and on the planner's; an SQLite that is too old or lacks a required feature is reported by name; the least version is one every machine meets; every figure in the decision record names the page it was read from and the day; the open question in `ARCHITECTURE.md` §5 is closed.
-- **Tests required:** unit tests with stand-in connections for an old SQLite and for each missing feature; tests against the real SQLite on each machine; planted defects; the full run of all gates; the workflow run on the pull request, on both machines; the run for `main` after the merge.
+- **Description:** A module, `motosphere.db.sqlite`, names the least SQLite version (3.45.0) and the six features the store relies on (enforced foreign keys, strict tables, RETURNING, the JSON functions, R*Tree, FTS5), and its function `missing()` says in plain words what a given SQLite lacks. Each feature is proven by statements a database must accept and, for two, one it must then refuse, in an empty database of its own in memory. Its tests run against the real SQLite of the Python that runs the pipeline, so the gates prove it on Linux and on Windows for every change; a lesser SQLite is stood in for by the real one made to behave like it, never by a mock. `DATABASE.md` becomes the decision record, with its sources: what the planner's probe found on each machine (SQLite 3.45.1 on GitHub's Linux, 3.49.1 on GitHub's Windows, 3.53.1 on the planner's; Geopoly and the `dbstat` table are not everywhere), where the store is kept between runs (text files in a `data` branch, with the database file as a release asset in reserve; a workflow cache or artifact does not last), GitHub's documented limits, and the sizes at which the decision is looked at again. `ARCHITECTURE.md` §5 loses its open question. No table and no connection module yet. The planner's trial has 36 new tests and detects 33 of 33 planted defects.
+- **Acceptance criteria:**
+  1. `missing()` returns an empty list for the SQLite of GitHub's Linux machine, of GitHub's Windows machine and of the planner's.
+  2. An SQLite older than 3.45.0 is reported with its version and the least version, compared as numbers; 3.45.0 itself is not.
+  3. Each of the six features is reported by name when a build lacks it, and foreign keys and strict tables also when the build accepts the statements and enforces nothing.
+  4. Everything lacking is reported together, the version first.
+  5. Each feature is tried in an empty database of its own in memory, every one is closed, and no file is written.
+  6. `DATABASE.md` gives the least version and the six features the module names, and a test fails when the two differ.
+  7. `DATABASE.md` records, each with the page it was read from and the day, what each machine's SQLite had, where the store is kept between runs and why, GitHub's limits, and the sizes at which the decision is looked at again; `ARCHITECTURE.md` §5 no longer has an open question.
+  8. No existing test changed, and all pass.
+  9. `python scripts/check.py` reports 19 of 19 gates and 780 tests (backend tests 151); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** backend unit tests with the real SQLite made to behave like a lesser one (33 new): an older version, a build without each feature, one that enforces nothing, everything lacking at once, a database of its own for each feature, the decision record compared with the module; backend integration tests against the machine's own SQLite (3 new); the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-001.md`
 
 ### DAT-002 – Store settings and connection module
 - **Status:** NOT STARTED
