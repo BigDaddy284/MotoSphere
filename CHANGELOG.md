@@ -148,10 +148,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   order of the texts is the order of the times. A time without an offset
   is refused, and what comes back is an aware UTC time. A model's
   `datetime` column gets this type from `Base` (DAT-028).
-- The key of every table: one whole-number column, `id`, which a model
-  gets from `Base` without naming it, and whose values SQLite never gives
-  twice, also not after a row is deleted. `broken_rules` names a table
-  without it (DAT-029).
 
 ### Removed
 

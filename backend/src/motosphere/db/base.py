@@ -5,15 +5,13 @@ A model is a class that describes one table. Every model is a subclass of
 
 - is a strict table: SQLite refuses a value that is not of its column's
   type, where an ordinary table would store whatever it is given;
-- has the same key: one whole-number column named ``id``, whose values
-  SQLite gives and never gives twice, also not after a row is deleted;
 - has columns of the few types a strict table takes: a Python ``int``
   becomes INTEGER, a ``str`` TEXT, a ``float`` REAL and ``bytes`` BLOB, and
   a ``datetime`` becomes the store's own type for a time
   (:class:`motosphere.db.times.UtcDateTime`), which is TEXT in the table;
 - has its constraints and indexes named by one rule, :data:`NAMING`, so
   that a migration can name what it changes and the names are the same on
-  every machine. The key has no name: SQLite writes it with its column.
+  every machine.
 
 :func:`broken_rules` says in plain words which tables of a schema break a
 rule. A test holds the real schema to it.
@@ -22,8 +20,8 @@ rule. A test holds the real schema to it.
 from datetime import datetime
 from typing import Any, ClassVar
 
-from sqlalchemy import REAL, Constraint, Index, Integer, MetaData, PrimaryKeyConstraint, Table, Text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import REAL, Constraint, Index, MetaData, Text
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.schema import conv
 from sqlalchemy.types import TypeEngine
 
@@ -36,6 +34,7 @@ __all__ = ["NAMING", "Base", "broken_rules"]
 # CheckConstraint("laps > 0", name="laps_positive") is ck_<table>_laps_positive.
 # A check without a name is refused when its table is defined.
 NAMING = {
+    "pk": "pk_%(table_name)s",
     "fk": "fk_%(table_name)s_%(column_0_N_name)s_%(referred_table_name)s",
     "uq": "uq_%(table_name)s_%(column_0_N_name)s",
     "ck": "ck_%(table_name)s_%(constraint_name)s",
@@ -55,61 +54,26 @@ class Base(DeclarativeBase):
         datetime: UtcDateTime,
     }
 
-    # The key of every table, and its first column. A model does not name it.
-    id: Mapped[int] = mapped_column(primary_key=True, sort_order=-1)
-
     def __init_subclass__(cls, **kwargs: Any) -> None:
-        """Make the table of a new model strict and its key one that is never given twice.
-
-        Both are done here and not left to the model, so that a model keeps
-        them whatever else it says of its table.
-        """
+        """Make the table of a new model strict, whatever else the model says of it."""
         super().__init_subclass__(**kwargs)
         table = cls.__dict__.get("__table__")
         if table is not None:
             table.dialect_options["sqlite"]["strict"] = True
-            # AUTOINCREMENT: without it SQLite gives the key of a deleted last
-            # row to the next new row, and what pointed to the old row by its
-            # key (its history, where it came from) would point to the new one.
-            table.dialect_options["sqlite"]["autoincrement"] = True
-
-
-def _has_the_key(table: Table) -> bool:
-    """Say whether SQLite will give this table's key and never give one twice.
-
-    SQLite does that for a key that is one whole-number column of the
-    table's own, and only if the table asks for it.
-    """
-    key = list(table.primary_key.columns)
-    return (
-        [column.name for column in key] == ["id"]
-        and isinstance(key[0].type, Integer)
-        and not key[0].foreign_keys
-        and bool(table.dialect_options["sqlite"]["autoincrement"])
-    )
 
 
 def broken_rules(schema: MetaData) -> list[str]:
     """Say which tables of ``schema`` break a rule, one plain sentence for each break.
 
-    A table must be strict, its key must be the one every table has, and
-    every other constraint and every index of it must have its name from
-    the naming rule, not one given by hand. A schema that keeps the rules
-    gives an empty list.
+    A table must be strict, and every constraint and index of it must have
+    its name from the naming rule, not one given by hand. A schema that
+    keeps the rules gives an empty list.
     """
     breaks: list[str] = []
     for table in sorted(schema.tables.values(), key=lambda table: table.name):
         if not table.dialect_options["sqlite"]["strict"]:
             breaks.append(f"The table {table.name} is not strict.")
-        if not _has_the_key(table):
-            breaks.append(
-                f"The table {table.name} does not have the key every table has: one "
-                "whole-number column named id, whose values are never given twice."
-            )
-        named: list[Constraint | Index] = [
-            *(one for one in table.constraints if not isinstance(one, PrimaryKeyConstraint)),
-            *table.indexes,
-        ]
+        named: list[Constraint | Index] = [*table.constraints, *table.indexes]
         by_hand = sorted(str(one.name) for one in named if not isinstance(one.name, conv))
         breaks.extend(
             f"The table {table.name} has a name given by hand, {name}: "

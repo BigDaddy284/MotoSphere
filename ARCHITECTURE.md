@@ -225,10 +225,8 @@ pipeline's command line. The settings and logging modules stay.
 - **Every table keeps the same rules**, through the base of all models,
   `Base` in `motosphere.db.base` (DAT-005): a table is strict, its columns
   have the types a strict table takes, and its constraints and indexes are
-  named by one rule. Its key is one whole-number column, `id`, which the
-  base gives and whose values SQLite never gives twice, also not after a
-  row is deleted (DAT-029). `broken_rules` names a table that breaks a
-  rule, and a test holds the schema to it (DATABASE.md).
+  named by one rule. `broken_rules` names a table that breaks one, and a
+  test holds the schema to it (DATABASE.md).
 - **A time is stored in one form**, as text: in UTC, with its offset
   written out and the whole fraction of its second, for example
   `2026-11-19T08:26:04.123456+00:00` (`motosphere.db.times`, DAT-028). The
