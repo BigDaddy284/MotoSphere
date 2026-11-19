@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 CONFTEST = Path(__file__).parents[1] / "conftest.py"
 
-# Tests for pytest to run by itself, with this project's fixtures. Three of
+# Tests for pytest to run by itself, with this project's fixtures. Four of
 # them leave connections to their store open; the others say what must be
 # true afterwards.
 LEAVING_CONNECTIONS_OPEN = """
@@ -57,6 +57,14 @@ def test_one_that_leaves_a_session_open(store):
     FILES.append(Path(store.url.database))
 
 
+def test_one_that_drops_a_connection_without_closing_it(store):
+    connection = store.connect()
+    connection.exec_driver_sql("SELECT count(*) FROM sqlite_master").scalar_one()
+    RAW.append(connection.connection.dbapi_connection)
+    FILES.append(Path(store.url.database))
+    del connection
+
+
 def test_one_that_closes_what_it_opened(store):
     with store.connect() as connection:
         connection.exec_driver_sql("SELECT count(*) FROM sqlite_master").scalar_one()
@@ -64,13 +72,13 @@ def test_one_that_closes_what_it_opened(store):
         session.execute(text("SELECT count(*) FROM sqlite_master")).scalar_one()
 
 
-@pytest.mark.parametrize("left_open", range(4))
+@pytest.mark.parametrize("left_open", range(5))
 def test_every_connection_left_open_was_closed(left_open):
     with pytest.raises(sqlite3.ProgrammingError, match="closed database"):
         RAW[left_open].execute("SELECT 1")
 
 
-@pytest.mark.parametrize("left_open", range(4))
+@pytest.mark.parametrize("left_open", range(5))
 def test_every_file_can_be_removed(left_open):
     FILES[left_open].unlink(missing_ok=True)
 
@@ -124,7 +132,7 @@ def test_a_test_that_leaves_connections_open_is_an_error_and_they_are_closed_for
 
     result = pytester.runpytest_subprocess("-p", "no:cacheprovider", "-W", "error", timeout=120)
 
-    result.assert_outcomes(passed=13, errors=3)
+    result.assert_outcomes(passed=16, errors=4)
     result.stdout.fnmatch_lines(
         [
             "*ERROR at teardown of test_one_that_closes_a_connection_and_leaves_another_open*",
@@ -132,6 +140,8 @@ def test_a_test_that_leaves_connections_open_is_an_error_and_they_are_closed_for
             "*ERROR at teardown of test_one_that_leaves_two_connections_open*",
             "*Connections to its store that the test left open: 2. They were closed for it.",
             "*ERROR at teardown of test_one_that_leaves_a_session_open*",
+            "*Connections to its store that the test left open: 1. They were closed for it.",
+            "*ERROR at teardown of test_one_that_drops_a_connection_without_closing_it*",
             "*Connections to its store that the test left open: 1. They were closed for it.",
         ]
     )

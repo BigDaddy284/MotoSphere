@@ -298,12 +298,13 @@ A test must close what it opens (`with store.connect() …`,
 `with unit_of_work(store) …`). A connection it leaves open is closed for it
 when the test ends, so that the file can be removed on Windows too, and the
 test is reported as an error: "Connections to its store that the test left
-open: 1. They were closed for it." That way a leak in the code under test
-fails the test that found it, and not a later one.
+open: 1. They were closed for it." A connection that was dropped without
+being closed counts too. That way a leak in the code under test fails the
+test that found it, and not a later one.
 
 `tests/integration/test_store_fixture.py` tests the fixture. For what
 happens after a test has ended, it lets pytest run a small file of tests in
-a process of its own (pytest's `pytester`), three of which leave
+a process of its own (pytest's `pytester`), four of which leave
 connections open, and reads the outcome.
 
 ## The tools a computer needs
