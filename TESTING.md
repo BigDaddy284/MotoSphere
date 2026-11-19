@@ -375,9 +375,14 @@ another type, one that may be empty, one the table sets itself, one the
 store's code does not set, one that is one fixed moment, one that SQLite
 is asked for; a `created_at` that is set anew at a change, an `updated_at`
 that is not, one that a change sets to one fixed moment, and one that a
-change asks SQLite for), a unique constraint, a foreign key and an index
-named by hand, the order of the sentences, and that a check without a
-name is refused when its table is defined. A table that must keep the
+change asks SQLite for), five columns whose text must not be empty and
+that are without their check (no check, the check under another name,
+and three checks of the right name that say something else), three ways
+of writing the check that count (as `not_empty` gives it, with the
+table's column, and as text), that the columns of a table are named in
+their order, a unique constraint, a foreign key and an index named by
+hand, the order of the sentences, and that a check without a name is
+refused when its table is defined. A table that must keep the
 rules gets its key and its two times from two helpers of the tests,
 `the_key` and `the_times`. One test there holds the real schema to the rules:
 `broken_rules(Base.metadata)` must be empty. It passes today because
@@ -452,6 +457,12 @@ empty text; every such column has a check of its own; and text that may
 be empty is stored empty, as before. The odd characters are written in
 the tests as their numbers, not as themselves, so that an editor cannot
 change them.
+
+Two more models there, in a schema of their own, share one table: the
+second is a subclass of the first and adds a column whose text must not
+be empty. `broken_rules` names that column; the test then gives the
+table the check, `broken_rules` names nothing, and the real SQLite file
+has the check and refuses empty text in the column (DAT-033).
 
 ## A data store of its own for every test
 

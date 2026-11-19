@@ -248,8 +248,9 @@ these rules:
 `broken_rules(schema)` says in plain words which tables of a schema break
 a rule: a table that is not strict (one made without a model can be), a
 table without the key every table has, a table without the two times
-every table has, and a constraint or an index that was named by hand. A
-test holds the real schema to it with every change.
+every table has, a column whose text must not be empty and whose table
+does not have the check for it, and a constraint or an index that was
+named by hand. A test holds the real schema to it with every change.
 
 A table is without the two times (DAT-032) if `created_at` or `updated_at`
 is missing, is not a time as the store keeps one, may be empty, or gets a
@@ -261,10 +262,15 @@ changed; or if `created_at` is set anew at all. The rule sees that the
 store's code calls a function, not which one: that it is the store's
 clock is what a model gets from `Base` by not naming the two columns.
 
-There is no model yet, and so no table. The rules are proven with two
-models of the tests' own, which are kept in a schema apart from the real
-one. `broken_rules` does not yet name a column whose text must not be
-empty and that has no check (DAT-033).
+A column whose text must not be empty is without its check (DAT-033)
+unless its table has the check `not_empty` gives for it: one of the name
+the naming rule gives, `ck_<table>_<column>_not_empty`, and of the same
+text, as SQLite is given it when the table is made. A check of another
+name does not count, and neither does one of that name that says
+something else. The columns of a table are named in their order.
+
+There is no model yet, and so no table. The rules are proven with models
+of the tests' own, which are kept in schemas apart from the real one.
 
 ## Times
 
@@ -359,8 +365,13 @@ Where this ends:
   is one, and a test says so.
 - `Base` adds the check to the table of a model when the model is
   defined. A column that a subclass of a model adds to its parent's table
-  gets none, and neither does a table made without a model. Naming such a
-  column is `broken_rules`' and follows (DAT-033).
+  gets none, and neither does a table made without a model.
+  `broken_rules` names such a column (DAT-033), so the test that holds
+  the real schema to the rules fails until the table is given the check:
+
+  ```python
+  table.append_constraint(not_empty("maker"))
+  ```
 
 ## When a row was stored and changed
 
