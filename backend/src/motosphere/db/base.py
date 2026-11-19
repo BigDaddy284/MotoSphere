@@ -14,14 +14,16 @@ A model is a class that describes one table. Every model is a subclass of
   becomes INTEGER, a ``str`` TEXT, a ``float`` REAL and ``bytes`` BLOB, and
   a ``datetime`` becomes the store's own type for a time
   (:class:`motosphere.db.times.UtcDateTime`), which is TEXT in the table;
-- refuses empty text in every column whose model says that its text must
-  not be empty (:data:`motosphere.db.texts.NotEmpty`), by a check;
+- has the check of every column whose type brings one
+  (:class:`motosphere.db.checks.WithItsCheck`). Text that must not be
+  empty is such a type (:data:`motosphere.db.texts.NotEmpty`), and so the
+  table refuses empty text in every column whose model says so;
 - has its constraints and indexes named by one rule, :data:`NAMING`, so
   that a migration can name what it changes and the names are the same on
   every machine. The key has no name: SQLite writes it with its column.
 
 :func:`broken_rules` says in plain words which tables of a schema break a
-rule, and which columns are without the check their text must have. A test
+rule, and which columns are without the check their type brings. A test
 holds the real schema to it.
 """
 
@@ -45,7 +47,8 @@ from sqlalchemy.schema import conv
 from sqlalchemy.types import TypeEngine
 
 from motosphere.db import times
-from motosphere.db.texts import NotEmpty, NotEmptyText, not_empty
+from motosphere.db.checks import WithItsCheck
+from motosphere.db.texts import NotEmpty, NotEmptyText
 from motosphere.db.times import UtcDateTime
 
 __all__ = ["NAMING", "Base", "broken_rules"]
@@ -104,8 +107,8 @@ class Base(DeclarativeBase):
         """Make the table of a new model strict and its key one that is never given twice.
 
         Both are done here and not left to the model, so that a model keeps
-        them whatever else it says of its table. A column whose text must
-        not be empty gets its check here too.
+        them whatever else it says of its table. A column whose type
+        brings a check gets its check here too.
         """
         super().__init_subclass__(**kwargs)
         table = cls.__dict__.get("__table__")
@@ -116,8 +119,8 @@ class Base(DeclarativeBase):
             # key (its history, where it came from) would point to the new one.
             table.dialect_options["sqlite"]["autoincrement"] = True
             for column in table.columns:
-                if isinstance(column.type, NotEmptyText):
-                    table.append_constraint(not_empty(column.name))
+                if isinstance(column.type, WithItsCheck):
+                    table.append_constraint(column.type.check_for(column.name))
 
 
 def _has_the_key(table: Table) -> bool:
@@ -170,26 +173,26 @@ def _as_sqlite_is_given_it(check: CheckConstraint) -> str:
     return str(written)
 
 
-def _without_their_check(table: Table) -> list[str]:
-    """Name the columns whose text must not be empty and that lack the check for it.
+def _without_their_check(table: Table) -> list[tuple[str, WithItsCheck]]:
+    """Name the columns whose type brings a check and whose table lacks it, each with its type.
 
-    The check is the one :func:`motosphere.db.texts.not_empty` gives: of
-    the name the naming rule gives it, and of the same text. A check of
-    another name, and one of that name that says something else, do not
-    count.
+    The check is the one the column's type gives
+    (:class:`motosphere.db.checks.WithItsCheck`): of the name the naming
+    rule gives it, and of the same text. A check of another name, and one
+    of that name that says something else, do not count.
     """
     checks = {
         str(check.name): _as_sqlite_is_given_it(check)
         for check in table.constraints
         if isinstance(check, CheckConstraint)
     }
-    without: list[str] = []
+    without: list[tuple[str, WithItsCheck]] = []
     for column in table.columns:
-        if isinstance(column.type, NotEmptyText):
-            its_check = not_empty(column.name)
+        if isinstance(column.type, WithItsCheck):
+            its_check = column.type.check_for(column.name)
             name = NAMING["ck"] % {"table_name": table.name, "constraint_name": its_check.name}
             if checks.get(name) != _as_sqlite_is_given_it(its_check):
-                without.append(column.name)
+                without.append((column.name, column.type))
     return without
 
 
@@ -197,8 +200,8 @@ def broken_rules(schema: MetaData) -> list[str]:
     """Say which tables of ``schema`` break a rule, one plain sentence for each break.
 
     A table must be strict, its key must be the one every table has, it
-    must have the two times every table has, every column of it whose text
-    must not be empty must have its check, and every other constraint and
+    must have the two times every table has, every column of it whose type
+    brings a check must have that check, and every other constraint and
     every index of it must have its name from the naming rule, not one
     given by hand. A schema that keeps the rules gives an empty list.
     """
@@ -218,10 +221,10 @@ def broken_rules(schema: MetaData) -> list[str]:
                 "first stored and whenever it is changed."
             )
         breaks.extend(
-            f"The table {table.name} does not refuse empty text in its column {name}: "
-            "it must have the check that not_empty gives for the column, named by "
+            f"The table {table.name} does not refuse {its_type.refuses} in its column {name}: "
+            f"it must have the check that {its_type.given_by} gives for the column, named by "
             "the naming rule."
-            for name in _without_their_check(table)
+            for name, its_type in _without_their_check(table)
         )
         named: list[Constraint | Index] = [
             *(one for one in table.constraints if not isinstance(one, PrimaryKeyConstraint)),
