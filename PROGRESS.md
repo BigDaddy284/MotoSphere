@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 2 – Data store and published data (Phase 1 – Foundation is complete)
-- **Current task:** DAT-006 – Information sources table (`NOT STARTED`, the planner is trialling it and writing its plan)
-- **Tasks verified:** 61 of 248
+- **Current task:** DAT-034 – A column type brings its check (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 61 of 252
 - **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (1122 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (the list is still empty); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, and only `migrate` writes to it; there is a base for all models, which makes every table strict and names its constraints and indexes by one rule, and a test that holds every table to that; a time is stored as text in one form, in UTC with its offset written out, a time without an offset is refused, and a model's `datetime` column gets that type from the base; every model gets its key from the base, a whole number `id` that SQLite never gives twice, and the two times `created_at` and `updated_at`, which the store's code sets from the store's one clock; the test that holds every table to the rules names a table without that key or without those two times; a model can say of a column that its text must not be empty, and SQLite itself then refuses empty text in it, also text of nothing but white space, and the test that holds every table to the rules names such a column whose table is without the check for it; one test holds the models and the migrations together, and fails with a sentence for each table or index that is not the same in both; there is no model and no table yet (`DATABASE.md`). No globe yet.
 
 ## Reports
@@ -5270,3 +5270,62 @@ both machines, and no deviation from the plan; the builder's Node was
 Commit: `3ea9b4f` (squash merge of pull request #91).
 
 Next task: DAT-006 – Information sources table.
+
+### PLAN-021 – Four tasks before the first table (2026-11-19)
+
+Not a development task: no application code changed.
+
+The next task was "DAT-006 – Information sources table", the first
+real table. Looking at what its columns must hold, before trialling it,
+the planner found three kinds of column the store does not have:
+
+- one that is yes or no (is the source switched on). A strict table has
+  no type for it, and SQLite refuses SQLAlchemy's own (`DATABASE.md`);
+- one whose value is one of a fixed list (the twelve categories of
+  DESIGN §7.1, the ways of collecting of §7.2, and later outcomes, states
+  and confidences in the tables that follow);
+- one that is a web address (the website, and later the address every
+  collected record was found at).
+
+Each is narrower than any type of a strict table, so each is kept by a
+check, as text that must not be empty is (DAT-030). Each has rules,
+cases and planted defects of its own, and none of them is about sources.
+Left inside DAT-006 they would make it four tasks in one.
+
+And `Base` and `broken_rules` know the one such type there is by its
+name. With three more to come, the two places are first turned into one
+rule that asks the column's type, so that each new type is one small
+module and its tests, and changes neither.
+
+The rule is to choose the smaller task (CLAUDE.md §1). So, in this order:
+
+1. DAT-034 – A column type brings its check. This is the task that is
+   planned now.
+2. DAT-035 – A column that is yes or no.
+3. DAT-036 – A column whose value is one of a list.
+4. DAT-037 – A column that is a web address.
+5. DAT-006 – Information sources table, as before. What it
+   still holds is looked at again when it is trialled.
+
+What the planner tried for DAT-034 (Linux, Python 3.13.18 with SQLite
+3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv
+0.11.32), on `main` at `faede2e`:
+
+- With the three files of code changed and no test touched, all 492
+  backend tests passed. Then 12 new tests, 4 of them against a real
+  SQLite file; no existing test changed. The full run: 19 of 19 gates
+  passed, "Tests: 1134 passed, 0 failed, 0 skipped." (backend tests
+  504).
+- 23 of 23 planted defects in the new rule detected,
+  and all 220 of DAT-033 again, brought in line with the new code where
+  they touch the changed lines: 243 of 243 together.
+- In trial pull request #92 (closed without merging), exactly the ten files
+  of the trial ran on GitHub (run 44547420224): "All gates (Linux)" and "All
+  gates (Windows)" green, each log ending `19 of 19 gates passed.` and
+  `Tests: 1134 passed, 0 failed, 0 skipped.`, with 504 backend tests on both
+  machines (Python 3.12.16 on Linux, 3.12.10 on Windows); "Build the site",
+  "Publish the site" and "Check the published site" skipped.
+
+Phase 2 has 45 tasks, 18 verified, and the project 252.
+
+Next task: DAT-034 – A column type brings its check.

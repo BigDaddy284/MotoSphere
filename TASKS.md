@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 41 | 18 |
+| 2 | Data store and published data (DAT, PUB) | 45 | 18 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-006 – Information sources table.
+**Current task:** DAT-034 – A column type brings its check.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -874,7 +874,10 @@ the key alone, and the timestamps are DAT-031, which follows it. The sixth
 (PLAN-019): DAT-031 is the timestamps themselves, and naming a table
 without them is DAT-032, which follows it. The seventh (PLAN-020): DAT-030
 is the check for text that must not be empty, and naming a column without
-that check is DAT-033, which follows it.
+that check is DAT-033, which follows it. Four tasks were added before the
+first table (PLAN-021): DAT-034 lets any column type bring the check for
+its column, and DAT-035, DAT-036 and DAT-037 are the three kinds of column
+the first table needs and the store did not have.
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -1216,6 +1219,58 @@ that check is DAT-033, which follows it.
 - **Verification status:** Verified by the planner on 2026-11-19. All 6 files are identical to the planner's trial. No existing file of code or tests changed, and no package was added. Every one of the 48 new tests compares two real SQLite files, on Linux and on Windows: one whose tables SQLAlchemy made from the models and one that `migrate` built. The real models and the real migrations agree, both being empty; that the comparison can fail is proven with two models and migrations of the tests' own.
 - **Commit:** `3ea9b4f`
 - **Plan:** `docs/plans/DAT-026.md`
+
+### DAT-034 – A column type brings its check
+- **Status:** IN PROGRESS
+- **Objective:** Any column type can bring the check for its column: `Base` gives that check to the table and `broken_rules` names a column whose table is without it, for every such type, so that a new type of this kind needs no change to either.
+- **Description:** Added on 2026-11-19 (PLAN-021), before the first table. Today `Base` and `broken_rules` know one type by its name, `NotEmptyText` (DAT-030, DAT-033); the first table needs three more kinds of column that are kept by a check (DAT-035 to DAT-037). One new module, `motosphere.db.checks`, with one class: a column type that brings a check is a subclass of `WithItsCheck`, beside its SQLAlchemy type, and says `check_for(name)`, the check for the column of that name, and two words for the sentence of `broken_rules`, `refuses` and `given_by`. `NotEmptyText` becomes such a type and gives the check of `not_empty`, which stays as it is. `Base` gives `column.type.check_for(column.name)` to the table of a model for every column whose type is a `WithItsCheck`, and `broken_rules` asks for the same and writes its sentence with the type's two words. Settled in the planner's trial: no existing test changes, and with only the code changed all 492 backend tests passed, which is the proof that the change keeps what was there; for text that must not be empty the sentence is letter for letter what it was; a type that says it brings a check and gives none is an error (`NotImplementedError`), when a model with a column of it is defined and when `broken_rules` is asked; the new rule is proven with a column type of the tests' own (text in large letters only), with tables made by hand and with a model in a real SQLite file. No table, no migration, no new package. The planner's trial has 12 new tests and detects 243 of 243 planted defects.
+- **Acceptance criteria:**
+  1. `Base` gives the table of a model the check of every column whose type is a `WithItsCheck`, whatever the type: the real SQLite file has the checks by name, in the order of the columns, and refuses what the type's check refuses, in a column that must have a value and in one that may be without.
+  2. `broken_rules` names a column of any such type whose table is without the check the type gives, with that type's two words, until the table has the check.
+  3. The check of one type does not count for a column of another, in four ways, and columns of several types in one table are named in their order, each in its own type's words.
+  4. A type that says it brings a check and gives none is an error, for `broken_rules` and when a model with a column of it is defined.
+  5. `NotEmptyText` brings exactly the check `not_empty` gives, and its `given_by` is the name of that function.
+  6. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  7. `python scripts/check.py` reports 19 of 19 gates and 1134 tests (backend tests 504); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 7 new unit tests of `broken_rules` in four functions, with two column types of the tests' own; 1 new unit test of `NotEmptyText`; 4 new integration tests in three functions, with a model that has columns of two such types, against a real SQLite file; every existing test, unchanged. Twelve planted defects by the builder and the planner's own, all of DAT-033's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-034.md`
+
+### DAT-035 – A column that is yes or no
+- **Status:** NOT STARTED
+- **Objective:** A model can say that a column is yes or no, and the store refuses anything else in it.
+- **Description:** Added on 2026-11-19 (PLAN-021). A strict table has no type for yes and no, and SQLite refuses to make one with SQLAlchemy's own (`DATABASE.md`). One column type that brings its check (DAT-034): a whole number in the table, `True` or `False` to Python, and a check by which SQLite refuses every number but 0 and 1, whoever writes the row. The first table needs it for "is this source switched on" (DAT-006). The planner's trial settles how a model says it, and what a column that may be without a value holds.
+- **Acceptance criteria:** a model says of a column that it is yes or no and gets a whole-number column with its check, named by the naming rule; yes and no are stored and read back as `True` and `False`; any other number, written past the model, is refused by SQLite with the name of the check; `broken_rules` names such a column whose table is without the check, without a change to `Base` or `broken_rules`.
+- **Tests required:** unit tests of the type and its check; integration tests against a real SQLite file for every rule above; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-036 – A column whose value is one of a list
+- **Status:** NOT STARTED
+- **Objective:** A model can say that a column's value is one of a fixed list, and the store refuses any other.
+- **Description:** Added on 2026-11-19 (PLAN-021). Much of what the store holds is one of a short list that the code knows: the category of a source and the way it is collected (DESIGN §7.1, §7.2), later the outcome of a run, the state of a review item, a confidence. One column type that brings its check (DAT-034): text in the table, a value of the list to Python, and a check that names the values, by which SQLite refuses every other text, whoever writes the row. The list is said once, in the code. The planner's trial settles how a list is said, what its values look like in the file, and what a change to a list means for a migration.
+- **Acceptance criteria:** a model says of a column that its value is one of a list and gets a text column with its check, named by the naming rule; every value of the list is stored and read back; a text that is not on the list, written past the model, is refused by SQLite with the name of the check; two columns with two lists each keep their own; `broken_rules` names such a column whose table is without the check, without a change to `Base` or `broken_rules`.
+- **Tests required:** unit tests of the type and its check; integration tests against a real SQLite file for every rule above; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-037 – A column that is a web address
+- **Status:** NOT STARTED
+- **Objective:** A model can say that a column holds a web address, and the store refuses text that is not one.
+- **Description:** Added on 2026-11-19 (PLAN-021). A source has a website (DAT-006), and every collected record says at which address it was found (DAT-008). One column type that brings its check (DAT-034): text in the table, with a check by which SQLite refuses text that does not begin with `https://` or `http://` and go on after it, whoever writes the row. An address is stored as it was given: the store does not tidy it and does not ask the network whether it exists. The planner's trial settles exactly what the check refuses, and how far a check in a table can go.
+- **Acceptance criteria:** a model says of a column that it is a web address and gets a text column with its check, named by the naming rule; an https and an http address are stored and read back as they were given; text of another kind (no scheme, another scheme, a scheme and nothing after it, empty text) is refused by SQLite with the name of the check; `broken_rules` names such a column whose table is without the check, without a change to `Base` or `broken_rules`.
+- **Tests required:** unit tests of the type and its check; integration tests against a real SQLite file for every rule above; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
 
 ### DAT-006 – Information sources table
 - **Status:** NOT STARTED
