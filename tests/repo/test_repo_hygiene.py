@@ -57,10 +57,6 @@ IGNORED_SAMPLE_PATHS = (
     "frontend/test-results/x.txt",
     "frontend/tsconfig.tsbuildinfo",
     "frontend/public/data/manifest.json",
-    "backend/store/motosphere.sqlite3",
-    "backend/store/anything-else.txt",
-    "backend/elsewhere/copy.sqlite3",
-    "copy.sqlite3-journal",
     "logs/app.log",
     "server.pem",
     "Thumbs.db",
@@ -159,13 +155,6 @@ class RepositoryHygieneTest(unittest.TestCase):
                 if code not in (0, 1):
                     raise RuntimeError(f"git check-ignore failed for {path} with exit code {code}")
                 self.assertEqual(code, 1, f"{path} is ignored but must be tracked")
-
-    def test_the_data_store_is_ignored_where_it_is_kept_by_default(self) -> None:
-        example = (ROOT / "backend" / ".env.example").read_text(encoding="utf-8")
-        paths = re.findall(r"^MOTOSPHERE_STORE_PATH=(.+)$", example, re.MULTILINE)
-        self.assertEqual(len(paths), 1, "backend/.env.example names no store path")
-        path = "backend/" + paths[0].strip()
-        self.assertEqual(check_ignore(path), 0, f"{path} is not ignored")
 
     def test_no_secret_or_environment_files_tracked(self) -> None:
         offending = []

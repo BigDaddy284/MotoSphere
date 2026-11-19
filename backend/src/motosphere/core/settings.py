@@ -11,7 +11,6 @@ Application code obtains settings through :func:`get_settings`.
 
 from enum import StrEnum
 from functools import lru_cache
-from pathlib import Path
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -60,13 +59,6 @@ class Settings(BaseSettings):
             "How much detail is written to the log: DEBUG, INFO, WARNING, ERROR or CRITICAL."
         ),
     )
-    store_path: Path = Field(
-        default=Path("store/motosphere.sqlite3"),
-        description=(
-            "Where the data store is kept: the path of an SQLite file. "
-            "A relative path starts in the backend folder."
-        ),
-    )
 
     @field_validator("environment", mode="before")
     @classmethod
@@ -80,15 +72,6 @@ class Settings(BaseSettings):
     def _normalise_log_level(cls, value: object) -> object:
         if isinstance(value, str):
             return value.strip().upper()
-        return value
-
-    @field_validator("store_path", mode="before")
-    @classmethod
-    def _require_a_store_path(cls, value: object) -> object:
-        if isinstance(value, str):
-            value = value.strip()
-            if not value:
-                raise ValueError("the path of the data store must not be empty")
         return value
 
 

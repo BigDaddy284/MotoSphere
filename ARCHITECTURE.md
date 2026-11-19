@@ -197,9 +197,6 @@ pipeline's command line. The settings and logging modules stay.
   and longitude (WGS 84). Bounding-box lookups use ordinary or R*Tree indexes;
   distances use the haversine formula in Python; map tiles and clusters are
   computed at export time.
-- **Where the file is** is one setting, `MOTOSPHERE_STORE_PATH`, by default
-  `backend/store/motosphere.sqlite3`. Git ignores that folder and every
-  `*.sqlite3` file (DAT-002).
 - **What the store relies on in SQLite** is named in one module,
   `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
   FTS5 and the JSON functions among them. Its tests run against the real

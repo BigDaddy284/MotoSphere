@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 42 | 42 |
-| 2 | Data store and published data (DAT, PUB) | 28 | 1 |
+| 2 | Data store and published data (DAT, PUB) | 30 | 1 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-002 – Store settings and connection module.
+**Current task:** DAT-002 – Store path setting.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -843,7 +843,9 @@ Written out in full by PLAN-012. The pipeline gets a real store (SQLite) and
 publishes real files from it. Every task that touches the store is tested
 against a real SQLite file, never a mock. A task's details are settled by
 the planner's trial before its plan is written, and a task that proves too
-large to test thoroughly is split then.
+large to test thoroughly is split then. The first such split (PLAN-013):
+the old DAT-002 is DAT-002, DAT-021 and DAT-022, which follow one another
+here although their numbers do not.
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -866,12 +868,42 @@ large to test thoroughly is split then.
 - **Commit:** `a71f880`
 - **Plan:** `docs/plans/DAT-001.md`
 
-### DAT-002 – Store settings and connection module
+### DAT-002 – Store path setting
+- **Status:** IN PROGRESS
+- **Objective:** The pipeline knows where its data store's file is from one validated setting, and a store's file can never be committed by accident.
+- **Description:** One new setting, `store_path` (`MOTOSPHERE_STORE_PATH` in the environment or in `backend/.env`), a path, by default `store/motosphere.sqlite3` in the `backend` folder. An empty value is refused in plain words when the settings are read; spaces around a value are dropped. Reading the settings creates no file and no folder. Git ignores `backend/store/` and every `*.sqlite3` file with the files SQLite keeps beside one, anywhere; a repository check reads the default from `backend/.env.example` and fails if Git would not ignore it. A new test holds the README's table of settings to the code. Nothing opens the store yet (DAT-021). This is the first third of the old "DAT-002 – Store settings and connection module" (PLAN-013). The planner's trial has 11 new tests and detects 22 of 22 planted defects.
+- **Acceptance criteria:**
+  1. `Settings().store_path` is the path `store/motosphere.sqlite3` when nothing is set, and the value of `MOTOSPHERE_STORE_PATH` from the environment or from `backend/.env` when it is.
+  2. An empty value, or one of spaces only, is refused when the settings are read, with a message that names `store_path` and says the path must not be empty. Spaces around a value are dropped; spaces inside it stay.
+  3. Reading the settings creates no file and no folder, with the default and with a set value.
+  4. `backend/.env.example` and the README's table list the setting with its default, and tests fail when either differs from the code.
+  5. Git ignores `backend/store/` and everything in it, every `*.sqlite3` file and every `*.sqlite3-*` file, anywhere in the repository; a repository check fails if the default in `backend/.env.example` is a place Git does not ignore.
+  6. `python scripts/check.py` reports 19 of 19 gates and 791 tests (repository checks 41, backend tests 161); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  7. Only the nine planned files changed; of the existing tests only `test_settings_are_exactly_the_documented_ones` changed, in what it expects.
+- **Tests required:** backend unit tests of the setting (10 new: the default, the environment, the `.env` file, spaces, an empty value in three forms, nothing created with the default and with a set value, the README's table); one new repository check (the default place is ignored) and four more sample paths in an existing one; the existing tests; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-002.md`
+
+### DAT-021 – Opening the store
 - **Status:** NOT STARTED
-- **Objective:** The pipeline opens its store through one module, and every connection enforces foreign keys.
-- **Description:** A setting for the store's path (`MOTOSPHERE_STORE_PATH`), validated like the others. One module makes the SQLAlchemy engine and the unit of work for it: foreign keys are switched on for every connection, a unit of work commits as a whole or not at all, and an SQLite that lacks what DAT-001 requires is refused in plain words before anything is written. Adds SQLAlchemy 2 to the pipeline (locked). No table of the application yet.
-- **Acceptance criteria:** a row that breaks a foreign key is refused on the first connection and on every later one; work that fails part-way leaves nothing behind; the path setting rejects an empty value and creates no file until the store is opened; an SQLite below the least version is refused with one plain sentence; the type check passes with SQLAlchemy's own types (no ignores).
-- **Tests required:** unit tests of the setting; integration tests against a real SQLite file (foreign keys on several connections, commit and rollback, the refusal); planted defects; the full run of all gates on both machines.
+- **Objective:** The pipeline opens its store through one module, every connection enforces foreign keys, and an SQLite that lacks what the store relies on is refused before anything is written.
+- **Description:** Adds SQLAlchemy 2 to the pipeline (locked). One module makes the engine for the path of DAT-002. It asks `missing()` of DAT-001 first and refuses in plain words; it makes the store's folder if it is not there; foreign keys are switched on for every connection; transactions are SQLite's own, so that a change to the schema is taken back with everything else when work fails (the setting SQLAlchemy documents for Python 3.12 and newer); a path that cannot be a store (a folder, a file that is not an SQLite database) is refused in plain words. No connection stays open after use, so the file can be removed on Windows too. No table of the application yet. The second third of the old DAT-002 (PLAN-013).
+- **Acceptance criteria:** a row that breaks a foreign key is refused on the first connection, on every later one and on two that are open at once; an SQLite below the least version is refused with one plain sentence, and no file and no folder is made; work on a connection that fails part-way leaves nothing behind, a new table included; a path that is a folder, and a file that is not a database, are refused in plain words; the type check passes with SQLAlchemy's own types (no ignores).
+- **Tests required:** integration tests against a real SQLite file (foreign keys on several connections, a failed piece of work, the refusals, nothing left open); planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-022 – Units of work
+- **Status:** NOT STARTED
+- **Objective:** Everything the pipeline writes to the store is written in units of work, each of which is kept as a whole or not at all.
+- **Description:** One function gives a session for a unit of work on the opened store (DAT-021). When the work ends the unit is committed; when the work raises, everything it did is taken back and the error reaches the caller unchanged; its connection is closed either way. The last third of the old DAT-002 (PLAN-013).
+- **Acceptance criteria:** committed work is there for a later unit of work and after the store has been opened again; work that fails part-way leaves nothing behind, neither rows nor a new table; the error that ended the work reaches the caller unchanged; a row that breaks a foreign key ends the whole unit; after a unit of work no connection is open.
+- **Tests required:** integration tests against a real SQLite file (commit, failure part-way, the error, a broken foreign key, nothing left open); planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -880,7 +912,7 @@ large to test thoroughly is split then.
 ### DAT-003 – A real, separate store for every test
 - **Status:** NOT STARTED
 - **Objective:** Every database test gets its own real SQLite file and can never see another test's data.
-- **Description:** A pytest fixture creates a store in the test's own temporary folder through DAT-002's module, hands it to the test and closes it afterwards, so that the file can be removed on Windows too. The store is never replaced by a mock (CLAUDE.md §3, `ARCHITECTURE.md` §5).
+- **Description:** A pytest fixture creates a store in the test's own temporary folder through DAT-021's module, hands it to the test and closes it afterwards, so that the file can be removed on Windows too. The store is never replaced by a mock (CLAUDE.md §3, `ARCHITECTURE.md` §5).
 - **Acceptance criteria:** two tests that write the same key both pass, in either order; the file exists on disk during the test and is closed after it; the fixture works unchanged on Linux and on Windows; a test that leaves a transaction open does not break the next test.
 - **Tests required:** tests of the fixture itself, run in random order within the file; the full run of all gates on both machines; planted defects (a shared file, a store left open).
 - **Tests executed:** –

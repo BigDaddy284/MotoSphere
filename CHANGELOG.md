@@ -106,9 +106,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
   gates run on, and where the store is kept between scheduled runs
   (DAT-001).
-- A setting for where the data store's file is, `MOTOSPHERE_STORE_PATH`
-  (default `store/motosphere.sqlite3` in the `backend` folder). Git ignores
-  that folder and every `*.sqlite3` file (DAT-002).
 
 ### Removed
 
