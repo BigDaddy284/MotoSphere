@@ -263,13 +263,21 @@ these rules:
   part of the name. A check without one is refused when its table is
   defined. The key has no name: SQLite writes it with its column, and
   nothing can change a key but building the table anew.
+- **Each constraint and each index of a table has a name of its own**
+  (DAT-038). The naming rule gives two constraints one name when they
+  are of one kind and on the same columns, and two checks one name when
+  a model calls them the same. SQLite takes a table with two checks of
+  one name. It keeps both, and says the one name when it refuses a row,
+  which does not tell which of the two refused it. Two indexes of one
+  name SQLite refuses itself, when the second is made.
 
 `broken_rules(schema)` says in plain words which tables of a schema break
 a rule: a table that is not strict (one made without a model can be), a
 table without the key every table has, a table without the two times
 every table has, a column whose type brings a check and whose table
-does not have it, and a constraint or an index that was named by hand. A
-test holds the real schema to it with every change.
+does not have it, a constraint or an index that was named by hand, and a
+name that more than one constraint or index of a table has. A test holds
+the real schema to it with every change.
 
 A table is without the two times (DAT-032) if `created_at` or `updated_at`
 is missing, is not a time as the store keeps one, may be empty, or gets a
@@ -289,7 +297,21 @@ table is made. For text that must not be empty that is the check
 name does not count, and neither does one of that name that says
 something else, nor the check another type gives. The columns of a table
 are named in their order, each in the words of its own type: what is not
-refused, and which function gives the check.
+refused, and which function gives the check. Where a table has two checks
+of the name of a column's check, the column has its check if one of the
+two is that check, whichever SQLAlchemy comes to first (it keeps the
+constraints of a table without an order). That there are two is said by
+the rule of the names.
+
+A name is given twice (DAT-038) if more than one constraint or index of
+one table has it. The key is not counted, as it has no name. The rule
+names each such name once, by the alphabet, after everything else it
+says of the table, and says how many have the name:
+`The table odd_one gives the name ck_odd_one_laps_sane to 2 of its
+constraints and indexes: each must have a name of its own.` A name given
+by hand to two constraints is named for both reasons. The same name in
+two tables is not a name given twice: only a name given by hand can be
+that, and it is named as one.
 
 There is no model yet, and so no table. The rules are proven with models
 of the tests' own, which are kept in schemas apart from the real one.
