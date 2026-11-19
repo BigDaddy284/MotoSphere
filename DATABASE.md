@@ -148,6 +148,20 @@ migration is not caught: it is a fault in the code, its traceback is what
 whoever mends it needs, and the store stays at the version before that
 migration.
 
+**The command that only looks.** `python -m motosphere schema` says which
+schema the store has, and never writes (DAT-025). Where
+`MOTOSPHERE_STORE_PATH` names no file it says "There is no data store: …
+does not exist." and makes none: it does not call `open_store`, which
+would. Otherwise it opens the store, asks `pending`, and writes one
+sentence to standard output, with the file's whole path: "The data store
+is up to date: … is at schema version 5." or "The data store lacks 2
+migrations: … is at schema version 3, and the newest is version 5." In
+all three cases the exit code is 0. A store that cannot be opened, or that
+`migrate` would refuse, gives the same sentence as there on standard
+error, and the same exit code 1: the two commands ask the same function,
+so they cannot come to disagree about a store. The file is byte for byte
+the same afterwards, and nothing is made beside it.
+
 SQLite can add, rename and drop a column and rename a table in place. For
 any other change the table is built anew. A migration can do that inside
 its transaction while other tables point to the table and foreign keys

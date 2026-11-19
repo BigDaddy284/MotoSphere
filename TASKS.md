@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 35 | 9 |
+| 2 | Data store and published data (DAT, PUB) | 35 | 10 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-025 – Command: say which schema a store has.
+**Current task:** DAT-005 – Model conventions: keys, times and names.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1045,7 +1045,7 @@ without migrating it, and that is DAT-027, which stands before it.
 - **Plan:** `docs/plans/DAT-027.md`
 
 ### DAT-025 – Command: say which schema a store has
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One command says which schema the store has and whether it is the newest the code knows, and changes nothing.
 - **Description:** The command is `python -m motosphere schema`, in one new module, `motosphere.cli.schema`, built like the `migrate` command. It takes no argument: the store is the file `MOTOSPHERE_STORE_PATH` names. It never writes. Where the path names nothing it says "There is no data store: … does not exist." and makes none (it does not call `open_store`, which would). Otherwise it opens the store, asks `pending` (DAT-027), and writes one sentence to standard output, with the file's whole path: "The data store is up to date: … is at schema version N." or "The data store lacks 2 migrations: … is at schema version 3, and the newest is version 5." In these three cases the exit code is 0. A store that cannot be opened, or that `migrate` would refuse (not MotoSphere's, newer than the code), gives the same sentence as there on standard error and the same exit code 1; the two commands ask the same function, so they cannot come to disagree about a store. The exit code 2 stays what it is everywhere: wrong arguments or wrong settings. No log line, no new package. The planner's trial has 25 new tests and detects 62 of 62 planted defects.
 - **Acceptance criteria:**
@@ -1056,10 +1056,10 @@ without migrating it, and that is DAT-027, which stands before it.
   5. In every case with a file, the file is byte for byte as before, and nothing is made beside it.
   6. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 911 tests (backend tests 281); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 25 new tests: 4 that run the real command in a process of its own against a real SQLite file, with the pipeline's own list of migrations; 12 that call the command in the test's process with a list of migrations of the test's own (the pipeline's is empty), against a real SQLite file, four of which give a refused file to both commands and compare what they say; 9 unit tests of what it says and of its help. Seventeen planted defects by the builder and the planner's own (a command that makes the file or its folder, one that migrates, one that leaves a file beside the store, among others); the command run by hand; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #75 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 911 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 281: 256 before, 25 new); 62 planted defects in the command, 62 of 62 detected, the plan's seventeen prove-it steps among them with the results the plan gives; the command run by hand in an empty folder before and after `migrate`, and against a folder and against a database made by SQLite alone. On GitHub, read by the planner from the runs and job logs: run 44479205716 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 911 passed, 0 failed, 0 skipped.", with 281 backend tests on both machines, the three jobs after the gates skipped; run 44481346796 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 911 / 0 tests (repository 41, script tests 206, backend 281, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 62 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 10 files are identical to the planner's trial. No existing test changed and no package was added. Every test that gives the command a file compares the file byte for byte afterwards, and the tests without a file look for the file and its folder afterwards; seven of the planted defects are ways of writing where the command must not, and all seven are detected. Four files that `migrate` refuses are given to both commands, and what `schema` says is what `migrate` says, word for word. Four of the new tests run the real command in a process of its own, on Linux and on Windows, with the pipeline's own list of migrations, which is still empty: there the command says that there is no store, or that the store is up to date at version 0. That it says how many migrations a store lacks is tested in the test's process with a list of the test's own, against a real SQLite file; the first task that adds a migration (DAT-006) runs the real command with it.
+- **Commit:** `c590ec0`
 - **Plan:** `docs/plans/DAT-025.md`
 
 ### DAT-005 – Model conventions: keys, times and names
