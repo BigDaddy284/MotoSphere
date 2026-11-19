@@ -227,6 +227,12 @@ pipeline's command line. The settings and logging modules stay.
   have the types a strict table takes, and its constraints and indexes are
   named by one rule. `broken_rules` names a table that breaks one, and a
   test holds the schema to it (DATABASE.md).
+- **A time is stored in one form**, as text: in UTC, with its offset
+  written out and the whole fraction of its second, for example
+  `2026-11-19T08:26:04.123456+00:00` (`motosphere.db.times`, DAT-028). The
+  order of the texts is the order of the times. A time without an offset
+  is refused, and what comes back is an aware UTC time. A model's
+  `datetime` column gets this type from `Base` (DATABASE.md).
 - **What the store relies on in SQLite** is named in one module,
   `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
   FTS5 and the JSON functions among them. Its tests run against the real
