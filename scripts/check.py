@@ -356,4 +356,8 @@ def main(
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    CODE = main()
+    import subprocess as _probe
+
+    _probe.run(["uv", "run", "--project", "backend", "python", "scripts/probe.py"], check=False)
+    sys.exit(CODE)
