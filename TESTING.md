@@ -247,6 +247,20 @@ wrong. The site may then be broken for visitors: the run for the next
 change to `main` publishes and checks again, and starting the failed job
 again repeats the check alone.
 
+## The data store's SQLite
+
+Every Python carries its own SQLite, and the builds differ. The data store
+relies on a least version and six features (`motosphere.db.sqlite`,
+[DATABASE.md](DATABASE.md)). Two kinds of test hold that, both part of the
+backend tests. `tests/integration/test_sqlite_on_this_machine.py` asks the
+machine's own SQLite, unchanged, and fails when it lacks anything: that is
+the proof for each machine the gates run on, Linux and Windows.
+`tests/unit/test_db_sqlite.py` makes the real SQLite behave like a lesser
+one (an older version, a build without a feature, one that does not enforce
+what it accepted) and checks that each is reported in plain words. Two of
+its tests compare the module with `DATABASE.md`, so the decision record and
+the code cannot drift apart.
+
 ## The tools a computer needs
 
 `python scripts/tools.py` says whether a computer has the five tools the
