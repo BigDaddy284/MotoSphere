@@ -200,10 +200,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   a table has, and how many have it. SQLite takes a table with two
   checks of one name, and a refusal then does not tell which of the two
   refused the row (DAT-038).
-- The two lists an information source is described by, in the new
-  package of the models, `motosphere.db.models`: the twelve kinds of
-  source and the ten ways of collecting of the design, each with the text
-  that is stored (DAT-039).
 
 ### Removed
 

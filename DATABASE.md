@@ -818,58 +818,6 @@ There is no model and no migration yet, so both stores are empty today.
 That the comparison can fail is proven with two models and migrations of
 the tests' own (`TESTING.md`).
 
-## The information sources
-
-A source is a website or a dataset that MotoSphere may collect from, and
-the store will know every one of them (DESIGN.md §7.3). The table of the
-sources is not there yet. What is there are the two lists a source is
-described by (DAT-039), in `motosphere.db.models.source`, the module in
-which the model of the table will stand too. The models of the store
-live in the package `motosphere.db.models`, one module for each table or
-for a few that belong together.
-
-Each list is said once, in the code, as a `StrEnum` whose values are the
-texts that are stored (see "One of a list"). The texts are words in small
-letters, with one space between two. Once a table has a column of a list,
-a text is changed or taken away only by a migration: the table's check
-names the texts, and rows hold them.
-
-**What kind of source it is**, `SourceCategory`: who publishes it. The
-twelve of DESIGN.md §7.1, in its order.
-
-| The text that is stored | In the design | What it is |
-|---|---|---|
-| `governing body` | Official governing bodies | A body that makes the rules of the sport, for the world or for a country |
-| `championship` | Official championship websites | The website of one championship or series |
-| `organiser` | Championship organisers | Whoever runs a championship from year to year |
-| `promoter` | Race promoters | Whoever puts on single races and sells them |
-| `track` | Individual motocross tracks | One track, about itself |
-| `club` | Local motorcycle clubs | A local motorcycle club |
-| `regional organisation` | Regional racing organisations | An organisation for the racing of one region of a country |
-| `results database` | Public results databases | A public collection of race results or of timing |
-| `news publication` | Motocross news publications | A magazine or a news site about the sport |
-| `community website` | Publicly accessible community websites | A website the riders and followers of the sport write themselves |
-| `social media page` | Public social media pages where permitted | A public page on a social network, only where that network permits collecting |
-| `historical archive` | Publicly accessible historical archives | A public archive of how the sport was |
-
-**How it is collected from**, `CollectionMethod`. The ten of DESIGN.md
-§7.2, in its order. Three of them are permitted only on a condition, which
-the design names and the list does not check: it is checked when a source
-is registered, and recorded with the source (`DATA_SOURCES.md`).
-
-| The text that is stored | In the design | What it is |
-|---|---|---|
-| `official api` | Official APIs | An interface the source itself offers to programs |
-| `structured feed` | Public structured feeds | A feed of records in a form made for programs, such as a calendar file |
-| `rss feed` | RSS feeds | A feed of what is new, as RSS or Atom |
-| `public dataset` | Public datasets | A whole set of records published for reuse, under a licence |
-| `html extraction` | Permitted HTML extraction | Pages made for people, only where the site's terms and its robots.txt permit |
-| `structured document` | Structured public documents | A public document with a fixed layout, such as a results sheet |
-| `json endpoint` | Public JSON endpoints where authorised | The data behind a public page, only where the source authorises its use |
-| `sitemap discovery` | Sitemap discovery | The list of its pages that a site publishes for programs |
-| `search engine discovery` | Search-engine discovery where permitted | What a search engine finds, only where the engine permits it |
-| `human submission` | Human-submitted source references | A reference a person has sent in |
-
 ## What the store relies on in SQLite
 
 SQLite is not one program. Every Python carries its own, built with its own

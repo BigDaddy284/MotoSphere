@@ -261,10 +261,6 @@ pipeline's command line. The settings and logging modules stay.
   order of the texts is the order of the times. A time without an offset
   is refused, and what comes back is an aware UTC time. A model's
   `datetime` column gets this type from `Base` (DATABASE.md).
-- **The models live in one package**, `motosphere.db.models`. The first
-  table will be that of the information sources; the two lists a source
-  is described by are there already: the twelve kinds of source and the
-  ten ways of collecting of DESIGN.md §7 (DAT-039, DATABASE.md).
 - **What the store relies on in SQLite** is named in one module,
   `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
   FTS5 and the JSON functions among them. Its tests run against the real

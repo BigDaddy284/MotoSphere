@@ -676,18 +676,6 @@ files in every test.
   keeps for itself are not compared; and comparing leaves both files byte
   for byte as they were.
 
-## The information sources
-
-`backend/tests/unit/test_db_models_source.py` tests the two lists a source
-is described by (DAT-039), without a store. The texts of both lists are
-written out in the test, so a text changed by mistake fails there: each
-list has exactly its texts, in the order of the design, twelve kinds of
-source and ten ways of collecting; no text has two names; each of the 22
-texts is words in small letters with one space between two; and a column
-can be of either list, with a check that names its texts in their order,
-as SQLite is given it. That SQLite refuses a text that is not on a list is
-proven for every list by the tests of "One of a list".
-
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`
