@@ -6,9 +6,7 @@ A model is a class that describes one table. Every model is a subclass of
 - is a strict table: SQLite refuses a value that is not of its column's
   type, where an ordinary table would store whatever it is given;
 - has columns of the few types a strict table takes: a Python ``int``
-  becomes INTEGER, a ``str`` TEXT, a ``float`` REAL and ``bytes`` BLOB, and
-  a ``datetime`` becomes the store's own type for a time
-  (:class:`motosphere.db.times.UtcDateTime`), which is TEXT in the table;
+  becomes INTEGER, a ``str`` TEXT, a ``float`` REAL and ``bytes`` BLOB;
 - has its constraints and indexes named by one rule, :data:`NAMING`, so
   that a migration can name what it changes and the names are the same on
   every machine.
@@ -17,15 +15,12 @@ A model is a class that describes one table. Every model is a subclass of
 rule. A test holds the real schema to it.
 """
 
-from datetime import datetime
 from typing import Any, ClassVar
 
 from sqlalchemy import REAL, Constraint, Index, MetaData, Text
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.schema import conv
 from sqlalchemy.types import TypeEngine
-
-from motosphere.db.times import UtcDateTime
 
 __all__ = ["NAMING", "Base", "broken_rules"]
 
@@ -51,7 +46,6 @@ class Base(DeclarativeBase):
     type_annotation_map: ClassVar[dict[type, type[TypeEngine[Any]]]] = {
         str: Text,
         float: REAL,
-        datetime: UtcDateTime,
     }
 
     def __init_subclass__(cls, **kwargs: Any) -> None:

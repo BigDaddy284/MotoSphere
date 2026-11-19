@@ -200,11 +200,9 @@ these rules:
 - **A column has one of the types a strict table takes**: INTEGER, REAL,
   TEXT or BLOB. A model that gives only the Python type of a column gets
   the right one: an `int` is INTEGER, a `str` TEXT, a `float` REAL and
-  `bytes` BLOB, and a `datetime` is the store's own type for a time, which
-  is TEXT (see "Times" below). SQLite refuses to make a strict table with a
-  column of another type ("unknown datatype"); SQLAlchemy's own types for
-  text, for numbers with a fraction, for yes and no and for times are four
-  such.
+  `bytes` BLOB. SQLite refuses to make a strict table with a column of
+  another type ("unknown datatype"); SQLAlchemy's own types for text, for
+  numbers with a fraction, for yes and no and for times are four such.
 - **Constraints and indexes are named by one rule** (`NAMING`), so that a
   migration can name what it changes, and so that the names are the same
   on every machine:
@@ -228,49 +226,8 @@ schema to it with every change.
 
 There is no model yet, and so no table. The rules are proven with two
 models of the tests' own, which are kept in a schema apart from the real
-one. The rules for a table's key and timestamps and for text that must not
-be empty follow (DAT-029 and DAT-030).
-
-## Times
-
-A strict table has no type for a time, so the store keeps a time as text,
-in one form (DAT-028, `motosphere.db.times`):
-
-```
-2026-11-19T08:26:04.123456+00:00
-```
-
-- **It is always in UTC.** A time given with another offset is stored as
-  the same moment in UTC: 10:26 at +02:00 is stored as 08:26.
-- **Its offset is always written out**, as `+00:00`, so the text says of
-  itself that it is UTC.
-- **It always has the six digits of the fraction of its second**, also
-  when they are zeros. So every text has the same length, and the order of
-  the texts is the order of the times: sorting and comparing rows by a
-  time needs nothing but the text.
-- **A time without an offset is refused** before anything is stored, with
-  one plain sentence: nothing can tell which moment it means. The unit of
-  work it was part of is taken back as a whole. A question that compares a
-  column with such a time is refused in the same way.
-- **What comes back is an aware UTC time**, whatever offset was given.
-
-A model says `Mapped[datetime]`, and `Base` gives the column the store's
-type for a time, `UtcDateTime`. In the table the column is TEXT.
-
-The text can be read without the pipeline's code: by a person, and by
-SQLite's own date functions (`unixepoch`, `strftime`), which take it as
-the moment it is.
-
-The store holds this one form only. Text in any other form in a column of
-a time (a time in another offset, one without its fraction, SQLite's own
-`2026-11-19 08:26:04`) can only get there past the models, and is refused
-when it is read, with a sentence that shows the text: a wrong time is not
-passed on as if it were right. The table itself does not check the form;
-whether it should is settled with the checks of DAT-030.
-
-Times UTC cannot say in the years 1 to 9999 are refused. A column for a
-date without a time of day needs a type of its own, which comes with the
-first table that has such a column.
+one. The rules for a table's key and timestamps, for times and for text
+that must not be empty follow (DAT-028 to DAT-030).
 
 ## What the store relies on in SQLite
 

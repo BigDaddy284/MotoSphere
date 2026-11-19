@@ -142,12 +142,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the types a strict table takes, and its constraints and indexes are
   named by one rule. `broken_rules` says which tables break a rule
   (DAT-005).
-- Times in the data store, `motosphere.db.times`: a time is stored as
-  text in one form, in UTC with its offset written out and the whole
-  fraction of its second (`2026-11-19T08:26:04.123456+00:00`), so the
-  order of the texts is the order of the times. A time without an offset
-  is refused, and what comes back is an aware UTC time. A model's
-  `datetime` column gets this type from `Base` (DAT-028).
 
 ### Removed
 
