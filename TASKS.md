@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 42 | 42 |
-| 2 | Data store and published data (DAT, PUB) | 30 | 2 |
+| 2 | Data store and published data (DAT, PUB) | 30 | 3 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-021 – Opening the store.
+**Current task:** DAT-022 – Units of work.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -888,7 +888,7 @@ here although their numbers do not.
 - **Plan:** `docs/plans/DAT-002.md`
 
 ### DAT-021 – Opening the store
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The pipeline opens its store through one function; every connection enforces foreign keys, work that fails is taken back as a whole, and an SQLite that lacks what the store relies on is refused before anything is written.
 - **Description:** Adds SQLAlchemy 2 to the pipeline (`sqlalchemy>=2.1`, locked at 2.1.9; no other new package). One module, `motosphere.db.store`, with `open_store(path)` and `StoreError`. The function asks `missing()` of DAT-001 first and refuses with everything the SQLite lacks in one sentence, before it touches the disk. It makes the path whole, makes the store's folder if it is not there, and returns the engine. Foreign keys are switched on for every connection in the engine's `connect` event. Transactions are SQLite's own (`autocommit=False`, the setting SQLAlchemy documents for Python 3.12 and newer), so a new table is taken back with the rest of a failed piece of work. No connection is kept open after use (`NullPool`). A path that is a folder, a folder that cannot be made and a file that is not an SQLite database are refused in plain words. No session, no fixture, no table of the application yet. The second third of the old DAT-002 (PLAN-013). The planner's trial has 19 new tests against a real SQLite file and detects 28 of 28 planted defects.
 - **Acceptance criteria:**
@@ -901,10 +901,10 @@ here although their numbers do not.
   7. The type check passes with SQLAlchemy's own types and no `ignore`.
   8. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 810 tests (backend tests 180); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** backend integration tests against a real SQLite file in the test's own folder (19 new): the file and its folder, a relative path, foreign keys on the first, later, simultaneous and reopened connections, a row that is accepted, committed work, a row and a new table of failed work, uncommitted work, every connection closed, the file removed after use, and the four refusals with their sentences; the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #59 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 810 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 180: 161 before, 19 new); 28 planted defects in the module, 28 of 28 detected by the new tests, the plan's eleven prove-it steps among them with the counts the plan gives. On GitHub, read by the planner from the runs and job logs: run 44443403050 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 810 passed, 0 failed, 0 skipped." with 180 backend tests, the three jobs after the gates skipped; run 44444397196 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 810 / 0 tests (repository 41, script tests 206, backend 180, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 28 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 8 files are identical to the planner's trial, the lock file included. No existing test changed. The 19 new tests run against a real SQLite file in the test's own folder, on Linux and on Windows; none uses a mock. The planner's trial first detected 27 of 28 planted defects (a path that was not made whole changed only the messages, and the test of the refused folder now passes a relative path), and one line that did nothing was found by the planted defects and the design corrected before the plan. A connection pool that keeps connections is detected on every run by one test; a second test fails beside it, a different one from run to run, so it is not among the prove-it steps. The pipeline's 8 locked run-time packages were checked once with `pip-audit` on 2026-11-19 ("No known vulnerabilities found"); the gate for that is PRF-005. Nothing in the pipeline calls `open_store` yet.
+- **Commit:** `d2f71e7`
 - **Plan:** `docs/plans/DAT-021.md`
 
 ### DAT-022 – Units of work
