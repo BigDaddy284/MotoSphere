@@ -366,13 +366,6 @@ shared with Linux and CI lives in Python scripts so it is written once. The
 commands are documented in README.md and verified on a real Windows machine
 before the task that adds them is accepted.
 
-The Python scripts come first, one at a time, and the gates run their tests
-on Linux and on Windows. The first is `scripts/tools.py`: it says whether a
-computer has the tools the project needs. It reads the least versions of
-Python and Node.js from the files where those tools read them
-(`backend/pyproject.toml`, `frontend/package.json`), and it only looks: it
-installs nothing.
-
 ## 13. Deployment (Decided)
 
 - **GitHub Pages**, deployed by the checks workflow after every gate passed

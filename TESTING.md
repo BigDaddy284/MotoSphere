@@ -247,19 +247,6 @@ wrong. The site may then be broken for visitors: the run for the next
 change to `main` publishes and checks again, and starting the failed job
 again repeats the check alone.
 
-## The tools a computer needs
-
-`python scripts/tools.py` says whether a computer has the five tools the
-gates and the application need (Python, Git, uv, Node.js and npm), which
-version of each it found, and whether Python and Node.js are as new as the
-project asks. The least versions are read from `backend/pyproject.toml` and
-`frontend/package.json`, so each is written once. It is not a gate: a gate
-whose tool is missing fails by itself and says so. Its tests
-(`tests/scripts/test_tools.py`, part of the script tests) read lines the
-real tools printed, ask the real Python for its version, run the script on
-the computer that runs the tests, where all five tools must be ready, and
-run it once with a search path that holds no tool.
-
 ## Latest results
 
 Results are recorded per task in [PROGRESS.md](PROGRESS.md).
