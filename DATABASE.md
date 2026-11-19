@@ -53,6 +53,34 @@ reason: what the SQLite lacks, a path that is a folder, a folder that
 cannot be made, or a file that is not an SQLite database (the file is left
 as it was).
 
+## Units of work
+
+Everything the pipeline writes to the store, it writes in a unit of work:
+`unit_of_work(store)` in `motosphere.db.work`, used in a `with` statement
+on the engine that `open_store` returned. It gives an SQLAlchemy session
+for one piece of work. What it promises:
+
+- **Kept as a whole.** When the block ends, everything the work did is
+  committed together, rows that were only added to the session included.
+- **Or not at all.** When the block raises, everything the work did is
+  taken back, a new table included. That holds for a row that breaks a
+  foreign key, whether the statement was sent at once or the row is written
+  when the unit ends, and for work that is stopped from outside (Ctrl+C).
+- **The error is the caller's.** The error that ended the work reaches the
+  caller as it was raised, not wrapped in another.
+- **One connection, closed either way.** A unit of work does all its work
+  on one connection and closes it when it ends or fails.
+- **No commit part-way.** A unit of work that calls `commit()` itself is
+  refused with "A unit of work is kept as a whole when it ends; it cannot
+  be committed part-way.", and what it did is taken back. Work that took
+  itself back with `rollback()` cannot go on in the same unit.
+- **Over means over.** The session cannot be used after its unit has ended.
+  What the work read or wrote can still be read afterwards, as it was when
+  the unit ended.
+
+SQLite lets one connection write at a time, and the pipeline does one unit
+of work at a time: a unit is not started inside another.
+
 ## What the store relies on in SQLite
 
 SQLite is not one program. Every Python carries its own, built with its own
