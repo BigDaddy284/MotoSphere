@@ -836,15 +836,21 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-019.md`
 
 ### FND-043 – The loading test waits for its request
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The browser test "says the data is loading until it arrives" passes or fails for what the page does, never for the moment at which it looks.
-- **Description:** Added on 2026-11-19 (PLAN-015), after the builder of DAT-004 saw this test of FND-028 fail once in a full local run and pass in the next, with nothing changed. The test holds the request for the manifest back, waits for "Loading data…" and then, at once, expects that the request has arrived. The page shows "Loading data…" from its first drawing, and the request is sent a moment later, so the test can look before the request is there: "Expected length: 1, Received length: 0". The planner made that happen every time by letting the page's request start 0.4 seconds late. The test is changed to wait for the request and then check that the page still says "Loading data…". Only the test changes; the page is right. The details are settled in the planner's trial.
-- **Acceptance criteria:** with a request that starts late the test as it is fails every time and the changed test passes every time; the changed test still fails when the page does not say "Loading data…" while the request is held, and when the page never asks for the manifest; no other test changes, and all pass.
-- **Tests required:** the changed browser test, repeated; the late request as a prove-it step; planted defects in the page (no loading text, no request); a search of the browser tests for the same pattern; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-19 (PLAN-015), after the builder of DAT-004 saw this test of FND-028 fail once in a full local run and pass in the next, with nothing changed. The test holds the request for the manifest back, waits for "Loading data…" and then, at once, expects that the request has arrived. The page says "Loading data…" from its first drawing and sends the request a moment later, so the test can look before the request is there ("Expected length: 1, Received length: 0"). The test now waits for the request (`expect.poll`, part of Playwright) and then reads what the page says while the request is held back. Only the test changes: the page is right, and nothing under `frontend/src` changes. `TESTING.md` gains the rule: a check that does not wait is right only for what must have happened before the thing the test waited for last. The planner searched the other browser tests for the same fault and found none. No new package and no retries.
+- **Acceptance criteria:**
+  1. With a request that starts late, the test as it is on `main` fails every time with "Expected length: 1, Received length: 0", and the changed test passes.
+  2. The changed test passes 100 times of 100 when it is repeated.
+  3. The changed test fails when the page says something else while the request is held back, when the page does not ask for the manifest where it should, and when it asks twice.
+  4. No file under `frontend/src` changed, no other test changed, and the number of browser tests is the same (171).
+  5. `python scripts/check.py` reports 19 of 19 gates and 851 tests; on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** the test as it is and the changed test, each with a request that starts 0.4 seconds late; the changed test repeated 100 times; four planted faults in the page (another text while loading, "Data unavailable" before the page has asked, a request to another address, two requests); the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-043.md`
 
 ---
 
