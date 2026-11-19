@@ -91,6 +91,9 @@ class ReadVersionTest(unittest.TestCase):
         self.assertIsNone(tools.read_version(""))
         self.assertIsNone(tools.read_version("this program cannot be run\n"))
 
+    def test_a_lone_number_is_not_a_version(self) -> None:
+        self.assertIsNone(tools.read_version("stopped with error 127\n"))
+
 
 class NewEnoughTest(unittest.TestCase):
     def test_the_least_version_itself_is_new_enough(self) -> None:
