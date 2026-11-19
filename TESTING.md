@@ -374,6 +374,26 @@ its table is defined. One test there holds the real schema to the rules:
 there is no table yet, and it is the test that fails when a table is
 added that breaks a rule.
 
+## Times in the store
+
+`backend/tests/unit/test_db_times.py` tests the form itself, without a
+store: what a UTC time and a time with another offset are written as, that
+every text has the same length and that the order of the texts is the
+order of the times, each kind of value that is refused (a time without an
+offset, a zone that gives none, a time UTC cannot say, a date, text, a
+number) with its whole sentence, and twelve texts that are nearly in the
+store's form and are refused when read.
+
+`backend/tests/integration/test_times.py` has a model of its own with two
+columns of a time, one of which may be empty, and makes its table in a
+real SQLite file. It reads the text the file holds with plain SQL, past
+the model, and compares it letter for letter; it stores the same moment in
+five offsets; it sorts and finds rows by a time in the database; it asks
+SQLite's own date functions what moment the text is; and it puts text of
+another form into the file with plain SQL and expects the refusal when the
+model reads it. A naive time (one without an offset) is made in a test
+with `.replace(tzinfo=None)`, since the lint refuses to write one out.
+
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`
