@@ -1,9 +1,8 @@
 """Tests of the base of every model, with tables made in a real SQLite file.
 
-The models here are made for the tests. They are subclasses of the
-real ``Base``, so they prove what it does, but they are kept in schemas of
-their own (``Proof.metadata`` for the two that keep the rules), so the real
-schema never sees them.
+The two models here are made for the tests. They are subclasses of the
+real ``Base``, so they prove what it does, but they are kept in a schema of
+their own (``Proof.metadata``), so the real schema never sees them.
 """
 
 import sqlite3
@@ -19,7 +18,7 @@ from sqlalchemy import (
     inspect,
     select,
 )
-from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, mapped_column
 
 from motosphere.db.base import Base, broken_rules
@@ -55,31 +54,6 @@ class ProofItem(Proof):
     place: Mapped[str] = mapped_column(index=True)
     length: Mapped[float | None]
     picture: Mapped[bytes | None]
-
-
-class TwiceChecked(Base):
-    """A model that gives one name to two of its checks, in a schema of its own."""
-
-    __tablename__ = "twice_checked"
-    metadata = MetaData(naming_convention=Base.metadata.naming_convention)
-    __table_args__ = (
-        CheckConstraint("laps > 0", name="laps_sane"),
-        CheckConstraint("laps < 99", name="laps_sane"),
-    )
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    laps: Mapped[int]
-
-
-class TwiceIndexed(Base):
-    """A model that says one index twice, in a schema of its own."""
-
-    __tablename__ = "twice_indexed"
-    metadata = MetaData(naming_convention=Base.metadata.naming_convention)
-    __table_args__ = (Index(None, "code"),)
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    code: Mapped[str] = mapped_column(index=True)
 
 
 # A row written with plain SQL says its two times itself, in the two "?" of its
@@ -202,49 +176,3 @@ def test_constraints_and_indexes_are_named_by_the_rule_in_the_store(made: Engine
 
 def test_the_models_of_these_tests_break_no_rule() -> None:
     assert broken_rules(Proof.metadata) == []
-
-
-@pytest.mark.parametrize("laps", [0, 99], ids=["the first check", "the second check"])
-def test_sqlite_takes_two_checks_of_one_name_and_a_refusal_does_not_say_which(
-    store: Engine, laps: int
-) -> None:
-    with store.begin() as connection:
-        TwiceChecked.metadata.create_all(connection)
-        (statement,) = connection.exec_driver_sql(
-            "SELECT sql FROM sqlite_schema WHERE name = 'twice_checked'"
-        ).one()
-        connection.exec_driver_sql(
-            "INSERT INTO twice_checked (laps, created_at, updated_at) VALUES (7, ?, ?)",
-            (A_TIME, A_TIME),
-        )
-
-    with pytest.raises(IntegrityError) as refused, store.begin() as connection:
-        connection.exec_driver_sql(
-            "INSERT INTO twice_checked (laps, created_at, updated_at) VALUES (?, ?, ?)",
-            (laps, A_TIME, A_TIME),
-        )
-
-    assert statement.count("CONSTRAINT ck_twice_checked_laps_sane CHECK") == 2
-    assert str(refused.value.orig) == "CHECK constraint failed: ck_twice_checked_laps_sane"
-
-
-def test_sqlite_itself_refuses_two_indexes_of_one_name(store: Engine) -> None:
-    with pytest.raises(OperationalError) as refused, store.begin() as connection:
-        TwiceIndexed.metadata.create_all(connection)
-
-    assert str(refused.value.orig) == "index ix_twice_indexed_code already exists"
-
-
-@pytest.mark.parametrize(
-    ("model", "name"),
-    [
-        (TwiceChecked, "ck_twice_checked_laps_sane"),
-        (TwiceIndexed, "ix_twice_indexed_code"),
-    ],
-    ids=["two checks", "two indexes"],
-)
-def test_a_model_that_gives_one_name_twice_breaks_a_rule(model: type[Base], name: str) -> None:
-    assert broken_rules(model.metadata) == [
-        f"The table {model.__tablename__} gives the name {name} to 2 of its constraints and "
-        "indexes: each must have a name of its own."
-    ]

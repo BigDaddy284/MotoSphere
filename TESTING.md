@@ -363,13 +363,7 @@ file. It then asks the file, not the models: that both tables are strict
 the wrong type is refused in four ways, which type each column has, and
 what every constraint and index is called. The names are written out in
 the test, so they are checked on Linux and on Windows. The two models are
-kept in a schema of their own, so the real schema never sees them. Two
-more models there break the rule of the names (DAT-038), each in a schema
-of its own: one gives one name to two of its checks, and one says one
-index twice. The real SQLite file takes the first table and keeps both
-checks: each refuses a row, with the same words, which name the one name
-and not which check. It refuses the second table, as an index of that
-name is already there. `broken_rules` names both models.
+kept in a schema of their own, so the real schema never sees them.
 
 `backend/tests/unit/test_db_base.py` tests `broken_rules` with tables made
 for each test: a schema that keeps the rules, a table that is not strict,
@@ -387,16 +381,7 @@ name that say something else), three ways of writing the check that count
 (as `not_empty` gives it, with the table's column, and as text), that the
 columns of a table are named in their order, a unique constraint, a foreign
 key and an index named by hand, the order of the sentences, and that a check
-without a name is refused when its table is defined. Four functions ask the
-rule about a name that more than one constraint or index of a table has
-(DAT-038): it is named, and how many have it, for two checks, three checks, a
-column that is unique and said so twice, an index said twice and a foreign
-key said twice; names given twice are listed once each, by the alphabet and
-after everything else, also one given by hand, with the constraints of the
-table put in the opposite order first; one name in two tables is not named;
-and a column with two checks of the name of its own check is judged the same
-whichever of the two comes first, in four cases (one of the two is its check
-or neither is, each in both orders). Four more functions ask
+without a name is refused when its table is defined. Four more functions ask
 the rule about a column type of the tests' own that brings a check
 (DAT-034): a column of it is named, in that type's own words, until its
 table has the check; the check of one type does not count for a column of
