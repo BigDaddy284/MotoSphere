@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 43 | 42 |
+| 1 | Foundation (FND) | 43 | 43 |
 | 2 | Data store and published data (DAT, PUB) | 34 | 6 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-043 – The loading test waits for its request.
+**Current task:** DAT-023 – Only a store of MotoSphere's is migrated.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -836,7 +836,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-019.md`
 
 ### FND-043 – The loading test waits for its request
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The browser test "says the data is loading until it arrives" passes or fails for what the page does, never for the moment at which it looks.
 - **Description:** Added on 2026-11-19 (PLAN-015), after the builder of DAT-004 saw this test of FND-028 fail once in a full local run and pass in the next, with nothing changed. The test holds the request for the manifest back, waits for "Loading data…" and then, at once, expects that the request has arrived. The page says "Loading data…" from its first drawing and sends the request a moment later, so the test can look before the request is there ("Expected length: 1, Received length: 0"). The test now waits for the request (`expect.poll`, part of Playwright) and then reads what the page says while the request is held back. Only the test changes: the page is right, and nothing under `frontend/src` changes. `TESTING.md` gains the rule: a check that does not wait is right only for what must have happened before the thing the test waited for last. The planner searched the other browser tests for the same fault and found none. No new package and no retries.
 - **Acceptance criteria:**
@@ -846,10 +846,10 @@ Windows 11. No database and no globe yet.
   4. No file under `frontend/src` changed, no other test changed, and the number of browser tests is the same (171).
   5. `python scripts/check.py` reports 19 of 19 gates and 851 tests; on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** the test as it is and the changed test, each with a request that starts 0.4 seconds late; the changed test repeated 100 times; four planted faults in the page (another text while loading, "Data unavailable" before the page has asked, a request to another address, two requests); the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #67 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32, Playwright 1.63.0), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 851 passed, 0 failed, 0 skipped.", exit code 0 (browser tests 171); the changed test repeated 100 times, 100 passed; with a request that starts 0.4 seconds late, the test as it was on `main` failed 3 times of 3 with "Expected length: 1, Received length: 0" and the changed test passed; four planted faults in the page, 4 of 4 detected by the changed test. On GitHub, read by the planner from the runs and job logs: run 44460533369 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 851 passed, 0 failed, 0 skipped." with 171 browser tests, the three jobs after the gates skipped; run 44461468925 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 851 / 0 tests (repository 41, script tests 206, backend 221, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 100 / 0 repeats of the changed test; 4 / 0 planted faults detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 3 files are identical to the planner's trial. Nothing under `frontend/src` changed, no other test changed, and no test was added, removed or skipped. The fault was a race in the test, not in the page: the page says "Loading data…" before it asks for the data, and the test expected the request to be there as soon as the page said so. It could not be met by repeating the test (450 passes of 450) and was met every time with a late request. The other browser tests were searched for the same fault, and none has it. That a test cannot fail by chance cannot be proven by running it; what is shown is that the one known cause is gone.
+- **Commit:** `846e470`
 - **Plan:** `docs/plans/FND-043.md`
 
 ---
