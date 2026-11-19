@@ -285,28 +285,6 @@ caller unchanged; a row without its parent ends the whole unit; one
 connection is used and closed, and the file can then be removed; a commit
 part-way is refused; and a session cannot be used after its unit has ended.
 
-## A data store of its own for every test
-
-A backend test that needs the data store asks for the fixture `store`
-(`backend/tests/conftest.py`). It gets the engine of a real SQLite file,
-`store.sqlite3` in the test's own temporary folder, opened through
-`open_store` as the pipeline opens its store, and empty. No two tests share
-a file, so tests can write the same keys and run in any order. The store is
-never a mock.
-
-A test must close what it opens (`with store.connect() …`,
-`with unit_of_work(store) …`). A connection it leaves open is closed for it
-when the test ends, so that the file can be removed on Windows too, and the
-test is reported as an error: "Connections to its store that the test left
-open: 1. They were closed for it." A connection that was dropped without
-being closed counts too. That way a leak in the code under test fails the
-test that found it, and not a later one.
-
-`tests/integration/test_store_fixture.py` tests the fixture. For what
-happens after a test has ended, it lets pytest run a small file of tests in
-a process of its own (pytest's `pytester`), four of which leave
-connections open, and reads the outcome.
-
 ## The tools a computer needs
 
 `python scripts/tools.py` says whether a computer has the five tools the

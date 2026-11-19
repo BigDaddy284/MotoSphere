@@ -230,9 +230,7 @@ pipeline's command line. The settings and logging modules stay.
   comparison, GitHub's limits and the sizes at which the decision is looked
   at again.
 - Database tests run against a real SQLite database file. It is never
-  replaced by mocks. The fixture `store` gives every test a file of its
-  own, opened as the pipeline opens its store, and reports a test that
-  leaves a connection to it open (DAT-003, TESTING.md).
+  replaced by mocks.
 - Every imported record carries provenance (source, source URL, collected-at,
   published-at, last-verified-at, extraction method, confidence, verification
   status). Changes are recorded in a history table rather than overwritten.
