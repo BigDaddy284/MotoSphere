@@ -1240,15 +1240,24 @@ the first table needs and the store did not have.
 - **Plan:** `docs/plans/DAT-034.md`
 
 ### DAT-035 – A column that is yes or no
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** A model can say that a column is yes or no, and the store refuses anything else in it.
-- **Description:** Added on 2026-11-19 (PLAN-021). A strict table has no type for yes and no, and SQLite refuses to make one with SQLAlchemy's own (`DATABASE.md`). One column type that brings its check (DAT-034): a whole number in the table, `True` or `False` to Python, and a check by which SQLite refuses every number but 0 and 1, whoever writes the row. The first table needs it for "is this source switched on" (DAT-006). The planner's trial settles how a model says it, and what a column that may be without a value holds.
-- **Acceptance criteria:** a model says of a column that it is yes or no and gets a whole-number column with its check, named by the naming rule; yes and no are stored and read back as `True` and `False`; any other number, written past the model, is refused by SQLite with the name of the check; `broken_rules` names such a column whose table is without the check, without a change to `Base` or `broken_rules`.
-- **Tests required:** unit tests of the type and its check; integration tests against a real SQLite file for every rule above; planted defects; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-19 (PLAN-021). A strict table has no type for yes and no, and SQLite refuses to make one with SQLAlchemy's own (`DATABASE.md`), so a model that says `Mapped[bool]` gets a table that cannot be made. One new module, `motosphere.db.yes_no`, with the column type `YesOrNo`, the second type that brings its check (DAT-034): INTEGER in the table, with the check `<column> IN (0, 1)`, named `ck_<table>_<column>_yes_or_no`; 1 is yes and 0 is no. The first table needs it for "is this source switched on" (DAT-006). Settled in the planner's trial: a model says the plain Python type, `Mapped[bool]`, and `Base` gets one entry in the list by which a Python type becomes a column type, so no model can get SQLAlchemy's own type by leaving a word out; the rule by which `Base` gives checks, and `broken_rules`, do not change. Only `True` and `False` are stored: a number and a word are refused before anything is written, with a `TypeError` that says what was given, because Python takes much for true that is not, the word "no" among it; a question is held to the same. Only the whole numbers 1 and 0 are read: anything else that comes back through the type is refused, which happens for a sum over such a column, never for a row. A column that may be without a value holds none, yes or no, and none means "not known". What SQLite takes for one of the two numbers (the text '1', the number 1.0) a strict table stores as that whole number, so the file never holds anything else. No existing test changes, no table, no migration, no new package. The planner's trial has 47 new tests and detects 290 of 290 planted defects.
+- **Acceptance criteria:**
+  1. A model that says `Mapped[bool]` of a column gets a whole-number column with the check `<column> IN (0, 1)`, named by the naming rule: the real SQLite file has the checks by name and letter for letter, for each such column and for no other.
+  2. Yes and no are stored as the whole numbers 1 and 0 and come back as `True` and `False`; a column that may be without a value holds none, yes or no; a value of the model's own is stored as its number; a change is stored.
+  3. What is neither `True` nor `False` is refused before anything is written, with a sentence that says what it was given, in five kinds, in a row and in a question.
+  4. Another number is refused by SQLite with the name of the check: in a row written with plain SQL, in five ways, and in a change. What SQLite takes for one of the two numbers is stored as that number, and what cannot be a whole number is refused by the strict table.
+  5. What is read through the type and is not the whole number 1 or 0 is refused, in five kinds, and a sum over such a column is read as yes or no, or refused.
+  6. `broken_rules` names such a column whose table is without the check, in the type's words, until the table has it; the rule by which `Base` gives checks, and `broken_rules`, are unchanged.
+  7. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  8. `python scripts/check.py` reports 19 of 19 gates and 1181 tests (backend tests 551); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 20 new unit tests in twelve functions, of the two functions that say and read the number, of the type and of its check; 27 new integration tests in fifteen functions, with a model that has three such columns, against a real SQLite file that is read with plain SQL, past the model; every existing test, unchanged. Twelve planted defects by the builder and the planner's own, all of DAT-034's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-035.md`
 
 ### DAT-036 – A column whose value is one of a list
 - **Status:** NOT STARTED
