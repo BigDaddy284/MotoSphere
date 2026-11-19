@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 42 | 42 |
-| 2 | Data store and published data (DAT, PUB) | 30 | 3 |
+| 2 | Data store and published data (DAT, PUB) | 30 | 4 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-022 – Units of work.
+**Current task:** DAT-003 – A real, separate store for every test.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -908,7 +908,7 @@ here although their numbers do not.
 - **Plan:** `docs/plans/DAT-021.md`
 
 ### DAT-022 – Units of work
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Everything the pipeline writes to the store is written in units of work, each of which is kept as a whole or not at all.
 - **Description:** One new module, `motosphere.db.work`, with one function, `unit_of_work(store)`, used in a `with` statement on the engine `open_store` returned (DAT-021). It gives an SQLAlchemy session for one piece of work. When the block ends the work is committed as a whole; when it raises, everything it did is taken back and the error reaches the caller as it was raised; the connection is closed either way. A unit that calls `commit()` itself is refused in one plain sentence, and one that called `rollback()` cannot go on. The session cannot be used after its unit has ended, and what the work read or wrote can still be read then. No new package, no fixture, no table or model of the application. The last third of the old DAT-002 (PLAN-013). The planner's trial has 18 new tests against a real SQLite file and detects 16 of 16 planted defects.
 - **Acceptance criteria:**
@@ -922,10 +922,10 @@ here although their numbers do not.
   8. The type check passes with SQLAlchemy's own types and no `ignore`.
   9. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 828 tests (backend tests 198); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** backend integration tests against a real SQLite file in the test's own folder (18 new): work kept for the next unit and for a reopened store, rows that were only added, a row and a new table of failed work, the store after failed work, the error unchanged, work stopped from outside, a broken foreign key at once and at the end, one connection closed after work that ends and work that fails, the file removed afterwards, a commit part-way, work that took itself back, what was written and read still readable, the session after its unit; the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #61 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 828 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 198: 180 before, 18 new); 16 planted defects in the module, 16 of 16 detected by the new tests, the plan's ten prove-it steps among them with the counts the plan gives. On GitHub, read by the planner from the runs and job logs: run 44447177749 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 828 passed, 0 failed, 0 skipped." with 198 backend tests, the three jobs after the gates skipped; run 44448306339 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 828 / 0 tests (repository 41, script tests 206, backend 198, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 16 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 6 files are identical to the planner's trial. No existing test changed and no package was added. The 18 new tests do units of work on a real SQLite file in the test's own folder, on Linux and on Windows; none uses a mock, and their two small tables are the tests' own. In the planner's trial a seventeenth planted defect changed nothing and is not counted: SQLAlchemy's option `isolation_level="AUTOCOMMIT"` has no effect on this store's connections, which use SQLite's own transactions (DAT-021), so failed work is still taken back. One test of the trial was wrong at first and showed that a call of `Session.commit(work)`, the method of SQLAlchemy's own class, passes the guard by; the guard is against `work.commit()` called by mistake. A session bound to a connection that is never given back is detected by two tests, and is not a prove-it step because it leaves a connection open. Nothing in the pipeline calls `unit_of_work` yet.
+- **Commit:** `ba0dd65`
 - **Plan:** `docs/plans/DAT-022.md`
 
 ### DAT-003 – A real, separate store for every test
