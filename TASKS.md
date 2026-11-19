@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 34 | 7 |
+| 2 | Data store and published data (DAT, PUB) | 34 | 8 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-024 – Command: bring the store to the newest schema.
+**Current task:** DAT-025 – Command: say which schema a store has.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1007,7 +1007,7 @@ tables test their migration from the version before it.
 - **Plan:** `docs/plans/DAT-023.md`
 
 ### DAT-024 – Command: bring the store to the newest schema
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One command of the pipeline's command line brings the store the settings name to the newest schema and says what it did.
 - **Description:** The command is `python -m motosphere migrate`, in one new module, `motosphere.cli.migrate`, built like the `export` command. It takes no argument: the store is the file `MOTOSPHERE_STORE_PATH` names. It makes the path whole, opens the store with `open_store` (which makes the file and its folder if they are not there), calls `migrate`, and writes one sentence to standard output, with the file's whole path: "A new data store was made: … is at schema version N.", "The data store was brought up to date: … went from schema version A to B." or "The data store is up to date: … is at schema version N." The sentences are one function by itself, `report`. A store that cannot be opened (`StoreError`) or that is refused (`SchemaError`) gives its own sentence on standard error, with nothing before or after it, nothing on standard output and the exit code 1, and is left as it is. An error inside a migration is not caught: it is a fault in the code, and the store stays at the version before that migration. It is the first command that uses the store and the first code that reads `MOTOSPHERE_STORE_PATH`. The pipeline's list of migrations is still empty, so today the command makes an empty file at version 0. No log line and no new package.
 - **Acceptance criteria:**
@@ -1018,10 +1018,10 @@ tables test their migration from the version before it.
   5. An error inside a migration reaches the caller as it was raised, and the store stays at the version before that migration.
   6. No existing test changed, and all pass. `python scripts/check.py` reports 19 of 19 gates and 876 tests (backend tests 246); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 18 new tests: 4 that run the real command in a process of its own against a real SQLite file, with the pipeline's own list of migrations; 6 that call the command in the test's process with a list of migrations of the test's own (the pipeline's is empty), against a real SQLite file; 8 unit tests of what it says and of its help. Fifteen planted defects by the builder and the planner's own; the command run by hand; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #71 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 876 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 246: 228 before, 18 new); 40 planted defects in the command, 40 of 40 detected, the plan's fifteen prove-it steps among them with the results the plan gives; the command run by hand in an empty folder, twice, and against a folder and against a database made by SQLite alone. On GitHub, read by the planner from the runs and job logs: run 44468959155 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 876 passed, 0 failed, 0 skipped.", the three jobs after the gates skipped; run 44470574256 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 876 / 0 tests (repository 41, script tests 206, backend 246, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 40 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 10 files are identical to the planner's trial. No existing test changed and no package was added. Four of the new tests run the real command in a process of its own, on Linux and on Windows, with the pipeline's own list of migrations, which is still empty: there the command makes an empty file at version 0. That the command gives a store the migrations it lacks, and says from which version to which, is tested in the test's process with a list of the test's own in the place of the pipeline's, against a real SQLite file; no process of its own has run the command with migrations yet, and the first task that adds one (DAT-006) will. An error inside a migration is not caught by the command, by decision. The command is not yet part of any scheduled run.
+- **Commit:** `f209739`
 - **Plan:** `docs/plans/DAT-024.md`
 
 ### DAT-025 – Command: say which schema a store has
