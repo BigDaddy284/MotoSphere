@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 40 | 14 |
+| 2 | Data store and published data (DAT, PUB) | 40 | 15 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-032 – A table without its timestamps is named.
+**Current task:** DAT-030 – Text that must not be empty.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1142,7 +1142,7 @@ without them is DAT-032, which follows it.
 - **Plan:** `docs/plans/DAT-031.md`
 
 ### DAT-032 – A table without its timestamps is named
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** `broken_rules` names a table that does not have the two times every table has, and so the test that holds the real schema to the rules fails on such a table.
 - **Description:** Added on 2026-11-19 (PLAN-019): the second half of what PLAN-018 called "DAT-031 – Every table's timestamps". A model gets `created_at` and `updated_at` from `Base` (DAT-031), but a model can name them itself, and a table can be made without a model. `broken_rules` gets one more rule and one more sentence, between the key and the names given by hand. A table has the two times if it has both columns and each is a time as the store keeps one, must be there in every row, gets no value from the table itself and gets its value from the store's code by a function that is called when the row is stored; `created_at` must not be set anew when a row changes, and `updated_at` must be, again by a function that is called. Settled in the planner's trial: SQLAlchemy says of a column's default whether it is a function to call, and one fixed value and an SQL expression (`func.now()`) are not, so a time that the statement asks SQLite for is named too; the rule does not see which function is called (that it is the store's clock is what a model gets from `Base` by not naming the columns, and `DATABASE.md` says so), and it does not look at the place of the two columns. The tables that the unit tests of `broken_rules` make by hand get the two times from two new helpers, as they got the key in DAT-029: 12 existing tests (five functions) change for that, and the plan gives the reason for each. `Base` does not change. No table, no migration, no new package. The planner's trial has 19 new tests and detects 159 of 159 planted defects.
 - **Acceptance criteria:**
@@ -1152,10 +1152,10 @@ without them is DAT-032, which follows it.
   4. The type check passes with no `ignore` and the lint with no `noqa`.
   5. `python scripts/check.py` reports 19 of 19 gates and 1032 tests (backend tests 402); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 19 new unit tests (one function, one case for each way of being without the times); the 12 existing unit tests of `broken_rules` that change, brought in line, one of them now pinning the order of all four sentences; the models of the integration tests break no rule, unchanged. Seventeen planted defects by the builder and the planner's own, all of DAT-031's and DAT-028's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #85 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1032 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 402: 383 before, 19 new); 159 planted defects in the two modules, 159 of 159 detected, the plan's seventeen prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 44511476187 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1032 passed, 0 failed, 0 skipped.", with 402 backend tests on both machines, the three jobs after the gates skipped; run 44514137973 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1032 / 0 tests (repository 41, script tests 206, backend 402, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 159 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 6 files are identical to the planner's trial. No package was added, and `Base` did not change. Twelve unit tests of `broken_rules` (five functions) changed, as the plan says and for the reasons it gives: their tables made by hand got the two times, and one test now expects all four sentences of a table in their order. All 86 planted defects of DAT-031 and all 49 of DAT-028 were planted again and detected. The 19 new tests are one function with one table for each way of being without the two times; the three integration tests that ask `broken_rules` about models of the tests' own pass unchanged, on Linux and on Windows.
+- **Commit:** `8c01ce1`
 - **Plan:** `docs/plans/DAT-032.md`
 
 ### DAT-030 – Text that must not be empty
