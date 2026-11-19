@@ -81,6 +81,62 @@ for one piece of work. What it promises:
 SQLite lets one connection write at a time, and the pipeline does one unit
 of work at a time: a unit is not started inside another.
 
+## How the schema changes
+
+The store's schema is built and changed only by migrations. A migration is
+a Python function that is given a connection and changes the schema, and
+the records with it where the change needs that. The migrations stand in
+one list, `MIGRATIONS` in `motosphere.db.migrations`, oldest first, and the
+place of a migration in that list is its number. The list is empty until
+the first table is added. What the module promises:
+
+- **A store knows its version.** The number of the last migration a store
+  has had is kept in the file itself, in the field SQLite gives
+  applications for this (`user_version`). A new store is at version 0.
+  `schema_version(store)` reads it.
+- **`migrate(store)` gives a store the migrations it lacks**, in order, and
+  returns their numbers. A store that lacks none is not written to.
+- **A migration and its version are one transaction.** A migration is kept
+  as a whole, with the store's new version, or not at all. When one fails,
+  the store stays at the version before it, the migrations before it stay
+  applied, and the error reaches the caller as it was raised. The store
+  goes on from there once the migration is mended.
+- **A version the code does not know is refused.** A store that is newer
+  than the code, or whose version no migration gave, is refused with one
+  plain sentence that begins "The data store cannot be brought up to
+  date:" (`SchemaError`), and is left as it is.
+- **The history only grows.** A migration that has been merged is not
+  changed, moved or taken out, because stores and snapshots at its version
+  exist. A mistake in one is put right by a new one.
+- **There is no way back.** No migration can be undone by another function.
+  An earlier state of the store is an earlier snapshot in the `data` branch
+  (see "Where the store is kept between runs"), rebuilt at the version it
+  was written at.
+- **A migration does not commit.** `migrate` does. A migration that commits
+  by itself fails, and what it had done by then is kept without its
+  version. The test that brings an empty store to the newest schema with
+  the real list fails for such a migration, so it cannot be merged.
+
+SQLite can add, rename and drop a column and rename a table in place. For
+any other change the table is built anew. A migration can do that inside
+its transaction while other tables point to the table and foreign keys
+stay on: it asks SQLite to check them only when the transaction ends
+(`PRAGMA defer_foreign_keys = ON`, which lasts for that transaction),
+copies the table aside, drops it, makes it anew under its own name, fills
+it again and drops the copy. If a row that is pointed to was lost on the
+way, the commit is refused and the store is as it was before. The tests
+do exactly this on every machine the gates run on.
+
+**Decision (DAT-004):** a small runner of the project's own, not Alembic.
+
+| Way | For | Against | Verdict |
+|---|---|---|---|
+| A runner of the project's own | No new package: about thirty lines on SQLAlchemy, which the pipeline already has. A migration and its version are one transaction, and the tests prove it against a real file. Nothing to configure. | The project keeps it. It has no way back and no branches, and it does not write a migration from the models. | Chosen |
+| Alembic | The usual tool beside SQLAlchemy. It can write the first draft of a migration from the models, and it rebuilds a table for the changes SQLite cannot make in place. | Three more packages (alembic 1.20.1, Mako 1.4.3 and MarkupSafe 3.0.4 on 2026-11-19), a configuration file and a folder of scripts of its own. What it adds beyond the runner serves several developers changing the schema at once, ways back, and databases a person administers by hand. The store has one line of history and one writer, and is rebuilt from its snapshot on every run. | Not now |
+
+The decision is looked at again if the store ever moves to a database
+server (ARCHITECTURE.md §4).
+
 ## What the store relies on in SQLite
 
 SQLite is not one program. Every Python carries its own, built with its own
