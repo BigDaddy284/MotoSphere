@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 2 – Data store and published data (Phase 1 – Foundation is complete)
-- **Current task:** DAT-001 – Data store research and decision record (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 42 of 234
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (744 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. No globe and no data store yet.
+- **Current task:** DAT-002 – Store settings and connection module (`NOT STARTED`, the planner is trialling it and writing its plan)
+- **Tasks verified:** 43 of 234
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with two commands so far: `version`, and `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published). The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (780 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; there is no table and no connection module yet (`DATABASE.md`). No globe yet.
 
 ## Reports
 
@@ -3374,3 +3374,86 @@ Phase 1 has 42 tasks, all verified; Phase 2 has 28, none started. The
 project has 234.
 
 Next task: DAT-001 – Data store research and decision record.
+
+### DAT-001 – Data store research and decision record (2026-11-19)
+
+TASK: DAT-001 – Data store research and decision record
+
+Implementation: Complete (builder thread, pull request #55). A module,
+`motosphere.db.sqlite`, with the Python standard library only. It names
+the least SQLite version the store works with (3.45.0) and the six
+features the store relies on: enforced foreign keys, strict tables,
+RETURNING, the JSON functions, R*Tree and FTS5. Its function `missing()`
+tries each feature in an empty database of its own in memory and says in
+plain words what a given SQLite lacks. `DATABASE.md` is now the decision
+record: what each machine's SQLite had, where the store is kept between
+runs (text files in a `data` branch; the database file as a release asset
+in reserve), GitHub's limits with the pages they were read from, and the
+sizes at which the decision is looked at again. `ARCHITECTURE.md` §5 has
+no open question left. Exactly the 8 planned files; all are identical to
+the planner's trial. No existing test changed. No table and no connection
+module yet.
+
+Before the plan (planner, 2026-11-19): a probe ran on GitHub's Linux and
+Windows machines (pull request #53, closed without merging, run
+44432064695) and on the planner's own. It found SQLite 3.45.1, 3.49.1 and
+3.53.1, all with the six features; Geopoly is missing on both of GitHub's
+machines and the `dbstat` table on the Windows one, so the store may not
+use them. The trial itself ran on both machines in pull request #54
+(closed without merging, run 44433808256): both gates jobs green with 780
+tests.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18 with SQLite 3.53.1,
+Node 22.23.4, npm 10.9.9, uv 0.11.32):
+
+- The full run: 19 of 19 gates passed, exit code 0, with the line "Tests:
+  780 passed, 0 failed, 0 skipped." Backend tests: 151 (115 before, 36
+  new: 33 unit tests and 3 integration tests).
+- Planted defects: 33 in the module and in `DATABASE.md`, 33 of 33
+  detected by the new tests, the plan's twelve prove-it steps among them,
+  each with the number of failing tests the plan gives.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 44435455047, the pull request's commit (`e8d9401`): "All gates
+  (Linux)" and "All gates (Windows)" green, each log ending "19 of 19
+  gates passed." and "Tests: 780 passed, 0 failed, 0 skipped.", with 151
+  backend tests on both machines; "Build the site", "Publish the site"
+  and "Check the published site" skipped.
+- Run 44436500524, for `main` after the merge (`a71f880`): all five
+  jobs green at the first attempt, both gates jobs with the same two
+  closing lines, the site republished, and the log of "Check the
+  published site" ending
+  "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+
+Unit and integration tests: 609/609 passed (repository 40, script tests
+206, backend 151, frontend 212). Browser tests: 171/171 passed.
+Database tests: the 3 integration tests ran against the real SQLite of
+each machine, and the 33 unit tests against a real SQLite in memory made
+to behave like a lesser one; no mock of a database is used.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the deployment succeeded and the
+published site is the site that was built. The task changes nothing a
+user sees.
+
+Overall applicable tests: 780/780 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: the runs on GitHub do not print the SQLite version;
+that they ran 3.45.1 and 3.49.1 follows from the probe a few minutes
+before on the same Pythons (3.12.16 and 3.12.10, read from the logs).
+3.45.0 is the least version because nothing older was tried, not because
+anything older is known to fail. The planner's trial first detected 30 of
+33 planted defects; one test was added and one planted defect replaced
+before the plan was written. The job that writes the `data` branch does
+not exist yet: it is planned with the first task that collects real
+records, and until then the store exists only in tests. The builder
+reported no deviation from the plan.
+
+Commit: `a71f880` (squash merge of pull request #55).
+
+Next task: DAT-002 – Store settings and connection module.
