@@ -1304,15 +1304,23 @@ of one name in a table, which the trial of DAT-037 showed to be missing.
 - **Plan:** `docs/plans/DAT-037.md`
 
 ### DAT-038 – No two constraints of one name in a table
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The test that holds every table to the rules names a table that has two constraints of the same name.
-- **Description:** Added on 2026-11-19 (PLAN-022), found while DAT-037 was trialled. SQLite takes a table with two constraints of one name and keeps both, so a refusal then names one name for two rules. And `broken_rules` looks for the check of a column by its name: with two checks of that name, which of them it finds follows the order of a set, so its answer can differ from one run to the next. One more rule in `broken_rules`: a table has no two constraints of one name, said in a sentence that names the table and the name; and the place that looks for a column's check gives the same answer whatever the order. The planner's trial settles the exact rule, and whether it has to say anything of indexes, of which SQLite itself refuses two of one name.
-- **Acceptance criteria:** `broken_rules` names a table with two constraints of one name, once for each such name, in a plain sentence; a schema that keeps the rule gives an empty list as before; for a table with two checks that have the name of a column's own check, `broken_rules` gives the same answer in whichever order the two are given; a real SQLite file shows that SQLite takes such a table, so that the rule is needed.
-- **Tests required:** unit tests of the rule, with tables made by hand in both orders; an integration test against a real SQLite file; planted defects, the earlier ones of `base.py` among them; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-19 (PLAN-022), found while DAT-037 was trialled. SQLite takes a table with two checks of one name and keeps both, and when it refuses a row it says the one name, which does not tell which of the two refused it. And `broken_rules` looked for the check of a column by its name: with two checks of that name it went by the one it came to last, and the order in which it comes to them is not fixed, as SQLAlchemy keeps the constraints of a table as a set. One more rule in `broken_rules`, the last it says of each table: a name that more than one constraint or index of the table has is named once, with how many have it, and several such names come by the alphabet. Settled in the planner's trial: every constraint but the key and every index is counted, in one count, which is the list the rule of the names given by hand already goes by; indexes are counted although SQLite itself refuses two of one name, so that the test of the models says it in plain words before anything is made; a name given by hand to two constraints is named for both reasons; the same name in two tables is not a name given twice, as the count is made table by table; and for a column with two checks of the name of its own check, the column has its check if either of the two is that check, whatever their order. One code file changes, `base.py`; tests are added to the two files that test it and no existing test changes. No new module, no table, no migration, no new package. The planner's trial has 16 new tests and detects 372 of 372 planted defects.
+- **Acceptance criteria:**
+  1. `broken_rules` names a name that more than one constraint or index of a table has, once, in a plain sentence that names the table and the name and says how many have it: for two checks, three checks, a column that is unique and said so twice, an index said twice and a foreign key said twice.
+  2. Several such names of one table are listed by the alphabet, after everything else the rule says of the table, whatever the order of the table's constraints; a name given by hand to two constraints is named for both reasons.
+  3. One name in two tables is not named as given twice.
+  4. For a column with two checks of the name of its own check, `broken_rules` says the same in both orders of the two: the column has its check if one of them is that check, and is named as without it if neither is.
+  5. A real SQLite file takes a table with two checks of one name, keeps both, and refuses a row by either with the same words; it refuses a second index of one name; and `broken_rules` names both models.
+  6. A schema that keeps the rules gives an empty list as before: no existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  7. `python scripts/check.py` reports 19 of 19 gates and 1325 tests (backend tests 695); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 11 new unit tests in four functions, with tables made by hand, whose constraints are given in an order the test decides; 5 new integration tests in three functions, with two models that break the rule, against a real SQLite file; every existing test, unchanged. Twelve planted defects by the builder and the planner's own, all of DAT-034's, DAT-035's and DAT-037's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-038.md`
 
 ### DAT-006 – Information sources table
 - **Status:** NOT STARTED
