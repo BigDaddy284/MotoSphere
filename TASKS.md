@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 35 | 8 |
+| 2 | Data store and published data (DAT, PUB) | 35 | 9 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-027 – Say which migrations a store lacks.
+**Current task:** DAT-025 – Command: say which schema a store has.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1027,7 +1027,7 @@ without migrating it, and that is DAT-027, which stands before it.
 - **Plan:** `docs/plans/DAT-024.md`
 
 ### DAT-027 – Say which migrations a store lacks
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One function says which migrations a store lacks, writes nothing, and refuses exactly the stores `migrate` refuses.
 - **Description:** A new function, `pending(store)`, in `motosphere.db.migrations`. It returns the numbers of the migrations the store lacks, in order: all of them for a new store, none for a store that is up to date. It only reads. It refuses what `migrate` refused until now, with `SchemaError` and the same two sentences, which move into it unchanged: a file that is not a store of MotoSphere's (DAT-023), and a store at a version the history does not know (DAT-004). `migrate` asks `pending` and applies exactly the migrations it names; its transaction, the mark and the version are as before, and nothing it does changes. So the question "would this store be migrated, and by what?" has one answer in one place, and the command that says which schema a store has (DAT-025) can ask it without writing. No command, no sentence and no existing test changes. No new package. The planner's trial has 10 new tests and detects 74 of 74 planted defects.
 - **Acceptance criteria:**
@@ -1038,10 +1038,10 @@ without migrating it, and that is DAT-027, which stands before it.
   5. No existing test changed, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
   6. `python scripts/check.py` reports 19 of 19 gates and 886 tests (backend tests 256); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 10 new integration tests against a real SQLite file (what a new store lacks, one that has had some, one that is up to date; that asking writes nothing; the store's own history; that migrating applies what was named; four stores that are refused, each in the words `migrate` uses and each left as it is); all existing tests of the runner and of the command `migrate` unchanged; twelve planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #73 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 886 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 256: 246 before, 10 new); 74 planted defects in the module, 74 of 74 detected (42 of those of DAT-004 and DAT-023 that still fit the module word for word, and 32 new ones, the plan's twelve prove-it steps among them with the results the plan gives). On GitHub, read by the planner from the runs and job logs: run 44473530583 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 886 passed, 0 failed, 0 skipped.", with 256 backend tests on both machines, the three jobs after the gates skipped; run 44474646015 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 886 / 0 tests (repository 41, script tests 206, backend 256, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 74 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 5 files are identical to the planner's trial. No package was added and no existing test changed: the 24 earlier tests of the runner and the 18 of the command `migrate` pass as they were, so `migrate` does what it did. The 10 new tests run against the real SQLite file the fixture `store` gives each test, on Linux and on Windows; the four stores that are refused are each compared byte for byte before and after, and each refusal is compared word for word with what `migrate` says of the same store. Nothing calls `pending` yet but `migrate`; the command that says which schema a store has (DAT-025) is the first that will.
+- **Commit:** `3a0ed18`
 - **Plan:** `docs/plans/DAT-027.md`
 
 ### DAT-025 – Command: say which schema a store has
