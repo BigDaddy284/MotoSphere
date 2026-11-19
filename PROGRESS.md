@@ -7,8 +7,8 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phase:** 2 – Data store and published data (Phase 1 – Foundation is complete)
-- **Current task:** DAT-005 – Model conventions: keys, times and names (`NOT STARTED`, the planner is trialling it and writing its plan)
-- **Tasks verified:** 53 of 242
+- **Current task:** DAT-005 – The base of all models: strict tables and one naming rule (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 53 of 245
 - **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (911 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store is decided but not built: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (the list is still empty); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, only `migrate` writes to it, and there is no table (`DATABASE.md`). No globe yet.
 
 ## Reports
@@ -4403,3 +4403,62 @@ deviation from the plan.
 Commit: `c590ec0` (squash merge of pull request #75).
 
 Next task: DAT-005 – Model conventions: keys, times and names.
+
+### PLAN-017 – What every table shares is four tasks, not one (2026-11-19)
+
+Not a development task: no application code changed.
+
+"DAT-005 – Model conventions: keys, times and names" was one task for
+everything the tables share: strict column types, one naming rule, a
+whole-number key, two timestamps set by the store's code, times in UTC
+with their offset, and text that must not be empty. In the planner's trial
+the first two alone took a module, 18 tests and 41 planted defects, and
+each of the others brings a decision of its own that deserves its own
+trial. The rule is to choose the smaller task (CLAUDE.md §1). So:
+
+1. DAT-005 – The base of all models: strict tables and one naming rule.
+   Every table is strict, its columns are of the types a strict table
+   takes, and its constraints and indexes are named by one rule; a test
+   holds every table to that. This is the task that is planned now.
+2. DAT-028 – Times in the store. A strict table has no type for a time, so
+   the store needs one of its own: UTC, stored with its offset, and a time
+   without an offset refused.
+3. DAT-029 – Every table's key and timestamps. The key `id` and
+   `created_at` and `updated_at`, set by the store's code. Its trial
+   settles whether a key may be given again after its row is deleted, and
+   how a test sets the time; if the key and the timestamps prove to be two
+   things to test, it is split again.
+4. DAT-030 – Text that must not be empty. A check in the table
+   itself, named by the rule of the first task.
+
+"DAT-026 – The models and the migrated schema agree" follows the four, and
+then the first table (DAT-006). A type for yes and no (a strict table has
+none either) is settled in the trial of the first table that has such a
+column, and becomes a task of its own if it is one.
+
+What the planner tried for DAT-005 (Linux, Python 3.13.18 with SQLite
+3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv
+0.11.32), on `main` at `6977f5f`:
+
+- 18 new tests, all passing; 9 of them make tables in a real SQLite file
+  and read the file itself. The full run: 19 of 19 gates passed, "Tests:
+  929 passed, 0 failed, 0 skipped." (backend tests 299).
+- 41 of 41 planted defects detected.
+- SQLite refuses to make a strict table with a column of SQLAlchemy's
+  `String`, `Float`, `Boolean` or `DateTime` ("unknown datatype"), so a
+  model with such a column cannot reach the store. That is why times and
+  yes-and-no need types of the store's own.
+- Saying "strict" once on the base of all models is lost by every model
+  that says something of its table itself; the base therefore makes each
+  table strict when its model is defined.
+- No existing test changed.
+- In trial pull request #76 (closed without merging), exactly the seven
+  files of the trial ran on GitHub (run 44483616466): "All gates (Linux)"
+  and "All gates (Windows)" green, each log ending `19 of 19 gates passed.`
+  and `Tests: 929 passed, 0 failed, 0 skipped.`, with 299 backend tests on
+  both machines (Python 3.12.16 on Linux, 3.12.10 on Windows); "Build the
+  site", "Publish the site" and "Check the published site" skipped.
+
+Phase 2 has 38 tasks, 10 verified, and the project 245.
+
+Next task: DAT-005 – The base of all models: strict tables and one naming rule.
