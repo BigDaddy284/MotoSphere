@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 46 | 23 |
+| 2 | Data store and published data (DAT, PUB) | 49 | 23 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-006 – Information sources table.
+**Current task:** DAT-039 – The lists a source is described by.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -881,6 +881,12 @@ the first table needs and the store did not have. One more was added
 before the first table (PLAN-022): DAT-038, a rule against two constraints
 of one name in a table, which the trial of DAT-037 showed to be missing.
 
+The task of the first table, DAT-006, was then cut into smaller ones
+(PLAN-023): DAT-039 has the two lists a source is described by; DAT-006
+keeps the table, with who a source is and how it may be used; DAT-040 has
+the kinds of information a source offers; and DAT-041, after the table of
+the runs (DAT-007), says how a source is doing.
+
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
 - **Objective:** Decide, with evidence, what the data store may rely on: which SQLite features every machine that runs the pipeline has, where the store is kept between scheduled runs, and which size limits bound it.
@@ -1322,12 +1328,41 @@ of one name in a table, which the trial of DAT-037 showed to be missing.
 - **Commit:** `e8e165c`
 - **Plan:** `docs/plans/DAT-038.md`
 
+### DAT-039 – The lists a source is described by
+- **Status:** IN PROGRESS
+- **Objective:** The code knows the twelve kinds of source and the ten ways of collecting from one, each with the text that is stored.
+- **Description:** Added on 2026-11-19 (PLAN-023), cut out of DAT-006. One new package for the models of the store, `motosphere.db.models`, which has no model yet, and in it one new module, `motosphere.db.models.source`, with two lists, each a `StrEnum` as a column of a list takes one (DAT-036): `SourceCategory`, the twelve kinds of source of DESIGN §7.1, and `CollectionMethod`, the ten ways of collecting of DESIGN §7.2, both in the design's order. Settled in the planner's trial: the texts, which are words in small letters with one space between two, short and in the singular (`governing body`, `results database`, `html extraction`, `human submission`); and that the conditions of the design ("permitted", "where authorised") are not in the texts, because a text in a row cannot say that somebody checked: the condition is checked when a source is registered and written down with it, as `DATABASE.md` and `DATA_SOURCES.md` now say. Whether a source has one kind and one way is not settled here: the table decides (DAT-006). No table, no model, no migration, no existing test changed. The planner's trial has 29 new tests and detects 18 of 18 planted defects.
+- **Acceptance criteria:**
+  1. `SourceCategory` has exactly its twelve texts and `CollectionMethod` its ten, each in the order of the design, and no text has two names.
+  2. Every text is words in small letters with one space between two.
+  3. A column can be of either list: `OneOf` takes it, and the check it gives names the texts of the list in their order.
+  4. `DATABASE.md` says what each text means and which words of the design it stands for, and `DATA_SOURCES.md` says which ways of collecting are permitted only on a condition.
+  5. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  6. `python scripts/check.py` reports 19 of 19 gates and 1354 tests (backend tests 724); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 29 new unit tests in five functions, with the texts of both lists written out a second time; every existing test, unchanged. Ten planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-039.md`
+
 ### DAT-006 – Information sources table
 - **Status:** NOT STARTED
-- **Objective:** The store knows every source of information: who it is, how it may be used and how it is doing (DESIGN §7.3).
-- **Description:** Table, model and migration for sources: name, website, category (the twelve of DESIGN §7.1), kinds of information offered, collection method (DESIGN §7.2), how often it is scanned, last attempted and last successful scan, reliability, current health, last error, usage restrictions, terms and licence, and whether it is switched on. A new source starts switched off. The source's country is added with the countries table (DAT-011). `DATABASE.md` documents the table.
-- **Acceptance criteria:** a source can be stored and read back with every field; two sources cannot share a name or a website; a category or method outside the lists is refused; a website that is not an https or http address is refused.
-- **Tests required:** integration tests against a real SQLite file for every rule above; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
+- **Objective:** The store knows every source of information: who it is and how it may be used (DESIGN §7.3).
+- **Description:** Narrowed on 2026-11-19 (PLAN-023). Table, model and the first migration for sources: name, website, category and collection method (the lists of DAT-039), how often it is to be scanned, usage restrictions, where its terms are, its licence, when its terms were last read, and whether it is switched on. A new source starts switched off, and a source is not switched on before its terms were read (CLAUDE.md §10). This is the first model, so the task also sees to it that every model is seen by the test of the rules every table keeps and by the test that holds the models and the migrations together (`DATABASE.md`, "Where this ends"). Not in this task: the source's country, which is added with the countries table (DAT-011); the kinds of information it offers (DAT-040); and how it is doing, its last attempted and last successful scan, its health, its last error and its reliability, which its runs tell (DAT-007, DAT-041). The planner's trial settles the exact columns and rules, among them whether two sources may share a website when they are collected from in two ways. `DATABASE.md` documents the table.
+- **Acceptance criteria:** a source can be stored and read back with every field; two sources cannot share a name; a category or method outside the lists is refused; a website that is not an https or http address is refused; a new source is switched off, and a source whose terms were not read cannot be switched on; every model of the package is in the schema the two tests look at; the migration builds exactly what the model says.
+- **Tests required:** integration tests against a real SQLite file for every rule above; the migration applied to a store at the version before it; a test that fails for a model the two tests would not see; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-040 – The kinds of information a source offers
+- **Status:** NOT STARTED
+- **Objective:** The store knows which kinds of information each source offers (DESIGN §7.3, "Available information types").
+- **Description:** Added on 2026-11-19 (PLAN-023), cut out of DAT-006. A list of the kinds of information (tracks, events, championships, results, standings, riders, teams and news, to be settled in the planner's trial), and which of them each source offers: a source can offer several, so they are rows of a table of their own, with model and migration, and not a column of the source.
+- **Acceptance criteria:** a source can offer several kinds, each once; a kind outside the list is refused; an offer belongs to a source that exists, and a source with offers is not deleted unnoticed.
+- **Tests required:** unit tests of the list; integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -1339,6 +1374,17 @@ of one name in a table, which the trial of DAT-037 showed to be missing.
 - **Description:** Table, model and migration for runs: the source, start and end, outcome (running, succeeded, failed, interrupted), counts of records seen, added, changed and unchanged, and the error in plain words when it failed. A run left `running` by a job that died is marked interrupted by the next start, so recovery after an interrupted job (CLAUDE.md §13) has a record to work from.
 - **Acceptance criteria:** a run belongs to exactly one source and cannot outlive it unnoticed (a source with runs cannot be deleted); a run cannot end before it started; counts cannot be negative; runs left running are marked interrupted and nothing else is touched.
 - **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-041 – How a source is doing, told by its runs
+- **Status:** NOT STARTED
+- **Objective:** The store says how each source is doing: its last attempted and last successful scan, its last error and its health (DESIGN §7.3).
+- **Description:** Added on 2026-11-19 (PLAN-023), cut out of DAT-006. What a source's runs already say (DAT-007) is not stored a second time with the source, where the two could come to disagree: one function reads it from the runs. Health is one of a fixed list, settled in the planner's trial with the rule by which it follows from the runs. The trial also settles what the reliability score of the design is: if runs alone can tell it, it is here; if it needs the records to have been verified, it comes with the task that verifies them, and no number is invented until then. `ARCHITECTURE.md` §7 says today that the table of the sources records health, and is brought in line.
+- **Acceptance criteria:** for a source that was never scanned, nothing is said of a last scan and its health says so; the last attempted and the last successful scan are those of its runs; the last error is that of its last failed run and is no longer said once a later run succeeded; nothing is written to the store when it is asked.
+- **Tests required:** integration tests against a real SQLite file with runs of every outcome; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
