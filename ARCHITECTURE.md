@@ -359,19 +359,21 @@ TESTING.md.
 
 ## 12. Windows 11 operation (Decided)
 
-Development and first use are on Windows 11. Everything works locally without
-GitHub: the checks, a pipeline run, and viewing the site with locally exported
-data. Scripts that the user runs are PowerShell (`scripts/*.ps1`); logic
-shared with Linux and CI lives in Python scripts so it is written once. The
-commands are documented in README.md and verified on a real Windows machine
-before the task that adds them is accepted.
+On Windows 11 MotoSphere is used in a browser: it is the published site
+(§13), and nothing is installed or started for it. The owner decided on
+2026-11-19 that there is no offline version. So there are no commands that
+build, serve and open a private copy on a PC, and no PowerShell scripts;
+an earlier wording of this section planned both.
 
-The Python scripts come first, one at a time, and the gates run their tests
-on Linux and on Windows. The first is `scripts/tools.py`: it says whether a
-computer has the tools the project needs. It reads the least versions of
-Python and Node.js from the files where those tools read them
-(`backend/pyproject.toml`, `frontend/package.json`), and it only looks: it
-installs nothing.
+What stays is working on the project, and that is the same on Windows and
+on Linux. Every command in README.md (the checks, the pipeline, the
+frontend's development server) is one command on both, logic shared with
+continuous integration lives in Python scripts so it is written once, and
+the gates run on a Windows machine for every pull request (§11).
+`scripts/tools.py` says whether a computer has the tools the project
+needs. It reads the least versions of Python and Node.js from the files
+where those tools read them (`backend/pyproject.toml`,
+`frontend/package.json`), and it only looks: it installs nothing.
 
 ## 13. Deployment (Decided)
 

@@ -12,7 +12,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 45 | 41 |
+| 1 | Foundation (FND) | 42 | 42 |
 | 2 | Data store and published data (DAT, PUB) | 28 | 0 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -26,13 +26,21 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** FND-019 – Local use: a check of the tools a computer needs.
+**Current task:** DAT-001 – Data store research and decision record. Phase 1 is complete; Phase 2 is written out
+in full task entries before this task starts.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
 (`ARCHITECTURE.md`). Tasks FND-001 to FND-013 were planned before that
 decision; everything after FND-013 follows it. Three foundation tasks were
 added for it (FND-020 to FND-022).
+
+**No offline version (owner, 2026-11-19):** "actually dont build the offline version". MotoSphere
+is the published site and nothing else: there are no commands that build,
+serve and open a private copy on a PC, and the owner's PC is not needed
+for any check. The commands for working on the project stay the same on
+Windows and Linux, and GitHub runs every gate on both (`ARCHITECTURE.md`
+§12).
 
 **Visual identity (owner, 2026-11-17):** the owner supplied the Graphite
 theme and the Sky Classic icon style (`docs/design/`). Two foundation tasks
@@ -68,7 +76,10 @@ tools a computer needs (FND-019), the built site served on this computer
 (FND-043), one command that builds the site and opens it (FND-044), and
 the commands a Windows user starts (FND-045). The first three are Python,
 written once for every system and tested on Linux and on GitHub's Windows
-machine; only the last needs the owner's Windows 11 PC.
+machine; only the last needs the owner's Windows 11 PC. On 2026-11-19 the
+owner decided against an offline version, and the three of them that had
+not started (FND-043 to FND-045) were taken out again (PLAN-011); FND-019
+was built by then and stays.
 
 Added tasks are listed where they fall in dependency order, so task numbers
 in Phase 1 are not strictly ascending.
@@ -806,7 +817,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-042.md`
 
 ### FND-019 – Local use: a check of the tools a computer needs
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One command says whether a computer has the tools MotoSphere needs, which version of each it found, and where to get one that is missing, too old or broken.
 - **Description:** A script, `python scripts/tools.py`, with the Python standard library only. It looks at five tools in the order a new computer needs them (Python, Git, uv, Node.js, npm), asks each for its version by its full path, and writes one line for each: found, missing, too old or broken, with the place to get it. Python's least version is read from `backend/pyproject.toml` and Node.js's from `frontend/package.json`, the files where uv and npm read them, so each is written once. "Python" is the Python that runs the script. A Python older than 3.12 is told so in one plain sentence before it reaches lines it cannot run. The script installs nothing and changes nothing, and it is not a gate: a gate whose tool is missing fails by itself. Narrowed by PLAN-010 from "Windows scripts for local use", which became four tasks; this one is Python and is tested on Linux and on GitHub's Windows machine. The planner's trial has 42 new tests and detects 26 of 26 planted defects.
 - **Acceptance criteria:**
@@ -818,44 +829,11 @@ Windows 11. No database and no globe yet.
   6. No existing test changed, and all pass.
   7. `python scripts/check.py` reports 19 of 19 gates and 744 tests (script tests 206); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** script tests (42 new, 206 in all): lines the real tools printed, the real Python asked for its version, stand-ins for a tool that is missing, too old or broken, the script run for real on the computer that runs the tests (all five tools ready) and once with a search path that holds no tool, and an older Python; the existing tests unchanged; planted defects; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #52 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 744 passed, 0 failed, 0 skipped.", exit code 0 (script tests 206); the script itself, five tools found, "5 of 5 tools are ready.", exit code 0, and started with Python 3.11 one plain sentence and exit code 1; 26 planted defects in the script, 26 of 26 detected, the plan's twelve prove-it steps among them. On GitHub, read by the planner from the runs and job logs: run 44428583058 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 744 passed, 0 failed, 0 skipped." with 206 script tests, the three jobs after the gates skipped; run 44429659797 for `main` after the merge: on its first attempt "All gates (Linux)" was green and "All gates (Windows)" failed with "18 of 19 gates passed. FAILED: Browser tests." and "Tests: 743 passed, 1 failed, 0 skipped.", because one browser test ("layout at 1920×1080 › the globe stage is the largest region") could not open the page, the browser on that machine reporting `net::ERR_NO_BUFFER_SPACE` for the test server's address, and the three jobs after the gates were skipped; the failed job was run once more, and on the second attempt all five jobs were green, the Windows gates ending "19 of 19 gates passed." and "Tests: 744 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 744 / 0 tests (repository 40, script tests 206, backend 115, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub, on the Windows machine for `main` at the second attempt (743 / 1 at the first); 26 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 6 files are identical to the planner's trial. No existing test changed. The planner's trial first detected 25 of 26 planted defects, and one test was added; one more test was rewritten before the plan, because it could not fail where `python` on the search path is the Python that runs the tests. The script was run on Linux and, by its tests, on GitHub's Windows machine (Windows Server 2025); it was not run on a Windows 11 PC, and after the owner's decision of the same day (PLAN-011) no task asks for that. The one failure on GitHub's Windows machine is recorded as a failure of that attempt: the browser could not reach the test server on the same machine, the task changed no file the browser tests read, and the same frontend files passed on that kind of machine in four other runs that night (44425486127, 44426691356, 44428583058 and the second attempt). It was seen once; if it is seen again it becomes a task of its own.
+- **Commit:** `fb8b6ed`
 - **Plan:** `docs/plans/FND-019.md`
-
-### FND-043 – Local use: the built site served on this computer
-- **Status:** NOT STARTED
-- **Objective:** One command serves the built site on this computer, at the same path as the published site, so the browser shows exactly what GitHub Pages would.
-- **Description:** A script with the Python standard library only. It serves `frontend/dist` under `/MotoSphere/` at an address of this computer only (127.0.0.1), never to the network, and names each file's kind of content itself, because on Windows the system's own list can name a script file wrongly. It says in plain words when the site is not built yet or the port is taken, and stops at Ctrl+C. `scripts/live.py` (FND-035) is the judge: the served site must be the built one, file for file and byte for byte. Added by PLAN-010. The details are settled by the planner's trial before the plan is written.
-- **Acceptance criteria:** the served site is exactly the built one (status, kind of content and bytes of every file), under the site's path and not at the root; the server answers this computer only; a missing build and a taken port each end with one plain sentence; nothing outside `frontend/dist` can be read through it; stopping it leaves no process behind.
-- **Tests required:** script tests on Linux and on GitHub's Windows machine against the real server on this computer, with `scripts/live.py`'s comparison; planted defects; the full run of all gates; the workflow run on the pull request, on both machines; the run for `main` after the merge.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
-
-### FND-044 – Local use: one command builds the site and opens it
-- **Status:** NOT STARTED
-- **Objective:** One command takes a fresh copy of the repository to the application in the browser, and Ctrl+C stops it with nothing left running.
-- **Description:** A Python script that checks the tools (FND-019), installs the project's own packages where they are missing, exports the published data, builds the site, serves it (FND-043) and opens the browser at its address. Each step says what it is doing in plain words, and a step that fails stops the run and says which. It never touches the tools themselves: a missing tool is the user's to get from the place FND-019 names. Added by PLAN-010. If the trial shows it too large to test thoroughly, it is split further.
-- **Acceptance criteria:** from a clean checkout on a computer with the five tools, the one command ends with the application served and the browser asked to open it; a second start is faster and gives the same site; a failing step ends the run with a plain sentence and a failing exit code; Ctrl+C stops the server, and no process of the run is left behind.
-- **Tests required:** script tests with stand-ins for each step and for the browser; the command run for real on Linux and on GitHub's Windows machine up to the served site, compared with the built site by `scripts/live.py`; stopping and the processes left afterwards; planted defects; the full run of all gates; the workflow run on the pull request, on both machines; the run for `main` after the merge.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
-
-### FND-045 – Local use: the commands for Windows 11
-- **Status:** NOT STARTED
-- **Objective:** Use MotoSphere on Windows 11 without GitHub, with one command per job.
-- **Description:** The commands a Windows user starts, in `scripts/`: check the tools, start the application (and stop it again), and run all checks. Each only starts the Python script that does the work. `ARCHITECTURE.md` §12 names PowerShell files; Windows 11 as installed refuses to run PowerShell files, so the planner's trial decides between them and command files that need no setting changed, and the decision is recorded there. README gets a Windows section: what to install and from where (with Windows's own commands for it), first-time setup, and each command, including how to stop. Added by PLAN-010; it keeps the acceptance of the task it replaces.
-- **Acceptance criteria:** on a real Windows 11 machine, a clean checkout reaches a working application in the browser by following the README only; stopping leaves no process behind; every command the README names exists and runs on GitHub's Windows machine.
-- **Tests required:** repository checks that every documented command exists and only starts its Python script; the commands run on GitHub's Windows machine; end-to-end verification on the owner's Windows 11 PC. Until that PC has been reached the task is `BLOCKED – EXTERNAL DEPENDENCY`, not passed.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
 
 ---
 
