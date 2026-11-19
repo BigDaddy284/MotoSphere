@@ -369,9 +369,17 @@ kept in a schema of their own, so the real schema never sees them.
 for each test: a schema that keeps the rules, a table that is not strict,
 six tables without the key every table has (no key, a key of another
 name, of two columns, of text, one that is the key of another table, and
-one that may be given twice), a unique constraint, a foreign key and an
-index named by hand, the order of the sentences, and that a check without
-a name is refused when its table is defined. One test there holds the real schema to the rules:
+one that may be given twice), nineteen tables without the two times every
+table has (none, one of the two missing, and for each of the two: of
+another type, one that may be empty, one the table sets itself, one the
+store's code does not set, one that is one fixed moment, one that SQLite
+is asked for; a `created_at` that is set anew at a change, an `updated_at`
+that is not, one that a change sets to one fixed moment, and one that a
+change asks SQLite for), a unique constraint, a foreign key and an index
+named by hand, the order of the sentences, and that a check without a
+name is refused when its table is defined. A table that must keep the
+rules gets its key and its two times from two helpers of the tests,
+`the_key` and `the_times`. One test there holds the real schema to the rules:
 `broken_rules(Base.metadata)` must be empty. It passes today because
 there is no table yet, and it is the test that fails when a table is
 added that breaks a rule.
@@ -385,6 +393,20 @@ deleted, nor after the store was closed, nor to a row written with plain
 SQL past the model. A row stored with a key of its own keeps it, and
 later keys come after it.
 
+`backend/tests/integration/test_row_times.py` has a model that names no
+time and makes its table in a real SQLite file. With the clock set (see
+"The clock of a test" below) it stores and changes rows and reads the two
+times the file holds with plain SQL, past the model: a new row has the one
+moment the clock said in both columns; a changed row has a new
+`updated_at` and its old `created_at`; a row stored again as it was keeps
+both, and the clock was not asked; rows stored together in three ways each
+get one moment of their own; rows changed by one statement all say when; a
+row stored with times of its own keeps them. It also shows where this
+ends: a row written with plain SQL without its times is refused, and a
+change written with plain SQL, or by a statement that stores a row or
+changes the one that is there, leaves `updated_at` as it was. One test
+runs without a set clock and expects the moment it is.
+
 ## Times in the store
 
 `backend/tests/unit/test_db_times.py` tests the form itself, without a
@@ -393,7 +415,9 @@ every text has the same length and that the order of the texts is the
 order of the times, each kind of value that is refused (a time without an
 offset, a zone that gives none, a time UTC cannot say, a date, text, a
 number) with its whole sentence, and twelve texts that are nearly in the
-store's form and are refused when read.
+store's form and are refused when read. Two tests are of the store's
+clock: that `now()` says the moment it is, in UTC, and that a clock a
+test set says what the fixture promises.
 
 `backend/tests/integration/test_times.py` has a model of its own with two
 columns of a time, one of which may be empty, and makes its table in a
@@ -426,6 +450,21 @@ test that found it, and not a later one.
 happens after a test has ended, it lets pytest run a small file of tests in
 a process of its own (pytest's `pytester`), four of which leave
 connections open, and reads the outcome.
+
+## The clock of a test
+
+The store sets two times in every row from its one clock, `now()` in
+`motosphere.db.times`. A test that needs to know those times asks for the
+fixture `clock` (`backend/tests/conftest.py`). The clock is then set for
+that test: it says 19 November 2026, 08:00 UTC, when it is first asked and
+one second more every time after that. The fixture is the list of the
+moments it said, in order, so a test can say `clock[0]` for the moment the
+first row was stored and `len(clock)` for how often the store asked.
+Because no two askings get the same moment, a test can tell one reading of
+the clock from two.
+
+A test that does not ask for the fixture runs with the real clock. Only
+the clock is replaced, never the store.
 
 ## The tools a computer needs
 

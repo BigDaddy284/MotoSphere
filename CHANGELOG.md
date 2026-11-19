@@ -152,6 +152,14 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   gets from `Base` without naming it, and whose values SQLite never gives
   twice, also not after a row is deleted. `broken_rules` names a table
   without it (DAT-029).
+- When a row was first stored and when it was last changed: the columns
+  `created_at` and `updated_at`, which a model gets from `Base` without
+  naming them. The store's code sets them from the store's clock, `now()`
+  in `motosphere.db.times`: both to the same moment for a new row, and
+  `updated_at` anew for a row that is changed (DAT-031).
+- `broken_rules` names a table without the two times every table has:
+  one whose `created_at` or `updated_at` is missing, or is not as `Base`
+  gives it (DAT-032).
 
 ### Removed
 

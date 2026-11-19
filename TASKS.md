@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 40 | 13 |
+| 2 | Data store and published data (DAT, PUB) | 40 | 14 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-031 – Every table's timestamps.
+**Current task:** DAT-032 – A table without its timestamps is named.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1122,7 +1122,7 @@ without them is DAT-032, which follows it.
 - **Plan:** `docs/plans/DAT-029.md`
 
 ### DAT-031 – Every table's timestamps
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Every row of every table says when it was first stored and when it was last changed, in two columns a model gets without naming them, and the store's code sets them from one clock that a test can set.
 - **Description:** Added on 2026-11-19 (PLAN-018): the second half of what PLAN-017 called "DAT-029 – Every table's key and timestamps"; the timestamps themselves since PLAN-019, with the rule that names a table without them as DAT-032. The store gets one clock, `now()` in `motosphere.db.times`. `Base` gives every model the columns `created_at` and `updated_at`, the last two of its table: times as DAT-028 stores them, required, with no value from the table itself. The store's code sets them when the statement runs that stores or changes a row: a new row gets one reading of the clock in both columns, a changed row gets a new `updated_at` and keeps its `created_at`, and a row whose values are set to what they already are keeps both. A row may be stored with times of its own, which the rebuild from a snapshot (DAT-020) needs. A test sets the clock with the new fixture `clock`, which is the list of the moments the clock said, a second apart. Where it ends is tested and written down: a row written with plain SQL without its times is refused, and a change written with plain SQL or by `INSERT … ON CONFLICT DO UPDATE` leaves `updated_at` as it was; the store's code uses neither. Twelve tests (six functions) of DAT-005, DAT-028 and DAT-029 change, because they write rows with plain SQL or list the columns of a table; the plan gives the reason for each. No table, no migration, no new package. The planner's trial has 20 new tests and detects 135 of 135 planted defects.
 - **Acceptance criteria:**
@@ -1135,10 +1135,10 @@ without them is DAT-032, which follows it.
   7. `now()` says the moment it is, in UTC; with the fixture `clock` it says what the fixture promises, and without it a row gets the moment it is. The type check passes with no `ignore` and the lint with no `noqa`.
   8. `python scripts/check.py` reports 19 of 19 gates and 1013 tests (backend tests 383); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 18 new integration tests with a model of the tests' own that names no time, in a real SQLite file, read with plain SQL (the columns; a new row; a changed row; a row stored again as it was; rows stored together in three ways; rows changed in one unit of work and by one statement; times of a row's own; plain SQL without the times; a change with plain SQL and by `ON CONFLICT DO UPDATE`; the real clock); 2 new unit tests of the clock; the twelve existing tests that change, brought in line. Sixteen planted defects by the builder and the planner's own, all of DAT-028's and DAT-029's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #83 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1013 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 383: 363 before, 20 new); 135 planted defects in the two modules, 135 of 135 detected, the plan's sixteen prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 44502765544 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1013 passed, 0 failed, 0 skipped.", with 383 backend tests on both machines, the three jobs after the gates skipped; run 44504725449 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1013 / 0 tests (repository 41, script tests 206, backend 383, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 135 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-19. All 12 files are identical to the planner's trial. No package was added. Twelve tests of DAT-005, DAT-028 and DAT-029 changed, as the plan says and for the reasons it gives, and all 63 planted defects of DAT-029 and all 49 of DAT-028 were planted again and detected. Eighteen of the new tests store and change rows through a model of the tests' own in a real SQLite file, on Linux and on Windows, with the clock set, and read the two times the file holds with plain SQL: a new row has one reading of the clock in both columns, a changed row a new `updated_at` and its old `created_at`, and a row stored again as it was keeps both. Four of them show where this ends: plain SQL, and `INSERT … ON CONFLICT DO UPDATE`.
+- **Commit:** `8db8664`
 - **Plan:** `docs/plans/DAT-031.md`
 
 ### DAT-032 – A table without its timestamps is named

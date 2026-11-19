@@ -7,6 +7,9 @@ A model is a class that describes one table. Every model is a subclass of
   type, where an ordinary table would store whatever it is given;
 - has the same key: one whole-number column named ``id``, whose values
   SQLite gives and never gives twice, also not after a row is deleted;
+- says when each of its rows was first stored and when it was last
+  changed, in its last two columns, ``created_at`` and ``updated_at``,
+  which the store's code sets from the store's clock;
 - has columns of the few types a strict table takes: a Python ``int``
   becomes INTEGER, a ``str`` TEXT, a ``float`` REAL and ``bytes`` BLOB, and
   a ``datetime`` becomes the store's own type for a time
@@ -27,6 +30,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.schema import conv
 from sqlalchemy.types import TypeEngine
 
+from motosphere.db import times
 from motosphere.db.times import UtcDateTime
 
 __all__ = ["NAMING", "Base", "broken_rules"]
@@ -43,6 +47,24 @@ NAMING = {
 }
 
 
+def _this_moment() -> datetime:
+    """Ask the store's clock, anew for every row that is stored or changed."""
+    return times.now()
+
+
+def _when_first_stored(context: Any) -> datetime:
+    """Give a new row the moment it was first stored as the moment it was last changed.
+
+    The two are then the same moment, not two readings of the clock.
+    ``context`` is what SQLAlchemy hands a default: the statement being run.
+    In a statement that stores several rows at once, it gives the columns of
+    each later row an ending of their own, the same for both columns.
+    """
+    ending = context.current_column.key.removeprefix("updated_at")
+    moment: datetime = context.current_parameters["created_at" + ending]
+    return moment
+
+
 class Base(DeclarativeBase):
     """The class every model is a subclass of."""
 
@@ -57,6 +79,10 @@ class Base(DeclarativeBase):
 
     # The key of every table, and its first column. A model does not name it.
     id: Mapped[int] = mapped_column(primary_key=True, sort_order=-1)
+    # When a row was first stored and when it was last changed. They are the
+    # last columns of every table, and a model does not name them either.
+    created_at: Mapped[datetime] = mapped_column(default=_this_moment)
+    updated_at: Mapped[datetime] = mapped_column(default=_when_first_stored, onupdate=_this_moment)
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """Make the table of a new model strict and its key one that is never given twice.
@@ -89,13 +115,40 @@ def _has_the_key(table: Table) -> bool:
     )
 
 
+def _has_the_times(table: Table) -> bool:
+    """Say whether this table has the two times as every table has them.
+
+    Each is a time as the store keeps one and a row cannot be without it.
+    The table gives neither a value of its own: the store's code does, by
+    asking for it when a row is first stored, and for ``updated_at`` again
+    whenever the row is changed.
+    """
+    first = table.columns.get("created_at")
+    last = table.columns.get("updated_at")
+    return (
+        first is not None
+        and last is not None
+        and all(
+            isinstance(time.type, UtcDateTime)
+            and not time.nullable
+            and time.server_default is None
+            and time.default is not None
+            and time.default.is_callable
+            for time in (first, last)
+        )
+        and first.onupdate is None
+        and last.onupdate is not None
+        and last.onupdate.is_callable
+    )
+
+
 def broken_rules(schema: MetaData) -> list[str]:
     """Say which tables of ``schema`` break a rule, one plain sentence for each break.
 
-    A table must be strict, its key must be the one every table has, and
-    every other constraint and every index of it must have its name from
-    the naming rule, not one given by hand. A schema that keeps the rules
-    gives an empty list.
+    A table must be strict, its key must be the one every table has, it
+    must have the two times every table has, and every other constraint and
+    every index of it must have its name from the naming rule, not one
+    given by hand. A schema that keeps the rules gives an empty list.
     """
     breaks: list[str] = []
     for table in sorted(schema.tables.values(), key=lambda table: table.name):
@@ -105,6 +158,12 @@ def broken_rules(schema: MetaData) -> list[str]:
             breaks.append(
                 f"The table {table.name} does not have the key every table has: one "
                 "whole-number column named id, whose values are never given twice."
+            )
+        if not _has_the_times(table):
+            breaks.append(
+                f"The table {table.name} does not have the times every table has: "
+                "created_at and updated_at, which the store's code sets when a row is "
+                "first stored and whenever it is changed."
             )
         named: list[Constraint | Index] = [
             *(one for one in table.constraints if not isinstance(one, PrimaryKeyConstraint)),
