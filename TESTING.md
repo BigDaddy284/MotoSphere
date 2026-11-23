@@ -686,7 +686,9 @@ given another name fails; the list the store is migrated with is that
 list itself; each migration is given to a store at the version before it,
 a test for each, and brings it to its own version; the first makes the
 table `source` and nothing else, in a file that then carries MotoSphere's
-mark; a store with the newest schema lacks no migration; and the module
+mark; the second makes the table `source_offer` in a store that has a
+source, and the source is as it was (DAT-040); a store with the newest
+schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
 
@@ -733,15 +735,29 @@ word, and so which constraint refused it.
   that is switched on cannot lose the time; and it can be switched off
   again and keeps it. A source that is changed says when.
 
-`backend/tests/unit/test_db_models_source.py` tests the two lists a source
-is described by (DAT-039), without a store. The texts of both lists are
-written out in the test, so a text changed by mistake fails there: each
-list has exactly its texts, in the order of the design, twelve kinds of
-source and ten ways of collecting; no text has two names; each of the 22
-texts is words in small letters with one space between two; and a column
-can be of either list, with a check that names its texts in their order,
-as SQLite is given it. That SQLite refuses a text that is not on a list is
-proven for every list by the tests of "One of a list".
+`backend/tests/integration/test_source_offer.py` tests the table of what
+the sources offer (DAT-040), in a store that the migrations built. An
+offer is stored and read back, its kind as a value of the list; a source
+can offer several kinds, and each of the nine; it does not offer one
+kind twice, and offers stored together are kept together or not at all;
+two sources can offer the same kind; the table refuses a kind that is
+not on the list, in five ways, written past the model; an offer belongs
+to a source that exists, when it is stored and when it is moved; it
+names its source and its kind; a source that has offers cannot be
+deleted, and is deleted once they were taken away, while another
+source's offers stay.
+
+`backend/tests/unit/test_db_models_source.py` tests the three lists of the
+sources, without a store: the two a source is described by (DAT-039) and
+the kinds of information one can offer (DAT-040). The texts of the lists
+are written out in the test, so a text changed by mistake fails there:
+each list has exactly its texts in their order, twelve kinds of source,
+ten ways of collecting and nine kinds of information; no text has two
+names; each of the 31 texts is words in small letters with one space
+between two; and a column can be of each list, with a check that names
+its texts in their order, as SQLite is given it. That SQLite refuses a
+text that is not on a list is proven for every list by the tests of "One
+of a list".
 
 ## A data store of its own for every test
 

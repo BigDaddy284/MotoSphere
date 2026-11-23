@@ -210,6 +210,11 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   terms were read. The migrations are written in `motosphere.db.history`,
   and `SCHEMA` in `motosphere.db.models` is the whole schema: a test
   proves that no model is missing from it (DAT-006).
+- The table `source_offer`, which says what kinds of information each
+  source offers, with its model, the second migration and the list of
+  the nine kinds. A source offers a kind once, an offer belongs to a
+  source that exists, and a source that has offers cannot be deleted
+  (DAT-040).
 
 ### Removed
 
