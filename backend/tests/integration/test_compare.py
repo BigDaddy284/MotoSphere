@@ -25,6 +25,7 @@ from sqlalchemy.schema import CreateIndex, CreateTable
 from motosphere.db.base import Base
 from motosphere.db.compare import differences
 from motosphere.db.migrations import Migration, migrate
+from motosphere.db.models import SCHEMA
 from motosphere.db.store import open_store
 from motosphere.db.texts import NotEmpty
 
@@ -123,7 +124,7 @@ def models(tmp_path: Path) -> Engine:
 def test_the_models_and_the_migrations_agree(store: Engine, tmp_path: Path) -> None:
     from_the_models = open_store(tmp_path / "models.sqlite3")
     with from_the_models.begin() as connection:
-        Base.metadata.create_all(connection)
+        SCHEMA.create_all(connection)
     migrate(store)
 
     found = differences(models=from_the_models, migrated=store)

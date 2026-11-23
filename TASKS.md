@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 49 | 24 |
+| 2 | Data store and published data (DAT, PUB) | 49 | 25 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-006 – Information sources table.
+**Current task:** DAT-040 – The kinds of information a source offers.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1347,7 +1347,7 @@ the runs (DAT-007), says how a source is doing.
 - **Plan:** `docs/plans/DAT-039.md`
 
 ### DAT-006 – Information sources table
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store knows every source of information: who it is, how it is collected from and how it may be used (DESIGN §7.3).
 - **Description:** Narrowed on 2026-11-19 (PLAN-023). The table `source`, its model `Source` in `motosphere.db.models.source`, and the first migration, `make_the_sources`. Settled in the planner's trial. The columns: `name` (not empty, unique), `website` (a web address), `category` and `collection_method` (the lists of DAT-039), `scan_every_hours` (whole hours above nought, or no value for a source that is not scanned by the clock, as a file loaded once by a command is not), `terms_address`, `licence`, `usage_restrictions`, `terms_read_at` and `switched_on`. A new source is switched off, and one check, `ck_source_switched_on_terms_read`, refuses a source that is switched on and does not say when its terms were read (CLAUDE.md §10). Two sources may share a website, which PLAN-023 had left open: a site collected from in two ways is two sources of two names, each with runs of its own; only the name is unique, and names are told apart letter for letter. The migrations are written in one new module, `motosphere.db.history`, as plain SQL that names nothing of the store's code, which a test holds the module to; `motosphere.db.migrations` takes `MIGRATIONS` from there. `motosphere.db.models` names every model and gives the whole schema a name, `SCHEMA`; the two tests that hold the whole schema take it from there, and a new test asks a new Python three times and proves that no model anywhere in the code is missing from it. One new fixture, `newest`: the test's own store, brought to the newest schema by `migrate`. Not in this task: the source's country (DAT-011), the kinds of information it offers (DAT-040), and how it is doing (DAT-007, DAT-041). The planner's trial has 74 new tests and detects 51 of 51 planted defects, and 184 of 184 of the earlier ones whose files or tests this task changes.
 - **Acceptance criteria:**
@@ -1361,10 +1361,10 @@ the runs (DAT-007), says how a source is doing.
   8. No existing test changed but two, in one line each, and all pass. The type check passes with no `ignore`.
   9. `python scripts/check.py` reports 19 of 19 gates and 1428 tests (backend tests 798); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 74 new integration tests against real SQLite files, in three files: 66 of the table in a store the migrations built, 6 of the history and 2 of the whole schema, asked of a new Python; every existing test. Fourteen planted defects by the builder and the planner's own; the earlier planted defects of the runner, of the fixture of the store, of the comparison and of the two lists again; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #105 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1428 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 798: 724 before, 74 new); 51 planted defects in the model, the migration, the history, the package of the models and the runner, 51 of 51 detected, the plan's fourteen prove-it steps among them with the results the plan gives; the earlier planted defects of the runner (74), of the fixture of the store (15), of the comparison (77) and of the two lists (18) again, 184 of 184 detected; the real commands `migrate` and `schema` on a new store, which is then at version 1 and holds the table `source`. On GitHub, read by the planner from the runs and job logs: run 45278804214 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1428 passed, 0 failed, 0 skipped.", with 798 backend tests on both machines, the three jobs after the gates skipped; run 45281309608 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1428 / 0 tests (repository 41, script tests 206, backend 798, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 235 / 0 planted defects detected (51 new, 184 earlier); the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-23. All 16 files are identical to the planner's trial. Every new test runs against a real SQLite file that the migrations built; nothing is a mock. Two existing tests changed in one line each (they take the whole schema from `SCHEMA`); no package was added.
+- **Commit:** `2d3a620`
 - **Plan:** `docs/plans/DAT-006.md`
 
 ### DAT-040 – The kinds of information a source offers

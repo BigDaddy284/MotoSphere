@@ -405,9 +405,9 @@ their order, each in its own type's words; and a type that says it brings a
 check and gives none is an error, for the rule and when a model with a
 column of it is defined. A table that must keep the rules gets its key and
 its two times from two helpers of the tests, `the_key` and `the_times`. One
-test there holds the real schema to the rules: `broken_rules(Base.metadata)`
-must be empty. It passes today because there is no table yet, and it is the
-test that fails when a table is added that breaks a rule.
+test there holds the real schema to the rules: `broken_rules(SCHEMA)` must
+be empty, where `SCHEMA` is the whole schema (`motosphere.db.models`). It
+is the test that fails when a table is added that breaks a rule.
 
 `backend/tests/integration/test_key.py` has two models that name no key,
 one of which says something of its table itself, and makes their tables
@@ -627,10 +627,11 @@ The model is kept in a schema of its own.
 
 `backend/tests/integration/test_compare.py` begins with the test that
 holds the real models to the real migrations: it brings the store of the
-fixture to the newest schema with `migrate`, makes the tables of
-`Base.metadata` in a second real file, and `differences` must find
-nothing. It passes today because there is neither a model nor a migration
-yet, and it is the test that fails when one is added without the other.
+fixture to the newest schema with `migrate`, makes the tables of the
+whole schema (`SCHEMA` in `motosphere.db.models`) in a second real file,
+and `differences` must find nothing. It is the test that fails when a
+model is added or changed without its migration, or a migration without
+its model.
 When it fails, its message is what `differences` found, one sentence to a
 line.
 
@@ -676,7 +677,61 @@ files in every test.
   keeps for itself are not compared; and comparing leaves both files byte
   for byte as they were.
 
+## The store's own history
+
+`backend/tests/integration/test_history.py` tests the real migrations
+(`motosphere.db.history`, DAT-006), each on a real SQLite file. The
+migrations are named in their order, so one that is moved, taken out or
+given another name fails; the list the store is migrated with is that
+list itself; each migration is given to a store at the version before it,
+a test for each, and brings it to its own version; the first makes the
+table `source` and nothing else, in a file that then carries MotoSphere's
+mark; a store with the newest schema lacks no migration; and the module
+names nothing of MotoSphere's own code, which the test reads from the
+module as it is written, imports inside a function included.
+
+## The whole schema
+
+`backend/tests/integration/test_models.py` proves that `SCHEMA` in
+`motosphere.db.models` is whole (DAT-006). In the Python that runs the
+tests, other tests have loaded models already, so each question is asked
+of a new Python that has loaded nothing but what it is told to. One loads
+every module MotoSphere has and says which tables the models then say;
+one takes `SCHEMA` and says its tables; one loads a single model by its
+own module. All three must say the same tables, `source` among them. A
+model that the package does not name, and a model that stands outside the
+package, each fail these tests.
+
 ## The information sources
+
+`backend/tests/integration/test_source.py` tests the table of the
+sources (DAT-006) in a store that the migrations built, as every real
+store is built. What is stored through the model is also read as SQLite
+holds it, and what the table must refuse is also written past the model.
+Where SQLite refuses a row, the test names what SQLite said, word for
+word, and so which constraint refused it.
+
+- A source is stored and read back with everything said of it: its kind
+  and its way of collecting as values of their lists, the time its terms
+  were read as the same moment in UTC though it was given in another
+  zone, and its two times from the store's clock. In the table it is
+  plain text and whole numbers, row written out in the test.
+- A new source is switched off, and nothing more is said of it than it
+  cannot be without. Without its name, its website, its kind or its way
+  of collecting it is refused, each in a test; so is a row written past
+  the model that does not say whether it is switched on.
+- Two sources cannot have one name, names are told apart letter for
+  letter, and two sources can have one website.
+- The table refuses what is not on a list, in six ways, and a source can
+  be of each of the twelve kinds and collected from in each of the ten
+  ways; it refuses what is not a web address, in four ways for each of its
+  two addresses; and empty text, in two ways for each of three columns.
+- A source is scanned every so many whole hours: nought, less and part of
+  an hour are refused.
+- A source whose terms were not read is not stored switched on and cannot
+  be switched on later; it is switched on once they were read; a source
+  that is switched on cannot lose the time; and it can be switched off
+  again and keeps it. A source that is changed says when.
 
 `backend/tests/unit/test_db_models_source.py` tests the two lists a source
 is described by (DAT-039), without a store. The texts of both lists are
@@ -705,9 +760,13 @@ open: 1. They were closed for it." A connection that was dropped without
 being closed counts too. That way a leak in the code under test fails the
 test that found it, and not a later one.
 
-`tests/integration/test_store_fixture.py` tests the fixture. For what
-happens after a test has ended, it lets pytest run a small file of tests in
-a process of its own (pytest's `pytester`), four of which leave
+A test that needs the tables asks for the fixture `newest` instead: the
+same store, brought to the newest schema by `migrate`, as every real
+store is, and without rows (DAT-006).
+
+`tests/integration/test_store_fixture.py` tests the fixture `store`. For
+what happens after a test has ended, it lets pytest run a small file of
+tests in a process of its own (pytest's `pytester`), four of which leave
 connections open, and reads the outcome.
 
 ## The clock of a test
