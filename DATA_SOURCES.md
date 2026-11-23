@@ -23,6 +23,14 @@ off. It is switched on only after a person has read its terms, and the
 store refuses a source that is switched on and does not say when they
 were read. The registry below names the same sources for a reader.
 
+What a source offers is one or more of nine kinds of information, from a
+third list in the code (`InformationType`, DAT-040; `DATABASE.md` has it
+with what each text means): `tracks`, `events`, `championships`,
+`results`, `standings`, `riders`, `teams`, `news` and `reference data`.
+The column "Information types" of the registry below holds those texts,
+and the store keeps them in its table `source_offer`, a row for each kind
+a source offers.
+
 Three ways of collecting are permitted only on a condition (DESIGN.md
 §7.2 and §14), and a source is registered with one of them only after the
 condition was checked and written down in its row here:
