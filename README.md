@@ -94,9 +94,9 @@ The data store is the file the setting `MOTOSPHERE_STORE_PATH` names (see
 "Configuration"). The command makes it if it is not there, gives it every
 change to its schema that it lacks, and says in one sentence what it did. A
 file that is not a MotoSphere data store is refused in one sentence and left
-as it is; the exit code is then 1. Today the store has two tables, for the
-information sources and for what they offer, and the command puts no rows
-into them.
+as it is; the exit code is then 1. Today the store has three tables, for
+the information sources, for what they offer and for the collection runs,
+and the command puts no rows into them.
 
 To see which schema the data store has, without changing anything:
 
