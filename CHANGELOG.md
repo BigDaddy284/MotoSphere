@@ -204,6 +204,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   package of the models, `motosphere.db.models`: the twelve kinds of
   source and the ten ways of collecting of the design, each with the text
   that is stored (DAT-039).
+- The first table of the data store, `source`, for the information
+  sources, with its model and the first migration. A new source is
+  switched off, and the table refuses one that is switched on before its
+  terms were read. The migrations are written in `motosphere.db.history`,
+  and `SCHEMA` in `motosphere.db.models` is the whole schema: a test
+  proves that no model is missing from it (DAT-006).
 
 ### Removed
 
