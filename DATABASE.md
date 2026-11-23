@@ -6,11 +6,10 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 2 and
-has two tables: `source`, that of the information sources (DAT-006), and
-`source_offer`, which says what kinds of information each of them offers
-(DAT-040; see "The information sources" for both). The decisions the
-store rests on are recorded below, from task DAT-001 on.
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 1 and
+has one table, `source`, that of the information sources (DAT-006, see
+"The information sources"). The decisions the store rests on are recorded
+below, from task DAT-001 on.
 
 ## Where the store's file is
 
@@ -173,7 +172,6 @@ list of them, and nothing else (DAT-006):
 | Number | Migration | What it does | Task |
 |---|---|---|---|
 | 1 | `make_the_sources` | Makes the table of the information sources, `source` | DAT-006 |
-| 2 | `make_the_source_offers` | Makes the table of what the sources offer, `source_offer` | DAT-040 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -848,18 +846,16 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have two tables to agree on, `source` and `source_offer`.
-That the comparison can fail is proven with two models and migrations of
-the tests' own (`TESTING.md`).
+Today the two have one table to agree on, `source`. That the comparison
+can fail is proven with two models and migrations of the tests' own
+(`TESTING.md`).
 
 ## The information sources
 
 A source is a website or a dataset that MotoSphere may collect from, and
 the store knows every one of them (DESIGN.md §7.3). The table `source`
 (DAT-006), its model `Source` and the two lists a source is described by
-(DAT-039) are in `motosphere.db.models.source`, and so are the table of
-what the sources offer, `source_offer`, its model `SourceOffer` and the
-list of the kinds of information (DAT-040). The models of the store
+(DAT-039) are in `motosphere.db.models.source`. The models of the store
 live in the package `motosphere.db.models`, one module for each table or
 for a few that belong together. The package names every model, and
 `SCHEMA` there is the whole schema.
@@ -905,11 +901,11 @@ What the planner's trial settled:
   168 weekly. A source without a number is not looked at by the clock, as
   a file that is loaded once by a command is not.
 - **What is not in the table.** The country of a source comes with the
-  table of the countries (DAT-011). The kinds of information it offers
-  are in a table of their own, `source_offer` (below). When it was last
-  scanned, how it is doing and its last error are what its runs will say
-  (DAT-007, DAT-041), and are not stored a second time here, where the
-  two could come to disagree.
+  table of the countries (DAT-011), and the kinds of information it
+  offers with a table of their own (DAT-040). When it was last scanned,
+  how it is doing and its last error are what its runs will say (DAT-007,
+  DAT-041), and are not stored a second time here, where the two could
+  come to disagree.
 
 Each list is said once, in the code, as a `StrEnum` whose values are the
 texts that are stored (see "One of a list"). The texts are words in small
@@ -952,46 +948,6 @@ is registered, and recorded with the source (`DATA_SOURCES.md`).
 | `sitemap discovery` | Sitemap discovery | The list of its pages that a site publishes for programs |
 | `search engine discovery` | Search-engine discovery where permitted | What a search engine finds, only where the engine permits it |
 | `human submission` | Human-submitted source references | A reference a person has sent in |
-
-**The table `source_offer`** says which kinds of information each source
-offers (DESIGN.md §7.3, "Available information types"; DAT-040). A source
-can offer several, so they are rows of a table of their own and not a
-column of the source: one row for one kind that one source offers. Its
-key and its two times are those of every table. The second migration
-makes it (`make_the_source_offers`).
-
-| Column | What it holds | When it is without a value | What the table refuses |
-|---|---|---|---|
-| `source_id` | The source that offers it: the key of a row of `source` | Never | A key that no source has |
-| `information_type` | The kind of information | Never | Text that is not on the list `InformationType`; a kind the same source offers already |
-
-- **A source offers a kind once.** No two rows have the same source and
-  the same kind (`uq_source_offer_source_id_information_type`). Two
-  sources can offer the same kind.
-- **An offer belongs to a source that exists**, when it is stored and
-  when it is changed (`fk_source_offer_source_id_source`).
-- **A source that has offers cannot be deleted.** Whoever deletes a
-  source takes its offers away first, in the same unit of work; nothing
-  is taken away in silence with the source.
-- **A source may be without offers.** The table of the sources does not
-  ask for one.
-
-**The kinds of information**, `InformationType`. The design names no
-list of them, so the planner's trial settled one from what the design
-says MotoSphere is a place to explore (DESIGN.md §1): nine texts, words
-in small letters in the plural.
-
-| The text that is stored | What it is |
-|---|---|
-| `tracks` | Where tracks are and what they are like |
-| `events` | Races and other events with their dates: calendars and the rounds of a championship |
-| `championships` | Championships and series: their seasons, their classes and who won them |
-| `results` | How races ended, single motos included |
-| `standings` | The standings of a championship, with their points |
-| `riders` | Riders: who they are and what they have ridden |
-| `teams` | Teams: who they are and who rides for them |
-| `news` | News and announcements |
-| `reference data` | What other records are described by, such as the countries of the world |
 
 ## What the store relies on in SQLite
 

@@ -24,7 +24,7 @@ from collections.abc import Callable
 
 from sqlalchemy import Connection
 
-__all__ = ["MIGRATIONS", "make_the_source_offers", "make_the_sources"]
+__all__ = ["MIGRATIONS", "make_the_sources"]
 
 
 def make_the_sources(connection: Connection) -> None:
@@ -89,27 +89,4 @@ def make_the_sources(connection: Connection) -> None:
     )
 
 
-def make_the_source_offers(connection: Connection) -> None:
-    """2: the table of what the sources offer, ``source_offer`` (DAT-040)."""
-    connection.exec_driver_sql(
-        """
-        CREATE TABLE source_offer (
-            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-            source_id INTEGER NOT NULL,
-            information_type TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL,
-            CONSTRAINT uq_source_offer_source_id_information_type
-                UNIQUE (source_id, information_type),
-            CONSTRAINT fk_source_offer_source_id_source
-                FOREIGN KEY(source_id) REFERENCES source (id),
-            CONSTRAINT ck_source_offer_information_type_one_of CHECK (information_type IN (
-                'tracks', 'events', 'championships', 'results', 'standings', 'riders', 'teams',
-                'news', 'reference data'
-            ))
-        ) STRICT
-        """
-    )
-
-
-MIGRATIONS: tuple[Callable[[Connection], None], ...] = (make_the_sources, make_the_source_offers)
+MIGRATIONS: tuple[Callable[[Connection], None], ...] = (make_the_sources,)
