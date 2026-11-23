@@ -11,6 +11,7 @@ from sqlalchemy.pool import PoolProxiedConnection
 
 from motosphere.core.settings import ENV_PREFIX, get_settings
 from motosphere.db import times
+from motosphere.db.migrations import migrate
 from motosphere.db.store import open_store
 
 # The tests of the `store` fixture run pytest itself (test_store_fixture.py).
@@ -53,6 +54,17 @@ def store(tmp_path: Path) -> Iterator[Engine]:
             f"Connections to its store that the test left open: {len(left_open)}. "
             "They were closed for it."
         )
+
+
+@pytest.fixture
+def newest(store: Engine) -> Engine:
+    """The test's own store with the newest schema: every migration has been given to it.
+
+    It is built the way every real store is built, by ``migrate``, and it
+    holds no rows.
+    """
+    migrate(store)
+    return store
 
 
 @pytest.fixture

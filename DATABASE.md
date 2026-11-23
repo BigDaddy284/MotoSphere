@@ -5,9 +5,11 @@ tables are added, its schema and entity relationships.
 
 ## Current state
 
-No schema exists yet. The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its first decisions are recorded
-below (task DAT-001).
+The store is an SQLite file used by the data pipeline
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 1 and
+has one table, `source`, that of the information sources (DAT-006, see
+"The information sources"). The decisions the store rests on are recorded
+below, from task DAT-001 on.
 
 ## Where the store's file is
 
@@ -86,9 +88,11 @@ of work at a time: a unit is not started inside another.
 The store's schema is built and changed only by migrations. A migration is
 a Python function that is given a connection and changes the schema, and
 the records with it where the change needs that. The migrations stand in
-one list, `MIGRATIONS` in `motosphere.db.migrations`, oldest first, and the
-place of a migration in that list is its number. The list is empty until
-the first table is added. What the module promises:
+one list, `MIGRATIONS`, oldest first, and the place of a migration in that
+list is its number. The list and the migrations themselves are written in
+`motosphere.db.history` (see "The history" below), and
+`motosphere.db.migrations` gives a store those it lacks. What that module
+promises:
 
 - **A store knows its version.** The number of the last migration a store
   has had is kept in the file itself, in the field SQLite gives
@@ -161,6 +165,26 @@ all three cases the exit code is 0. A store that cannot be opened, or that
 error, and the same exit code 1: the two commands ask the same function,
 so they cannot come to disagree about a store. The file is byte for byte
 the same afterwards, and nothing is made beside it.
+
+**The history.** `motosphere.db.history` has every migration, and the
+list of them, and nothing else (DAT-006):
+
+| Number | Migration | What it does | Task |
+|---|---|---|---|
+| 1 | `make_the_sources` | Makes the table of the information sources, `source` | DAT-006 |
+
+- **A migration is plain SQL, written out in its function.** It names no
+  model, no list and no type of the store's code, and the module imports
+  nothing of MotoSphere's, which a test holds it to. So a migration builds
+  tomorrow what it builds today, whatever becomes of the code. What two
+  migrations both need, such as the white space that a check for empty
+  text names, each writes out for itself.
+- **A test names the migrations in their order.** One that is moved, taken
+  out or given another name fails it, and a new one adds its name there,
+  last.
+- **Each migration is given to a store at the version before it**, in a
+  test of its own, and one test holds what all of them build to the
+  models (see "The models and the migrations agree").
 
 SQLite can add, rename and drop a column and rename a table in place. For
 any other change the table is built anew. A change made in place must leave
@@ -313,8 +337,10 @@ by hand to two constraints is named for both reasons. The same name in
 two tables is not a name given twice: only a name given by hand can be
 that, and it is named as one.
 
-There is no model yet, and so no table. The rules are proven with models
-of the tests' own, which are kept in schemas apart from the real one.
+A test holds the real schema to the rules: `broken_rules` must find
+nothing in `SCHEMA`, the whole schema (see "The models and the migrations
+agree"). That each rule can be broken is proven with models of the tests'
+own, which are kept in schemas apart from the real one.
 
 ## Times
 
@@ -807,26 +833,79 @@ Where this ends:
 
 - The test compares the newest schema only. That a store which stopped at
   an earlier version reaches it is what the tests of `migrate` prove.
-- The test sees the models whose modules have been imported. The task
-  that adds the first model sees to it that all are (DAT-006).
+- The test takes the models from `SCHEMA` in `motosphere.db.models`, which
+  is the whole schema: the package names every model, so loading it, or
+  any one model, loads them all. A test proves that it is whole (DAT-006).
+  In a new Python, which has loaded nothing else, it loads every module
+  MotoSphere has and asks which tables the models then say; `SCHEMA`,
+  asked in another new Python, must say the same. So a model that the
+  package does not name, or one that stands outside it, fails a test and
+  is not passed over in silence.
 - What a model cannot say is not compared yet: a search index and an
   index of places, which SQLite builds as tables of its own kind with
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-There is no model and no migration yet, so both stores are empty today.
-That the comparison can fail is proven with two models and migrations of
-the tests' own (`TESTING.md`).
+Today the two have one table to agree on, `source`. That the comparison
+can fail is proven with two models and migrations of the tests' own
+(`TESTING.md`).
 
 ## The information sources
 
 A source is a website or a dataset that MotoSphere may collect from, and
-the store will know every one of them (DESIGN.md §7.3). The table of the
-sources is not there yet. What is there are the two lists a source is
-described by (DAT-039), in `motosphere.db.models.source`, the module in
-which the model of the table will stand too. The models of the store
+the store knows every one of them (DESIGN.md §7.3). The table `source`
+(DAT-006), its model `Source` and the two lists a source is described by
+(DAT-039) are in `motosphere.db.models.source`. The models of the store
 live in the package `motosphere.db.models`, one module for each table or
-for a few that belong together.
+for a few that belong together. The package names every model, and
+`SCHEMA` there is the whole schema.
+
+**The table `source`.** Its key and its two times are those of every
+table. The first migration makes it (`make_the_sources`).
+
+| Column | What it holds | When it is without a value | What the table refuses |
+|---|---|---|---|
+| `name` | What the source is called | Never | Empty text; a name another source has |
+| `website` | The address of the site it is | Never | Text that is not a web address |
+| `category` | What kind of source it is | Never | Text that is not on the list `SourceCategory` |
+| `collection_method` | How it is collected from | Never | Text that is not on the list `CollectionMethod` |
+| `scan_every_hours` | After how many hours it is looked at again | It is not looked at by the clock | Nought and less; part of an hour |
+| `terms_address` | Where its terms of use are | None is known | Text that is not a web address |
+| `licence` | The licence under which what it publishes may be used, as the source names it | None is known | Empty text |
+| `usage_restrictions` | What its terms ask for or forbid, in plain words | None is known | Empty text |
+| `terms_read_at` | When a person last read its terms | Nobody has yet | |
+| `switched_on` | Whether MotoSphere collects from it | Never | A number that is not 1 or 0; yes, while `terms_read_at` is without a value |
+
+What the planner's trial settled:
+
+- **A new source is switched off, and a source is switched on only after
+  its terms were read** (CLAUDE.md §10: sources are validated before they
+  are activated). The model gives a new source "no". The table gives the
+  column no value of its own, so a row that is written past the model and
+  does not say is refused, not switched on in silence. The check
+  `ck_source_switched_on_terms_read` refuses a row that is switched on and
+  does not say when its terms were read: when it is first stored, when it
+  is switched on later, and when the time is taken away from a source that
+  is switched on. A source can be switched off again, and keeps the time.
+  The table cannot know that somebody read the terms; it makes sure that
+  whoever switches a source on has written down when.
+- **Two sources cannot have one name, and they can have one website.** A
+  source has one kind and one way of collecting. A site that is collected
+  from in two ways, its news by a feed and its calendar from its pages, is
+  two sources of two names with the same website, and each will have runs
+  of its own (DAT-007). `website` is the address of the site, not of the
+  page or the feed that is read. Names are told apart letter for letter:
+  `Example` and `EXAMPLE` are two names, and so are a name and the same
+  name with a space after it.
+- **How often a source is scanned is said in whole hours**: 24 is daily and
+  168 weekly. A source without a number is not looked at by the clock, as
+  a file that is loaded once by a command is not.
+- **What is not in the table.** The country of a source comes with the
+  table of the countries (DAT-011), and the kinds of information it
+  offers with a table of their own (DAT-040). When it was last scanned,
+  how it is doing and its last error are what its runs will say (DAT-007,
+  DAT-041), and are not stored a second time here, where the two could
+  come to disagree.
 
 Each list is said once, in the code, as a `StrEnum` whose values are the
 texts that are stored (see "One of a list"). The texts are words in small

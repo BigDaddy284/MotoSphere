@@ -15,6 +15,14 @@ each from a list in the code (`motosphere.db.models.source`, DAT-039).
 text means. The columns "Category" and "Collection method" of the
 registry below hold those texts.
 
+The store keeps every source in its table `source` (DAT-006,
+`DATABASE.md`): its name, its website, the two texts above, how often it
+is scanned, where its terms are, its licence, what its terms ask for or
+forbid, and when a person last read them. A source is registered switched
+off. It is switched on only after a person has read its terms, and the
+store refuses a source that is switched on and does not say when they
+were read. The registry below names the same sources for a reader.
+
 Three ways of collecting are permitted only on a condition (DESIGN.md
 §7.2 and §14), and a source is registered with one of them only after the
 condition was checked and written down in its row here:
