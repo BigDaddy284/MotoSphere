@@ -33,7 +33,6 @@ from sqlalchemy.schema import SchemaItem
 from motosphere.db import times
 from motosphere.db.base import NAMING, Base, broken_rules
 from motosphere.db.checks import WithItsCheck
-from motosphere.db.models import SCHEMA
 from motosphere.db.texts import WHITE_SPACE, NotEmptyText, not_empty
 from motosphere.db.times import UtcDateTime
 
@@ -128,7 +127,7 @@ def written_as_text(table: Table) -> None:
 
 
 def test_the_real_schema_breaks_no_rule() -> None:
-    assert broken_rules(SCHEMA) == []
+    assert broken_rules(Base.metadata) == []
 
 
 def test_tables_that_keep_the_rules_break_none() -> None:

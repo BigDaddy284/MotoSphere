@@ -4,8 +4,7 @@ A migration is a function that changes the schema of a store. The
 migrations stand in one list, oldest first, and the place of a migration in
 that list is its number. A store records the number of the last migration
 it has had (its schema version), ``pending`` says which it lacks, and
-``migrate`` gives it those. The list and the migrations themselves are
-written in :mod:`motosphere.db.history`; ``MIGRATIONS`` here is that list.
+``migrate`` gives it those.
 
 Only a store of MotoSphere's is migrated. Its first migration marks the
 file as MotoSphere's, and ``migrate`` refuses a file that has anything in it
@@ -15,8 +14,6 @@ and not that mark.
 from collections.abc import Callable, Sequence
 
 from sqlalchemy import Connection, Engine
-
-from motosphere.db.history import MIGRATIONS
 
 __all__ = [
     "APPLICATION_ID",
@@ -29,6 +26,11 @@ __all__ = [
 ]
 
 type Migration = Callable[[Connection], None]
+
+# The history of the store's schema, oldest first. It only ever grows at
+# its end: a migration that has been merged is not changed, moved or taken
+# out, because stores and snapshots at its version exist.
+MIGRATIONS: tuple[Migration, ...] = ()
 
 # The mark of a store of MotoSphere's: the letters "MoSp" as one number. It
 # is kept in the file itself, in the field SQLite gives applications to say

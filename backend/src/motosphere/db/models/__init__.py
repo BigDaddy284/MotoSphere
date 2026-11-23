@@ -1,20 +1,6 @@
 """The models: one class for each table of the data store.
 
-Every model is named here, and so loading this package, or any module of
-it, loads them all. ``SCHEMA`` is what they say together: every table the
-store has. Whoever needs the whole schema takes it from here.
+There is no table yet. The first will be the table of the information
+sources, and :mod:`motosphere.db.models.source` has the two lists a source
+is described by.
 """
-
-from typing import Final
-
-from sqlalchemy import MetaData
-
-from motosphere.db.base import Base
-from motosphere.db.models.source import Source
-
-__all__ = ["SCHEMA", "Source"]
-
-# Every table of the store, as the models say them. A test holds the
-# migrations to it, and another proves that no model anywhere in the code
-# is missing from it.
-SCHEMA: Final[MetaData] = Base.metadata
