@@ -1368,15 +1368,24 @@ the runs (DAT-007), says how a source is doing.
 - **Plan:** `docs/plans/DAT-006.md`
 
 ### DAT-040 – The kinds of information a source offers
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The store knows which kinds of information each source offers (DESIGN §7.3, "Available information types").
-- **Description:** Added on 2026-11-19 (PLAN-023), cut out of DAT-006. A list of the kinds of information (tracks, events, championships, results, standings, riders, teams and news, to be settled in the planner's trial), and which of them each source offers: a source can offer several, so they are rows of a table of their own, with model and migration, and not a column of the source.
-- **Acceptance criteria:** a source can offer several kinds, each once; a kind outside the list is refused; an offer belongs to a source that exists, and a source with offers is not deleted unnoticed.
-- **Tests required:** unit tests of the list; integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-19 (PLAN-023), cut out of DAT-006. One list, `InformationType`, in `motosphere.db.models.source`, and one table, `source_offer`, with its model `SourceOffer` and the second migration, `make_the_source_offers`: one row for one kind of information that one source offers, with the columns `source_id` and `information_type`. Settled in the planner's trial. The kinds, which the design does not list: nine, from what the design says MotoSphere is a place to explore (DESIGN §1), as words in small letters in the plural: `tracks`, `events`, `championships`, `results`, `standings`, `riders`, `teams`, `news` and `reference data`; the ninth is there because the first source the plan registers, the reference file of the countries (DAT-012), offers none of the other eight. A source offers a kind once (a unique constraint over the two columns, the source first), and two sources can offer the same kind. An offer belongs to a source that exists (a foreign key). A source that has offers cannot be deleted: the foreign key does nothing by itself, so SQLite refuses the delete, and whoever deletes a source takes its offers away first; taking them away in silence with the source was not taken. A source may be without offers. The model of an offer has the key of its source and no `relationship`. The tests of the list go into the file of the two other lists. The planner's trial has 40 new tests and detects 34 of 34 planted defects, and 69 of 69 of the earlier ones whose files or tests this task changes.
+- **Acceptance criteria:**
+  1. `InformationType` has exactly its nine texts in their order, no text has two names, and every text is words in small letters with one space between two.
+  2. A source can offer several kinds of information, and each of the nine; it does not offer one kind twice; two sources can offer the same kind.
+  3. The table refuses a kind that is not on the list, an offer without a source or without a kind, and an offer for a source that does not exist, when it is stored and when it is moved.
+  4. A source that has offers cannot be deleted; once its offers were taken away it can, and the offers of another source stay.
+  5. The second migration makes the table in a store at version 1 and leaves its sources as they were, and the test of the models and the migrations finds the two the same.
+  6. The first migration is unchanged, and the history names its two migrations in their order.
+  7. No existing test changed but the test of the history's names and the tests of the lists, which take the third list in; all pass. The type check passes with no `ignore`.
+  8. `python scripts/check.py` reports 19 of 19 gates and 1468 tests (backend tests 838); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 40 new tests: 25 integration tests of the table in a store the migrations built, 2 of the history (the second migration given to a store at version 1 that has a source), and 13 unit tests of the list; every existing test. Thirteen planted defects by the builder and the planner's own; the earlier planted defects of the table of the sources and of the two lists again; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-040.md`
 
 ### DAT-007 – Data collection runs table
 - **Status:** NOT STARTED
