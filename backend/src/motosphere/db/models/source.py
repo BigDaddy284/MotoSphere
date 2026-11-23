@@ -3,7 +3,9 @@
 A source is a website or a dataset that MotoSphere may collect from. This
 module has the model of the table that knows them all, :class:`Source`,
 and the two lists a source is described by: what kind of source it is,
-and how it is collected from.
+and how it is collected from. It also has what each source offers: the
+list of the kinds of information there are, and the model of the table
+that says which of them a source has, :class:`SourceOffer`.
 
 Each list is said once, here. Its values are the texts that are stored,
 and a column of the list (:class:`motosphere.db.lists.OneOf`) refuses
@@ -16,7 +18,7 @@ the texts and rows hold them.
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import CheckConstraint
+from sqlalchemy import CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from motosphere.db.base import Base
@@ -24,7 +26,7 @@ from motosphere.db.lists import OneOf
 from motosphere.db.texts import NotEmpty
 from motosphere.db.web import WebAddress
 
-__all__ = ["CollectionMethod", "Source", "SourceCategory"]
+__all__ = ["CollectionMethod", "InformationType", "Source", "SourceCategory", "SourceOffer"]
 
 
 class SourceCategory(StrEnum):
@@ -81,6 +83,29 @@ class CollectionMethod(StrEnum):
     SUBMITTED = "human submission"
 
 
+class InformationType(StrEnum):
+    """A kind of information a source can offer (DESIGN.md 1 and 7.3)."""
+
+    # Where tracks are and what they are like.
+    TRACKS = "tracks"
+    # Races and other events with their dates: calendars and the rounds of a championship.
+    EVENTS = "events"
+    # Championships and series: their seasons, their classes and who won them.
+    CHAMPIONSHIPS = "championships"
+    # How races ended, single motos included.
+    RESULTS = "results"
+    # The standings of a championship, with their points.
+    STANDINGS = "standings"
+    # Riders: who they are and what they have ridden.
+    RIDERS = "riders"
+    # Teams: who they are and who rides for them.
+    TEAMS = "teams"
+    # News and announcements.
+    NEWS = "news"
+    # What other records are described by, such as the countries of the world.
+    REFERENCE = "reference data"
+
+
 class Source(Base):
     """One source of information: who it is, how it is collected from and how it may be used.
 
@@ -118,3 +143,18 @@ class Source(Base):
     terms_read_at: Mapped[datetime | None]
     # Whether MotoSphere collects from it.
     switched_on: Mapped[bool] = mapped_column(default=False)
+
+
+class SourceOffer(Base):
+    """One kind of information that one source offers.
+
+    A source can offer several kinds, and each of them once. An offer
+    belongs to a source that exists, and a source that has offers cannot
+    be deleted: its offers are taken away first.
+    """
+
+    __tablename__ = "source_offer"
+    __table_args__ = (UniqueConstraint("source_id", "information_type"),)
+
+    source_id: Mapped[int] = mapped_column(ForeignKey("source.id"))
+    information_type: Mapped[InformationType] = mapped_column(OneOf(InformationType))

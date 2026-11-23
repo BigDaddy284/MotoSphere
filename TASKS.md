@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 49 | 25 |
+| 2 | Data store and published data (DAT, PUB) | 49 | 26 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-040 – The kinds of information a source offers.
+**Current task:** DAT-007 – Data collection runs table.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1368,7 +1368,7 @@ the runs (DAT-007), says how a source is doing.
 - **Plan:** `docs/plans/DAT-006.md`
 
 ### DAT-040 – The kinds of information a source offers
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store knows which kinds of information each source offers (DESIGN §7.3, "Available information types").
 - **Description:** Added on 2026-11-19 (PLAN-023), cut out of DAT-006. One list, `InformationType`, in `motosphere.db.models.source`, and one table, `source_offer`, with its model `SourceOffer` and the second migration, `make_the_source_offers`: one row for one kind of information that one source offers, with the columns `source_id` and `information_type`. Settled in the planner's trial. The kinds, which the design does not list: nine, from what the design says MotoSphere is a place to explore (DESIGN §1), as words in small letters in the plural: `tracks`, `events`, `championships`, `results`, `standings`, `riders`, `teams`, `news` and `reference data`; the ninth is there because the first source the plan registers, the reference file of the countries (DAT-012), offers none of the other eight. A source offers a kind once (a unique constraint over the two columns, the source first), and two sources can offer the same kind. An offer belongs to a source that exists (a foreign key). A source that has offers cannot be deleted: the foreign key does nothing by itself, so SQLite refuses the delete, and whoever deletes a source takes its offers away first; taking them away in silence with the source was not taken. A source may be without offers. The model of an offer has the key of its source and no `relationship`. The tests of the list go into the file of the two other lists. The planner's trial has 40 new tests and detects 34 of 34 planted defects, and 69 of 69 of the earlier ones whose files or tests this task changes.
 - **Acceptance criteria:**
@@ -1381,10 +1381,10 @@ the runs (DAT-007), says how a source is doing.
   7. No existing test changed but the test of the history's names and the tests of the lists, which take the third list in; all pass. The type check passes with no `ignore`.
   8. `python scripts/check.py` reports 19 of 19 gates and 1468 tests (backend tests 838); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 40 new tests: 25 integration tests of the table in a store the migrations built, 2 of the history (the second migration given to a store at version 1 that has a source), and 13 unit tests of the list; every existing test. Thirteen planted defects by the builder and the planner's own; the earlier planted defects of the table of the sources and of the two lists again; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #107 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1468 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 838: 798 before, 40 new); 34 planted defects in the list, the model and the migration, 34 of 34 detected, the plan's thirteen prove-it steps among them with the results the plan gives; the earlier planted defects of the table of the sources (51) and of the two lists (18) again, 69 of 69 detected; the real commands `migrate` and `schema` on a new store, which is then at version 2 and holds the tables `source` and `source_offer`. On GitHub, read by the planner from the runs and job logs: run 45285106731 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1468 passed, 0 failed, 0 skipped.", with 838 backend tests on both machines, the three jobs after the gates skipped; run 45287559418 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1468 / 0 tests (repository 41, script tests 206, backend 838, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 103 / 0 planted defects detected (34 new, 69 earlier); the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-23. All 12 files are identical to the planner's trial. The 27 new integration tests run against real SQLite files that the migrations built; nothing is a mock. The first migration is unchanged. No package was added.
+- **Commit:** `04571b0`
 - **Plan:** `docs/plans/DAT-040.md`
 
 ### DAT-007 – Data collection runs table
