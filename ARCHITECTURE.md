@@ -270,8 +270,9 @@ pipeline's command line. The settings and logging modules stay.
   that of the information sources, `source` (DAT-006), with the two lists
   a source is described by: the twelve kinds of source and the ten ways of
   collecting of DESIGN.md §7 (DAT-039). A new source is switched off, and
-  the table refuses one that is switched on before its terms were read
-  (DATABASE.md).
+  the table refuses one that is switched on before its terms were read.
+  A second table, `source_offer`, says which of nine kinds of information
+  each source offers, a row for each (DAT-040, DATABASE.md).
 - **What the store relies on in SQLite** is named in one module,
   `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
   FTS5 and the JSON functions among them. Its tests run against the real
