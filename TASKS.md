@@ -1388,15 +1388,25 @@ the runs (DAT-007), says how a source is doing.
 - **Plan:** `docs/plans/DAT-040.md`
 
 ### DAT-007 – Data collection runs table
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Every collection run is recorded: which source, when, how it ended and what it changed.
-- **Description:** Table, model and migration for runs: the source, start and end, outcome (running, succeeded, failed, interrupted), counts of records seen, added, changed and unchanged, and the error in plain words when it failed. A run left `running` by a job that died is marked interrupted by the next start, so recovery after an interrupted job (CLAUDE.md §13) has a record to work from.
-- **Acceptance criteria:** a run belongs to exactly one source and cannot outlive it unnoticed (a source with runs cannot be deleted); a run cannot end before it started; counts cannot be negative; runs left running are marked interrupted and nothing else is touched.
-- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
+- **Description:** One list, `RunOutcome` (`running`, `succeeded`, `failed`, `interrupted`), and one table, `collection_run`, with its model `CollectionRun` in a new module, `motosphere.db.models.collection_run`, and the third migration, `make_the_collection_runs`: the source (`source_id`), `started_at`, `ended_at`, `outcome`, the counts `records_seen`, `records_added`, `records_changed` and `records_unchanged`, and `error`, the error in plain words when the run failed. One function, `mark_interrupted(work)` in the new module `motosphere.db.runs`, marks every run that a job that died left `running` as interrupted, so that recovery after an interrupted job (CLAUDE.md §13) has a record to work from. Settled in the planner's trial. A run is stored when it starts: a new run is running and has counted nothing, and whoever starts it says when. An interrupted run has no end, because nobody knows when its job died and the store holds no time that somebody made up; `updated_at` says when it was marked. The end goes with the outcome (a run that succeeded or failed says when it ended, and no other run does) and so does the error (a run that failed says what went wrong, and no other run has an error), each by one check. A run cannot end before it started; it can end at that moment. Each count has a check of its own; the table does not ask that added, changed and unchanged add up to seen, because a record that was refused was seen and is none of the three. A source that has runs cannot be deleted, as with its offers: the foreign key does nothing by itself. There is no index beside the key's and no rule against two running runs of one source: DAT-041 and the first task that starts runs have the questions those must answer. `mark_interrupted` is one statement in the caller's unit of work, gives the keys of the runs it marked, smallest first, and changes only their outcome and `updated_at`; nothing calls it yet. The planner's trial has 65 new tests and detects 76 of 76 planted defects, and 85 of 85 of the earlier ones whose files this task changes.
+- **Acceptance criteria:**
+  1. `RunOutcome` has exactly its four texts in their order, and no text has two names.
+  2. A new run is running, has counted nothing and has neither end nor error; a run that ends says when, how and what it changed.
+  3. A run belongs to exactly one source that exists, when it is stored and when it is moved; a source that has runs cannot be deleted, and once its runs were taken away it can.
+  4. A run cannot end before it started. A run that succeeded or failed says when it ended, and no other run does. A run that failed says what went wrong, in text that is not empty, and no other run has an error.
+  5. No count can be below 0, be without a value or be a number that is not whole. The table refuses an outcome that is not on the list.
+  6. `mark_interrupted` marks every run that is still running as interrupted and gives their keys in order; of those runs only the outcome and `updated_at` change; no other run and no other table is touched; the marking is kept or taken back with its unit of work.
+  7. The third migration makes the table in a store at version 2 and leaves its sources and offers as they were, and the test of the models and the migrations finds the two the same. The first two migrations are unchanged, and the history names its three migrations in their order.
+  8. No existing test changed but the test of the history's names; all pass. The type check passes with no `ignore`.
+  9. `python scripts/check.py` reports 19 of 19 gates and 1533 tests (backend tests 903); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 65 new tests: 47 integration tests of the table and 9 of `mark_interrupted`, in a store the migrations built, 2 of the history (the third migration given to a store at version 2 that has a source and an offer), and 7 unit tests of the list; every existing test. Sixteen planted defects by the builder and the planner's own; the earlier planted defects of the tables of the sources and of the offers again; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-007.md`
 
 ### DAT-041 – How a source is doing, told by its runs
 - **Status:** NOT STARTED
