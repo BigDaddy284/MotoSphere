@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 50 | 29 |
+| 2 | Data store and published data (DAT, PUB) | 51 | 29 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-008 – Provenance on every collected record.
+**Current task:** DAT-043 – The lists that say how far a record can be trusted.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -890,6 +890,10 @@ the runs (DAT-007), says how a source is doing.
 The trial of DAT-041 showed which index the table of the runs needs, and
 the index was cut out as a task of its own (PLAN-024): DAT-042.
 
+The task that gives every collected record its provenance, DAT-008, was
+cut before its trial (PLAN-025): DAT-043 has the two lists that say how
+far a record can be trusted, and DAT-008 keeps the columns.
+
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
 - **Objective:** Decide, with evidence, what the data store may rely on: which SQLite features every machine that runs the pipeline has, where the store is kept between scheduled runs, and which size limits bound it.
@@ -1452,12 +1456,31 @@ the index was cut out as a task of its own (PLAN-024): DAT-042.
 - **Commit:** `0ae92df`
 - **Plan:** `docs/plans/DAT-042.md`
 
+### DAT-043 – The lists that say how far a record can be trusted
+- **Status:** IN PROGRESS
+- **Objective:** The code knows the three levels of confidence and the four verification statuses of a collected record, each with the text that is stored.
+- **Description:** Added on 2026-11-24 (PLAN-025), cut out of DAT-008. One new module, `motosphere.db.models.provenance`, with two lists, each a `StrEnum` as a column of a list takes one (DAT-036). They answer two questions, and neither answers the other. `Confidence` is about the reading, how sure it is that a record says what its source says: `high` (the source gives the value in a place made for it, and it was taken as it stands), `medium` (read out of a page or a document made for people, by a rule written for that source) and `low` (worked out from what stands around it, or the source is unclear or says two things). `VerificationStatus` is about the publishing, what standing the source's word has: the four kinds of record DESIGN §6 tells apart, in its order, `official`, `independent`, `reconstructed` and `unverified`, which also tells official information from independently published information (CLAUDE.md §11). Settled in the planner's trial: the texts and what each means; three levels and no number, because nothing measures how sure a reading is; that both lists go from what can be trusted most to what can be trusted least; that the status is said of the record and not of its source, so the kind of a source does not give it; that every value has the name its text spells; and that no text is on both lists. Left to the columns (DAT-008): whether a record may be without one of the two, and how a record says the way it was got. No table, no model, no migration, no existing code file or test changed. The planner's trial has 22 new tests and detects 23 of 23 planted defects.
+- **Acceptance criteria:**
+  1. `Confidence` has exactly its three texts and `VerificationStatus` its four, each from what can be trusted most to what can be trusted least, and no text has two names.
+  2. Every text is words in small letters with one space between two, and every value has the name its text spells.
+  3. No text is on both lists.
+  4. A column can be of either list: `OneOf` takes it, and the check it gives names the texts of the list in their order.
+  5. `DATABASE.md` says what each text means, which words of the design each status stands for, and that the status is said of the record and not of its source.
+  6. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  7. `python scripts/check.py` reports 19 of 19 gates and 1600 tests (backend tests 970); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 22 new unit tests in seven functions, with the texts of both lists written out a second time; every existing test, unchanged. Twelve planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-043.md`
+
 ### DAT-008 – Provenance on every collected record
 - **Status:** NOT STARTED
 - **Objective:** Every collected record says where it came from, when, how, and how far it can be trusted (DESIGN §8).
-- **Description:** One reusable set of columns for collected records: source, source address, collected at, published at where known, last verified at, extraction method, confidence (a fixed list) and verification status (a fixed list that tells official information from independently published information, CLAUDE.md §11). Unknown values are null, never invented. A test table proves the set; the real tables use it from DAT-011 on.
+- **Description:** One reusable set of columns for collected records: source, source address, collected at, published at where known, last verified at, extraction method, confidence and verification status. The last two are of the lists of DAT-043, which was cut out of this task on 2026-11-24 (PLAN-025). Unknown values are null, never invented. A test table proves the set; the real tables use it from DAT-011 on. The trial settles whether a record may be without a confidence or a status, and whether the extraction method is of the list of the ways of collecting (`CollectionMethod`).
 - **Acceptance criteria:** a record without a source or without a collection time is refused; confidence and verification status accept only their listed values; a published date may be unknown; a source that records refer to cannot be deleted; the convention test of DAT-005 knows which tables must carry provenance and fails on one that does not.
-- **Tests required:** unit tests of the lists; integration tests against a real SQLite file; planted defects; the full run of all gates on both machines.
+- **Tests required:** integration tests against a real SQLite file; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
