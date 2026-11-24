@@ -6,13 +6,13 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 4 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 3 and
 has three tables: `source`, that of the information sources (DAT-006),
 `source_offer`, which says what kinds of information each of them offers
 (DAT-040; see "The information sources" for both), and `collection_run`,
 the record of every time a source was collected from (DAT-007; see "The
-collection runs"), which has the store's first index (DAT-042). The
-decisions the store rests on are recorded below, from task DAT-001 on.
+collection runs"). The decisions the store rests on are recorded below,
+from task DAT-001 on.
 
 ## Where the store's file is
 
@@ -177,7 +177,6 @@ list of them, and nothing else (DAT-006):
 | 1 | `make_the_sources` | Makes the table of the information sources, `source` | DAT-006 |
 | 2 | `make_the_source_offers` | Makes the table of what the sources offer, `source_offer` | DAT-040 |
 | 3 | `make_the_collection_runs` | Makes the table of the collection runs, `collection_run` | DAT-007 |
-| 4 | `index_the_runs_of_a_source` | Makes the index of the runs of one source in the order they started, `ix_collection_run_source_id_started_at` | DAT-042 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -852,10 +851,9 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have three tables and one index to agree on: `source`,
-`source_offer`, `collection_run` and the index of the runs of one source.
-That the comparison can fail is proven with two models and migrations of
-the tests' own (`TESTING.md`).
+Today the two have three tables to agree on, `source`, `source_offer`
+and `collection_run`. That the comparison can fail is proven with two
+models and migrations of the tests' own (`TESTING.md`).
 
 ## The information sources
 
@@ -1054,36 +1052,11 @@ of every table.
   its own (`ck_collection_run_records_seen_not_negative` and three more).
   The table does not ask that added, changed and unchanged add up to
   seen: a record that was refused was seen and is none of the three.
-- **What is not in the table.** Two runs of one source can be running at
-  once as far as the table goes.
-
-**The index of the runs of one source**,
-`ix_collection_run_source_id_started_at`, is over `source_id` and
-`started_at`, in that order (DAT-042). The model says it, the naming rule
-names it, and the fourth migration makes it (`index_the_runs_of_a_source`).
-It forbids nothing: two runs of one source can start at the same moment.
-
-- **What it is for.** `standing_of` asks for the newest run of one source
-  that has one of some outcomes ("How a source is doing"). SQLite says of
-  each of those statements how it will answer it, and a test reads that:
-  with the index, one step, `SEARCH collection_run USING INDEX
-  ix_collection_run_source_id_started_at (source_id=?)`, and nothing is
-  sorted; without it, `SCAN collection_run` and `USE TEMP B-TREE FOR
-  ORDER BY`, so the whole table is read and what was found is sorted.
-- **Why these two columns and no more.** The planner's trial asked SQLite
-  for its plan with six indexes. Over the source alone, the runs are
-  found and then sorted. With the key as a third column the plan is the
-  same as without it: SQLite ends every entry of an index with the key
-  by itself, which is also why two runs that started together stand in
-  the order they were stored. With the outcome as a third column, or
-  with the start in falling order, the last part of the order must be
-  sorted again. With the outcome before the start, a question about more
-  than one outcome is sorted.
-- **Deleting a source.** SQLite must look for the runs of a source before
-  it lets the source go. In the trial its program for that statement
-  opened the table of the runs without the index, and the index with it.
-  No test holds it to that: it is how SQLite works inside, and what it
-  must do, refuse the delete, is tested (DAT-007).
+- **What is not in the table.** There is no index beside the key's yet.
+  The first function that reads the runs of one source ("How a source is
+  doing") showed which one is needed, and a task of its own adds it
+  (DAT-042). Two runs of one source can be running at once as far as the
+  table goes.
 
 **Runs that were left running.** A job that dies cannot say how its run
 ended, and the run would be running in the table for ever.
@@ -1155,12 +1128,14 @@ nothing yet, so it is passed over.
   that scores the sources from records that were checked (COL-009); no
   number is invented until then. The same task can make the health finer
   than the outcome of one run.
-- **Four small questions, and the index that answers them.** The
-  function asks the table four times for the newest run of one source
-  with one of some outcomes. The index over the source and the start
-  takes SQLite straight to the source's runs in the order asked for, and
-  a test reads from SQLite itself that all four are answered so ("The
-  collection runs", DAT-042).
+- **Four small questions, and the index they want.** The function asks
+  the table four times for the newest run of one source with one of some
+  outcomes. Without an index SQLite reads the whole table for each and
+  sorts what it found; with an index over the source and the start it
+  goes straight to the source's runs in the order asked for (the
+  planner's trial read both from SQLite's own account of its plan). The
+  table has no rows yet, so nothing is slow today. The index is a change
+  to the schema, with a migration and a test of its own: DAT-042.
 
 ## What the store relies on in SQLite
 

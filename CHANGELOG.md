@@ -227,11 +227,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   was last attempted, when that last succeeded, its last error, and its
   health, which is `not yet scanned`, `healthy`, `failing` or
   `interrupted` (DAT-041).
-- The store's first index, over the source and the start of a collection
-  run, with the fourth migration. SQLite goes straight to the runs of one
-  source in the order they started, where it read the whole table and
-  sorted; a test reads that from SQLite itself for the statements of
-  `standing_of` (DAT-042).
 
 ### Removed
 

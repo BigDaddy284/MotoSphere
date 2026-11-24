@@ -14,7 +14,7 @@ start finds it and marks it interrupted
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index
+from sqlalchemy import CheckConstraint, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from motosphere.db.base import Base
@@ -60,12 +60,6 @@ class CollectionRun(Base):
         CheckConstraint("records_added >= 0", name="records_added_not_negative"),
         CheckConstraint("records_changed >= 0", name="records_changed_not_negative"),
         CheckConstraint("records_unchanged >= 0", name="records_unchanged_not_negative"),
-        # The runs of one source, in the order they started: what asks for
-        # the newest run of a source goes straight to it, and so does the
-        # look for its runs when a source is to be deleted. SQLite ends
-        # every entry of an index with the key, so two runs that started
-        # together stand in the order they were stored.
-        Index(None, "source_id", "started_at"),
     )
 
     # The source that was collected from.

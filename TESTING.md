@@ -689,11 +689,8 @@ table `source` and nothing else, in a file that then carries MotoSphere's
 mark; the second makes the table `source_offer` in a store that has a
 source, and the source is as it was (DAT-040); the third makes the table
 `collection_run` in a store that has a source and an offer, and both are
-as they were (DAT-007); the fourth makes the index of the runs of one
-source in a store that has runs and had no index, and the runs are as
-they were, and it fails, with the store left at its version, where an
-index of its name is there already (DAT-042); a store with the newest
-schema lacks no migration; and the module
+as they were (DAT-007); a store with the newest schema lacks no
+migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
 
@@ -811,30 +808,6 @@ the four outcomes, without a store: its texts are written out in the
 test, in their order; no outcome has two names; each is one word in small
 letters; and a column can be of the list, with a check that names the
 four as SQLite is given them.
-
-## The index of the runs of one source
-
-`backend/tests/integration/test_collection_run_index.py` tests that the
-index is there and is used (DAT-042), in a store that the migrations
-built. It asks SQLite itself: `EXPLAIN QUERY PLAN` gives SQLite's own
-account of how it will answer a statement, and the statements are the
-ones `standing_of` really sends, caught as they go to SQLite, with what
-they were given.
-
-- The newest schema has the index over `source_id` and `started_at`, in
-  that order; it lets two rows be alike, and is over all rows.
-- Each of the four statements about the runs of a source is answered in
-  one step, by a search of the index for the source, and nothing is
-  sorted.
-- What the index is for: the same four statements, in the same store
-  without the index, read the whole table and sort what they found.
-- The index changes no answer: three sources with a run of every outcome
-  are said to be doing the same with it and without it.
-
-That the model and the migration say the same index is proven by the
-test of the models and the migrations, and that the index forbids
-nothing by the tests of the table, where two runs of a source start at
-the same moment.
 
 ## How a source is doing
 
