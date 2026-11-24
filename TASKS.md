@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 49 | 26 |
+| 2 | Data store and published data (DAT, PUB) | 49 | 27 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-007 – Data collection runs table.
+**Current task:** DAT-041 – How a source is doing, told by its runs.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1388,7 +1388,7 @@ the runs (DAT-007), says how a source is doing.
 - **Plan:** `docs/plans/DAT-040.md`
 
 ### DAT-007 – Data collection runs table
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Every collection run is recorded: which source, when, how it ended and what it changed.
 - **Description:** One list, `RunOutcome` (`running`, `succeeded`, `failed`, `interrupted`), and one table, `collection_run`, with its model `CollectionRun` in a new module, `motosphere.db.models.collection_run`, and the third migration, `make_the_collection_runs`: the source (`source_id`), `started_at`, `ended_at`, `outcome`, the counts `records_seen`, `records_added`, `records_changed` and `records_unchanged`, and `error`, the error in plain words when the run failed. One function, `mark_interrupted(work)` in the new module `motosphere.db.runs`, marks every run that a job that died left `running` as interrupted, so that recovery after an interrupted job (CLAUDE.md §13) has a record to work from. Settled in the planner's trial. A run is stored when it starts: a new run is running and has counted nothing, and whoever starts it says when. An interrupted run has no end, because nobody knows when its job died and the store holds no time that somebody made up; `updated_at` says when it was marked. The end goes with the outcome (a run that succeeded or failed says when it ended, and no other run does) and so does the error (a run that failed says what went wrong, and no other run has an error), each by one check. A run cannot end before it started; it can end at that moment. Each count has a check of its own; the table does not ask that added, changed and unchanged add up to seen, because a record that was refused was seen and is none of the three. A source that has runs cannot be deleted, as with its offers: the foreign key does nothing by itself. There is no index beside the key's and no rule against two running runs of one source: DAT-041 and the first task that starts runs have the questions those must answer. `mark_interrupted` is one statement in the caller's unit of work, gives the keys of the runs it marked, smallest first, and changes only their outcome and `updated_at`; nothing calls it yet. The planner's trial has 65 new tests and detects 76 of 76 planted defects, and 85 of 85 of the earlier ones whose files this task changes.
 - **Acceptance criteria:**
@@ -1402,10 +1402,10 @@ the runs (DAT-007), says how a source is doing.
   8. No existing test changed but the test of the history's names; all pass. The type check passes with no `ignore`.
   9. `python scripts/check.py` reports 19 of 19 gates and 1533 tests (backend tests 903); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 65 new tests: 47 integration tests of the table and 9 of `mark_interrupted`, in a store the migrations built, 2 of the history (the third migration given to a store at version 2 that has a source and an offer), and 7 unit tests of the list; every existing test. Sixteen planted defects by the builder and the planner's own; the earlier planted defects of the tables of the sources and of the offers again; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #109 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1533 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 903: 838 before, 65 new); 76 planted defects in the list, the model, the migration and the function, 76 of 76 detected, the plan's sixteen prove-it steps among them with the results the plan gives; the earlier planted defects of the table of the sources (51) and of the table of the offers (34) again, 85 of 85 detected; the real commands `migrate` and `schema` on a new store, which is then at version 3 and holds the tables `collection_run`, `source` and `source_offer`. On GitHub, read by the planner from the runs and job logs: run 45294634124 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1533 passed, 0 failed, 0 skipped.", with 903 backend tests on both machines, the three jobs after the gates skipped; run 45298847089 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1533 / 0 tests (repository 41, script tests 206, backend 903, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 161 / 0 planted defects detected (76 new, 85 earlier); the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-24. All 13 files are identical to the planner's trial. The 58 new integration tests run against real SQLite files, 56 of them in a store that the migrations built; nothing is a mock. The first two migrations are unchanged. No package was added.
+- **Commit:** `dc53ad1`
 - **Plan:** `docs/plans/DAT-007.md`
 
 ### DAT-041 – How a source is doing, told by its runs
