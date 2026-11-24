@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 49 | 27 |
+| 2 | Data store and published data (DAT, PUB) | 50 | 27 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -887,6 +887,9 @@ keeps the table, with who a source is and how it may be used; DAT-040 has
 the kinds of information a source offers; and DAT-041, after the table of
 the runs (DAT-007), says how a source is doing.
 
+The trial of DAT-041 showed which index the table of the runs needs, and
+the index was cut out as a task of its own (PLAN-024): DAT-042.
+
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
 - **Objective:** Decide, with evidence, what the data store may rely on: which SQLite features every machine that runs the pipeline has, where the store is kept between scheduled runs, and which size limits bound it.
@@ -1409,11 +1412,33 @@ the runs (DAT-007), says how a source is doing.
 - **Plan:** `docs/plans/DAT-007.md`
 
 ### DAT-041 – How a source is doing, told by its runs
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The store says how each source is doing: its last attempted and last successful scan, its last error and its health (DESIGN §7.3).
-- **Description:** Added on 2026-11-19 (PLAN-023), cut out of DAT-006. What a source's runs already say (DAT-007) is not stored a second time with the source, where the two could come to disagree: one function reads it from the runs. Health is one of a fixed list, settled in the planner's trial with the rule by which it follows from the runs. The trial also settles what the reliability score of the design is: if runs alone can tell it, it is here; if it needs the records to have been verified, it comes with the task that verifies them, and no number is invented until then. `ARCHITECTURE.md` §7 says today that the table of the sources records health, and is brought in line.
-- **Acceptance criteria:** for a source that was never scanned, nothing is said of a last scan and its health says so; the last attempted and the last successful scan are those of its runs; the last error is that of its last failed run and is no longer said once a later run succeeded; nothing is written to the store when it is asked.
-- **Tests required:** integration tests against a real SQLite file with runs of every outcome; planted defects; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-19 (PLAN-023), cut out of DAT-006. What a source's runs already say (DAT-007) is not stored a second time with the source, where the two could come to disagree: one function, `standing_of(work, source_id)` in the new module `motosphere.db.source_health`, reads it from the table `collection_run` and writes nothing. It gives a `SourceStanding`, a frozen dataclass with `last_attempt`, `last_success`, `last_error` and `health`. Settled in the planner's trial. The health is one of four texts, the list `SourceHealth`, told by the newest of the source's runs that is over (a run that is still running is passed over): `not yet scanned` when no run is over yet, `healthy` after one that succeeded, `failing` after one that failed, `interrupted` after one whose job died. Interrupted is not failing: a run that failed says what went wrong at the source, a run that was interrupted says that the job died. No rule has a number in it. A scan is said by when it started, the one time every run has, so both times are starts. The newest run is the one that started last, and of two that started together the one stored last. The last error is that of the newest run that failed, is no longer said once a later run succeeded, and is still said while a later run is running or was interrupted. A key that no source has is refused with a `LookupError`. The list is not stored, so there is no table, no column and no migration, and the schema stays at version 3. The reliability score of the design is not here: how often a source could be collected from says whether it answers, not whether what it says is right, so it comes with COL-009 from records that were checked, and no number is invented until then. The index the function wants on the table of the runs, over (`source_id`, `started_at`), was read from SQLite's account of its plan in the trial and is cut out as DAT-042 (PLAN-024). `ARCHITECTURE.md` §7, which said that the table of the sources records health, is brought in line. The planner's trial has 38 new tests and detects 45 of 45 planted defects.
+- **Acceptance criteria:**
+  1. `SourceHealth` has exactly its four texts in their order, and no text has two names.
+  2. Of a source that has no run, nothing is said of a last scan or a last error, and its health is `not yet scanned`; the same health holds while its only run is still running, and that run is its last attempt.
+  3. The last attempt is the start of the source's newest run, whatever became of it; the last success is the start of its newest run that succeeded.
+  4. The health is told by the newest run that is over: `healthy` after one that succeeded, `failing` after one that failed, `interrupted` after one that was interrupted.
+  5. The last error is that of the newest run that failed; it is no longer said once a later run succeeded, and is still said while a later run is running or was interrupted.
+  6. The newest run is the one that started last, and of two that started together the one stored last. A source is told by its own runs only.
+  7. A key that no source has is refused with a `LookupError` in one plain sentence.
+  8. Nothing is written to the store when it is asked, and what is said cannot be changed afterwards.
+  9. No existing test changed, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  10. `python scripts/check.py` reports 19 of 19 gates and 1571 tests (backend tests 941); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 38 new tests: 32 integration tests in a store the migrations built, with runs of every outcome, and 6 unit tests of the list; every existing test. Fourteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-041.md`
+
+### DAT-042 – An index for the runs of one source
+- **Status:** NOT STARTED
+- **Objective:** The store finds the runs of one source, newest first, without reading the whole table of the runs.
+- **Description:** Added on 2026-11-24 (PLAN-024), cut out of DAT-041. `standing_of` (DAT-041) asks the table of the runs for the newest run of one source that has one of some outcomes. The planner's trial of DAT-041 read SQLite's own account of its plan for that statement: without an index it reads the whole table and sorts what it found; with an index over (`source_id`, `started_at`) it searches by the index and does not sort. The index is said by the model, named by the naming rule and made by the fourth migration. The trial settles whether the key or the outcome belongs in the index as well, and whether the deletion of a source, which must look for its runs, is served by it.
+- **Acceptance criteria:** the model and the migration agree on the index; the fourth migration makes it in a store at version 3 that has runs, and keeps them; SQLite's account of its plan for the statement of `standing_of` names the index and no sorting; no answer of `standing_of` changes.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; the plan of the real statement, read from SQLite; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
