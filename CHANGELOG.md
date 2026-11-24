@@ -215,13 +215,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the nine kinds. A source offers a kind once, an offer belongs to a
   source that exists, and a source that has offers cannot be deleted
   (DAT-040).
-- The table `collection_run`, the record of every collection run, with
-  its model, the third migration and the list of the four outcomes. A
-  run belongs to a source that exists, a source that has runs cannot be
-  deleted, a run cannot end before it started, its end and its error go
-  with its outcome, and no count is below 0. `mark_interrupted` in
-  `motosphere.db.runs` marks the runs a dead job left running as
-  interrupted and touches nothing else (DAT-007).
 
 ### Removed
 

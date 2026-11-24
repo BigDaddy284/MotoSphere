@@ -687,10 +687,8 @@ list itself; each migration is given to a store at the version before it,
 a test for each, and brings it to its own version; the first makes the
 table `source` and nothing else, in a file that then carries MotoSphere's
 mark; the second makes the table `source_offer` in a store that has a
-source, and the source is as it was (DAT-040); the third makes the table
-`collection_run` in a store that has a source and an offer, and both are
-as they were (DAT-007); a store with the newest schema lacks no
-migration; and the module
+source, and the source is as it was (DAT-040); a store with the newest
+schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
 
@@ -760,54 +758,6 @@ between two; and a column can be of each list, with a check that names
 its texts in their order, as SQLite is given it. That SQLite refuses a
 text that is not on a list is proven for every list by the tests of "One
 of a list".
-
-## The collection runs
-
-`backend/tests/integration/test_collection_run.py` tests the table of the
-collection runs (DAT-007), in a store that the migrations built. What the
-table must refuse is written past the model, as plain SQL, and each test
-names what SQLite says, word for word, and so which constraint refused
-it.
-
-- **What a run is.** A new run is running, has counted nothing and has
-  neither end nor error. A run that ends says when, how and what it
-  changed, and says when it was changed; one that fails says what went
-  wrong. A run can have each of the four outcomes, and the table refuses
-  an outcome that is not on the list, in five ways.
-- **Its source.** A source can have several runs, two that started
-  together among them. A run belongs to a source that exists, when it is
-  stored and when it is moved. A source that has runs cannot be deleted,
-  and is deleted once they were taken away, while another source's run
-  stays.
-- **What a run must say.** Its source, its start, its outcome and each
-  of its four counts: a test for each.
-- **Its end.** A run cannot end before it started, when it is stored and
-  when it is given its end later; it can end at the moment it started.
-  Only a run that succeeded or failed says when it ended, and it must:
-  four ways are refused. Only a run that failed has an error, and it
-  must: four ways are refused. The error is not empty, in three ways.
-- **Its counts.** None of the four can be below 0, and each is a whole
-  number. They need not add up.
-
-`backend/tests/integration/test_runs.py` tests `mark_interrupted`
-(`motosphere.db.runs`), in a store that the migrations built and with the
-clock set. Where no run is running, and in a store without runs, nothing
-is marked and every row is as it was. A run left running is marked
-interrupted, and the whole row is compared: only its outcome and when it
-was last changed are different, it has no end and keeps its counts. Every
-run left running is marked, whichever source it is of, and the keys come
-back in order. No other run is touched, in any column, and neither are
-the tables of the sources and of their offers. A run that was marked is
-not marked again. The marking is taken back with the unit of work it is
-part of; a run that the unit of work had read already says it was
-interrupted; and a new run of the same source can start in the same unit
-of work.
-
-`backend/tests/unit/test_db_models_collection_run.py` tests the list of
-the four outcomes, without a store: its texts are written out in the
-test, in their order; no outcome has two names; each is one word in small
-letters; and a column can be of the list, with a check that names the
-four as SQLite is given them.
 
 ## A data store of its own for every test
 

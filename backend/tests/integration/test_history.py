@@ -26,7 +26,6 @@ def test_the_history_is_these_migrations_in_this_order() -> None:
     assert [migration.__name__ for migration in MIGRATIONS] == [
         "make_the_sources",
         "make_the_source_offers",
-        "make_the_collection_runs",
     ]
 
 
@@ -78,36 +77,6 @@ def test_the_second_migration_makes_the_table_of_the_offers_and_keeps_the_source
             (1, "Example Federation")
         ]
         assert connection.exec_driver_sql("SELECT count(*) FROM source_offer").scalar_one() == 0
-
-
-def test_the_third_migration_makes_the_table_of_the_runs_and_keeps_what_there_was(
-    store: Engine,
-) -> None:
-    migrate(store, MIGRATIONS[:2])
-    with store.begin() as connection:
-        connection.exec_driver_sql(
-            "INSERT INTO source (name, website, category, collection_method, switched_on, "
-            "created_at, updated_at) VALUES ('Example Federation', 'https://federation.example', "
-            "'governing body', 'rss feed', 0, '2026-11-19T08:00:00.000000+00:00', "
-            "'2026-11-19T08:00:00.000000+00:00')"
-        )
-        connection.exec_driver_sql(
-            "INSERT INTO source_offer (source_id, information_type, created_at, updated_at) "
-            "VALUES (1, 'events', '2026-11-19T08:00:00.000000+00:00', "
-            "'2026-11-19T08:00:00.000000+00:00')"
-        )
-
-    migrate(store, MIGRATIONS[:3])
-
-    assert tables(store) == ["collection_run", "source", "source_offer"]
-    with store.connect() as connection:
-        assert connection.exec_driver_sql("SELECT id, name FROM source").all() == [
-            (1, "Example Federation")
-        ]
-        assert connection.exec_driver_sql(
-            "SELECT id, source_id, information_type FROM source_offer"
-        ).all() == [(1, 1, "events")]
-        assert connection.exec_driver_sql("SELECT count(*) FROM collection_run").scalar_one() == 0
 
 
 def test_a_store_with_the_newest_schema_lacks_no_migration(newest: Engine) -> None:
