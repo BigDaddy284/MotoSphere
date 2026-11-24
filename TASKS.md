@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 50 | 28 |
+| 2 | Data store and published data (DAT, PUB) | 50 | 29 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-042 – An index for the runs of one source.
+**Current task:** DAT-008 – Provenance on every collected record.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1434,7 +1434,7 @@ the index was cut out as a task of its own (PLAN-024): DAT-042.
 - **Plan:** `docs/plans/DAT-041.md`
 
 ### DAT-042 – An index for the runs of one source
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store finds the runs of one source, newest first, without reading the whole table of the runs.
 - **Description:** Added on 2026-11-24 (PLAN-024), cut out of DAT-041. `standing_of` (DAT-041) asks the table of the runs four times for the newest run of one source that has one of some outcomes. One index, `ix_collection_run_source_id_started_at`, over `source_id` and `started_at` in that order: the model says it, the naming rule names it, and the fourth migration, `index_the_runs_of_a_source`, makes it. Settled in the planner's trial, which asked SQLite for its plan for the four statements with no index and with six. With none, the whole table is read and what was found is sorted. Over the source and the start, the runs of the source are searched for by the index and nothing is sorted. Over the source alone, they are found and then sorted. The key as a third column changes nothing, because SQLite ends every entry of an index with the key by itself, which is why two runs that started together need no sorting either. The outcome as a third column, or the start in falling order, makes SQLite sort the last part of the order again, and the outcome before the start makes it sort whenever more than one outcome is asked for. The index is not unique: two runs of one source can start at the same moment. A test catches the statements `standing_of` really sends and reads SQLite's plan for each (`EXPLAIN QUERY PLAN`), so a statement changed later in a way the index does not serve fails it. Deleting a source: in the trial SQLite's program for that statement opened the table of the runs without the index and the index with it; no test holds it to that, because it is how SQLite works inside. The planner's trial has 7 new tests and detects 28 of 28 planted defects, and 161 of 161 of the earlier ones whose files this task changes.
 - **Acceptance criteria:**
@@ -1446,10 +1446,10 @@ the index was cut out as a task of its own (PLAN-024): DAT-042.
   6. No existing test changed but the test of the history's names; all pass. The type check passes with no `ignore` and the lint with no `noqa`.
   7. `python scripts/check.py` reports 19 of 19 gates and 1578 tests (backend tests 948); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 7 new tests: 4 integration tests of the index in a store the migrations built, which read SQLite's plan for the real statements, and 3 of the history (the fourth migration given to a store at version 3 that has runs, and to one that has an index of its name already); every existing test. Thirteen planted defects by the builder and the planner's own; the earlier planted defects of the tables of the sources, of the offers and of the runs again; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #113 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1578 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 948: 941 before, 7 new); 28 planted defects in the model and the migration, 28 of 28 detected, the plan's thirteen prove-it steps among them with the results the plan gives; the earlier planted defects of the table of the sources (51), of the table of the offers (34) and of the table of the runs (76) again, 161 of 161 detected; the real commands `migrate` and `schema` on a new store, which is then at version 4 and holds the index `ix_collection_run_source_id_started_at`. On GitHub, read by the planner from the runs and job logs: run 45387972476 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1578 passed, 0 failed, 0 skipped.", with 948 backend tests on both machines, the three jobs after the gates skipped; run 45393820115 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1578 / 0 tests (repository 41, script tests 206, backend 948, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 189 / 0 planted defects detected (28 new, 161 earlier); the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-24. All 8 files are identical to the planner's trial. The 7 new integration tests run against real SQLite files, and three of them read SQLite's own account of its plan for the statements `standing_of` really sends; nothing is a mock. The first three migrations are unchanged. No package was added.
+- **Commit:** `0ae92df`
 - **Plan:** `docs/plans/DAT-042.md`
 
 ### DAT-008 – Provenance on every collected record
