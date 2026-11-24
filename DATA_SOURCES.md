@@ -31,6 +31,14 @@ The column "Information types" of the registry below holds those texts,
 and the store keeps them in its table `source_offer`, a row for each kind
 a source offers.
 
+When a source was last scanned, when that last worked, what last went
+wrong and how it is doing are not written down anywhere, here or in the
+store: they are read from the record of its collection runs whenever
+somebody asks (DAT-041; `DATABASE.md`, "How a source is doing"). A source
+is `not yet scanned`, `healthy`, `failing` or `interrupted`. A
+reliability score comes later, with the task that can tell one from
+records that were checked (COL-009).
+
 Three ways of collecting are permitted only on a condition (DESIGN.md
 §7.2 and §14), and a source is registered with one of them only after the
 condition was checked and written down in its row here:
