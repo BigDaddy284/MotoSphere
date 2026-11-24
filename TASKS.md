@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 52 | 30 |
+| 2 | Data store and published data (DAT, PUB) | 52 | 31 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-044 – A column that is a calendar day.
+**Current task:** DAT-008 – Provenance on every collected record.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1479,7 +1479,7 @@ as a task of its own (PLAN-026): DAT-044.
 - **Plan:** `docs/plans/DAT-043.md`
 
 ### DAT-044 – A column that is a calendar day
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A model can say that a column is a calendar day, and the store refuses anything else in it.
 - **Description:** Added on 2026-11-24 (PLAN-026), in front of DAT-008, whose columns are the first to need it: the day a source published a record is a day, with no time of day, and none is made up for it (CLAUDE.md §11). `DATABASE.md` has said since DAT-028 that a day without a time needs a type of its own. One new module, `motosphere.db.days`, with the column type `CalendarDay`, the fifth type that brings its check (DAT-034): TEXT in the table, in the one form `2026-11-24`, with a check named `ck_<table>_<column>_calendar_day`. A model says the column's Python type, `Mapped[date]`, and `Base` gets one entry in the list by which a Python type becomes a column type; the rule by which `Base` gives checks, and `broken_rules`, do not change. Settled in the planner's trial: the form, which is the one SQLite's own date functions and Python's `date.isoformat()` write, so that the order of the texts is the order of the days; the check, which asks three things of the text: that it has the form, that SQLite's calendar reads it and says the same text back (so the 30th of February is refused), and that it is not before the first of January of the year 1 (SQLite knows a year 0 and Python does not); that the form is asked first, because SQLite will not ask its calendar about the word `now` inside a check and fails with words of its own, which the trial found; that the calendar is asked with `IS` and not with `=`, because a check lets what is not known pass; that a time is refused with a sentence of its own, with an offset or without, although Python counts a `datetime` as a `date`, because the time of day would be dropped in silence and the day a moment falls on depends on its offset; that only text in the one form is read as a day; and that the years go from 1 to 9999. A day of which only the year or the month is known is not a day, and this type does not hold it: the table that first has such a thing settles how it is kept. No model, no table, no migration, no new package, no existing test changed. The planner's trial has 94 new tests and detects 63 of 63 new planted defects and 372 of 372 of the earlier tasks'.
 - **Acceptance criteria:**
@@ -1493,10 +1493,10 @@ as a task of its own (PLAN-026): DAT-044.
   8. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
   9. `python scripts/check.py` reports 19 of 19 gates and 1694 tests (backend tests 1064); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 45 new unit tests in fifteen functions, of saying and reading a day, of the check as SQLite is given it, of its name, of the type and of the entry in the list of `Base`; 49 new integration tests in seventeen functions, with a model that has three such columns and a time next to them, against a real SQLite file that is read with plain SQL, past the model; every existing test, unchanged. Thirteen planted defects by the builder and the planner's own, all of DAT-034's, DAT-035's, DAT-037's and DAT-038's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #117 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1694 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1064: 970 before, 94 new); 63 planted defects in the new module and in the new line of `base.py`, 63 of 63 detected, the plan's thirteen prove-it steps among them with the results the plan gives; the 372 planted defects of DAT-034, DAT-035, DAT-037 and DAT-038 planted again, because `base.py` changes, 372 of 372 detected. On GitHub, read by the planner from the runs and job logs: run 45410961772 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1694 passed, 0 failed, 0 skipped.", with 1064 backend tests on both machines, the three jobs after the gates skipped; run 45415020306 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1694 / 0 tests (repository 41, script tests 206, backend 1064, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 435 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-24. All 8 files are identical to the planner's trial. No existing test changed, and no package was added. The check was asked of the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `b1a5eb8`
 - **Plan:** `docs/plans/DAT-044.md`
 
 ### DAT-008 – Provenance on every collected record
