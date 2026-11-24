@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 50 | 27 |
+| 2 | Data store and published data (DAT, PUB) | 50 | 28 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-041 – How a source is doing, told by its runs.
+**Current task:** DAT-042 – An index for the runs of one source.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1412,7 +1412,7 @@ the index was cut out as a task of its own (PLAN-024): DAT-042.
 - **Plan:** `docs/plans/DAT-007.md`
 
 ### DAT-041 – How a source is doing, told by its runs
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store says how each source is doing: its last attempted and last successful scan, its last error and its health (DESIGN §7.3).
 - **Description:** Added on 2026-11-19 (PLAN-023), cut out of DAT-006. What a source's runs already say (DAT-007) is not stored a second time with the source, where the two could come to disagree: one function, `standing_of(work, source_id)` in the new module `motosphere.db.source_health`, reads it from the table `collection_run` and writes nothing. It gives a `SourceStanding`, a frozen dataclass with `last_attempt`, `last_success`, `last_error` and `health`. Settled in the planner's trial. The health is one of four texts, the list `SourceHealth`, told by the newest of the source's runs that is over (a run that is still running is passed over): `not yet scanned` when no run is over yet, `healthy` after one that succeeded, `failing` after one that failed, `interrupted` after one whose job died. Interrupted is not failing: a run that failed says what went wrong at the source, a run that was interrupted says that the job died. No rule has a number in it. A scan is said by when it started, the one time every run has, so both times are starts. The newest run is the one that started last, and of two that started together the one stored last. The last error is that of the newest run that failed, is no longer said once a later run succeeded, and is still said while a later run is running or was interrupted. A key that no source has is refused with a `LookupError`. The list is not stored, so there is no table, no column and no migration, and the schema stays at version 3. The reliability score of the design is not here: how often a source could be collected from says whether it answers, not whether what it says is right, so it comes with COL-009 from records that were checked, and no number is invented until then. The index the function wants on the table of the runs, over (`source_id`, `started_at`), was read from SQLite's account of its plan in the trial and is cut out as DAT-042 (PLAN-024). `ARCHITECTURE.md` §7, which said that the table of the sources records health, is brought in line. The planner's trial has 38 new tests and detects 45 of 45 planted defects.
 - **Acceptance criteria:**
@@ -1427,10 +1427,10 @@ the index was cut out as a task of its own (PLAN-024): DAT-042.
   9. No existing test changed, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
   10. `python scripts/check.py` reports 19 of 19 gates and 1571 tests (backend tests 941); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 38 new tests: 32 integration tests in a store the migrations built, with runs of every outcome, and 6 unit tests of the list; every existing test. Fourteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #111 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1571 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 941: 903 before, 38 new); 45 planted defects in the new module, 45 of 45 detected, the plan's fourteen prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 45309716301 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1571 passed, 0 failed, 0 skipped.", with 941 backend tests on both machines, the three jobs after the gates skipped; run 45311067843 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1571 / 0 tests (repository 41, script tests 206, backend 941, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 45 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-24. All 8 files are identical to the planner's trial. The 32 new integration tests run against real SQLite files in a store that the migrations built, with runs of every outcome; nothing is a mock. No existing code file or test changed, and the schema is still at version 3. No package was added.
+- **Commit:** `02da36e`
 - **Plan:** `docs/plans/DAT-041.md`
 
 ### DAT-042 – An index for the runs of one source
