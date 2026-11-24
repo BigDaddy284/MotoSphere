@@ -237,12 +237,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `low`, and its verification status, `official`, `independent`,
   `reconstructed` or `unverified`. No table has a column of them yet
   (DAT-043).
-- A column that is a calendar day, `motosphere.db.days`: a model says
-  `Mapped[date]`, the table holds text in one form, `2026-11-24`, and
-  SQLite itself refuses text that is not a day of the calendar in that
-  form, by a check; the 30th of February is refused. Only a `date` is
-  stored: a time is refused, not cut down to its day, and no time of day
-  is made up for a day (DAT-044).
 
 ### Removed
 
