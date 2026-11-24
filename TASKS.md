@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 51 | 30 |
+| 2 | Data store and published data (DAT, PUB) | 52 | 30 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-008 – Provenance on every collected record.
+**Current task:** DAT-044 – A column that is a calendar day.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -892,7 +892,10 @@ the index was cut out as a task of its own (PLAN-024): DAT-042.
 
 The task that gives every collected record its provenance, DAT-008, was
 cut before its trial (PLAN-025): DAT-043 has the two lists that say how
-far a record can be trusted, and DAT-008 keeps the columns.
+far a record can be trusted, and DAT-008 keeps the columns. Its trial
+then showed that one of those columns, the day a record was published,
+needs a type the store did not have, and the type was put in front of it
+as a task of its own (PLAN-026): DAT-044.
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -1475,10 +1478,31 @@ far a record can be trusted, and DAT-008 keeps the columns.
 - **Commit:** `f4846bb`
 - **Plan:** `docs/plans/DAT-043.md`
 
+### DAT-044 – A column that is a calendar day
+- **Status:** IN PROGRESS
+- **Objective:** A model can say that a column is a calendar day, and the store refuses anything else in it.
+- **Description:** Added on 2026-11-24 (PLAN-026), in front of DAT-008, whose columns are the first to need it: the day a source published a record is a day, with no time of day, and none is made up for it (CLAUDE.md §11). `DATABASE.md` has said since DAT-028 that a day without a time needs a type of its own. One new module, `motosphere.db.days`, with the column type `CalendarDay`, the fifth type that brings its check (DAT-034): TEXT in the table, in the one form `2026-11-24`, with a check named `ck_<table>_<column>_calendar_day`. A model says the column's Python type, `Mapped[date]`, and `Base` gets one entry in the list by which a Python type becomes a column type; the rule by which `Base` gives checks, and `broken_rules`, do not change. Settled in the planner's trial: the form, which is the one SQLite's own date functions and Python's `date.isoformat()` write, so that the order of the texts is the order of the days; the check, which asks three things of the text: that it has the form, that SQLite's calendar reads it and says the same text back (so the 30th of February is refused), and that it is not before the first of January of the year 1 (SQLite knows a year 0 and Python does not); that the form is asked first, because SQLite will not ask its calendar about the word `now` inside a check and fails with words of its own, which the trial found; that the calendar is asked with `IS` and not with `=`, because a check lets what is not known pass; that a time is refused with a sentence of its own, with an offset or without, although Python counts a `datetime` as a `date`, because the time of day would be dropped in silence and the day a moment falls on depends on its offset; that only text in the one form is read as a day; and that the years go from 1 to 9999. A day of which only the year or the month is known is not a day, and this type does not hold it: the table that first has such a thing settles how it is kept. No model, no table, no migration, no new package, no existing test changed. The planner's trial has 94 new tests and detects 63 of 63 new planted defects and 372 of 372 of the earlier tasks'.
+- **Acceptance criteria:**
+  1. A model that says `Mapped[date]` of a column gets a text column with the check, named by the naming rule: the real SQLite file has the checks by name and letter for letter, for each such column and for no other. A model's `datetime` is still a time.
+  2. A day is stored as text in the one form and comes back as the day, from the first day there is to the last; a column that may be without a value holds none or a day; a value of the model's own is stored in the form; a change is stored.
+  3. What is not a `date` is refused before anything is written, with a sentence that says what it was given, and a time with a sentence of its own, with an offset or without, in a row and in a question.
+  4. Text that is not a day of the calendar in the form is refused by SQLite with the name of the check, word for word, in twenty kinds, in every such column, in a row written with plain SQL and in a change; a number is refused by the check and bytes by the strict table.
+  5. Only text in the one form is read as a day: fifteen things that are not are refused when read, also what Python could read as a day.
+  6. Rows are found by a day, by the days before and after it, and in the order of the days; SQLite's own date functions read a stored day.
+  7. `broken_rules` names such a column whose table is without the check, in the type's words, until the table has it; the rule by which `Base` gives checks, and `broken_rules`, are unchanged.
+  8. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  9. `python scripts/check.py` reports 19 of 19 gates and 1694 tests (backend tests 1064); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 45 new unit tests in fifteen functions, of saying and reading a day, of the check as SQLite is given it, of its name, of the type and of the entry in the list of `Base`; 49 new integration tests in seventeen functions, with a model that has three such columns and a time next to them, against a real SQLite file that is read with plain SQL, past the model; every existing test, unchanged. Thirteen planted defects by the builder and the planner's own, all of DAT-034's, DAT-035's, DAT-037's and DAT-038's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-044.md`
+
 ### DAT-008 – Provenance on every collected record
 - **Status:** NOT STARTED
 - **Objective:** Every collected record says where it came from, when, how, and how far it can be trusted (DESIGN §8).
-- **Description:** One reusable set of columns for collected records: source, source address, collected at, published at where known, last verified at, extraction method, confidence and verification status. The last two are of the lists of DAT-043, which was cut out of this task on 2026-11-24 (PLAN-025). Unknown values are null, never invented. A test table proves the set; the real tables use it from DAT-011 on. The trial settles whether a record may be without a confidence or a status, and whether the extraction method is of the list of the ways of collecting (`CollectionMethod`).
+- **Description:** One reusable set of columns for collected records: source, source address, collected at, the day it was published where known, last verified at, extraction method, confidence and verification status. The last two are of the lists of DAT-043, which was cut out of this task on 2026-11-24 (PLAN-025). The day a record was published is a calendar day, of the type of DAT-044, which was put in front of this task on 2026-11-24 (PLAN-026): most sources say a day and no time, and no time is invented for it. Unknown values are null, never invented. A test table proves the set; the real tables use it from DAT-011 on. The trial settles whether a record may be without a confidence or a status, and whether the extraction method is of the list of the ways of collecting (`CollectionMethod`).
 - **Acceptance criteria:** a record without a source or without a collection time is refused; confidence and verification status accept only their listed values; a published date may be unknown; a source that records refer to cannot be deleted; the convention test of DAT-005 knows which tables must carry provenance and fails on one that does not.
 - **Tests required:** integration tests against a real SQLite file; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
