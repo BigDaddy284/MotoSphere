@@ -24,7 +24,13 @@ from collections.abc import Callable
 
 from sqlalchemy import Connection
 
-__all__ = ["MIGRATIONS", "make_the_collection_runs", "make_the_source_offers", "make_the_sources"]
+__all__ = [
+    "MIGRATIONS",
+    "index_the_runs_of_a_source",
+    "make_the_collection_runs",
+    "make_the_source_offers",
+    "make_the_sources",
+]
 
 
 def make_the_sources(connection: Connection) -> None:
@@ -154,8 +160,17 @@ def make_the_collection_runs(connection: Connection) -> None:
     )
 
 
+def index_the_runs_of_a_source(connection: Connection) -> None:
+    """4: the index of the runs of one source in the order they started (DAT-042)."""
+    connection.exec_driver_sql(
+        "CREATE INDEX ix_collection_run_source_id_started_at "
+        "ON collection_run (source_id, started_at)"
+    )
+
+
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
     make_the_collection_runs,
+    index_the_runs_of_a_source,
 )

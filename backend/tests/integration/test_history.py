@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from sqlalchemy import Engine
+from sqlalchemy.exc import OperationalError
 
 from motosphere.db import history, migrations
 from motosphere.db.history import MIGRATIONS
@@ -21,12 +22,23 @@ def tables(store: Engine) -> list[str]:
         return [str(name) for (name,) in found]
 
 
+def indexes(store: Engine) -> list[tuple[str, str]]:
+    """The indexes a migration made, each with its table, without those SQLite makes by itself."""
+    with store.connect() as connection:
+        found = connection.exec_driver_sql(
+            "SELECT name, tbl_name FROM sqlite_master "
+            "WHERE type = 'index' AND name NOT LIKE 'sqlite~_%' ESCAPE '~' ORDER BY name"
+        )
+        return [(str(name), str(table)) for name, table in found]
+
+
 def test_the_history_is_these_migrations_in_this_order() -> None:
     # The list only grows at its end: a new migration adds its name here, last.
     assert [migration.__name__ for migration in MIGRATIONS] == [
         "make_the_sources",
         "make_the_source_offers",
         "make_the_collection_runs",
+        "index_the_runs_of_a_source",
     ]
 
 
@@ -108,6 +120,64 @@ def test_the_third_migration_makes_the_table_of_the_runs_and_keeps_what_there_wa
             "SELECT id, source_id, information_type FROM source_offer"
         ).all() == [(1, 1, "events")]
         assert connection.exec_driver_sql("SELECT count(*) FROM collection_run").scalar_one() == 0
+
+
+def test_the_fourth_migration_makes_the_index_of_the_runs_and_keeps_the_runs(
+    store: Engine,
+) -> None:
+    migrate(store, MIGRATIONS[:3])
+    with store.begin() as connection:
+        connection.exec_driver_sql(
+            "INSERT INTO source (name, website, category, collection_method, switched_on, "
+            "created_at, updated_at) VALUES ('Example Federation', 'https://federation.example', "
+            "'governing body', 'rss feed', 0, '2026-11-19T08:00:00.000000+00:00', "
+            "'2026-11-19T08:00:00.000000+00:00')"
+        )
+        for started in ("2026-11-24T06:00:00.000000+00:00", "2026-11-23T06:00:00.000000+00:00"):
+            connection.exec_driver_sql(
+                "INSERT INTO collection_run (source_id, started_at, outcome, records_seen, "
+                "records_added, records_changed, records_unchanged, created_at, updated_at) "
+                "VALUES (1, ?, 'running', 0, 0, 0, 0, '2026-11-24T06:00:00.000000+00:00', "
+                "'2026-11-24T06:00:00.000000+00:00')",
+                (started,),
+            )
+    assert indexes(store) == []
+
+    migrate(store, MIGRATIONS[:4])
+
+    assert tables(store) == ["collection_run", "source", "source_offer"]
+    assert indexes(store) == [("ix_collection_run_source_id_started_at", "collection_run")]
+    with store.connect() as connection:
+        assert connection.exec_driver_sql(
+            "SELECT id, source_id, started_at, outcome FROM collection_run ORDER BY id"
+        ).all() == [
+            (1, 1, "2026-11-24T06:00:00.000000+00:00", "running"),
+            (2, 1, "2026-11-23T06:00:00.000000+00:00", "running"),
+        ]
+
+
+def test_the_fourth_migration_does_not_pass_over_an_index_of_its_name_that_is_there(
+    store: Engine,
+) -> None:
+    # An index of that name over something else would be taken for the
+    # right one ever after. The migration fails instead, and the store is
+    # as it was.
+    migrate(store, MIGRATIONS[:3])
+    with store.begin() as connection:
+        connection.exec_driver_sql(
+            "CREATE INDEX ix_collection_run_source_id_started_at ON collection_run (outcome)"
+        )
+
+    with pytest.raises(OperationalError) as refusal:
+        migrate(store, MIGRATIONS[:4])
+
+    assert str(refusal.value.orig) == "index ix_collection_run_source_id_started_at already exists"
+    assert schema_version(store) == 3
+    with store.connect() as connection:
+        columns = connection.exec_driver_sql(
+            "PRAGMA index_info(ix_collection_run_source_id_started_at)"
+        ).all()
+    assert [name for _, _, name in columns] == ["outcome"]
 
 
 def test_a_store_with_the_newest_schema_lacks_no_migration(newest: Engine) -> None:
