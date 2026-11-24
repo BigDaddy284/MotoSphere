@@ -278,7 +278,10 @@ pipeline's command line. The settings and logging modules stay.
   what it counted, with the error in plain words when it failed. A run
   whose job died is still running in the table; `mark_interrupted` in
   `motosphere.db.runs` marks such runs interrupted at the next start and
-  touches nothing else (DATABASE.md).
+  touches nothing else (DATABASE.md). The table has an index over the
+  source and the start of a run (DAT-042), and a test reads from SQLite
+  itself that the statements which ask for the newest run of a source
+  are answered by it.
 - **How a source is doing is read from its runs, not stored**
   (DAT-041): `standing_of` in `motosphere.db.source_health` says when a
   source was last attempted, when that last succeeded, its last error
