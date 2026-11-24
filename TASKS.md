@@ -1434,15 +1434,23 @@ the index was cut out as a task of its own (PLAN-024): DAT-042.
 - **Plan:** `docs/plans/DAT-041.md`
 
 ### DAT-042 – An index for the runs of one source
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The store finds the runs of one source, newest first, without reading the whole table of the runs.
-- **Description:** Added on 2026-11-24 (PLAN-024), cut out of DAT-041. `standing_of` (DAT-041) asks the table of the runs for the newest run of one source that has one of some outcomes. The planner's trial of DAT-041 read SQLite's own account of its plan for that statement: without an index it reads the whole table and sorts what it found; with an index over (`source_id`, `started_at`) it searches by the index and does not sort. The index is said by the model, named by the naming rule and made by the fourth migration. The trial settles whether the key or the outcome belongs in the index as well, and whether the deletion of a source, which must look for its runs, is served by it.
-- **Acceptance criteria:** the model and the migration agree on the index; the fourth migration makes it in a store at version 3 that has runs, and keeps them; SQLite's account of its plan for the statement of `standing_of` names the index and no sorting; no answer of `standing_of` changes.
-- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; the plan of the real statement, read from SQLite; planted defects; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-24 (PLAN-024), cut out of DAT-041. `standing_of` (DAT-041) asks the table of the runs four times for the newest run of one source that has one of some outcomes. One index, `ix_collection_run_source_id_started_at`, over `source_id` and `started_at` in that order: the model says it, the naming rule names it, and the fourth migration, `index_the_runs_of_a_source`, makes it. Settled in the planner's trial, which asked SQLite for its plan for the four statements with no index and with six. With none, the whole table is read and what was found is sorted. Over the source and the start, the runs of the source are searched for by the index and nothing is sorted. Over the source alone, they are found and then sorted. The key as a third column changes nothing, because SQLite ends every entry of an index with the key by itself, which is why two runs that started together need no sorting either. The outcome as a third column, or the start in falling order, makes SQLite sort the last part of the order again, and the outcome before the start makes it sort whenever more than one outcome is asked for. The index is not unique: two runs of one source can start at the same moment. A test catches the statements `standing_of` really sends and reads SQLite's plan for each (`EXPLAIN QUERY PLAN`), so a statement changed later in a way the index does not serve fails it. Deleting a source: in the trial SQLite's program for that statement opened the table of the runs without the index and the index with it; no test holds it to that, because it is how SQLite works inside. The planner's trial has 7 new tests and detects 28 of 28 planted defects, and 161 of 161 of the earlier ones whose files this task changes.
+- **Acceptance criteria:**
+  1. The model and the migration say the same index, and the test of the models and the migrations finds the two the same.
+  2. The newest schema has the index `ix_collection_run_source_id_started_at` over `source_id` and `started_at`, in that order; it is not unique and is over all rows.
+  3. The fourth migration makes the index in a store at version 3 that has runs, and keeps them; where an index of its name is there already it fails, and the store is as it was. The first three migrations are unchanged, and the history names its four migrations in their order.
+  4. SQLite's account of its plan for each of the four statements of `standing_of` that read the runs is the one step that searches the index for the source, and nothing is sorted.
+  5. No answer of `standing_of` changes: its tests pass as they are, and it says the same with the index and without it.
+  6. No existing test changed but the test of the history's names; all pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  7. `python scripts/check.py` reports 19 of 19 gates and 1578 tests (backend tests 948); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 7 new tests: 4 integration tests of the index in a store the migrations built, which read SQLite's plan for the real statements, and 3 of the history (the fourth migration given to a store at version 3 that has runs, and to one that has an index of its name already); every existing test. Thirteen planted defects by the builder and the planner's own; the earlier planted defects of the tables of the sources, of the offers and of the runs again; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-042.md`
 
 ### DAT-008 – Provenance on every collected record
 - **Status:** NOT STARTED
