@@ -24,7 +24,7 @@ from collections.abc import Callable
 
 from sqlalchemy import Connection
 
-__all__ = ["MIGRATIONS", "make_the_source_offers", "make_the_sources"]
+__all__ = ["MIGRATIONS", "make_the_collection_runs", "make_the_source_offers", "make_the_sources"]
 
 
 def make_the_sources(connection: Connection) -> None:
@@ -112,4 +112,50 @@ def make_the_source_offers(connection: Connection) -> None:
     )
 
 
-MIGRATIONS: tuple[Callable[[Connection], None], ...] = (make_the_sources, make_the_source_offers)
+def make_the_collection_runs(connection: Connection) -> None:
+    """3: the table of the collection runs, ``collection_run`` (DAT-007)."""
+    connection.exec_driver_sql(
+        """
+        CREATE TABLE collection_run (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            source_id INTEGER NOT NULL,
+            started_at TEXT NOT NULL,
+            ended_at TEXT,
+            outcome TEXT NOT NULL,
+            records_seen INTEGER NOT NULL,
+            records_added INTEGER NOT NULL,
+            records_changed INTEGER NOT NULL,
+            records_unchanged INTEGER NOT NULL,
+            error TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            CONSTRAINT ck_collection_run_ended_at_not_before_started_at
+                CHECK (ended_at >= started_at),
+            CONSTRAINT ck_collection_run_ended_at_when_succeeded_or_failed
+                CHECK ((ended_at IS NULL) = (outcome IN ('running', 'interrupted'))),
+            CONSTRAINT ck_collection_run_error_when_failed
+                CHECK ((error IS NULL) = (outcome != 'failed')),
+            CONSTRAINT ck_collection_run_records_seen_not_negative CHECK (records_seen >= 0),
+            CONSTRAINT ck_collection_run_records_added_not_negative CHECK (records_added >= 0),
+            CONSTRAINT ck_collection_run_records_changed_not_negative
+                CHECK (records_changed >= 0),
+            CONSTRAINT ck_collection_run_records_unchanged_not_negative
+                CHECK (records_unchanged >= 0),
+            CONSTRAINT fk_collection_run_source_id_source
+                FOREIGN KEY(source_id) REFERENCES source (id),
+            CONSTRAINT ck_collection_run_outcome_one_of
+                CHECK (outcome IN ('running', 'succeeded', 'failed', 'interrupted')),
+            CONSTRAINT ck_collection_run_error_not_empty CHECK (trim(error, char(
+                9, 10, 11, 12, 13, 28, 29, 30, 31, 32, 133, 160, 5760, 8192, 8193, 8194, 8195,
+                8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288
+            )) != '')
+        ) STRICT
+        """
+    )
+
+
+MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
+    make_the_sources,
+    make_the_source_offers,
+    make_the_collection_runs,
+)

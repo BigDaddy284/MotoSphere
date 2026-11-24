@@ -6,11 +6,13 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 2 and
-has two tables: `source`, that of the information sources (DAT-006), and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 3 and
+has three tables: `source`, that of the information sources (DAT-006),
 `source_offer`, which says what kinds of information each of them offers
-(DAT-040; see "The information sources" for both). The decisions the
-store rests on are recorded below, from task DAT-001 on.
+(DAT-040; see "The information sources" for both), and `collection_run`,
+the record of every time a source was collected from (DAT-007; see "The
+collection runs"). The decisions the store rests on are recorded below,
+from task DAT-001 on.
 
 ## Where the store's file is
 
@@ -174,6 +176,7 @@ list of them, and nothing else (DAT-006):
 |---|---|---|---|
 | 1 | `make_the_sources` | Makes the table of the information sources, `source` | DAT-006 |
 | 2 | `make_the_source_offers` | Makes the table of what the sources offer, `source_offer` | DAT-040 |
+| 3 | `make_the_collection_runs` | Makes the table of the collection runs, `collection_run` | DAT-007 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -848,9 +851,9 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have two tables to agree on, `source` and `source_offer`.
-That the comparison can fail is proven with two models and migrations of
-the tests' own (`TESTING.md`).
+Today the two have three tables to agree on, `source`, `source_offer`
+and `collection_run`. That the comparison can fail is proven with two
+models and migrations of the tests' own (`TESTING.md`).
 
 ## The information sources
 
@@ -896,20 +899,21 @@ What the planner's trial settled:
 - **Two sources cannot have one name, and they can have one website.** A
   source has one kind and one way of collecting. A site that is collected
   from in two ways, its news by a feed and its calendar from its pages, is
-  two sources of two names with the same website, and each will have runs
-  of its own (DAT-007). `website` is the address of the site, not of the
-  page or the feed that is read. Names are told apart letter for letter:
-  `Example` and `EXAMPLE` are two names, and so are a name and the same
-  name with a space after it.
+  two sources of two names with the same website, and each has runs of
+  its own ("The collection runs"). `website` is the address of the site,
+  not of the page or the feed that is read. Names are told apart letter
+  for letter: `Example` and `EXAMPLE` are two names, and so are a name
+  and the same name with a space after it.
 - **How often a source is scanned is said in whole hours**: 24 is daily and
   168 weekly. A source without a number is not looked at by the clock, as
   a file that is loaded once by a command is not.
 - **What is not in the table.** The country of a source comes with the
   table of the countries (DAT-011). The kinds of information it offers
   are in a table of their own, `source_offer` (below). When it was last
-  scanned, how it is doing and its last error are what its runs will say
-  (DAT-007, DAT-041), and are not stored a second time here, where the
-  two could come to disagree.
+  scanned, how it is doing and its last error are what its runs say
+  ("The collection runs"; a function that reads it from them comes with
+  DAT-041), and are not stored a second time here, where the two could
+  come to disagree.
 
 Each list is said once, in the code, as a `StrEnum` whose values are the
 texts that are stored (see "One of a list"). The texts are words in small
@@ -992,6 +996,80 @@ in small letters in the plural.
 | `teams` | Teams: who they are and who rides for them |
 | `news` | News and announcements |
 | `reference data` | What other records are described by, such as the countries of the world |
+
+## The collection runs
+
+A run is one attempt to collect from one source, and the store records
+every one of them (DESIGN.md §5.1, "Data collection runs"; DAT-007). The
+table `collection_run`, its model `CollectionRun` and the list of how a
+run stands or ended, `RunOutcome`, are in
+`motosphere.db.models.collection_run`. The third migration makes the
+table (`make_the_collection_runs`). Its key and its two times are those
+of every table.
+
+| Column | What it holds | When it is without a value | What the table refuses |
+|---|---|---|---|
+| `source_id` | The source that was collected from: the key of a row of `source` | Never | A key that no source has |
+| `started_at` | When the run started | Never | |
+| `ended_at` | When the run ended | While it is running, and when it was interrupted | A time before `started_at`; a time for a run that is running or was interrupted; no time for a run that succeeded or failed |
+| `outcome` | How the run stands or ended | Never; a new run is `running` | Text that is not on the list `RunOutcome` |
+| `records_seen` | How many records the source gave the run | Never; a new run has 0 | A number below 0 |
+| `records_added` | How many of them were new to the store | Never; a new run has 0 | A number below 0 |
+| `records_changed` | How many were different from what the store had | Never; a new run has 0 | A number below 0 |
+| `records_unchanged` | How many were what the store had already | Never; a new run has 0 | A number below 0 |
+| `error` | What went wrong, in plain words | Unless the run failed | Empty text; an error for a run that did not fail; no error for a run that failed |
+
+**How a run stands or ended**, `RunOutcome`:
+
+| The text that is stored | What it is | Its end | Its error |
+|---|---|---|---|
+| `running` | It has started and has not said how it ended | None | None |
+| `succeeded` | It ended, and collected what it set out to collect | Said | None |
+| `failed` | It ended, and says what went wrong | Said | Said |
+| `interrupted` | It never said how it ended, because its job died | None | None |
+
+- **A run is stored when it starts**, and it is then running. When it
+  ends it says so itself, in the same row: when it ended, how, and what
+  it counted.
+- **A run belongs to a source that exists**, when it is stored and when
+  it is changed (`fk_collection_run_source_id_source`), **and a source
+  that has runs cannot be deleted.** Whoever deletes a source takes its
+  runs away first, in the same unit of work; no record of a run is lost
+  in silence with its source. A source can have any number of runs, two
+  that started at the same moment among them.
+- **A run cannot end before it started**
+  (`ck_collection_run_ended_at_not_before_started_at`). It can end at the
+  moment it started. Times are text of one form whose order is the order
+  of the times ("Times"), so the table compares them as they are.
+- **The end and the error go with the outcome.** A run that succeeded or
+  failed says when it ended, and no other run does
+  (`ck_collection_run_ended_at_when_succeeded_or_failed`). A run that
+  failed says what went wrong, and no other run has an error
+  (`ck_collection_run_error_when_failed`).
+- **An interrupted run has no end.** Nobody knows when its job died, and
+  the store does not hold a time that somebody made up. `updated_at`
+  says when the run was marked, which is another thing.
+- **A count is a whole number that is not below 0**, each by a check of
+  its own (`ck_collection_run_records_seen_not_negative` and three more).
+  The table does not ask that added, changed and unchanged add up to
+  seen: a record that was refused was seen and is none of the three.
+- **What is not in the table.** There is no index beside the key's: the
+  first task that reads the runs of one source (DAT-041) has the question
+  an index must answer, and decides it there. Two runs of one source can
+  be running at once as far as the table goes.
+
+**Runs that were left running.** A job that dies cannot say how its run
+ended, and the run would be running in the table for ever.
+`motosphere.db.runs.mark_interrupted(work)` marks every run that is
+still running as interrupted and gives the keys of the runs it marked,
+smallest first. It is for the moment nothing can be running: the start
+of collecting, before the first new run is stored, so that whoever takes
+up the work has a record of what was cut off (CLAUDE.md §13). It changes
+the outcome of those runs and, with it, when they were last changed, and
+nothing else: they get no end and keep what they had counted, and no
+other run and no other table is touched. It is part of the unit of work
+it is given, and is kept or taken back with it. Nothing calls it yet:
+the first task that collects does.
 
 ## What the store relies on in SQLite
 
