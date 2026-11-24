@@ -273,6 +273,12 @@ pipeline's command line. The settings and logging modules stay.
   the table refuses one that is switched on before its terms were read.
   A second table, `source_offer`, says which of nine kinds of information
   each source offers, a row for each (DAT-040, DATABASE.md).
+- **Every collection run is recorded** in the table `collection_run`
+  (DAT-007): which source, when it started and ended, how it ended and
+  what it counted, with the error in plain words when it failed. A run
+  whose job died is still running in the table; `mark_interrupted` in
+  `motosphere.db.runs` marks such runs interrupted at the next start and
+  touches nothing else (DATABASE.md).
 - **What the store relies on in SQLite** is named in one module,
   `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
   FTS5 and the JSON functions among them. Its tests run against the real
