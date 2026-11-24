@@ -11,8 +11,11 @@ has three tables: `source`, that of the information sources (DAT-006),
 `source_offer`, which says what kinds of information each of them offers
 (DAT-040; see "The information sources" for both), and `collection_run`,
 the record of every time a source was collected from (DAT-007; see "The
-collection runs"), which has the store's first index (DAT-042). The
-decisions the store rests on are recorded below, from task DAT-001 on.
+collection runs"), which has the store's first index (DAT-042). The two
+lists that say how far a collected record can be trusted are in the code
+and in no table yet (DAT-043; see "How far a collected record can be
+trusted"). The decisions the store rests on are recorded below, from
+task DAT-001 on.
 
 ## Where the store's file is
 
@@ -1161,6 +1164,70 @@ nothing yet, so it is passed over.
   takes SQLite straight to the source's runs in the order asked for, and
   a test reads from SQLite itself that all four are answered so ("The
   collection runs", DAT-042).
+
+## How far a collected record can be trusted
+
+Every record MotoSphere collects keeps with it where it came from and
+how far it can be trusted (DESIGN.md §8, CLAUDE.md §11). Two of the
+things it keeps are one of a list each: its confidence and its
+verification status. The two lists are in
+`motosphere.db.models.provenance` (DAT-043). No table has a column of
+them yet. The columns every collected record has come with DAT-008, and
+the first table of collected records after that.
+
+They are two questions, and neither answers the other:
+
+- **Confidence** is about the reading: how sure it is that the record
+  says what its source says.
+- **Verification status** is about the publishing: what standing the
+  source's word has.
+
+A result read without doubt from a fan's website is of high confidence
+and independent. A date worked out from an official notice is official
+and of low confidence.
+
+**How sure it is**, `Confidence`. The design asks for a confidence level
+and names no levels (DESIGN.md §8), so the planner's trial settled
+three, from the surest to the least sure.
+
+| The text that is stored | When |
+|---|---|
+| `high` | The source gives the value in a place made for it, such as a field of a feed or a cell under its heading, and it was taken as it stands |
+| `medium` | The value was read out of a page or a document made for people, by a rule written for that source. It is wrong where the page is not as the rule expects it |
+| `low` | The value was worked out from what stands around it, or the source is unclear about it or says two things |
+
+**What standing the source's word has**, `VerificationStatus`. The four
+kinds of record the design tells apart (DESIGN.md §6), in its order.
+
+| The text that is stored | In the design | What it is |
+|---|---|---|
+| `official` | Officially published records | Published by whoever is answerable for what the record says: the body that ran the race or the championship, or the track about itself |
+| `independent` | Independently published records | Published by somebody else, such as a news publication, a results database or a community website |
+| `reconstructed` | Reconstructed historical records | Put together afterwards from what is left, where nothing published at the time is at hand. It is never shown as an official record |
+| `unverified` | Unverified historical references | A mention that has not been checked against anything |
+
+- **Three levels and no number.** A number between 0 and 1 would look
+  more exact than anything behind it, because nothing measures how sure
+  a reading is. Each of three levels can be said in a sentence, and a
+  collector can be held to the sentence.
+- **The status is said of the record, not of its source.** A governing
+  body is official about its own championship and independent about a
+  race somebody else ran. So the kind of a source (`SourceCategory`)
+  does not give the status of what is collected from it.
+- **Official does not mean right, and independent does not mean
+  wrong.** The status says who published a thing. Whether two sources
+  agree is another matter, and where they do not the review queue is
+  for it (CLAUDE.md §11, DAT-010).
+- **Both lists go from what can be trusted most to what can be trusted
+  least.** That order is the list's, in the code. SQLite does not know
+  it: in a table the texts are plain text, and a column sorted by them
+  is sorted by their letters.
+- **No text is on both lists**, so a text read from a row says by
+  itself which of the two questions it answers.
+- **What is left to the columns** (DAT-008): whether a record may be
+  without one of the two, and how a record says the way it was got, the
+  design's extraction method, for which the store has the list of the
+  ways of collecting already (`CollectionMethod`).
 
 ## What the store relies on in SQLite
 
