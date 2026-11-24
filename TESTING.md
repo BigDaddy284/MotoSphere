@@ -809,42 +809,6 @@ test, in their order; no outcome has two names; each is one word in small
 letters; and a column can be of the list, with a check that names the
 four as SQLite is given them.
 
-## How a source is doing
-
-`backend/tests/integration/test_source_health.py` tests `standing_of`
-(`motosphere.db.source_health`, DAT-041), in a store that the migrations
-built, with runs of every outcome. Each answer is compared whole where
-the whole of it matters.
-
-- **One run or none.** Of a source without a run nothing is said but
-  that it is not yet scanned. A source whose first run is still running
-  was attempted and is not yet scanned. One whose only run succeeded is
-  healthy; one whose only run failed is failing and says why; one whose
-  only run was interrupted says so and has no error.
-- **Several runs.** The last attempt is the newest run, whatever became
-  of it, a test for each outcome. The last success is the newest run
-  that succeeded, whatever came after. The health is told by the newest
-  run that is over, with a running run after it. The last error is that
-  of the newest run that failed; it is no longer said once a later run
-  succeeded, and is still said while a later run is running or was
-  interrupted.
-- **Which run is the newest.** The one that started last, not the one
-  stored last; of two that started together, the one stored last, both
-  ways round.
-- **Whose runs.** Three sources, one of them without runs: each is told
-  by its own.
-- **What comes back.** The times are times in UTC. A key that no source
-  has is refused in one sentence, in three ways. What was said cannot be
-  changed afterwards, a test for each of its four parts.
-- **Nothing is written.** After the asking the store's file is byte for
-  byte what it was, the unit of work holds nothing new, changed or
-  deleted, and the store's clock was not asked.
-
-`backend/tests/unit/test_db_source_health.py` tests the list
-`SourceHealth`, without a store: its four texts are written out in the
-test, in their order; no text has two names; and each is words in small
-letters with one space between two.
-
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`

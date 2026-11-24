@@ -910,9 +910,10 @@ What the planner's trial settled:
 - **What is not in the table.** The country of a source comes with the
   table of the countries (DAT-011). The kinds of information it offers
   are in a table of their own, `source_offer` (below). When it was last
-  scanned, how it is doing and its last error are what its runs say, and
-  one function reads it from them ("How a source is doing"). They are not
-  stored a second time here, where the two could come to disagree.
+  scanned, how it is doing and its last error are what its runs say
+  ("The collection runs"; a function that reads it from them comes with
+  DAT-041), and are not stored a second time here, where the two could
+  come to disagree.
 
 Each list is said once, in the code, as a `StrEnum` whose values are the
 texts that are stored (see "One of a list"). The texts are words in small
@@ -1052,11 +1053,10 @@ of every table.
   its own (`ck_collection_run_records_seen_not_negative` and three more).
   The table does not ask that added, changed and unchanged add up to
   seen: a record that was refused was seen and is none of the three.
-- **What is not in the table.** There is no index beside the key's yet.
-  The first function that reads the runs of one source ("How a source is
-  doing") showed which one is needed, and a task of its own adds it
-  (DAT-042). Two runs of one source can be running at once as far as the
-  table goes.
+- **What is not in the table.** There is no index beside the key's: the
+  first task that reads the runs of one source (DAT-041) has the question
+  an index must answer, and decides it there. Two runs of one source can
+  be running at once as far as the table goes.
 
 **Runs that were left running.** A job that dies cannot say how its run
 ended, and the run would be running in the table for ever.
@@ -1070,72 +1070,6 @@ nothing else: they get no end and keep what they had counted, and no
 other run and no other table is touched. It is part of the unit of work
 it is given, and is kept or taken back with it. Nothing calls it yet:
 the first task that collects does.
-
-## How a source is doing
-
-The registry of the design says of each source when it was last scanned,
-when that last worked, what last went wrong and how it is doing (DESIGN.md
-§7.3: "Last attempted scan", "Last successful scan", "Error information",
-"Current health"). The store has no columns for these. They are what the
-source's runs say already, and a second copy with the source could come
-to disagree with the runs. `standing_of(work, source_id)` in
-`motosphere.db.source_health` reads them from the table `collection_run`
-whenever it is asked, and writes nothing (DAT-041). It gives a
-`SourceStanding`, which cannot be changed afterwards:
-
-| What it says | What it is | When it is without a value |
-|---|---|---|
-| `last_attempt` | When the source's newest run started, whatever became of it | The source has no run |
-| `last_success` | When its newest run that succeeded started | None has succeeded |
-| `last_error` | What went wrong in its newest run that failed, in plain words | None has failed, or one has succeeded since |
-| `health` | How it is doing, from the list `SourceHealth` | Never |
-
-**How a source can be doing**, `SourceHealth`. It is told by the newest
-of the source's runs that is over. A run that is still running says
-nothing yet, so it is passed over.
-
-| The text | When |
-|---|---|
-| `not yet scanned` | No run of the source is over yet: it has none, or only one that is running |
-| `healthy` | Its newest run that is over succeeded |
-| `failing` | Its newest run that is over failed |
-| `interrupted` | Its newest run that is over was cut off, because its job died |
-
-- **A scan is said by when it started.** That is the one time every run
-  has: a run that was interrupted has no end. So both times are starts,
-  and the last success is the last attempt exactly when the newest run
-  succeeded.
-- **The newest run is the one that started last**, not the one that was
-  stored last; of two that started at the same moment, the one stored
-  last is the newer.
-- **The last error is no longer said once a later run succeeded.** A run
-  that is running, or was interrupted, after the one that failed does not
-  take the error away: nothing has shown yet that it is over.
-- **Interrupted is not failing.** A run that failed says what went wrong
-  at the source. A run that was interrupted says that the job died,
-  which is a thing to look at in the job and not in the source; so the
-  two are told apart, and an interrupted source has no error of its own.
-- **A key that no source has is refused** with a `LookupError` that says
-  so in one sentence. Of a source that does not exist nothing is true,
-  also not that it was never scanned.
-- **The list is not stored.** `SourceHealth` is no column of any table:
-  it is worked out when it is asked for, and so a text of it can be
-  changed without a migration.
-- **No reliability score.** The design's registry has one (DESIGN.md
-  §7.3). How often a source could be collected from says whether it
-  answers, not whether what it says is right, and a score from the runs
-  alone would be a number with nothing behind it. It comes with the task
-  that scores the sources from records that were checked (COL-009); no
-  number is invented until then. The same task can make the health finer
-  than the outcome of one run.
-- **Four small questions, and the index they want.** The function asks
-  the table four times for the newest run of one source with one of some
-  outcomes. Without an index SQLite reads the whole table for each and
-  sorts what it found; with an index over the source and the start it
-  goes straight to the source's runs in the order asked for (the
-  planner's trial read both from SQLite's own account of its plan). The
-  table has no rows yet, so nothing is slow today. The index is a change
-  to the schema, with a migration and a test of its own: DAT-042.
 
 ## What the store relies on in SQLite
 

@@ -279,11 +279,6 @@ pipeline's command line. The settings and logging modules stay.
   whose job died is still running in the table; `mark_interrupted` in
   `motosphere.db.runs` marks such runs interrupted at the next start and
   touches nothing else (DATABASE.md).
-- **How a source is doing is read from its runs, not stored**
-  (DAT-041): `standing_of` in `motosphere.db.source_health` says when a
-  source was last attempted, when that last succeeded, its last error
-  and its health, one of four texts. Stored with the source as well,
-  they could come to disagree with the runs (DATABASE.md).
 - **What the store relies on in SQLite** is named in one module,
   `motosphere.db.sqlite`: SQLite 3.45.0 or newer and six features, R*Tree,
   FTS5 and the JSON functions among them. Its tests run against the real
@@ -343,9 +338,7 @@ the export step, from the data store.
 - A source adapter framework inside `motosphere.collectors`: one adapter per
   source, each independently testable, enable-able and disable-able. A failure
   in one adapter never stops another.
-- A source registry table drives scheduling (DESIGN §7.3). How a source is
-  doing is not a column of it: it is read from the source's collection runs
-  (`motosphere.db.source_health`, DAT-041).
+- A source registry table drives scheduling and records health (DESIGN §7.3).
 - One shared **polite HTTP client**: honest identifying User-Agent,
   robots.txt check, per-domain rate limit, timeouts, bounded retries, on-disk
   cache, conditional requests (ETag / Last-Modified).

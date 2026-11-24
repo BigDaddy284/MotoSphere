@@ -222,11 +222,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with its outcome, and no count is below 0. `mark_interrupted` in
   `motosphere.db.runs` marks the runs a dead job left running as
   interrupted and touches nothing else (DAT-007).
-- `standing_of` in `motosphere.db.source_health` says how a source is
-  doing, read from its collection runs and stored nowhere else: when it
-  was last attempted, when that last succeeded, its last error, and its
-  health, which is `not yet scanned`, `healthy`, `failing` or
-  `interrupted` (DAT-041).
 
 ### Removed
 
