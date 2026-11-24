@@ -311,10 +311,7 @@ pipeline's command line. The settings and logging modules stay.
   leaves a connection to it open (DAT-003, TESTING.md).
 - Every imported record carries provenance (source, source URL, collected-at,
   published-at, last-verified-at, extraction method, confidence, verification
-  status). The last two are one of a list each: three levels of confidence,
-  and the four statuses the design tells apart, from official to unverified
-  (DAT-043, DATABASE.md). Changes are recorded in a history table rather
-  than overwritten.
+  status). Changes are recorded in a history table rather than overwritten.
   Ambiguous or conflicting records go to a review queue; uncertain identities
   are never merged automatically.
 

@@ -232,11 +232,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   source in the order they started, where it read the whole table and
   sorted; a test reads that from SQLite itself for the statements of
   `standing_of` (DAT-042).
-- The two lists that say how far a collected record can be trusted, in
-  `motosphere.db.models.provenance`: its confidence, `high`, `medium` or
-  `low`, and its verification status, `official`, `independent`,
-  `reconstructed` or `unverified`. No table has a column of them yet
-  (DAT-043).
 
 ### Removed
 

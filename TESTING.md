@@ -872,20 +872,6 @@ the whole of it matters.
 test, in their order; no text has two names; and each is words in small
 letters with one space between two.
 
-## How far a collected record can be trusted
-
-`backend/tests/unit/test_db_models_provenance.py` tests the two lists of
-`motosphere.db.models.provenance` (DAT-043), without a store. The texts
-of the lists are written out in the test, so a text changed by mistake
-fails there: each list has exactly its texts in their order, three
-levels of confidence and four statuses; no text has two names; each of
-the 7 texts is words in small letters with one space between two; each
-value has the name its text spells, so that `Confidence.HIGH` is `high`
-in the store and no other text of its list; no text is on both lists;
-and a column can be of each list, with a check that names its texts in
-their order, as SQLite is given it. That SQLite refuses a text that is
-not on a list is proven for every list by the tests of "One of a list".
-
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`
