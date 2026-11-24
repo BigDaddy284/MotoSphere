@@ -454,6 +454,49 @@ another form into the file with plain SQL and expects the refusal when the
 model reads it. A naive time (one without an offset) is made in a test
 with `.replace(tzinfo=None)`, since the lint refuses to write one out.
 
+## Calendar days in the store
+
+`backend/tests/unit/test_db_days.py` tests the form itself and the type,
+without a store: what seven days from the first there is to the last are
+written as, and that each is read back as a day and not as a time at its
+midnight; that every text has the same length and that the order of the
+texts is the order of the days; each kind of value that is refused on
+the way in (text, a number, no value) with its whole sentence, and a
+time in three kinds (a time, midnight in UTC, midnight without an
+offset) with the sentence a time gets; fifteen things that are not in
+the store's form and are refused when read, two of them text Python
+could read as a day; that no value stays no value; that the type is TEXT
+in a table; the text of the check as SQLite is given it, also for a
+column named with a word of SQL, and its name before and after the
+naming rule; that the type brings exactly that check, with its two words
+for `broken_rules`; the sentence of `broken_rules` for a table made by
+hand, until the table has the check; and that to `Base` a `date` is a
+day and a `datetime` is still a time.
+
+`backend/tests/integration/test_days.py` has a model of its own with
+three such columns, one that may be without a value and one with a value
+of its own, and a column of a time beside them. It makes the table in a
+real SQLite file and asks the file which columns there are and reads the
+three checks as the file says them, letter for letter. Then it stores
+rows and reads with plain SQL, past the model, what the file holds and
+of which kind it is: a day is text in the one form and comes back as the
+day, seven of them from the first day there is to the last; no value is
+stored as none; a change is stored; what is not a day is refused in four
+kinds, two of them times, and the row stored with it in the same unit of
+work is not there either; twenty texts that are not a day, written with
+plain SQL, are each refused with the name of the check, word for word,
+the 30th of February, the year 0 and the word `now` among them; every
+such column refuses what is not a day; a number is refused by the check
+and bytes because the table is strict; a change to what is not a day is
+refused and the row stays as it was; rows are found by a day, by the
+days before and after it and in the order of the days; a question with
+a time is refused; what is read through the type and is no day is
+refused; SQLite's own date functions read a stored day; and a time
+beside a day is stored as a time. One more model names SQLAlchemy's own
+type for a day, and SQLite refuses to make its table. A naive time (one
+without an offset) is made with `.replace(tzinfo=None)`, since the lint
+refuses to write one out. The models are kept in schemas of their own.
+
 ## Text that must not be empty
 
 `backend/tests/unit/test_db_texts.py` tests the check without a store:
