@@ -14,7 +14,9 @@ A model is a class that describes one table. Every model is a subclass of
   becomes INTEGER, a ``str`` TEXT, a ``float`` REAL and ``bytes`` BLOB, a
   ``datetime`` becomes the store's own type for a time
   (:class:`motosphere.db.times.UtcDateTime`), which is TEXT in the table,
-  and a ``bool`` the store's own type for yes or no
+  a ``date`` the store's own type for a calendar day
+  (:class:`motosphere.db.days.CalendarDay`), which is TEXT too, and a
+  ``bool`` the store's own type for yes or no
   (:class:`motosphere.db.yes_no.YesOrNo`), which is INTEGER;
 - has the check of every column whose type brings one
   (:class:`motosphere.db.checks.WithItsCheck`). Text that must not be
@@ -23,7 +25,9 @@ A model is a class that describes one table. Every model is a subclass of
   is another, and so the table refuses every number but 1 and 0 in a
   column that is a ``bool``; a web address is a third
   (:data:`motosphere.db.web.WebAddress`), and so the table refuses text
-  that is not one in every column whose model says so;
+  that is not one in every column whose model says so; a calendar day is
+  a fourth, and so the table refuses text that is not a day in every
+  column that is a ``date``;
 - has its constraints and indexes named by one rule, :data:`NAMING`, so
   that a migration can name what it changes and the names are the same on
   every machine. The key has no name: SQLite writes it with its column;
@@ -37,7 +41,7 @@ holds the real schema to it.
 """
 
 from collections import Counter
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, ClassVar
 
 from sqlalchemy import (
@@ -58,6 +62,7 @@ from sqlalchemy.types import TypeEngine
 
 from motosphere.db import times
 from motosphere.db.checks import WithItsCheck
+from motosphere.db.days import CalendarDay
 from motosphere.db.texts import NotEmpty, NotEmptyText
 from motosphere.db.times import UtcDateTime
 from motosphere.db.web import WebAddress, WebAddressText
@@ -105,6 +110,7 @@ class Base(DeclarativeBase):
         str: Text,
         float: REAL,
         datetime: UtcDateTime,
+        date: CalendarDay,
         bool: YesOrNo,
         NotEmpty: NotEmptyText,
         WebAddress: WebAddressText,

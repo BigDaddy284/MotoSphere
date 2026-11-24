@@ -252,7 +252,11 @@ pipeline's command line. The settings and logging modules stay.
   column that is a web address: a model says `WebAddress`, the table
   holds text, and the check refuses text that does not begin with
   `https://` or `http://` and go on with the name of a site, and text
-  with white space in it (DAT-037).
+  with white space in it (DAT-037). And so is a column that is a calendar
+  day: a model says `date`, the table holds text such as `2026-11-24`,
+  and the check refuses text that is not a day of the calendar in that
+  form. A time is not taken for a day, and no time of day is made up for
+  one (DAT-044).
   `broken_rules` names a table that breaks a rule, a table without the
   key or without the two times among them (DAT-032), and a column whose
   type brings a check and whose table is without it (DAT-033), and a name

@@ -256,11 +256,13 @@ these rules:
   TEXT or BLOB. A model that gives only the Python type of a column gets
   the right one: an `int` is INTEGER, a `str` TEXT, a `float` REAL and
   `bytes` BLOB, a `datetime` is the store's own type for a time, which is
-  TEXT (see "Times" below), and a `bool` is the store's own type for yes
-  or no, which is INTEGER (see "Yes or no" below). SQLite refuses to make
-  a strict table with a column of another type ("unknown datatype");
-  SQLAlchemy's own types for text, for numbers with a fraction, for yes
-  and no and for times are four such.
+  TEXT (see "Times" below), a `date` is the store's own type for a
+  calendar day, which is TEXT too (see "Calendar days" below), and a
+  `bool` is the store's own type for yes or no, which is INTEGER (see
+  "Yes or no" below). SQLite refuses to make a strict table with a column
+  of another type ("unknown datatype"); SQLAlchemy's own types for text,
+  for numbers with a fraction, for yes and no, for times and for days are
+  five such.
 - **A column whose type brings a check has that check** (DAT-034). Some
   of what the store promises of a column is narrower than any type of a
   strict table, and is kept by a check in the table. The column's type
@@ -389,9 +391,100 @@ passed on as if it were right. The table itself does not check the form,
 and that is settled (DAT-030): a check in a table is for what the models
 cannot promise, and through the models a time cannot have another form.
 
-Times UTC cannot say in the years 1 to 9999 are refused. A column for a
-date without a time of day needs a type of its own, which comes with the
-first table that has such a column.
+Times UTC cannot say in the years 1 to 9999 are refused. A day without a
+time of day is not kept as a time: it has a type of its own (see
+"Calendar days" below).
+
+## Calendar days
+
+Much of what the store holds is said by the day and not by the moment:
+the day a race is held, the day a rider was born, the day a page says it
+was published. Such a day has no time of day and no offset, and the
+store makes none up for it: a day kept as the moment its midnight struck
+somewhere would say more than its source did (CLAUDE.md §11). A strict
+table has no type for a day, so the store keeps a day as text, in one
+form (DAT-044, `motosphere.db.days`):
+
+```
+2026-11-24
+```
+
+A model says it with the column's Python type:
+
+```python
+held_on: Mapped[date]
+born_on: Mapped[date | None]
+```
+
+- **It always has the four digits of its year, the two of its month and
+  the two of its day.** So every text has the same length, and the order
+  of the texts is the order of the days: sorting and comparing rows by a
+  day needs nothing but the text.
+- **In the table the column is TEXT, with a check**, which `Base` adds
+  when the model is defined. The check is named after its column,
+  `ck_<table>_<column>_calendar_day`, by the naming rule, and reads:
+
+  ```
+  CONSTRAINT ck_event_held_on_calendar_day CHECK ((held_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]') AND date(held_on) IS held_on AND held_on >= '0001-01-01')
+  ```
+
+  It asks three things of the text. It has the form of a day. It is a
+  day SQLite's own calendar has: SQLite reads it as a day and says the
+  same text back. For the 30th of February it says the 2nd of March, and
+  for what it cannot read it says nothing, so neither passes. And it is
+  not before the first day there is, 1 January of the year 1: SQLite
+  knows a year 0, and Python does not.
+- **To Python the column is a `date`**, and only a `date` is stored.
+  Text and numbers are refused before anything is written, with a
+  `TypeError` that says what was given:
+  `Only a day (a date) is stored as a day, not str: '2026-11-24'.`
+- **A time is refused**, although Python counts a `datetime` as a
+  `date`: its time of day would be dropped without a word, and which day
+  a moment falls on depends on where one stands. The sentence says so:
+  `A time is not stored as a day: datetime.datetime(2026, 11, 24, 8, 0,
+  tzinfo=datetime.timezone.utc). Say the day itself: which day a moment
+  falls on depends on where one stands.` A question that compares such a
+  column with a time is refused in the same way. `Base` does not take
+  one for the other either: a model's `datetime` is still a time.
+- **SQLite refuses text that is not a day**, on storing and on changing,
+  in a row written with plain SQL too, and the refusal names the check:
+  `CHECK constraint failed: ck_event_held_on_calendar_day`. A day no
+  calendar has, a day with a time, with white space, without its
+  hyphens or with one digit where two belong, the year 0, the word `now`
+  and empty text are all refused so. A number is refused by the check as
+  well, and bytes because the table is strict.
+- **The form is asked first.** SQLite will not ask its calendar about
+  the word `now` in a check at all, and says so in words of its own.
+  With the form before the calendar the word never gets that far, and
+  is refused like any other text.
+- **A column that may be without a value** (`date | None`) holds no
+  value or a day. No value means that the day is not known.
+- **The text can be read without the pipeline's code**: by a person, and
+  by SQLite's own date functions (`date`, `strftime`, `julianday`), which
+  take it as the day it is.
+
+Where this ends:
+
+- A day of which only the year or the month is known is not a day, and
+  this type does not hold it. The table that first has such a thing
+  settles how it is kept; nothing is made up to fill a day out.
+- The check asks SQLite's calendar, which is today's calendar carried
+  back to the year 1, and so is Python's. A day that was written in
+  another calendar is not converted by the store.
+- What is read through the type is read as a day, and text in another
+  form is refused when it is read (`The store holds a day that is not in
+  the store's form: '2026'.`), also when Python could read it as a day
+  (`20261124`). The table never holds such text; but what a function of
+  SQLite makes of such a column is read through the type too when
+  SQLAlchemy is told so, and is then refused. The earliest and the
+  latest day of a column (`func.min`, `func.max`) come back as days.
+- As for every type that brings a check, a column that a subclass of a
+  model adds to its parent's table, and a table made without a model, get
+  no check from `Base` (see "Column types that bring a check" below):
+
+  ```python
+  table.append_constraint(calendar_day("held_on"))
+  ```
 
 ## Text that must not be empty
 
@@ -730,8 +823,9 @@ A model can only say a type by the column's Python type
 (`mapped_column(TheType)`).
 
 The types that bring a check so far: `NotEmptyText`, text that must not
-be empty, `YesOrNo`, yes or no, `OneOf`, a value of a list, and
-`WebAddressText`, a web address (all above).
+be empty, `YesOrNo`, yes or no, `OneOf`, a value of a list,
+`WebAddressText`, a web address, and `CalendarDay`, a calendar day (all
+above).
 
 Where this ends is the same for every such type: `Base` gives the check
 when a model is defined, so a column that a subclass of a model adds to
