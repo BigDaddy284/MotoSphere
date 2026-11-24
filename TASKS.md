@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 51 | 29 |
+| 2 | Data store and published data (DAT, PUB) | 51 | 30 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-043 – The lists that say how far a record can be trusted.
+**Current task:** DAT-008 – Provenance on every collected record.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1457,7 +1457,7 @@ far a record can be trusted, and DAT-008 keeps the columns.
 - **Plan:** `docs/plans/DAT-042.md`
 
 ### DAT-043 – The lists that say how far a record can be trusted
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The code knows the three levels of confidence and the four verification statuses of a collected record, each with the text that is stored.
 - **Description:** Added on 2026-11-24 (PLAN-025), cut out of DAT-008. One new module, `motosphere.db.models.provenance`, with two lists, each a `StrEnum` as a column of a list takes one (DAT-036). They answer two questions, and neither answers the other. `Confidence` is about the reading, how sure it is that a record says what its source says: `high` (the source gives the value in a place made for it, and it was taken as it stands), `medium` (read out of a page or a document made for people, by a rule written for that source) and `low` (worked out from what stands around it, or the source is unclear or says two things). `VerificationStatus` is about the publishing, what standing the source's word has: the four kinds of record DESIGN §6 tells apart, in its order, `official`, `independent`, `reconstructed` and `unverified`, which also tells official information from independently published information (CLAUDE.md §11). Settled in the planner's trial: the texts and what each means; three levels and no number, because nothing measures how sure a reading is; that both lists go from what can be trusted most to what can be trusted least; that the status is said of the record and not of its source, so the kind of a source does not give it; that every value has the name its text spells; and that no text is on both lists. Left to the columns (DAT-008): whether a record may be without one of the two, and how a record says the way it was got. No table, no model, no migration, no existing code file or test changed. The planner's trial has 22 new tests and detects 23 of 23 planted defects.
 - **Acceptance criteria:**
@@ -1469,10 +1469,10 @@ far a record can be trusted, and DAT-008 keeps the columns.
   6. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
   7. `python scripts/check.py` reports 19 of 19 gates and 1600 tests (backend tests 970); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 22 new unit tests in seven functions, with the texts of both lists written out a second time; every existing test, unchanged. Twelve planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #115 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1600 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 970: 948 before, 22 new); 23 planted defects in the two lists, 23 of 23 detected, the plan's twelve prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 45400249455 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1600 passed, 0 failed, 0 skipped.", with 970 backend tests on both machines, the three jobs after the gates skipped; run 45401832086 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1600 / 0 tests (repository 41, script tests 206, backend 970, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 23 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-24. All 6 files are identical to the planner's trial. No existing test changed, and no package was added. The task has no table: the lists are plain code, and what SQLite does with a column of a list is proven for every list by the tests of DAT-036 and comes for these two with the columns (DAT-008).
+- **Commit:** `f4846bb`
 - **Plan:** `docs/plans/DAT-043.md`
 
 ### DAT-008 – Provenance on every collected record
