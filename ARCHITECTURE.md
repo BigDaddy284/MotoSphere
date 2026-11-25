@@ -324,7 +324,11 @@ pipeline's command line. The settings and logging modules stay.
   before it was collected. Only the day of publishing may be unknown
   (DAT-008). Every such table has an index over the source of its
   records, so that the records of one source are found, and a source is
-  deleted, without reading a whole table (DAT-045). Changes are recorded
+  deleted, without reading a whole table (DAT-045). Every table holds
+  collected records unless a list in the code says that it does not,
+  with the reason; a rule names a table that is off that list and
+  without the set, or has a part of it otherwise, and a test holds the
+  real schema to it (DAT-046). Changes are recorded
   in a history table rather than overwritten.
   Ambiguous or conflicting records go to a review queue; uncertain identities
   are never merged automatically.
