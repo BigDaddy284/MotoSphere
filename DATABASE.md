@@ -1543,10 +1543,11 @@ edited nor deleted is DAT-048; its indexes are DAT-049.
   on record. What holds the two to a record is the function that
   writes a change with its history (DAT-047).
 - **Values are kept as text, in the form the store keeps them in.** A
-  moment, a day, a yes or no and a word of a list are text in the
-  store already (see "Times", "Calendar days", "Yes or no" and "One of
-  a list"). A number is kept as its text; which text that is, is for
-  the function that writes it (DAT-047). The two columns are TEXT in
+  moment, a day and a word of a list are text in the store already
+  (see "Times", "Calendar days" and "One of a list"). A whole number
+  is kept as its text, and so is a yes or no, which the store keeps
+  as 1 or 0 (see "Yes or no"); which text a value has is for the
+  function that writes it to say (DAT-047). The two columns are TEXT in
   a strict table, and not of SQLite's kind `ANY`, which keeps a value
   as it is given: then "7" and 7 would be two values in one column,
   and whether a field changed would depend on how its value was

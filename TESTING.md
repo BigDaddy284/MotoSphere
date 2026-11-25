@@ -737,9 +737,9 @@ as they were (DAT-007); the fourth makes the index of the runs of one
 source in a store that has runs and had no index, and the runs are as
 they were, and it fails, with the store left at its version, where an
 index of its name is there already (DAT-042); the fifth makes the table
-`record_change` in a store that has a source, an offer and runs, and all
-are as they were, with the index of the runs, and it fails, with the
-store left at its version, where a table of its name is there already
+`record_change` in a store that has a source and a run, and both are as
+they were, with the index of the runs, and it fails, with the store
+left at its version, where a table of its name is there already
 (DAT-009); a store with the newest
 schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
