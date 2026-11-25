@@ -1006,44 +1006,6 @@ QUERY PLAN`).
   the refusal to delete a source, are the same with the index and
   without it.
 
-`backend/tests/unit/test_db_models_provenance_rule.py` tests the rule
-that names a table which does not say where its records came from
-(`broken_provenance`, DAT-046), without a store. Its tables are made by
-hand, each in a schema of its own, and two models of the tests' own,
-subclasses of the real `Collected`, hold the rule to what a model of
-collected records really gets.
-
-- **The real schema** breaks no rule. Each of its three tables is named
-  as soon as it is taken off the list, in the sentences the rule has
-  for it, so the rule does look at the real tables. Every table on the
-  list has a reason, and no two have the same.
-- **What keeps the rule.** The tables of the two models, one of which
-  has a rule, a check and a second index of its own that begins with
-  the source; and a table made by hand as the set says, which keeps
-  the rules every table keeps as well.
-- **Missing columns.** A table with none of the eight, and tables
-  without one, two and four of them, are named once each, with the
-  missing columns in the order of the set.
-- **A column that is not as the set has it** is named: of another type
-  or of another list, in 14 kinds, among them a list of the tests' own
-  that has the very texts of the right one; one that may be without a
-  value where the set says otherwise, each of the eight; one that is
-  given a value nobody said, by the code or by the table, when a row
-  is stored or changed, in eight kinds; and one that does not refer as
-  the set says, in nine kinds.
-- **The index and the check.** A table without the index over the
-  source alone is named, in seven kinds; an index of another name
-  counts, among others. A table without the check of its two times is
-  named, in eight kinds, among them a name that only ends as it
-  should; the check of another table does not count. Neither is asked
-  for where a column it needs is missing.
-- **The list.** A table on it is not looked at; a name on it that is no
-  table is named, once; a table on it that has the whole set is named.
-- **The order.** The names of the list that are no table come first,
-  then table by table by the alphabet, and for each table its missing
-  columns, its columns in the order of the set, its index and its
-  check.
-
 ## How far a collected record can be trusted
 
 `backend/tests/unit/test_db_models_provenance.py` tests the two lists of
