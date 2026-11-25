@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 54 | 34 |
+| 2 | Data store and published data (DAT, PUB) | 57 | 34 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -900,6 +900,11 @@ cut two more things out of DAT-008 (PLAN-027): the index for the records
 of one source, DAT-045, and the rule that names a table of collected
 records made without the columns, DAT-046.
 
+The trial of the change history, DAT-009, cut it down to the table of
+the changes (PLAN-028). The function that writes a change with its
+history is DAT-047, that a row of the history is neither edited nor
+deleted is DAT-048, and the indexes of the history are DAT-049.
+
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
 - **Objective:** Decide, with evidence, what the data store may rely on: which SQLite features every machine that runs the pipeline has, where the store is kept between scheduled runs, and which size limits bound it.
@@ -1566,11 +1571,53 @@ records made without the columns, DAT-046.
 - **Plan:** `docs/plans/DAT-046.md`
 
 ### DAT-009 – Record change history
+- **Status:** IN PROGRESS
+- **Objective:** The store has a table that keeps, for one field of one record, what it held before it was changed and what it holds now, when it was changed, and which collection run or which person caused the change.
+- **Description:** Cut down in the planner's trial on 2026-11-25 (PLAN-028) to the table of the changes: the function that writes a change with its history is DAT-047, that a row of the history can be neither edited nor deleted is DAT-048, and its indexes are DAT-049. One new table, `record_change`, with its model `RecordChange` in `motosphere.db.models.record_change` and the fifth migration, `make_the_record_changes`; the schema is at version 5. One row is one field of one record that was changed: `record_table`, `record_id`, `field`, `old_value`, `new_value`, `collection_run_id`, `decided_by`, and the two times every table has. Settled in the trial: one table for the changes of every table, so the record is named by the name of its table and its key there, which SQLite cannot hold to a row that exists (the function of DAT-047 will); one row for a field and not for a change to several; values as text in the form the store keeps them, in TEXT columns of a strict table and not of SQLite's kind `ANY`, so that `'7'` and `7` are not two values; no value is a value, so either side may be without, and a check, `old_value IS NOT new_value`, refuses a change that changed nothing, also where both are missing, which `!=` would let through; when it was changed is `created_at`, with no second column to say it again; a run caused the change, by reference, or a person did, by name, and a check holds that it is exactly one of the two; the reference to the run says nothing of what happens when the run is deleted, so a run that caused a change cannot be deleted; the key of the record is above 0; nothing forbids two changes that are alike, and their order is the order of their keys; no index yet. The table holds no collected records, so it is on the list `NOT_COLLECTED` with its reason (DAT-046). Nothing writes a change yet. Two existing tests get an addition each (the names of the migrations, and the case of the new table in the test that takes each real table off the list); no other existing test changed; no new package. The planner's trial has 48 new tests and detects 64 of 64 new planted defects.
+- **Acceptance criteria:**
+  1. The fifth migration makes the table `record_change` in a store at version 4 and leaves the sources, the offers, the runs and the index of the runs as they were; it fails, with the store left at version 4, where a table of its name is there already. A new store is at schema version 5.
+  2. The model `RecordChange` and the migration say the same table; in the file it is strict, has the columns in the order of the model, one reference (to `collection_run.id`), no index and six checks.
+  3. A change a run caused and a change a person decided are stored and read back with every column; values are kept as the text they were, and no value on either side is kept as no value.
+  4. The table refuses: a change whose new value is its old value, also where both are missing; a change that nothing caused and one that a run and a person both caused; a run that does not exist; a row without the table, the key or the field of its record; an empty name of a table, of a field or of a person; a key of a record that is not above 0; and a value of the wrong kind for a column.
+  5. A run that caused a change can neither be deleted nor have its key changed, and a run that caused none can be deleted.
+  6. `record_change` is on `NOT_COLLECTED` with a reason of its own, and the real schema breaks neither the rules every table keeps nor the rule of DAT-046.
+  7. Two existing tests get an addition each and no other changes; all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  8. `python scripts/check.py` reports 19 of 19 gates and 1958 tests (backend tests 1328); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 43 new integration tests in 16 functions, in a store the migrations built, on a real SQLite file, through the model and with plain SQL past it; 4 new tests of the history, of the fifth migration given to a store at the version before it and of the names the module gives; one new case of the rule of DAT-046; every other existing test, unchanged. Sixteen planted defects by the builder and the planner's own, with those of the earlier tasks whose files change; the real commands `migrate` and `schema` on a new store; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-009.md`
+
+### DAT-047 – A change is written with its history
 - **Status:** NOT STARTED
-- **Objective:** A change to a collected record is added to its history, never written over it.
-- **Description:** Table, model and migration for changes: which record, which field, the old and the new value, when, which collection run or which person's decision caused it. One function writes a change and its history in the same unit of work, so neither exists without the other. Historical values keep their original dates (CLAUDE.md §11).
-- **Acceptance criteria:** changing a field through the function leaves one history row with the old and new value; a change that sets the same value leaves none; history rows cannot be edited or deleted through the model; a failed change leaves neither the change nor the history.
-- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
+- **Objective:** A field of a record is changed and the change is written to its history in the same unit of work, so that neither exists without the other.
+- **Description:** Added on 2026-11-25 (PLAN-028), cut out of DAT-009. One function is given a unit of work, a record, what it shall hold now and what caused the change (a collection run or a person), and for each field that then holds another value it changes the record and adds one row to `record_change`. The planner's trial settles: the text a value of each kind is kept as, so that the old value in the history is what the record's own column held (the store's column types already say a moment, a day, a yes or no and a word of a list as text); whether the rows of one change to several fields carry the same moment; which fields never go through the function (the key and the two times every table has); whether the columns of the provenance are changed through it, and with a row each, so that what a record said before keeps its original dates (CLAUDE.md §11), when the moment a record was last seen at its source changes with every run; and that a record which is stored for the first time has no history yet. No real table of records exists before DAT-011, so tables made for the tests prove it, as they proved the provenance (DAT-008).
+- **Acceptance criteria:** changing a field through the function leaves the record with the new value and one history row with the old and the new value, the cause and the moment; a change to three fields leaves three rows; a change that sets the same value leaves none and does not touch the record; a failed change leaves neither the change nor the history, and so does a failed history row; the history names the record by its table and key, and a record that is not stored is refused.
+- **Tests required:** integration tests against a real SQLite file, with tables of the tests' own and the real table of the changes; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-048 – A row of the history is neither edited nor deleted
+- **Status:** NOT STARTED
+- **Objective:** What the history said once it says for good: a row of `record_change` is added and never edited or deleted.
+- **Description:** Added on 2026-11-25 (PLAN-028), cut out of DAT-009, which asked that "history rows cannot be edited or deleted through the model". After DAT-009 nothing stops either. The planner's trial settles where the refusal stands: in the model, which holds whoever goes through it, or in the store itself, by triggers that a migration makes and that hold past the model too, or both; what that means for `updated_at`, which every table has and which a row that is never edited never moves; and how the comparison of the models and the migrations holds a trigger, which no model says today.
+- **Acceptance criteria:** an edit and a delete of a row of the history are each refused, in one plain sentence, and the row is as it was; a new row is still stored; a run that caused a change still cannot be deleted; the refusal is proven on a real SQLite file on every machine the gates run on.
+- **Tests required:** integration tests against a real SQLite file; the migration, if there is one, applied to a store at the version before it; planted defects, those of DAT-009 among them where its files change; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-049 – Indexes for the history of a record
+- **Status:** NOT STARTED
+- **Objective:** SQLite finds the history of one record, and the changes one run caused, without reading the whole table of the changes.
+- **Description:** Added on 2026-11-25 (PLAN-028), cut out of DAT-009, as the index of the runs was cut out of their table (PLAN-024, DAT-042) and the index of a record's source out of the provenance (PLAN-027, DAT-045). The table of the changes has no index. It is the table that grows with every change to every record, and two things look into it: whoever asks what a record said before, and SQLite itself, every time a run is to be deleted, to see whether the run caused a change. Which indexes are the right ones is read from the plans SQLite makes for the statements that are really asked, and the function of DAT-047 is what asks them.
+- **Acceptance criteria:** the indexes are in the model and in the real SQLite file, by the names the naming rule gives them, made by a migration that is given to a store at the version before it; SQLite's own plan for the history of one record in the order of its changes, for the changes one run caused, and for the deleting of a run reads no whole table, read from SQLite itself on every machine the gates run on; the test of DAT-009 that holds the table to have no index is changed to hold these, and no other existing test changes.
+- **Tests required:** integration tests against a real SQLite file that read SQLite's plans; the migration applied to a store at the version before it; planted defects, those of DAT-009 among them; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
