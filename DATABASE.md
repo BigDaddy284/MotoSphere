@@ -6,18 +6,21 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 4 and
-has three tables: `source`, that of the information sources (DAT-006),
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 5 and
+has four tables: `source`, that of the information sources (DAT-006),
 `source_offer`, which says what kinds of information each of them offers
-(DAT-040; see "The information sources" for both), and `collection_run`,
+(DAT-040; see "The information sources" for both), `collection_run`,
 the record of every time a source was collected from (DAT-007; see "The
-collection runs"), which has the store's first index (DAT-042). The
+collection runs"), which has the store's first index (DAT-042), and
+`record_change`, which keeps what a field of a record held before it
+was changed (DAT-009; see "The changes to records"). Nothing writes a
+change yet: the function that does is a task of its own (DAT-047). The
 columns by which every collected record says where it came from are in
 the code, as one set that a model of collected records takes whole
 (DAT-008; see "Where a collected record came from"), and so are the two
 lists that say how far such a record can be trusted (DAT-043; see "How
 far a collected record can be trusted"). No table has them yet: none of
-the three holds collected records, and a list in the code says of each
+the four holds collected records, and a list in the code says of each
 why not. A rule names every table that neither has the set nor is on
 that list (DAT-046; see "Every table says where its records came from,
 or why not"). The decisions the store rests on are recorded below, from
@@ -187,6 +190,7 @@ list of them, and nothing else (DAT-006):
 | 2 | `make_the_source_offers` | Makes the table of what the sources offer, `source_offer` | DAT-040 |
 | 3 | `make_the_collection_runs` | Makes the table of the collection runs, `collection_run` | DAT-007 |
 | 4 | `index_the_runs_of_a_source` | Makes the index of the runs of one source in the order they started, `ix_collection_run_source_id_started_at` | DAT-042 |
+| 5 | `make_the_record_changes` | Makes the table of the changes to records, `record_change` | DAT-009 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -955,8 +959,9 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have three tables and one index to agree on: `source`,
-`source_offer`, `collection_run` and the index of the runs of one source.
+Today the two have four tables and one index to agree on: `source`,
+`source_offer`, `collection_run`, `record_change` and the index of the
+runs of one source.
 That the comparison can fail is proven with two models and migrations of
 the tests' own (`TESTING.md`).
 
@@ -1365,8 +1370,9 @@ that makes that table.
   collects says the way it used.
 - **The address is stored as it was given** (see "A web address"), so
   two spellings of one address are two addresses here too.
-- **Not in the set.** A record does not say which run collected it:
-  what a record was before it was changed is for its history (DAT-009).
+- **Not in the set.** A record does not say which run collected it.
+  What a record was before it was changed, and which run changed it,
+  is said by the changes to it (see "The changes to records").
 
 ## Every table says where its records came from, or why not
 
@@ -1385,6 +1391,7 @@ holds the real schema to it.
   | Table | Why it holds no collected records |
   |---|---|
   | `collection_run` | A run is the store's own record of its work: it is what collects, and not what is collected |
+  | `record_change` | A change is the store's own record of what it did to a record. Where the new value came from is said by the record, and by the run that caused the change |
   | `source` | A source is where records come from. A person describes it and reads its terms: it is not collected from a source itself |
   | `source_offer` | What a source offers is part of the description of the source, which a person gives |
 
@@ -1496,6 +1503,89 @@ kinds of record the design tells apart (DESIGN.md §6), in its order.
   `low` and `unverified` say so. How a record says the way it was got,
   the design's extraction method, is a column of the list of the ways
   of collecting (`CollectionMethod`).
+
+## The changes to records
+
+Nothing MotoSphere has collected is written over without a trace: "Preserve
+original records and update history wherever practical." (CLAUDE.md
+§11). When a field of a record is changed, what it held before is kept.
+The table `record_change` keeps it, and its model `RecordChange` is in
+`motosphere.db.models.record_change`. The fifth migration makes the
+table (`make_the_record_changes`, DAT-009).
+
+This is the table and its rules, and no more. Nothing writes a change
+yet. The function that changes a record and writes its history in the
+same unit of work is DAT-047; that a row of the history can be neither
+edited nor deleted is DAT-048; its indexes are DAT-049.
+
+| Column | Holds | Rule |
+|---|---|---|
+| `id` | The key of the change | Given by the store, and never given twice (see "The rules every table keeps") |
+| `record_table` | The table of the record that was changed, by its name | Never without it; not empty |
+| `record_id` | The key of that record in its table | Never without it; above 0 |
+| `field` | The field that was changed, by the name of its column | Never without it; not empty |
+| `old_value` | What the field held before, as text | Can be without: the field had no value |
+| `new_value` | What the field holds now, as text | Can be without: the field has no value now. Never the same as `old_value` |
+| `collection_run_id` | The collection run that caused the change | A run that exists (`collection_run.id`), or none |
+| `decided_by` | The person who decided the change, by name | Not empty, or none |
+| `created_at`, `updated_at` | When the row was stored and changed | See "When a row was stored and changed" |
+
+- **One row is one field of one record that was changed.** A change to
+  three fields of a record is three rows. So the history of one field
+  is read without taking a row apart, and a field that did not change
+  has no row.
+- **One table for the changes of every table.** A table of history
+  beside every table of records would say the same columns again for
+  each of them, each with a migration and tests of its own. The price:
+  SQLite cannot hold `record_table` and `record_id` to a row that
+  exists, because a reference is to one table. A test stores a change
+  to a track in a store that has no table of tracks, so the price is
+  on record. What holds the two to a record is the function that
+  writes a change with its history (DAT-047).
+- **Values are kept as text, in the form the store keeps them in.** A
+  moment, a day and a word of a list are text in the store already
+  (see "Times", "Calendar days" and "One of a list"). A whole number
+  is kept as its text, and so is a yes or no, which the store keeps
+  as 1 or 0 (see "Yes or no"); which text a value has is for the
+  function that writes it to say (DAT-047). The two columns are TEXT in
+  a strict table, and not of SQLite's kind `ANY`, which keeps a value
+  as it is given: then "7" and 7 would be two values in one column,
+  and whether a field changed would depend on how its value was
+  handed over.
+- **No value is a value.** A field that had no value and has one now
+  has changed, and so has one that lost its value: `old_value` or
+  `new_value` is then without. Empty text and no value are not the
+  same, and a change from one to the other is a change.
+- **A change that changed nothing is refused** by a check,
+  `old_value IS NOT new_value`. It says `IS NOT` and not `!=`: in SQL
+  nothing is equal to no value, not even no value, so `!=` would let
+  a row through whose field had none and has none. The table
+  compares the texts letter for letter, so "Example Park" and
+  "example park" are a change, and so are "1" and "1.0".
+- **When it was changed is `created_at`.** A change and its history
+  are written together, so the moment the row was stored is the moment
+  of the change, and a second column would say the same.
+- **What caused it: a run or a person, one of the two.** A change the
+  collecting made names its run, and through the run its source and
+  when it ran. A change a person made names the person. A check
+  refuses a row that names neither, and a row that names both. The
+  review queue (DAT-010) can later be named beside the person; the
+  task that adds it decides how.
+- **A run that caused a change cannot be deleted**, nor its key
+  changed: the reference says nothing of what happens then, and SQLite
+  refuses. A history that loses its cause when a run is tidied away
+  would not be one.
+- **Nothing forbids two changes that are alike.** A field can go from
+  one value to another, back, and there again. The order of the
+  changes to a field is the order of their keys, which the store
+  gives in the order the rows were stored and never gives twice.
+- **No index yet.** The history of one record and the changes one run
+  caused will each be found through an index (DAT-049). SQLite
+  indexes nothing by itself for a reference, so until then both read
+  the whole table, which holds no rows yet.
+- **Not collected records.** The table is on the list of the tables
+  that hold no collected records (see "Every table says where its
+  records came from, or why not").
 
 ## What the store relies on in SQLite
 

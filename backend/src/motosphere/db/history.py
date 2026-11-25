@@ -28,6 +28,7 @@ __all__ = [
     "MIGRATIONS",
     "index_the_runs_of_a_source",
     "make_the_collection_runs",
+    "make_the_record_changes",
     "make_the_source_offers",
     "make_the_sources",
 ]
@@ -168,9 +169,51 @@ def index_the_runs_of_a_source(connection: Connection) -> None:
     )
 
 
+def make_the_record_changes(connection: Connection) -> None:
+    """5: the table of the changes to records, ``record_change`` (DAT-009)."""
+    white_space = (
+        "char(9, 10, 11, 12, 13, 28, 29, 30, 31, 32, 133, 160, 5760, 8192, 8193, 8194, 8195, "
+        "8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288)"
+    )
+
+    def not_empty(column: str) -> str:
+        return (
+            f"CONSTRAINT ck_record_change_{column}_not_empty "
+            f"CHECK (trim({column}, {white_space}) != '')"
+        )
+
+    connection.exec_driver_sql(
+        f"""
+        CREATE TABLE record_change (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            record_table TEXT NOT NULL,
+            record_id INTEGER NOT NULL,
+            field TEXT NOT NULL,
+            old_value TEXT,
+            new_value TEXT,
+            collection_run_id INTEGER,
+            decided_by TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            CONSTRAINT ck_record_change_record_id_positive CHECK (record_id > 0),
+            CONSTRAINT ck_record_change_new_value_not_old_value
+                CHECK (old_value IS NOT new_value),
+            CONSTRAINT ck_record_change_caused_by_a_run_or_a_person
+                CHECK ((collection_run_id IS NULL) != (decided_by IS NULL)),
+            CONSTRAINT fk_record_change_collection_run_id_collection_run
+                FOREIGN KEY(collection_run_id) REFERENCES collection_run (id),
+            {not_empty("record_table")},
+            {not_empty("field")},
+            {not_empty("decided_by")}
+        ) STRICT
+        """
+    )
+
+
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
     make_the_collection_runs,
     index_the_runs_of_a_source,
+    make_the_record_changes,
 )

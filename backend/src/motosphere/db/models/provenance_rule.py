@@ -48,6 +48,10 @@ NOT_COLLECTED: Final[Mapping[str, str]] = {
         "A run is the store's own record of its work: it is what collects, "
         "and not what is collected."
     ),
+    "record_change": (
+        "A change is the store's own record of what it did to a record. Where the new "
+        "value came from is said by the record, and by the run that caused the change."
+    ),
     "source": (
         "A source is where records come from. A person describes it and reads "
         "its terms: it is not collected from a source itself."
