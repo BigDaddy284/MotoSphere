@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 54 | 32 |
+| 2 | Data store and published data (DAT, PUB) | 54 | 33 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-045 – An index for the records of one source.
+**Current task:** DAT-046 – A table of collected records without its provenance is named.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1526,7 +1526,7 @@ records made without the columns, DAT-046.
 - **Plan:** `docs/plans/DAT-008.md`
 
 ### DAT-045 – An index for the records of one source
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** SQLite finds the records that came from one source without reading a whole table, in every table of collected records.
 - **Description:** Added on 2026-11-25 (PLAN-027), cut out of DAT-008, as the index of the runs was cut out of their table (PLAN-024, DAT-042). One word in `Collected`: the column `source_id` says `index=True`, so every table of a model of collected records has an index over that column, which the naming rule names `ix_<table>_source_id`. Without it SQLite reads the whole of every such table to find the records of one source: whenever the store asks what it holds of a source, and by itself every time a source is to be deleted. Settled in the planner's trial: the index is over the source alone and does not go on with the moment a record was last seen. Five things asked about the records of one source (which came from it, how many, whether any, which were not seen since a moment, and the taking away of its records) are each answered by this index in one step, and no code asks for more yet; an index over two columns would be paid for in every table of collected records at every writing, so the task whose code first asks such a question reads SQLite's plan with real numbers of rows and widens the index if it is worth it. The index is said on the column and not in `__table_args__`, so that a model which says `__table_args__` itself keeps it. It is not unique and is over all rows. SQLite's own account of the deleting of a source (`EXPLAIN QUERY PLAN`) names the look into each table that refers to a source, so the tests read from SQLite itself that this look goes by the index, on every machine the gates run on. Two tests of DAT-008 held that such a table has no index, one of the model and one of the file; both now hold this one, and no other existing test changes. No real table has the set yet, so there is no migration. The planner's trial has 25 new tests and detects 16 of 16 new planted defects and 90 of 90 of DAT-008's and DAT-043's.
 - **Acceptance criteria:**
@@ -1538,10 +1538,10 @@ records made without the columns, DAT-046.
   6. Two existing tests change, the two of DAT-008 that held such a table to have no index, and no other; all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
   7. `python scripts/check.py` reports 19 of 19 gates and 1836 tests (backend tests 1206); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 11 new unit tests in four functions, of the index in the model; 14 new integration tests in six functions, in a store the migrations built, with the tables of two models of the tests' own made beside the real ones, which read SQLite's plans for statements the code really sends and for the deleting of a source; the two changed tests; every other existing test, unchanged. Nine planted defects by the builder and the planner's own, those of DAT-008 and DAT-043 among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #121 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1836 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1206: 1181 before, 25 new); 16 planted defects in the index, 16 of 16 detected, the plan's nine prove-it steps among them with the results the plan gives; 67 of the planted defects of DAT-008 and the 23 of DAT-043 planted again, because `provenance.py` changes, 90 of 90 detected. On GitHub, read by the planner from the runs and job logs: run 45705440930 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1836 passed, 0 failed, 0 skipped.", with 1206 backend tests on both machines, the three jobs after the gates skipped; run 45707939048 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1836 / 0 tests (repository 41, script tests 206, backend 1206, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 106 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-25. All 8 files are identical to the planner's trial. Two existing tests changed, the two that held such a table to have no index, and no package was added. What SQLite's plans say was read from the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `50ac0f1`
 - **Plan:** `docs/plans/DAT-045.md`
 
 ### DAT-046 – A table of collected records without its provenance is named
