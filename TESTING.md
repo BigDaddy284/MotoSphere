@@ -915,6 +915,64 @@ the whole of it matters.
 test, in their order; no text has two names; and each is words in small
 letters with one space between two.
 
+## Where a collected record came from
+
+The columns every collected record has (`Collected`, DAT-008) are in no
+real table yet, so both files of tests make models of collected records
+of their own, in a schema apart from the real one: one model that says
+nothing else, and one that says more of its table.
+
+`backend/tests/unit/test_db_models_collected.py`, without a store: the
+table of a model that says nothing else is the key, the eight columns in
+their order and the two times, and the columns a model names come before
+the set; each of the eight is of its type and of its list; only the day
+of publishing may be without a value; no column gives itself a value,
+and none is a key, unique or indexed; the record refers to `source.id`
+by a reference the naming rule names, and says nothing of what happens
+when its source is deleted; the table has the check of its two times and
+the check of every column whose type brings one, with the texts of the
+three lists in their order; a model that gives its table a check and a
+rule of its own keeps both and the checks of the set; every table has a
+check of its own; the tables break none of the rules every table keeps;
+and `Collected` itself is no table.
+
+`backend/tests/integration/test_collected.py`, in a store that the
+migrations built, so that the source a record refers to is the real
+table of the sources. What must be refused is also written past the
+model, with plain SQL.
+
+- **Stored and read back.** A record is in the file as text in the
+  store's forms, and comes back as it was given. The file has the eleven
+  columns as the model says them, the reference to `source`, no index,
+  and the six checks by name, four of them letter for letter.
+- **What may be unknown.** The day of publishing may be without a value,
+  through the model and past it. A record without one of the other seven
+  is refused, each in three ways.
+- **The source.** A record of a source that is not there is refused. A
+  source that records came from cannot be deleted, through the model or
+  past it, and its key cannot be changed; one that nothing came from
+  can, and so can one whose records are gone. A second table of
+  collected records holds its source in the same way. A record can be
+  given to another source that exists, and to no other.
+- **The address, the lists and the day.** An address that is not a web
+  address is refused, in four kinds. Text that is not on the list of its
+  column is refused, in 17 kinds, among them a text of one of the other
+  two lists; a value of another list is refused before anything is
+  written; every value of each list is stored as its text and read
+  back. A day of publishing that is not a day is refused, in six kinds,
+  and a time is not taken for it. A record published the day after it
+  was collected, by the clock of UTC, is stored.
+- **The two times.** A record last seen a millionth of a second before
+  it was collected is refused; at the same moment, a moment after and a
+  week later it is stored. The two are compared as moments whatever
+  offset they were given in: 10:29 in Paris is before 09:30 in UTC. A
+  record that is seen again says when, keeps when it was collected, and
+  its row says that it was changed.
+- **Changes.** A change that breaks the set is refused, in seven kinds,
+  and the row stays as it was.
+- **A model that says more.** Its table refuses what the set refuses and
+  what the model said, and stores a row with nothing wrong.
+
 ## How far a collected record can be trusted
 
 `backend/tests/unit/test_db_models_provenance.py` tests the two lists of

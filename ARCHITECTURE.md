@@ -317,8 +317,13 @@ pipeline's command line. The settings and logging modules stay.
   published-at, last-verified-at, extraction method, confidence, verification
   status). The last two are one of a list each: three levels of confidence,
   and the four statuses the design tells apart, from official to unverified
-  (DAT-043, DATABASE.md). Changes are recorded in a history table rather
-  than overwritten.
+  (DAT-043, DATABASE.md). The eight are one set of columns, said once:
+  a model of collected records is a subclass of `Collected` and not of
+  `Base` itself, and its table has them all, with the reference to its
+  source and the check that a record was not last seen at its source
+  before it was collected. Only the day of publishing may be unknown
+  (DAT-008). Changes are recorded in a history table rather than
+  overwritten.
   Ambiguous or conflicting records go to a review queue; uncertain identities
   are never merged automatically.
 
