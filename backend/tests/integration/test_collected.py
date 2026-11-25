@@ -236,18 +236,7 @@ def test_in_the_file_the_set_is_as_the_model_says_it(made: Engine) -> None:
                 "PRAGMA foreign_key_list(proof_record)"
             )
         ]
-        indexes = [
-            (name, bool(unique), made_by, bool(partial))
-            for _, name, unique, made_by, partial in connection.exec_driver_sql(
-                "PRAGMA index_list(proof_record)"
-            )
-        ]
-        indexed = [
-            name
-            for _, _, name in connection.exec_driver_sql(
-                "PRAGMA index_info(ix_proof_record_source_id)"
-            )
-        ]
+        indexes = connection.exec_driver_sql("PRAGMA index_list(proof_record)").all()
 
     assert columns == [
         ("id", "INTEGER", True, None, True),
@@ -263,10 +252,7 @@ def test_in_the_file_the_set_is_as_the_model_says_it(made: Engine) -> None:
         ("updated_at", "TEXT", True, None, False),
     ]
     assert references == [("source_id", "source", "id", "NO ACTION", "NO ACTION")]
-    # One index, over the source of a record alone: two rows can be alike in
-    # it, a statement made it, and it is over all rows.
-    assert indexes == [("ix_proof_record_source_id", False, "c", False)]
-    assert indexed == ["source_id"]
+    assert indexes == []
 
 
 def test_the_file_has_the_checks_of_the_set_by_name_and_letter_for_letter(made: Engine) -> None:

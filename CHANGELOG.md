@@ -252,11 +252,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   refuses a record of a source that is not there, the deleting of a
   source that records came from, and a record last seen at its source
   before it was collected. No table has the set yet (DAT-008).
-- An index over the source of a collected record, which `Collected`
-  gives to every table with the set. SQLite goes straight to the records
-  of one source, where it read the whole table, also when a source is to
-  be deleted and it looks whether records came from it; the tests read
-  that from SQLite itself (DAT-045).
 
 ### Removed
 

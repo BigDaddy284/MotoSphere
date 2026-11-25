@@ -322,10 +322,8 @@ pipeline's command line. The settings and logging modules stay.
   `Base` itself, and its table has them all, with the reference to its
   source and the check that a record was not last seen at its source
   before it was collected. Only the day of publishing may be unknown
-  (DAT-008). Every such table has an index over the source of its
-  records, so that the records of one source are found, and a source is
-  deleted, without reading a whole table (DAT-045). Changes are recorded
-  in a history table rather than overwritten.
+  (DAT-008). Changes are recorded in a history table rather than
+  overwritten.
   Ambiguous or conflicting records go to a review queue; uncertain identities
   are never merged automatically.
 
