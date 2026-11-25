@@ -726,8 +726,7 @@ files in every test.
 (`motosphere.db.history`, DAT-006), each on a real SQLite file. The
 migrations are named in their order, so one that is moved, taken out or
 given another name fails; the list the store is migrated with is that
-list itself; the module gives every migration, and their list, by name
-(DAT-009); each migration is given to a store at the version before it,
+list itself; each migration is given to a store at the version before it,
 a test for each, and brings it to its own version; the first makes the
 table `source` and nothing else, in a file that then carries MotoSphere's
 mark; the second makes the table `source_offer` in a store that has a
@@ -736,11 +735,7 @@ source, and the source is as it was (DAT-040); the third makes the table
 as they were (DAT-007); the fourth makes the index of the runs of one
 source in a store that has runs and had no index, and the runs are as
 they were, and it fails, with the store left at its version, where an
-index of its name is there already (DAT-042); the fifth makes the table
-`record_change` in a store that has a source and a run, and both are as
-they were, with the index of the runs, and it fails, with the store
-left at its version, where a table of its name is there already
-(DAT-009); a store with the newest
+index of its name is there already (DAT-042); a store with the newest
 schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -1018,7 +1013,7 @@ hand, each in a schema of its own, and two models of the tests' own,
 subclasses of the real `Collected`, hold the rule to what a model of
 collected records really gets.
 
-- **The real schema** breaks no rule. Each of its four tables is named
+- **The real schema** breaks no rule. Each of its three tables is named
   as soon as it is taken off the list, in the sentences the rule has
   for it, so the rule does look at the real tables. Every table on the
   list has a reason, and no two have the same.
@@ -1048,44 +1043,6 @@ collected records really gets.
   then table by table by the alphabet, and for each table its missing
   columns, its columns in the order of the set, its index and its
   check.
-
-## The changes to records
-
-`backend/tests/integration/test_record_change.py` tests the table
-`record_change` (DAT-009) in a store that the migrations built, on a
-real SQLite file. Every refusal is tested twice where the model could
-stand in the way: through the model, and with a row given to SQLite
-past it.
-
-- **The table in the file** is as the model says it: its columns in
-  their order, with their kinds and which may be without a value; its
-  one reference, to the runs; no index; a strict table; and its six
-  checks by name.
-- **What is stored is read back.** A change a run caused and a change
-  a person decided, each with every column. Eight pairs of values are
-  kept as they were given: no value on either side, empty text, a
-  capital letter, a space at the end, "1" and "1.0".
-- **A change that changed nothing is refused**, also where the field
-  had no value and has none.
-- **The cause.** A change that nothing caused is refused, and one that
-  a run and a person both caused. The run must exist. A run that
-  caused a change cannot be deleted, nor its key changed, and the
-  change is as it was; a run that caused none can be deleted.
-- **What a change cannot be without**: the table, the key and the
-  field of its record. The names of the table, of the field and of
-  the person are not empty, and nothing but white space is empty too.
-  The key of a record is above 0.
-- **The table is strict**: a word for a key, a key with a fraction and
-  bytes for a text are refused by SQLite, and a number given for a
-  value is kept as its text.
-- **The order of the changes** to a field is the order of their keys,
-  with two changes that are alike among them.
-- **What the table does not hold**: a change to a record of a table
-  that is not there is stored. The test is there so that this is not
-  taken for something the table does.
-
-That the model and the fifth migration say the same table is proven by
-the test of the models and the migrations.
 
 ## How far a collected record can be trusted
 

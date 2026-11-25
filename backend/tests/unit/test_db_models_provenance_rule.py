@@ -190,7 +190,6 @@ def test_the_real_schema_breaks_no_rule_of_where_records_came_from() -> None:
                 NO_INDEX.format("collection_run"),
             ],
         ),
-        ("record_change", [WITHOUT.format("record_change", 8, THE_EIGHT)]),
         ("source", [WITHOUT.format("source", 8, THE_EIGHT)]),
         (
             "source_offer",
@@ -200,7 +199,7 @@ def test_the_real_schema_breaks_no_rule_of_where_records_came_from() -> None:
             ],
         ),
     ],
-    ids=["collection_run", "record_change", "source", "source_offer"],
+    ids=["collection_run", "source", "source_offer"],
 )
 def test_every_table_of_the_real_schema_is_named_as_soon_as_it_is_off_the_list(
     name: str, breaks: list[str]
