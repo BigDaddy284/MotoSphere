@@ -1545,15 +1545,25 @@ records made without the columns, DAT-046.
 - **Plan:** `docs/plans/DAT-045.md`
 
 ### DAT-046 – A table of collected records without its provenance is named
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** A table of collected records that was made without the set of DAT-008, or with a part of it changed, is named in plain words, and a test holds the real schema to it.
-- **Description:** Added on 2026-11-25 (PLAN-027), cut out of DAT-008, as the rule of the two times was cut out of them (PLAN-019, DAT-032). Nothing in DAT-008 stops a model from being a subclass of `Base` where it should be one of `Collected`, or from saying a column of the set again in its own way. The planner's trial settles how the rule knows which tables hold collected records (a list of the store's own tables that do not, each with its reason, is the first thing to try), and whether the rule is part of `broken_rules` or stands next to it.
-- **Acceptance criteria:** a table that is not one of the store's own and is without the set is named; a table that has a column of the set otherwise than the set says it, or is without the reference to its source or without the check of its two times, is named; each break is one plain sentence; the real schema breaks no rule, and the test that holds it fails on a table that does.
-- **Tests required:** unit tests with schemas made for them; a test of the real schema; planted defects, those of the rules every table keeps among them where their file changes; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-25 (PLAN-027), cut out of DAT-008, as the rule of the two times was cut out of them (PLAN-019, DAT-032). Nothing in DAT-008 stops a model from being a subclass of `Base` where it should be one of `Collected`, or from saying a column of the set again in its own way. One new module, `motosphere.db.models.provenance_rule`, with one function, `broken_provenance(schema, not_collected)`, which says in one plain sentence for each break which tables of a schema do not say where their records came from, and one list, `NOT_COLLECTED`, which has the three tables of the real schema that hold no collected records, each with its reason. Settled in the planner's trial: every table holds collected records unless the list names it, so a new table that nobody thought about is named; the list is given to the function, so that the tests give their own; the rule stands beside `broken_rules` and in a module of its own, so neither `base.py` nor `provenance.py` changes; the rule says the set a second time and does not take it from `Collected`, so a change to the set is made in two places and a test fails until they agree; a column is as the set has it by its type and list, by whether a row can be without it, by being given no value, and by what it refers to, and the order of the columns is not held; the index is one over `source_id` alone, over all rows and not unique, whatever it is called; the check is looked for by its name and letter for letter; all missing columns of a table are one sentence, and the index and the check are not asked for where a column they need is missing; the list is held to the schema too, so a name on it that is no table is named, and so is a table on it that has all eight columns. All three real tables are on the list, so a second test takes each off in turn and holds the rule to what it then says. No table, no migration, no new package, no existing test changed. The planner's trial has 74 new tests and detects 86 of 86 planted defects.
+- **Acceptance criteria:**
+  1. `broken_provenance` gives an empty list for the real schema with `NOT_COLLECTED`, and for the tables of models that are subclasses of `Collected`, also one that has rules, a check and indexes of its own.
+  2. A table that is not on the list and is without columns of the set is named in one sentence, which names the missing columns in the order of the set and says both ways out.
+  3. A column of the set that is of another type or list, that may be without a value where the set says otherwise, that is given a value nobody said, or that does not refer as the set says, is named.
+  4. A table without an index over `source_id` alone, over all rows and not unique, is named; so is a table without the check of its two times, by its name and letter for letter. Neither is asked for where a column it needs is missing.
+  5. A table on the list is not looked at. A name on the list that is no table is named, and so is a table on the list that has all eight columns.
+  6. Each break is one plain sentence, and the breaks come in one order: the list, then table by table, and rule by rule.
+  7. Each table of the real schema is named as soon as it is off the list; every table on `NOT_COLLECTED` has a reason of its own.
+  8. No existing test changed, and all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  9. `python scripts/check.py` reports 19 of 19 gates and 1910 tests (backend tests 1280); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 74 new unit tests in 21 functions, with tables made by hand in schemas of their own, two models of the tests' own that are subclasses of `Collected`, and the real schema; every existing test, unchanged. Fourteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-046.md`
 
 ### DAT-009 – Record change history
 - **Status:** NOT STARTED
