@@ -17,8 +17,11 @@ the code, as one set that a model of collected records takes whole
 (DAT-008; see "Where a collected record came from"), and so are the two
 lists that say how far such a record can be trusted (DAT-043; see "How
 far a collected record can be trusted"). No table has them yet: none of
-the three holds collected records. The decisions the store rests on are
-recorded below, from task DAT-001 on.
+the three holds collected records, and a list in the code says of each
+why not. A rule names every table that neither has the set nor is on
+that list (DAT-046; see "Every table says where its records came from,
+or why not"). The decisions the store rests on are recorded below, from
+task DAT-001 on.
 
 ## Where the store's file is
 
@@ -1362,10 +1365,74 @@ that makes that table.
   collects says the way it used.
 - **The address is stored as it was given** (see "A web address"), so
   two spellings of one address are two addresses here too.
-- **Not in the set.** Nothing yet names a table of collected records
-  that was made without the set, or with a column of it changed
-  (DAT-046). And a record does not say which run collected it: what a
-  record was before it was changed is for its history (DAT-009).
+- **Not in the set.** A record does not say which run collected it:
+  what a record was before it was changed is for its history (DAT-009).
+
+## Every table says where its records came from, or why not
+
+Nothing in `Collected` stops a model from being a subclass of `Base`
+where it should be one of `Collected`, or from saying a column of the
+set again in its own way. `broken_provenance`, in
+`motosphere.db.models.provenance_rule` (DAT-046), says in plain words
+which tables of a schema do so, one sentence for each break, and a test
+holds the real schema to it.
+
+- **A table holds collected records unless a list says that it does
+  not.** So a new table that nobody thought about is named. The list
+  of the real schema is `NOT_COLLECTED`, in the same module, and has
+  each table with its reason:
+
+  | Table | Why it holds no collected records |
+  |---|---|
+  | `collection_run` | A run is the store's own record of its work: it is what collects, and not what is collected |
+  | `source` | A source is where records come from. A person describes it and reads its terms: it is not collected from a source itself |
+  | `source_offer` | What a source offers is part of the description of the source, which a person gives |
+
+  Whoever adds a table that holds nothing collected puts it on the
+  list, with the reason, and the reason is read with the change.
+- **What a table of collected records must have.** The eight columns,
+  each as the set has it: of its type, and of its list where it is of
+  one; a row cannot be without it, unless it is the day the record was
+  published; neither the table nor the store's code gives it a value;
+  `source_id` refers to `source.id` and says nothing of what happens
+  when the source is deleted or its key changed, and no other column
+  of the set refers to anything. An index over `source_id` alone, over
+  all rows, in which two rows can be alike. And the check of its two
+  times, by the name the naming rule gives it and letter for letter.
+- **What it need not have.** The rule does not hold the order of the
+  columns, and says nothing of what else a table has: a model can have
+  rules, checks and indexes of its own, also an index that begins with
+  the source and goes on. That a name was given by hand is for the
+  rules every table keeps to say, not for this one.
+- **One sentence for the missing columns of a table**, which names
+  them in the order of the set and says what to do: "The table track
+  is without 8 of the eight columns every table of collected records
+  has (source_id, …): its model must be a subclass of Collected, or
+  the table must be on the list of the tables that hold no collected
+  records, with the reason." A column that is there and not as the set
+  has it, a missing index and a missing check have a sentence each.
+  The index is not asked for where there is no `source_id`, nor the
+  check where one of its two times is missing: the missing column
+  says it all.
+- **The list is held to the schema as well.** A name on it that is no
+  table is named: a list that names what is not there is a list
+  nobody reads. And a table on it that has all eight columns is named,
+  because it holds collected records after all and must come off the
+  list. A table on the list is not looked at otherwise: the runs and
+  the offers have a `source_id` of their own, which is not the set.
+- **The set is said twice, and that is meant.** The rule does not take
+  the columns from `Collected`: it says them again, in its own words.
+  A change to the set is therefore made in two places, and a test,
+  which gives the tables of models of `Collected` to the rule, fails
+  as long as the two do not agree.
+- **Beside `broken_rules`, not a part of it** (see "The rules every
+  table keeps"). `Base` knows nothing of sources, and most of the
+  schemas that function is asked about hold nothing that was
+  collected. The real schema is held to both, by a test each.
+- **What the rule cannot see.** Whether the rows of a table were
+  collected is a person's judgement, and the list is where it is
+  written down. The rule cannot tell a good reason from a bad one; it
+  makes sure that there is one to read.
 
 ## How far a collected record can be trusted
 

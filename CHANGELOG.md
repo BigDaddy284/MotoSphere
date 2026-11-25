@@ -257,6 +257,13 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of one source, where it read the whole table, also when a source is to
   be deleted and it looks whether records came from it; the tests read
   that from SQLite itself (DAT-045).
+- A rule that names every table which does not say where its records
+  came from, `broken_provenance` in
+  `motosphere.db.models.provenance_rule`. A table must have the columns
+  of `Collected` as it gives them, with the index over its source and
+  the check of its two times, unless it is on the list of the tables
+  that hold no collected records, `NOT_COLLECTED`, which has each with
+  its reason. A test holds the real schema to it (DAT-046).
 
 ### Removed
 
