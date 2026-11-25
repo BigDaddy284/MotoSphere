@@ -927,9 +927,13 @@ table of a model that says nothing else is the key, the eight columns in
 their order and the two times, and the columns a model names come before
 the set; each of the eight is of its type and of its list; only the day
 of publishing may be without a value; no column gives itself a value,
-and none is a key, unique or indexed; the record refers to `source.id`
-by a reference the naming rule names, and says nothing of what happens
-when its source is deleted; the table has the check of its two times and
+and none is a key or unique; the table has one index, over the source of
+its records alone, and no other column of the set has one; a model that
+gives its table an index of its own keeps it and the index of the set;
+every table has an index of its own, named by the naming rule (DAT-045);
+the record refers to `source.id` by a reference the naming rule names,
+and says nothing of what happens when its source is deleted; the table
+has the check of its two times and
 the check of every column whose type brings one, with the texts of the
 three lists in their order; a model that gives its table a check and a
 rule of its own keeps both and the checks of the set; every table has a
@@ -943,8 +947,9 @@ model, with plain SQL.
 
 - **Stored and read back.** A record is in the file as text in the
   store's forms, and comes back as it was given. The file has the eleven
-  columns as the model says them, the reference to `source`, no index,
-  and the six checks by name, four of them letter for letter.
+  columns as the model says them, the reference to `source`, the one
+  index over the source, and the six checks by name, four of them letter
+  for letter.
 - **What may be unknown.** The day of publishing may be without a value,
   through the model and past it. A record without one of the other seven
   is refused, each in three ways.
@@ -972,6 +977,34 @@ model, with plain SQL.
   and the row stays as it was.
 - **A model that says more.** Its table refuses what the set refuses and
   what the model said, and stores a row with nothing wrong.
+
+`backend/tests/integration/test_collected_index.py` tests the index over
+the source of a record (DAT-045), in a store that the migrations built,
+with two tables of the tests' own and records of three sources. An index
+is there to be used, so the tests take the statements as the store's
+code sends them and ask SQLite itself how it will answer each (`EXPLAIN
+QUERY PLAN`).
+
+- **In the file.** Each table has the index by its name, over
+  `source_id` alone, as a statement made it; a model's own index is
+  there beside it.
+- **What is asked about the records of one source**, five questions:
+  which records came from it, how many, whether any did, which of them
+  were not seen since a moment, and the taking away of its records.
+  Each is one statement and SQLite answers it in one step, by the
+  index. Where the index alone has the answer SQLite says so (`USING
+  COVERING INDEX`).
+- **Deleting a source.** SQLite refuses to delete a source that records
+  came from. Its account of the deleting names the look into each table
+  of collected records, by that table's index, and reads no whole table
+  of any kind.
+- **Without the index.** The same statements in the same store, with the
+  indexes dropped: each of the five reads the whole table, and so does
+  the deleting of a source, in both tables.
+- **The index changes no answer.** What the store answers about the
+  records of each of three sources and of one that is not there, and
+  the refusal to delete a source, are the same with the index and
+  without it.
 
 ## How far a collected record can be trusted
 
