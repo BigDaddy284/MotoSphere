@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 52 | 31 |
+| 2 | Data store and published data (DAT, PUB) | 54 | 31 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -895,7 +895,10 @@ cut before its trial (PLAN-025): DAT-043 has the two lists that say how
 far a record can be trusted, and DAT-008 keeps the columns. Its trial
 then showed that one of those columns, the day a record was published,
 needs a type the store did not have, and the type was put in front of it
-as a task of its own (PLAN-026): DAT-044.
+as a task of its own (PLAN-026): DAT-044. The trial of the columns then
+cut two more things out of DAT-008 (PLAN-027): the index for the records
+of one source, DAT-045, and the rule that names a table of collected
+records made without the columns, DAT-046.
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -1500,11 +1503,45 @@ as a task of its own (PLAN-026): DAT-044.
 - **Plan:** `docs/plans/DAT-044.md`
 
 ### DAT-008 – Provenance on every collected record
+- **Status:** IN PROGRESS
+- **Objective:** Every collected record says where it came from, when, how, and how far it can be trusted (DESIGN §8): one set of columns, said once, that a model of collected records takes whole.
+- **Description:** One new class, `Collected`, in `motosphere.db.models.provenance`, next to the two lists of DAT-043, which was cut out of this task on 2026-11-24 (PLAN-025). It is a subclass of `Base` that is no table itself, and a model whose records are collected is a subclass of it and not of `Base`. Its table then has eight columns after the columns the model names and before the two times: `source_id`, which refers to `source.id`; `source_address`, a web address (DAT-037); `collected_at`, a time; `published_on`, a calendar day, of the type of DAT-044, which was put in front of this task on 2026-11-24 (PLAN-026); `last_verified_at`, a time; `extraction_method`, one of the ways of collecting (`CollectionMethod`); `confidence` and `verification_status`, of the lists of DAT-043. Settled in the planner's trial: a class to be a subclass of and not a mixin beside `Base`, so that there is one parent and no order of parents to get wrong; that only the day of publishing may be without a value, and that no column gives itself a value, because a default would be a value nobody read anywhere (CLAUDE.md §11), `low` and `unverified` being the words for knowing little; that the extraction method is of the list of the ways of collecting, and is kept with the record although the source says its way too, because that can change; that `last_verified_at` is when the source was last seen to say what the row says, which for a new record is the moment it was collected, so it is never unknown; one check across two columns, `ck_<table>_last_verified_at_not_before_collected_at`, which `Collected` gives to each table itself in `__init_subclass__`, so that a model which says `__table_args__` keeps it; that the two times are compared as text, which is the order of the moments; that nothing holds the day of publishing to the moment of collecting, because a page dated the 26th in New Zealand is read on the 25th by the clock of UTC; and that SQLite refuses to delete a source that records came from, with nothing deleted along with it. Tables made for the tests prove the set, in a store the migrations built, so the source they refer to is the real table; the real tables use the set from DAT-011 on. Cut out on 2026-11-25 (PLAN-027): the index over `source_id` (DAT-045) and the rule that names a table of collected records without the set (DAT-046). No table, no migration, no new package, no existing test changed. The planner's trial has 117 new tests and detects 68 of 68 new planted defects and 23 of 23 of DAT-043's.
+- **Acceptance criteria:**
+  1. The table of a model that is a subclass of `Collected` has the key, the columns the model names, the eight columns of the set in their order and the two times, in the model and in the real SQLite file. `Collected` itself is no table, and the real schema is as it was.
+  2. Each of the eight is of its type and of its list; only `published_on` may be without a value; no column of the set gives itself a value, and none is a key, unique or indexed.
+  3. A record is stored with all eight and read back as it was given, and in the file it is text in the store's forms. Every value of each of the three lists is stored as its text and read back.
+  4. A record without one of the seven that must be said is refused by SQLite, through the model and past it. The day of publishing may be unknown.
+  5. A record of a source that is not there is refused. A source that records came from cannot be deleted and its key cannot be changed, in either of two tables of collected records; one whose records are gone can be deleted.
+  6. An address that is not a web address, text that is not on the list of its column, and a day of publishing that is not a day are refused by SQLite with the name of the check; a value of another list and a time given for the day are refused before anything is written.
+  7. A record last seen at its source before it was collected is refused with the name of the check, through the model and past it, also when the two times were given in different offsets; the same moment and every later one are taken. A record that is seen again says when and keeps when it was collected.
+  8. A change that breaks the set is refused, in seven kinds, and the row stays as it was.
+  9. A model that says more of its table keeps what it said and has every check of the set; every table has a check of its own; the tables break none of the rules every table keeps.
+  10. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  11. `python scripts/check.py` reports 19 of 19 gates and 1811 tests (backend tests 1181); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 42 new unit tests in fourteen functions, of the columns, their order, their types, the reference and the checks, with two models of the tests' own; 75 new integration tests in 24 functions, in a store the migrations built, with the tables of those models made beside the real ones, read with plain SQL, past the model; every existing test, unchanged. Thirteen planted defects by the builder and the planner's own, all of DAT-043's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-008.md`
+
+### DAT-045 – An index for the records of one source
 - **Status:** NOT STARTED
-- **Objective:** Every collected record says where it came from, when, how, and how far it can be trusted (DESIGN §8).
-- **Description:** One reusable set of columns for collected records: source, source address, collected at, the day it was published where known, last verified at, extraction method, confidence and verification status. The last two are of the lists of DAT-043, which was cut out of this task on 2026-11-24 (PLAN-025). The day a record was published is a calendar day, of the type of DAT-044, which was put in front of this task on 2026-11-24 (PLAN-026): most sources say a day and no time, and no time is invented for it. Unknown values are null, never invented. A test table proves the set; the real tables use it from DAT-011 on. The trial settles whether a record may be without a confidence or a status, and whether the extraction method is of the list of the ways of collecting (`CollectionMethod`).
-- **Acceptance criteria:** a record without a source or without a collection time is refused; confidence and verification status accept only their listed values; a published date may be unknown; a source that records refer to cannot be deleted; the convention test of DAT-005 knows which tables must carry provenance and fails on one that does not.
-- **Tests required:** integration tests against a real SQLite file; planted defects; the full run of all gates on both machines.
+- **Objective:** SQLite finds the records that came from one source without reading a whole table, in every table of collected records.
+- **Description:** Added on 2026-11-25 (PLAN-027), cut out of DAT-008, as the index of the runs was cut out of their table (PLAN-024, DAT-042). `Collected` gives each table of collected records an index over `source_id`, named by the naming rule. Without it SQLite reads the whole of every such table to find the records of one source: when a source is to be deleted, and whenever the collectors ask what the store holds of a source. The planner's trial settles whether the index is over the source alone or goes on with the moment a record was last seen, by reading the plans SQLite makes for the statements that are asked. No real table has the set yet, so there is no migration.
+- **Acceptance criteria:** every table of a model of collected records has the index, by the name the rule gives it, in the model and in the real SQLite file; SQLite's own plan for finding the records of one source, and for deleting a source, goes by the index and reads no whole table, read from SQLite itself on every machine the gates run on; the test of DAT-008 that holds such a table to have no index is changed to hold this one, and no other existing test changes.
+- **Tests required:** unit tests of the index in the model; integration tests against a real SQLite file that read SQLite's plans; planted defects, those of DAT-008 among them; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-046 – A table of collected records without its provenance is named
+- **Status:** NOT STARTED
+- **Objective:** A table of collected records that was made without the set of DAT-008, or with a part of it changed, is named in plain words, and a test holds the real schema to it.
+- **Description:** Added on 2026-11-25 (PLAN-027), cut out of DAT-008, as the rule of the two times was cut out of them (PLAN-019, DAT-032). Nothing in DAT-008 stops a model from being a subclass of `Base` where it should be one of `Collected`, or from saying a column of the set again in its own way. The planner's trial settles how the rule knows which tables hold collected records (a list of the store's own tables that do not, each with its reason, is the first thing to try), and whether the rule is part of `broken_rules` or stands next to it.
+- **Acceptance criteria:** a table that is not one of the store's own and is without the set is named; a table that has a column of the set otherwise than the set says it, or is without the reference to its source or without the check of its two times, is named; each break is one plain sentence; the real schema breaks no rule, and the test that holds it fails on a table that does.
+- **Tests required:** unit tests with schemas made for them; a test of the real schema; planted defects, those of the rules every table keeps among them where their file changes; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
