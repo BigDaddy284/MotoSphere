@@ -243,15 +243,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   form, by a check; the 30th of February is refused. Only a `date` is
   stored: a time is refused, not cut down to its day, and no time of day
   is made up for a day (DAT-044).
-- The columns by which every collected record says where it came from,
-  as one set, `Collected` in `motosphere.db.models.provenance`: its
-  source, the address it was found at, when it was collected, the day it
-  was published where the source says it, when the source was last seen
-  to say it, how it was got, its confidence and its verification status.
-  A model of collected records is a subclass of `Collected`. SQLite
-  refuses a record of a source that is not there, the deleting of a
-  source that records came from, and a record last seen at its source
-  before it was collected. No table has the set yet (DAT-008).
 
 ### Removed
 

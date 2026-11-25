@@ -11,14 +11,11 @@ has three tables: `source`, that of the information sources (DAT-006),
 `source_offer`, which says what kinds of information each of them offers
 (DAT-040; see "The information sources" for both), and `collection_run`,
 the record of every time a source was collected from (DAT-007; see "The
-collection runs"), which has the store's first index (DAT-042). The
-columns by which every collected record says where it came from are in
-the code, as one set that a model of collected records takes whole
-(DAT-008; see "Where a collected record came from"), and so are the two
-lists that say how far such a record can be trusted (DAT-043; see "How
-far a collected record can be trusted"). No table has them yet: none of
-the three holds collected records. The decisions the store rests on are
-recorded below, from task DAT-001 on.
+collection runs"), which has the store's first index (DAT-042). The two
+lists that say how far a collected record can be trusted are in the code
+and in no table yet (DAT-043; see "How far a collected record can be
+trusted"). The decisions the store rests on are recorded below, from
+task DAT-001 on.
 
 ## Where the store's file is
 
@@ -1262,100 +1259,15 @@ nothing yet, so it is passed over.
   a test reads from SQLite itself that all four are answered so ("The
   collection runs", DAT-042).
 
-## Where a collected record came from
-
-Every record MotoSphere collects keeps with it where it came from and
-how far it can be trusted (DESIGN.md §8, CLAUDE.md §11). The design
-names eight things a record keeps. They are eight columns, the same in
-every table of collected records, and they are said once: in
-`Collected`, in `motosphere.db.models.provenance` (DAT-008). A model
-whose records are collected is a subclass of `Collected`, and not of
-`Base` itself:
-
-```python
-class Track(Collected):
-    __tablename__ = "track"
-
-    name: Mapped[NotEmpty]
-```
-
-Its table then has the key, the columns the model names, the eight
-columns of the set, and the two times every table ends with. No table
-has the set yet: the first table of collected records brings it, with
-the migration that makes that table.
-
-| Column | In the design | What it holds | May be without a value |
-|---|---|---|---|
-| `source_id` | Source identity | The source the record was collected from: the key of a row of `source` | No |
-| `source_address` | Original source URL | The address at which it was found: the page, the feed or the file that says it, not the front page of the site. A web address (see "A web address") | No |
-| `collected_at` | Collection timestamp | When what the row says was taken from its source | No |
-| `published_on` | Original publication date where known | The day its source says it was published. A calendar day (see "Calendar days") | Yes: the source does not say |
-| `last_verified_at` | Last verification timestamp | When the source was last seen to say what the row says | No |
-| `extraction_method` | Extraction method | How this record was got: one of the ways of collecting, `CollectionMethod` (see "The information sources") | No |
-| `confidence` | Confidence level | How sure it is that the record says what its source says: `Confidence` (see "How far a collected record can be trusted") | No |
-| `verification_status` | Verification status | What standing the source's word has: `VerificationStatus` (the same section) | No |
-
-- **Only the day a record was published may be unknown**, because not
-  every source says it, and no day is made up for one that does not
-  (CLAUDE.md §11). The other seven are known of every record when it is
-  collected, and whoever stores the record says them: no column of the
-  set gives itself a value. A value the table gave by itself would be a
-  value nobody read anywhere. Where little is known of how far a record
-  can be trusted, the lists have the words for it, `low` and
-  `unverified`, and the collector says them.
-- **A record belongs to a source that exists.** `source_id` refers to
-  `source`, by a reference the naming rule names
-  (`fk_<table>_source_id_source`), and SQLite refuses a record of a
-  source that is not there. It also refuses to delete a source that
-  records came from, or to change its key (`FOREIGN KEY constraint
-  failed`): the records are taken away first, or given to another
-  source. Nothing is deleted along with a source.
-- **The two times.** `collected_at` is when what the row says was taken
-  from its source. `last_verified_at` is when the source was last seen
-  to say so. For a new record they are the same moment. When the source
-  is looked at again and says what it said, only `last_verified_at`
-  moves; when it says something else, the row is changed and both move.
-  A check, `ck_<table>_last_verified_at_not_before_collected_at`,
-  refuses a record that was last seen at its source before it was
-  collected. The two are compared as text, which is the order of the
-  moments, because the store keeps every time in one form (see
-  "Times"). `Collected` gives the check to each table itself, as `Base`
-  gives the checks of the column types, so a model that says more of
-  its table (`__table_args__`) keeps it.
-- **Neither time is the store's clock.** `created_at` says when the row
-  was stored, and the store sets it. A record that was collected
-  yesterday and is stored today says yesterday in `collected_at`.
-- **Seen again is not the same as right.** `last_verified_at` says that
-  a program found the source still saying it. Whether what the source
-  says can be trusted is the verification status, and whether two
-  sources agree is for the review queue (DAT-010).
-- **No check holds the day a record was published to the moment it was
-  collected.** A page dated the 26th in New Zealand is read on the 25th
-  by the clock of UTC, and a test stores such a record.
-- **Why a record says how it was got, when its source says so too.** A
-  source is collected from in one way at a time
-  (`source.collection_method`), and that way can change: a site that
-  was read page by page may offer a feed next year. The record keeps
-  the way it was got. Nothing in the store holds the two to each other,
-  because a check cannot look into another table; the code that
-  collects says the way it used.
-- **The address is stored as it was given** (see "A web address"), so
-  two spellings of one address are two addresses here too.
-- **Not in the set.** No index over `source_id`: until there is one
-  SQLite reads a whole table to find the records of one source, also
-  when a source is to be deleted (DAT-045). Nothing yet names a table of
-  collected records that was made without the set, or with a column of
-  it changed (DAT-046). And a record does not say which run collected
-  it: what a record was before it was changed is for its history
-  (DAT-009).
-
 ## How far a collected record can be trusted
 
-Two of the columns every collected record has are one of a list each:
-its confidence and its verification status (see "Where a collected
-record came from"). The two lists are in
+Every record MotoSphere collects keeps with it where it came from and
+how far it can be trusted (DESIGN.md §8, CLAUDE.md §11). Two of the
+things it keeps are one of a list each: its confidence and its
+verification status. The two lists are in
 `motosphere.db.models.provenance` (DAT-043). No table has a column of
-them yet: the first table of collected records brings them.
+them yet. The columns every collected record has come with DAT-008, and
+the first table of collected records after that.
 
 They are two questions, and neither answers the other:
 
@@ -1406,11 +1318,10 @@ kinds of record the design tells apart (DESIGN.md §6), in its order.
   is sorted by their letters.
 - **No text is on both lists**, so a text read from a row says by
   itself which of the two questions it answers.
-- **A record cannot be without either** (DAT-008). Neither column has
-  a value of its own, and neither may be empty: where little is known,
-  `low` and `unverified` say so. How a record says the way it was got,
-  the design's extraction method, is a column of the list of the ways
-  of collecting (`CollectionMethod`).
+- **What is left to the columns** (DAT-008): whether a record may be
+  without one of the two, and how a record says the way it was got, the
+  design's extraction method, for which the store has the list of the
+  ways of collecting already (`CollectionMethod`).
 
 ## What the store relies on in SQLite
 
