@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 54 | 31 |
+| 2 | Data store and published data (DAT, PUB) | 54 | 32 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-008 – Provenance on every collected record.
+**Current task:** DAT-045 – An index for the records of one source.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1503,7 +1503,7 @@ records made without the columns, DAT-046.
 - **Plan:** `docs/plans/DAT-044.md`
 
 ### DAT-008 – Provenance on every collected record
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Every collected record says where it came from, when, how, and how far it can be trusted (DESIGN §8): one set of columns, said once, that a model of collected records takes whole.
 - **Description:** One new class, `Collected`, in `motosphere.db.models.provenance`, next to the two lists of DAT-043, which was cut out of this task on 2026-11-24 (PLAN-025). It is a subclass of `Base` that is no table itself, and a model whose records are collected is a subclass of it and not of `Base`. Its table then has eight columns after the columns the model names and before the two times: `source_id`, which refers to `source.id`; `source_address`, a web address (DAT-037); `collected_at`, a time; `published_on`, a calendar day, of the type of DAT-044, which was put in front of this task on 2026-11-24 (PLAN-026); `last_verified_at`, a time; `extraction_method`, one of the ways of collecting (`CollectionMethod`); `confidence` and `verification_status`, of the lists of DAT-043. Settled in the planner's trial: a class to be a subclass of and not a mixin beside `Base`, so that there is one parent and no order of parents to get wrong; that only the day of publishing may be without a value, and that no column gives itself a value, because a default would be a value nobody read anywhere (CLAUDE.md §11), `low` and `unverified` being the words for knowing little; that the extraction method is of the list of the ways of collecting, and is kept with the record although the source says its way too, because that can change; that `last_verified_at` is when the source was last seen to say what the row says, which for a new record is the moment it was collected, so it is never unknown; one check across two columns, `ck_<table>_last_verified_at_not_before_collected_at`, which `Collected` gives to each table itself in `__init_subclass__`, so that a model which says `__table_args__` keeps it; that the two times are compared as text, which is the order of the moments; that nothing holds the day of publishing to the moment of collecting, because a page dated the 26th in New Zealand is read on the 25th by the clock of UTC; and that SQLite refuses to delete a source that records came from, with nothing deleted along with it. Tables made for the tests prove the set, in a store the migrations built, so the source they refer to is the real table; the real tables use the set from DAT-011 on. Cut out on 2026-11-25 (PLAN-027): the index over `source_id` (DAT-045) and the rule that names a table of collected records without the set (DAT-046). No table, no migration, no new package, no existing test changed. The planner's trial has 117 new tests and detects 68 of 68 new planted defects and 23 of 23 of DAT-043's.
 - **Acceptance criteria:**
@@ -1519,10 +1519,10 @@ records made without the columns, DAT-046.
   10. No existing test changed, and all of them pass. The type check passes with no `ignore` and the lint with no `noqa`.
   11. `python scripts/check.py` reports 19 of 19 gates and 1811 tests (backend tests 1181); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 42 new unit tests in fourteen functions, of the columns, their order, their types, the reference and the checks, with two models of the tests' own; 75 new integration tests in 24 functions, in a store the migrations built, with the tables of those models made beside the real ones, read with plain SQL, past the model; every existing test, unchanged. Thirteen planted defects by the builder and the planner's own, all of DAT-043's among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #119 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1811 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1181: 1064 before, 117 new); 68 planted defects in `Collected`, 68 of 68 detected, the plan's thirteen prove-it steps among them with the results the plan gives; the 23 planted defects of DAT-043 planted again, because `provenance.py` changes, 23 of 23 detected. On GitHub, read by the planner from the runs and job logs: run 45698596000 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1811 passed, 0 failed, 0 skipped.", with 1181 backend tests on both machines, the three jobs after the gates skipped; run 45701102574 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1811 / 0 tests (repository 41, script tests 206, backend 1181, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 91 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-25. All 7 files are identical to the planner's trial. No existing test changed, and no package was added. What SQLite refuses was asked of the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `b88fb1b`
 - **Plan:** `docs/plans/DAT-008.md`
 
 ### DAT-045 – An index for the records of one source
