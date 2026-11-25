@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 54 | 33 |
+| 2 | Data store and published data (DAT, PUB) | 54 | 34 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-046 – A table of collected records without its provenance is named.
+**Current task:** DAT-009 – Record change history.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1545,7 +1545,7 @@ records made without the columns, DAT-046.
 - **Plan:** `docs/plans/DAT-045.md`
 
 ### DAT-046 – A table of collected records without its provenance is named
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A table of collected records that was made without the set of DAT-008, or with a part of it changed, is named in plain words, and a test holds the real schema to it.
 - **Description:** Added on 2026-11-25 (PLAN-027), cut out of DAT-008, as the rule of the two times was cut out of them (PLAN-019, DAT-032). Nothing in DAT-008 stops a model from being a subclass of `Base` where it should be one of `Collected`, or from saying a column of the set again in its own way. One new module, `motosphere.db.models.provenance_rule`, with one function, `broken_provenance(schema, not_collected)`, which says in one plain sentence for each break which tables of a schema do not say where their records came from, and one list, `NOT_COLLECTED`, which has the three tables of the real schema that hold no collected records, each with its reason. Settled in the planner's trial: every table holds collected records unless the list names it, so a new table that nobody thought about is named; the list is given to the function, so that the tests give their own; the rule stands beside `broken_rules` and in a module of its own, so neither `base.py` nor `provenance.py` changes; the rule says the set a second time and does not take it from `Collected`, so a change to the set is made in two places and a test fails until they agree; a column is as the set has it by its type and list, by whether a row can be without it, by being given no value, and by what it refers to, and the order of the columns is not held; the index is one over `source_id` alone, over all rows and not unique, whatever it is called; the check is looked for by its name and letter for letter; all missing columns of a table are one sentence, and the index and the check are not asked for where a column they need is missing; the list is held to the schema too, so a name on it that is no table is named, and so is a table on it that has all eight columns. All three real tables are on the list, so a second test takes each off in turn and holds the rule to what it then says. No table, no migration, no new package, no existing test changed. The planner's trial has 74 new tests and detects 86 of 86 planted defects.
 - **Acceptance criteria:**
@@ -1559,10 +1559,10 @@ records made without the columns, DAT-046.
   8. No existing test changed, and all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
   9. `python scripts/check.py` reports 19 of 19 gates and 1910 tests (backend tests 1280); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 74 new unit tests in 21 functions, with tables made by hand in schemas of their own, two models of the tests' own that are subclasses of `Collected`, and the real schema; every existing test, unchanged. Fourteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #123 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 1910 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1280: 1206 before, 74 new); 86 planted defects in the rule and its list, 86 of 86 detected, the plan's fourteen prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 45712685284 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 1910 passed, 0 failed, 0 skipped.", with 1280 backend tests on both machines, the three jobs after the gates skipped; run 45713961295 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 1910 / 0 tests (repository 41, script tests 206, backend 1280, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 86 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-25. All 6 files are identical to the planner's trial. No existing test changed, and no package was added.
+- **Commit:** `71df1fc`
 - **Plan:** `docs/plans/DAT-046.md`
 
 ### DAT-009 – Record change history
