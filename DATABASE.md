@@ -1280,9 +1280,10 @@ class Track(Collected):
 ```
 
 Its table then has the key, the columns the model names, the eight
-columns of the set, and the two times every table ends with. No table
-has the set yet: the first table of collected records brings it, with
-the migration that makes that table.
+columns of the set, and the two times every table ends with, and an
+index over the source of its records (DAT-045). No table has the set
+yet: the first table of collected records brings it, with the migration
+that makes that table.
 
 | Column | In the design | What it holds | May be without a value |
 |---|---|---|---|
@@ -1310,6 +1311,26 @@ the migration that makes that table.
   records came from, or to change its key (`FOREIGN KEY constraint
   failed`): the records are taken away first, or given to another
   source. Nothing is deleted along with a source.
+- **An index over the source** (DAT-045), `ix_<table>_source_id`, which
+  `Collected` gives to every table with the column. With it SQLite goes
+  straight to the records of one source, where it read the whole table:
+  when it is asked which records came from a source, how many, or
+  whether any did, when the records of a source are taken away, and
+  when a source is to be deleted and SQLite itself looks whether
+  records came from it. That last look is made in every table that
+  refers to a source, at every deleting of one. The tests read all of
+  this from SQLite's own account of how it answers (`EXPLAIN QUERY
+  PLAN`), with the index and without it.
+- **The index is over the source alone.** Every question the store asks
+  about the records of a source today begins with the source and is
+  answered by this index. One that goes on with the moment a record
+  was last seen ("what of this source was not seen since Monday") is
+  answered by it too: SQLite finds the records of the source by the
+  index and looks at each. An index over both columns would save that
+  look, and would be paid for in every table of collected records at
+  every writing. Nothing asks that question yet; the task whose code
+  first asks it reads SQLite's plan with real numbers of rows and
+  widens the index if that is worth it.
 - **The two times.** `collected_at` is when what the row says was taken
   from its source. `last_verified_at` is when the source was last seen
   to say so. For a new record they are the same moment. When the source
@@ -1341,13 +1362,10 @@ the migration that makes that table.
   collects says the way it used.
 - **The address is stored as it was given** (see "A web address"), so
   two spellings of one address are two addresses here too.
-- **Not in the set.** No index over `source_id`: until there is one
-  SQLite reads a whole table to find the records of one source, also
-  when a source is to be deleted (DAT-045). Nothing yet names a table of
-  collected records that was made without the set, or with a column of
-  it changed (DAT-046). And a record does not say which run collected
-  it: what a record was before it was changed is for its history
-  (DAT-009).
+- **Not in the set.** Nothing yet names a table of collected records
+  that was made without the set, or with a column of it changed
+  (DAT-046). And a record does not say which run collected it: what a
+  record was before it was changed is for its history (DAT-009).
 
 ## How far a collected record can be trusted
 

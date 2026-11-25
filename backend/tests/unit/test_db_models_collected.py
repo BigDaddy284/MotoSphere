@@ -11,7 +11,7 @@ from enum import StrEnum
 from typing import Any
 
 import pytest
-from sqlalchemy import CheckConstraint, Integer, MetaData, Table, UniqueConstraint
+from sqlalchemy import CheckConstraint, Index, Integer, MetaData, Table, UniqueConstraint
 from sqlalchemy.dialects import sqlite
 from sqlalchemy.orm import Mapped
 from sqlalchemy.schema import conv
@@ -62,12 +62,13 @@ class ProofRecord(Proof):
 
 
 class ProofTrack(Proof):
-    """A model that says more of its table: columns, a rule of its own and a check."""
+    """A model that says more of its table: columns, a rule, a check and an index of its own."""
 
     __tablename__ = "proof_track"
     __table_args__ = (
         UniqueConstraint("name"),
         CheckConstraint("length_in_metres > 0", name="length_in_metres_positive"),
+        Index(None, "length_in_metres"),
     )
 
     name: Mapped[NotEmpty]
@@ -155,7 +156,57 @@ def test_no_column_of_the_set_is_the_key_or_must_be_the_only_one_of_its_value(na
 
         assert not column.primary_key
         assert not column.unique
-        assert not column.index
+
+
+def indexes_of(model: type[Proof]) -> dict[str, tuple[list[str], bool]]:
+    """The indexes of a model's table: the name of each, its columns, and whether it is unique."""
+    return {
+        str(index.name): ([column.name for column in index.columns], bool(index.unique))
+        for index in table_of(model).indexes
+    }
+
+
+def test_the_table_has_one_index_and_it_is_over_the_source_of_its_records_alone() -> None:
+    assert indexes_of(ProofRecord) == {"ix_proof_record_source_id": (["source_id"], False)}
+
+
+@EACH_COLUMN
+def test_only_the_source_of_a_record_has_an_index(name: str) -> None:
+    for model in (ProofRecord, ProofTrack):
+        column = table_of(model).columns[name]
+        indexes = [index for index in table_of(model).indexes if column in set(index.columns)]
+
+        assert len(indexes) == (1 if name == "source_id" else 0)
+        assert bool(column.index) is (name == "source_id")
+
+
+def test_a_model_that_gives_its_table_an_index_of_its_own_keeps_it_and_the_index_of_the_set() -> (
+    None
+):
+    assert indexes_of(ProofTrack) == {
+        "ix_proof_track_source_id": (["source_id"], False),
+        "ix_proof_track_length_in_metres": (["length_in_metres"], False),
+    }
+
+
+def test_every_table_has_an_index_of_its_own_and_the_rule_names_it() -> None:
+    over_the_source = [
+        index
+        for model in (ProofRecord, ProofTrack)
+        for index in table_of(model).indexes
+        if [column.name for column in index.columns] == ["source_id"]
+    ]
+
+    assert [index.name for index in over_the_source] == [
+        "ix_proof_record_source_id",
+        "ix_proof_track_source_id",
+    ]
+    assert over_the_source[0] is not over_the_source[1]
+    assert all(isinstance(index.name, conv) for index in over_the_source)
+    assert [index.table.name for index in over_the_source if index.table is not None] == [
+        "proof_record",
+        "proof_track",
+    ]
 
 
 def test_a_record_refers_to_its_source_and_the_rule_names_the_reference() -> None:

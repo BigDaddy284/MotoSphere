@@ -91,7 +91,9 @@ class Collected(Base):
     model names and before the two times every table ends with. A record
     belongs to a source that exists, and a source that records came from
     cannot be deleted. The table itself refuses a record that was last
-    seen at its source before it was collected.
+    seen at its source before it was collected. It has an index over the
+    source of its records, so that the records of one source are found
+    without reading the whole table.
 
     Only the day a record was published may be without a value, because
     not every source says it. Everything else is known of every record
@@ -101,8 +103,10 @@ class Collected(Base):
 
     __abstract__ = True
 
-    # The source it was collected from.
-    source_id: Mapped[int] = mapped_column(ForeignKey("source.id"))
+    # The source it was collected from. The index is what finds the records
+    # of one source: for whoever asks for them, and for SQLite itself when
+    # a source is to be deleted and it looks whether records came from it.
+    source_id: Mapped[int] = mapped_column(ForeignKey("source.id"), index=True)
     # The address at which it was found: the page, the feed or the file
     # that says it, not the front page of the site.
     source_address: Mapped[WebAddress]
