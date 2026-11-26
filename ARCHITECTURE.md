@@ -350,7 +350,9 @@ pipeline's command line. The settings and logging modules stay.
   again what they have answered (DAT-050). One function,
   `open_possible_duplicate`, puts two stored records that may be the
   same thing to the queue, and gives back the item that is there when
-  the doubt is one already (DAT-051).
+  the doubt is one already (DAT-051). Another, `open_field_doubt`, does
+  the same for what a source says of a field of a record, which it
+  keeps as the text the source gave (DAT-053).
 
 The schema is documented in DATABASE.md as tables are added.
 

@@ -1397,6 +1397,66 @@ is read with plain SQL, past the models.
   store the same doubt, and SQLite says "database is locked" to it:
   the function's item is the only one.
 
+### Opening a doubt about a field
+
+`backend/tests/integration/test_review_field_doubt.py` tests
+`open_field_doubt` (`motosphere.db.review`, DAT-053) in the same way:
+in a store that the migrations built, on a real SQLite file, with
+records of tables of the tests' own, and with what the store holds
+read back with plain SQL.
+
+- **One open item**, of each of the two kinds: it names the table and
+  the key of its record, the field, the source, the address, what the
+  source says and the reason, and nothing else; it was stored at one
+  reading of the clock; and the item given back says the same.
+- **The same doubt again** gives the item that is there and stores
+  none, in a later unit of work and in the same one, and the clock is
+  not asked. What else is given the second time is not read: the
+  other kind, another address, another reason, and an address and a
+  reason the store would refuse in a new item.
+- **A doubt that was decided** is given back as it was decided,
+  accepted or rejected, and no new item is stored.
+- **Another doubt**: another field, another source, and what is said
+  written otherwise, with a space after it, with a space in it and
+  empty; and the same thing said of another record and of the same
+  key in another table.
+- **What a source says is kept as the text it was and found again by
+  it**: empty text, white space around it, markup, a statement of SQL
+  and a character beyond ASCII, each kept letter for letter as text,
+  with the table still there.
+- **The unit of work**: the item has its key and is in the table
+  before the function returns, and another connection does not see it
+  until the unit ends; a unit that fails afterwards leaves no item.
+- **The record is not touched**, and the history gets no row. The
+  function does not look at what the record holds: a doubt is stored
+  where the text given is the text of what the record holds, for both
+  kinds. A record stored earlier in the same unit of work can be
+  given. A possible duplicate and a doubt about a field of one record
+  are two items.
+- **What is refused**, each with its sentence, letter for letter, and
+  with nothing written: a record that is new, one that was given to
+  the unit of work and is not written yet, one the unit has deleted,
+  one of a unit that has ended and one of another unit that is open;
+  a row of each of the five tables that hold no collected records,
+  which is refused for its table before its field is looked at; the
+  kind of a possible duplicate; each of the store's three own
+  columns; a field the table does not have, in five spellings; and
+  something said that is not text, in six kinds.
+- **What the store refuses is refused at the call**, and the unit of
+  work fails as a whole: a source that is not there, an address that
+  is no web address or empty, and a reason that is empty or blank.
+- **What the function sends**: one look, given the table, the key,
+  the field, the source and what it says, and a write only where the
+  doubt is new. SQLite's own plan for the look is one step, a search
+  of the index of what a source says.
+- **Between the look and the write** another connection tries to
+  store the same doubt, and SQLite says "database is locked" to it.
+- **The module** gives its two functions by name.
+
+The tests of `open_possible_duplicate` are unchanged and pass: the
+rules for which records and which tables are taken are now asked by
+both functions in one place.
+
 ## How far a collected record can be trusted
 
 `backend/tests/unit/test_db_models_provenance.py` tests the two lists of
