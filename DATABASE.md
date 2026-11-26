@@ -22,11 +22,9 @@ queue: what is in doubt and waits for a person's decision (DAT-010;
 see "The review queue"), where the store itself refuses the same doubt
 a second time (DAT-050). One function
 changes a record and writes its history in the same unit of work
-(DAT-047; see "Changing a record"), one puts two records that may
+(DAT-047; see "Changing a record"), and one puts two records that may
 be the same thing to the review queue (DAT-051; see "Opening a possible
-duplicate"), and one puts what a source says of a field of a record
-there (DAT-053; see "Opening a doubt about a field"); no real table
-holds records yet, so nothing calls them. The
+duplicate"); no real table holds records yet, so nothing calls them. The
 columns by which every collected record says where it came from are in
 the code, as one set that a model of collected records takes whole
 (DAT-008; see "Where a collected record came from"), and so are the two
@@ -1854,10 +1852,9 @@ and its index (`make_the_review_items`, DAT-010).
 
 This section is the table and its rules, and how an item is opened. A
 possible duplicate is opened by `open_possible_duplicate` (DAT-051; see
-"Opening a possible duplicate" below), and a doubt about a field by
-`open_field_doubt` (DAT-053; see "Opening a doubt about a field"). The
-function that decides an item, with the rule that a decision is kept,
-is DAT-052.
+"Opening a possible duplicate" below). The function that opens a doubt
+about a field is DAT-053, and the function that decides an item, with
+the rule that a decision is kept, is DAT-052.
 
 | Column | Holds | Rule |
 |---|---|---|
@@ -2094,97 +2091,7 @@ What it refuses before anything is written, each with one sentence:
   nothing asks for more yet. It does not look whether the two records
   are alike in any way; that is the work of the code that finds
   possible duplicates, which comes with the tasks that collect. A
-  doubt about a field is opened by a function of its own (see below).
-
-### Opening a doubt about a field
-
-`motosphere.db.review.open_field_doubt(work, record, field, kind=...,
-source=..., address=..., says=..., reason=...)` (DAT-053) is what the
-collecting calls when a source says something of a field of a stored
-record and it cannot settle whether that is right: "Use review queues
-when information conflicts." (CLAUDE.md §11). It puts that down as one
-open item of the review queue and gives the item back. Nothing calls
-it yet, because no real table holds records.
-
-| What is given | What it is |
-|---|---|
-| `record` | The record itself. The name of its table and its key are taken from it |
-| `field` | The name of a column of that table |
-| `kind` | Which of the two doubts about a field it is: `ReviewKind.SOURCES_DISAGREE` or `ReviewKind.VALUE_OUTSIDE_ITS_RULES` |
-| `source` | The key of the source that says it, as `change` is given the key of a run |
-| `address` | The web address at which the source says it |
-| `says` | What the source says the field holds, as the text the source gave |
-| `reason` | Why it is in doubt, in plain words, for the person who decides |
-
-- **What the source says is text, and is kept as it was given**,
-  letter for letter: with its white space, in the source's own way of
-  writing a number, and empty when the source says nothing of the
-  field. It is never run, followed or taken for an instruction
-  (CLAUDE.md §14). Only text is taken: a number, yes or no, bytes,
-  nothing at all, and a class of its own that is merely like text
-  are each refused, so that what is kept is what was given.
-- **A doubt that is there already stays one item.** When the queue
-  holds an item in which this source says this of this field of this
-  record, that item is given back as it is and nothing is written.
-  Its kind, its address, its state, its reason, its note and its
-  times stay what they were; the kind, the address and the reason
-  given the second time are not read. That is the same doubt as the
-  store's index says it (DAT-050): the kind, the address and the
-  reason do not make another, and a decided item counts.
-- **Another field, another source, another record or another thing
-  said is another doubt.** What is said is compared as the text it
-  is: `1750` and `1750.0` are two doubts. Whether two texts mean the
-  same is for the code that collects to say before it calls.
-- **It does not look at what the record holds.** A source says a
-  thing in its own words, and the record holds it in the store's. So
-  the function cannot tell whether a source disagrees, and does not
-  try: the code that collects has read the source and knows. A doubt
-  that the sources disagree is stored even where the text given is
-  the text of what the record holds; a test puts that on record.
-- **The record is not touched**, and nothing is written to the
-  history. What follows from a decision belongs to the tasks that
-  decide and that apply decisions.
-- **It is part of the unit of work** it is given, and written to it
-  before the function returns, as a possible duplicate is. What the
-  store refuses is refused at the call: a source that is not there
-  (`FOREIGN KEY constraint failed`), an address that is no web
-  address, and a reason that is empty. Whatever is refused, the unit
-  of work fails as a whole.
-- **It looks, and then writes**, as `open_possible_duplicate` does.
-  The look is one statement, for the table, the key, the field, the
-  source and what it says, and SQLite answers it by the index of
-  what a source says in one search (DAT-050). It names neither the
-  kind nor the address. No other connection can store the same doubt
-  between the look and the write; a test tries exactly that.
-
-What it refuses before anything is written, each with one sentence:
-
-| What is given | What the function says |
-|---|---|
-| A record that is not stored yet, or that this unit of work did not read or store | "Only records that are stored, and that this unit of work read or stored, are put to the review queue." |
-| A row of a table that holds no collected records | "The review queue is for doubts about collected records, and the table … holds none." |
-| The kind `ReviewKind.POSSIBLE_DUPLICATE` | "A possible duplicate is two records and no field: it is opened with open_possible_duplicate." |
-| `id`, `created_at` or `updated_at` as the field | "The column … is the store's own in every table: no source says what it holds." |
-| A field its table does not have | "The table … has no column …." |
-| Something said that is not text | "What a source says is given as the text it said, which … is not." (a `TypeError`) |
-
-- **Which records and which tables are taken is said once.** The first
-  two sentences are those of `open_possible_duplicate`, and both
-  functions ask the same two rules of the module, so that they cannot
-  come to differ.
-- **The store's own columns** are the three that `change` refuses to
-  change (see "Changing a record"), by the same list:
-  `motosphere.db.changes.THE_STORES_OWN`. A doubt about one of them
-  could never be applied.
-- **A field is a column of the record's table**, by its name as the
-  model says it, letter for letter. A doubt about a field the table
-  does not have could never be applied either, and a misspelled name
-  would otherwise wait in the queue for a person to find.
-- **What it does not do.** It does not say whether the item is new or
-  was there. It does not hold what the source says to the rules of the
-  field: an item of the kind `value outside its rules` says that the
-  code that collects found it outside them. It does not look whether
-  the source is one that offers this kind of information.
+  doubt about a field is opened by a function of its own (DAT-053).
 
 ## What the store relies on in SQLite
 

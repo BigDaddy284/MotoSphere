@@ -314,15 +314,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   decided. A record that is not stored, two records of two tables,
   rows of a table that holds no collected records and a record given
   as its own duplicate are each refused in one sentence (DAT-051).
-- `open_field_doubt` in `motosphere.db.review`: one function that puts
-  what a source says of a field of a stored record to the review
-  queue, kept as the text the source gave, and gives back the item.
-  The same source saying the same thing of the same field of the same
-  record stays one item, also after it was decided. A field its table
-  does not have, the store's own columns and something said that is
-  not text are each refused in one sentence. The list of the store's
-  own columns is now public, `motosphere.db.changes.THE_STORES_OWN`
-  (DAT-053).
 
 ### Removed
 
