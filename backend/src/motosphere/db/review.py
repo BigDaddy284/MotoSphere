@@ -1,8 +1,8 @@
-"""Putting a doubt into the review queue, and deciding it.
+"""Putting a doubt into the review queue.
 
 Where the collecting cannot tell by itself what is right, it does not
 guess (DESIGN.md 8, CLAUDE.md 11): it puts the doubt down as an item of
-the review queue, and a person decides. Two functions here are how an
+the review queue, and a person decides. The functions here are how an
 item is opened. Each is given the records themselves and takes the name
 of their table and their keys from them, so that an item is about
 records that are stored.
@@ -10,21 +10,17 @@ records that are stored.
 A doubt is one item. Whoever opens a doubt that the queue holds already
 is given the item that is there, as it is, whether it is still open or
 was decided: a question a person has answered is not put to them again.
-
-The third function, :func:`decide`, is how a person's decision is put
-down: accepted or rejected, by whom, and when. An item is decided once.
 """
 
 from sqlalchemy import inspect, select
 from sqlalchemy.orm import Session
 
-from motosphere.db import times
 from motosphere.db.base import Base
 from motosphere.db.changes import THE_STORES_OWN
 from motosphere.db.models.provenance_rule import NOT_COLLECTED
-from motosphere.db.models.review_item import ReviewItem, ReviewKind, ReviewState
+from motosphere.db.models.review_item import ReviewItem, ReviewKind
 
-__all__ = ["decide", "open_field_doubt", "open_possible_duplicate"]
+__all__ = ["open_field_doubt", "open_possible_duplicate"]
 
 
 def _must_be_stored(work: Session, *records: Base) -> None:
@@ -212,59 +208,3 @@ def open_field_doubt(
     work.add(item)
     work.flush()
     return item
-
-
-def decide(
-    work: Session,
-    item: ReviewItem,
-    decision: ReviewState,
-    *,
-    by: str,
-    note: str | None = None,
-) -> None:
-    """Put down a person's decision on an open item: accepted or rejected, by whom, and when.
-
-    ``decision`` is ``ReviewState.ACCEPTED`` or ``ReviewState.REJECTED``,
-    and ``by`` is the name of the person who decided. When they decided
-    is not given: it is the moment of this call, by the store's clock,
-    and the same moment is when the item was last changed. ``note`` is
-    what the person wants kept with the item; without one, the note the
-    item has, if any, stays.
-
-    An item is decided once. One that was decided already is refused,
-    whatever is given for it, and stays as it was: a decision is not
-    taken back, turned round or given to another person here.
-
-    Only the item is touched. What follows from a decision, that two
-    records become one or that a field gets what a source says, is not
-    done here, and nothing is written to the history.
-
-    The decision is part of the unit of work ``work``: it is written to
-    it before the function returns, and kept or taken back with it. What
-    the store refuses is refused here: a name or a note that is empty.
-    """
-    # The same rule as for a record that is put to the queue, and for the
-    # same reason: only such an item is a row of the table that this unit
-    # of work has read as it is now.
-    state = inspect(item)
-    if not state.persistent or state.session is not work:
-        raise ValueError(
-            "Only an item that is stored, and that this unit of work read or stored, is decided."
-        )
-    if item.state is not ReviewState.OPEN:
-        raise ValueError(
-            f"The review item {item.id} was {item.state} already, and a decision is kept."
-        )
-    if decision is not ReviewState.ACCEPTED and decision is not ReviewState.REJECTED:
-        raise ValueError("To decide an item is to accept it or to reject it.")
-
-    # One reading of the clock: the moment of the decision is the moment
-    # the item was last changed.
-    moment = times.now()
-    item.state = decision
-    item.decided_by = by
-    item.decided_at = moment
-    item.updated_at = moment
-    if note is not None:
-        item.note = note
-    work.flush()
