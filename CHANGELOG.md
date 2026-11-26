@@ -278,12 +278,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   value already gets no row; values are compared as the text of what
   the store keeps; and a change the store refuses leaves neither the
   change nor its history (DAT-047).
-- The history of the records is only added to: the sixth migration
-  makes four triggers on `record_change`, and SQLite itself then refuses
-  to edit a row, to delete one, to put a new row in the place of one
-  (`INSERT OR REPLACE`), and to store a row with a key below 1, each in
-  one plain sentence, whoever writes to the file. The data store's
-  schema is at version 6 (DAT-048).
 
 ### Removed
 

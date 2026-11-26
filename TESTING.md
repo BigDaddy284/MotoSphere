@@ -740,11 +740,7 @@ index of its name is there already (DAT-042); the fifth makes the table
 `record_change` in a store that has a source and a run, and both are as
 they were, with the index of the runs, and it fails, with the store
 left at its version, where a table of its name is there already
-(DAT-009); the sixth makes the four triggers of `record_change` in a
-store that has a row of history, the row is as it was and is then held
-like any other, and it fails where a trigger of its name is there
-already, with the store left at its version and the triggers it had
-made before that one taken back (DAT-048); a store with the newest
+(DAT-009); a store with the newest
 schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -1090,53 +1086,6 @@ past it.
 
 That the model and the fifth migration say the same table is proven by
 the test of the models and the migrations.
-
-## The history is only added to
-
-`backend/tests/integration/test_record_change_kept.py` tests that a row
-of `record_change` is neither edited, deleted nor replaced (DAT-048),
-in a store that the migrations built, on a real SQLite file, with two
-rows of history in it. After every refusal the table is read back with
-every column and must be as it was. The sentences are written out in
-the tests.
-
-- **The triggers in the file**: the four of the history, by name and
-  table, and no other.
-- **An edit is refused**, in seven ways, with plain SQL: a value of one
-  row, of every row, a value set to what it holds already, only
-  `updated_at`, the key, the key set to that of another row to take its
-  place, and an edit told to pass over what is refused.
-- **A delete is refused**: of the first row, of the newest, of every
-  row.
-- **A new row in the place of a row is refused**, in six ways, each for
-  the first row and for the newest: `INSERT OR REPLACE`, `REPLACE`, a
-  plain `INSERT`, `INSERT OR IGNORE`, and an `INSERT` that would edit
-  the row, or do nothing, when its key is taken.
-- **A key below 1 is refused** (0, -1 and -7), and the history goes on
-  afterwards: the next row gets the key 3.
-- **Through the model**, in seven ways: a row that was read is given
-  another value, every row is in one statement, a row is merged onto
-  one that is there, a row that was read is deleted, every row is in
-  one statement, and a row is added with a key that is taken and with
-  one below 1.
-- **A new row is still stored**: through the model and with plain SQL,
-  with the next key; a key that is free may be named, also by a
-  statement that would replace; and the row after it follows that key.
-- **What is not refused**: an edit and a delete that name a key no row
-  has, and both in a history without rows. Nothing is changed.
-- **A refusal takes back the whole unit of work**, a new row written
-  before it included, through the model and on a plain connection.
-- **On a connection the store's code did not open**, made with Python's
-  own `sqlite3` and with foreign keys off, an edit, a delete, a
-  replacement and a key below 1 are refused in the same sentences.
-- **A store made from the models** has the same four triggers and
-  refuses the same.
-
-That the model and the sixth migration say the same triggers, to the
-letter of each sentence, is proven by the test of the models and the
-migrations. That `change` still writes a change with its history into
-the table that has the triggers is proven by its own tests, which run
-in a store with the newest schema.
 
 ## Changing a record with its history
 

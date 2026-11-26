@@ -27,7 +27,6 @@ from sqlalchemy import Connection
 __all__ = [
     "MIGRATIONS",
     "index_the_runs_of_a_source",
-    "let_the_record_changes_only_be_added_to",
     "make_the_collection_runs",
     "make_the_record_changes",
     "make_the_source_offers",
@@ -211,49 +210,10 @@ def make_the_record_changes(connection: Connection) -> None:
     )
 
 
-def let_the_record_changes_only_be_added_to(connection: Connection) -> None:
-    """6: the triggers by which ``record_change`` is only added to (DAT-048)."""
-    connection.exec_driver_sql(
-        """
-        CREATE TRIGGER tr_record_change_never_edited BEFORE UPDATE ON record_change
-        BEGIN
-            SELECT RAISE(ABORT, 'A row of the history (record_change) is never edited.');
-        END
-        """
-    )
-    connection.exec_driver_sql(
-        """
-        CREATE TRIGGER tr_record_change_never_deleted BEFORE DELETE ON record_change
-        BEGIN
-            SELECT RAISE(ABORT, 'A row of the history (record_change) is never deleted.');
-        END
-        """
-    )
-    connection.exec_driver_sql(
-        """
-        CREATE TRIGGER tr_record_change_never_replaced BEFORE INSERT ON record_change
-        WHEN EXISTS (SELECT 1 FROM record_change WHERE id = NEW.id)
-        BEGIN
-            SELECT RAISE(ABORT, 'A row of the history (record_change) is never replaced.');
-        END
-        """
-    )
-    connection.exec_driver_sql(
-        """
-        CREATE TRIGGER tr_record_change_key_positive AFTER INSERT ON record_change
-        WHEN NEW.id < 1
-        BEGIN
-            SELECT RAISE(ABORT, 'A key of the history (record_change) is 1 or more.');
-        END
-        """
-    )
-
-
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
     make_the_collection_runs,
     index_the_runs_of_a_source,
     make_the_record_changes,
-    let_the_record_changes_only_be_added_to,
 )
