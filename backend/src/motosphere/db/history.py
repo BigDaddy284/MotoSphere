@@ -26,7 +26,6 @@ from sqlalchemy import Connection
 
 __all__ = [
     "MIGRATIONS",
-    "index_the_record_changes",
     "index_the_runs_of_a_source",
     "let_the_record_changes_only_be_added_to",
     "make_the_collection_runs",
@@ -250,17 +249,6 @@ def let_the_record_changes_only_be_added_to(connection: Connection) -> None:
     )
 
 
-def index_the_record_changes(connection: Connection) -> None:
-    """7: the indexes of the changes of one record and of the changes one run caused (DAT-049)."""
-    connection.exec_driver_sql(
-        "CREATE INDEX ix_record_change_record_table_record_id "
-        "ON record_change (record_table, record_id)"
-    )
-    connection.exec_driver_sql(
-        "CREATE INDEX ix_record_change_collection_run_id ON record_change (collection_run_id)"
-    )
-
-
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
@@ -268,5 +256,4 @@ MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     index_the_runs_of_a_source,
     make_the_record_changes,
     let_the_record_changes_only_be_added_to,
-    index_the_record_changes,
 )

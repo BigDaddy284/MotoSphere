@@ -334,9 +334,7 @@ pipeline's command line. The settings and logging modules stay.
   when it was changed, and the collection run or the person that caused
   it (DAT-009). The table is only added to: four triggers in the store
   itself refuse to edit, delete or replace a row, whoever writes to the
-  file (DAT-048). Two indexes find the changes of one record and the
-  changes one run caused without reading the whole table
-  (DAT-049). One function, `change`, gives a record its new values
+  file (DAT-048). One function, `change`, gives a record its new values
   and writes a row of history for every field that differs, in the same
   unit of work, so neither is kept without the other (DAT-047).
   Ambiguous or conflicting records go to a review queue; uncertain identities

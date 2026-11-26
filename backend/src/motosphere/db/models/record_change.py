@@ -21,7 +21,7 @@ in the place of one. The refusal stands in the file, as triggers, so it
 holds whoever writes to the file, through the models or past them.
 """
 
-from sqlalchemy import CheckConstraint, Connection, ForeignKey, Index, event
+from sqlalchemy import CheckConstraint, Connection, ForeignKey, event
 from sqlalchemy.orm import Mapped, mapped_column
 
 from motosphere.db.base import Base
@@ -50,13 +50,6 @@ class RecordChange(Base):
             "(collection_run_id IS NULL) != (decided_by IS NULL)",
             name="caused_by_a_run_or_a_person",
         ),
-        # What finds the history of one record without reading the whole
-        # table. In it the changes of a record stand in the order of
-        # their keys, which is the order they were made in.
-        Index(None, "record_table", "record_id"),
-        # What finds the changes one run caused, for whoever asks and for
-        # SQLite itself, which looks for them before a run is deleted.
-        Index(None, "collection_run_id"),
     )
 
     # The record that was changed: the name of its table, and its key there.

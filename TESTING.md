@@ -744,13 +744,7 @@ left at its version, where a table of its name is there already
 store that has a row of history, the row is as it was and is then held
 like any other, and it fails where a trigger of its name is there
 already, with the store left at its version and the triggers it had
-made before that one taken back (DAT-048); the seventh makes the two
-indexes of `record_change` in a store that has two rows of history,
-the rows are as they were and are found through each index, the index
-of the runs and the four triggers are as they were, and it fails where
-an index of its name is there already, with the store left at its
-version and the index it had made before that one taken back
-(DAT-049); a store with the newest
+made before that one taken back (DAT-048); a store with the newest
 schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -1069,8 +1063,8 @@ past it.
 
 - **The table in the file** is as the model says it: its columns in
   their order, with their kinds and which may be without a value; its
-  one reference, to the runs; its two indexes, which let two rows be
-  alike (DAT-049); a strict table; and its six checks by name.
+  one reference, to the runs; no index; a strict table; and its six
+  checks by name.
 - **What is stored is read back.** A change a run caused and a change
   a person decided, each with every column. Eight pairs of values are
   kept as they were given: no value on either side, empty text, a
@@ -1143,47 +1137,6 @@ letter of each sentence, is proven by the test of the models and the
 migrations. That `change` still writes a change with its history into
 the table that has the triggers is proven by its own tests, which run
 in a store with the newest schema.
-
-## The indexes of the history
-
-`backend/tests/integration/test_record_change_index.py` tests that the
-two indexes of `record_change` are there and are used (DAT-049), in a
-store that the migrations built, with a source, three runs and six
-changes: to two tracks and to an event that has the key of one of the
-tracks, caused by two runs and decided by a person. It asks SQLite
-itself: `EXPLAIN QUERY PLAN` gives SQLite's own account of how it will
-answer a statement. The statements are written with the model, as the
-store's code will ask them, and caught as they go to SQLite, with what
-they were given.
-
-- **The indexes in the file**: the two by name, each over its columns
-  in their order, as the statement that made it; each lets two rows be
-  alike and is over all rows.
-- **Eight questions are answered by an index**, each in one step, a
-  search of the index, with nothing sorted afterwards: what a record
-  said before in the order of its changes, the same with all a change
-  says, the newest first, only the last change, the changes to one
-  field, how many times a record was changed, what a run changed in
-  the order of the changes, and how many changes a run caused. Where
-  the index alone answers, the plan says so.
-- **What the indexes are for**: the same eight statements, in the same
-  store without the indexes, each read the whole history.
-- **SQLite looks for the changes of a run by the index** when a run is
-  deleted and when a run is given another key. Both are refused, as
-  before; the plan of each searches the history by the index of a run
-  and reads no table whole. Without the indexes the whole history is
-  read for each.
-- **The indexes change no answer**: the eight questions are answered
-  the same with the indexes and without them, each answer written out
-  in the test, and a run that caused changes is refused its delete in
-  both.
-
-That the model and the seventh migration say the same indexes is proven
-by the test of the models and the migrations. That the indexes forbid
-nothing is proven by the history of these tests itself, in which one
-record is changed four times and one run causes four changes. That a
-row is still neither edited nor deleted is proven by the tests of the
-triggers, which run in a store with the newest schema.
 
 ## Changing a record with its history
 
