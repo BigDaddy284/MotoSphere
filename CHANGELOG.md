@@ -323,6 +323,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   not text are each refused in one sentence. The list of the store's
   own columns is now public, `motosphere.db.changes.THE_STORES_OWN`
   (DAT-053).
+- `decide` in `motosphere.db.review`: one function that puts down a
+  person's decision on an open review item, accepted or rejected, with
+  who decided, the moment by the store's clock, and a note where one
+  is given. An item that was decided already is refused and stays as
+  it was. An item that is not stored, and anything but one of the two
+  decisions, are each refused in one sentence (DAT-052).
 
 ### Removed
 

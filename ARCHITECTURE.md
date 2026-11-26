@@ -352,7 +352,9 @@ pipeline's command line. The settings and logging modules stay.
   same thing to the queue, and gives back the item that is there when
   the doubt is one already (DAT-051). Another, `open_field_doubt`, does
   the same for what a source says of a field of a record, which it
-  keeps as the text the source gave (DAT-053).
+  keeps as the text the source gave (DAT-053). A third, `decide`, puts
+  down a person's decision on an open item, by whom and when, and
+  refuses an item that was decided already (DAT-052).
 
 The schema is documented in DATABASE.md as tables are added.
 
