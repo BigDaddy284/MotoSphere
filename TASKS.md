@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 61 | 41 |
+| 2 | Data store and published data (DAT, PUB) | 61 | 42 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-053 – Opening a doubt about a field.
+**Current task:** DAT-052 – Deciding a review item.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1728,7 +1728,7 @@ about a field is DAT-053, which stands between DAT-051 and DAT-052.
 - **Plan:** `docs/plans/DAT-051.md`
 
 ### DAT-053 – Opening a doubt about a field
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One function puts what a source says of a field of a stored record into the review queue, and a doubt that is there already stays one item.
 - **Description:** Added on 2026-11-26 (PLAN-030), cut out of DAT-051. `open_field_doubt(work, record, field, kind=..., source=..., address=..., says=..., reason=...)` in `motosphere.db.review` is what the collecting calls when a source says something of a field of a stored record and it cannot settle whether that is right. It takes the table and the key from the record itself, as `open_possible_duplicate` does (DAT-051). One statement looks for an item in which this source says this of this field of this record, answered by the index of DAT-050 in one search; if there is one, it is given back as it is and nothing is written, whatever its state, and the kind, the address and the reason given the second time are not read; if not, one open item is written to the unit of work and given back. Settled in the planner's trial: the field must be a column of the record's table, by its name as the model says it, and the three columns that are the store's own in every table are refused, by the list `change` uses (DAT-047), which becomes public as `motosphere.db.changes.THE_STORES_OWN`; the source is given by its key, as `change` is given the key of a run, and a key that is no source is refused by the store at the call; what the source says is given as text and kept letter for letter, and only exactly text is taken, so a number, yes or no, bytes, nothing and a class that derives from `str` are each refused with a `TypeError`, while empty text is taken; the function does not look at what the record holds, because a source says a thing in its own words and the record holds it in the store's, so a doubt that the sources disagree is not refused where the two texts are alike; the kind of a possible duplicate is refused in a sentence that names the function to call; a bad address and an empty reason are refused by the store's own checks at the call; and the two rules that are true of both functions, which records and which tables are taken, are said once in the module and asked by both, with the sentences they had. The refusals are said in the order stored, the table, the kind, the field, what is said. No table, column, check, index or migration changes; no existing test changes; no new package. The planner's trial has 64 new tests and detects 56 of 56 new planted defects and 110 of 110 of the two earlier tasks whose code changes.
 - **Acceptance criteria:**
@@ -1743,10 +1743,10 @@ about a field is DAT-053, which stands between DAT-051 and DAT-052.
   9. `open_possible_duplicate` and `change` do and say what they did. No existing test changes; all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
   10. `python scripts/check.py` reports 19 of 19 gates and 2361 tests (backend tests 1731); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 64 new integration tests in 25 functions, in a store the migrations built, on a real SQLite file, with tables of the tests' own and the real table of the review items, read back with plain SQL; they read SQLite's own plan for the statement the function really sends, and have another connection write between the function's look and its write; every existing test, unchanged. Nineteen planted defects by the builder and the planner's own, those of DAT-051 and DAT-047 among them, because their code changes; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #139 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2361 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1731: 1667 before, 64 new); 56 planted defects in the new function, 56 of 56 detected with the results of the trial, seventeen of the plan's nineteen prove-it steps among them; no planted defect of an earlier task was planted again on the pull request, because its files are byte for byte those of the planner's trial, in which 110 of 110 of the two earlier tasks whose code changes were detected (the 45 of DAT-051 and the 65 of DAT-047), each failing every test it failed when it was last planted. On GitHub, read by the planner from the runs and job logs: run 45898132134 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2361 passed, 0 failed, 0 skipped.", with 1731 backend tests on both machines, the three jobs after the gates skipped; run 45901966421 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 2361 / 0 tests (repository 41, script tests 206, backend 1731, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 56 / 0 new planted defects detected, and 110 / 0 of the two earlier tasks in the trial; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-26. All 7 files are identical to the planner's trial. No existing test changed, and no package was added. SQLite's plan for the function's look, and what SQLite says to another connection that writes between the look and the write, were read on the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `2011111`
 - **Plan:** `docs/plans/DAT-053.md`
 
 ### DAT-052 – Deciding a review item
