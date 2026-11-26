@@ -31,6 +31,7 @@ __all__ = [
     "let_the_record_changes_only_be_added_to",
     "make_the_collection_runs",
     "make_the_record_changes",
+    "make_the_review_items",
     "make_the_source_offers",
     "make_the_sources",
 ]
@@ -261,6 +262,81 @@ def index_the_record_changes(connection: Connection) -> None:
     )
 
 
+def make_the_review_items(connection: Connection) -> None:
+    """8: the table of the review queue, ``review_item``, and the index of its sources (DAT-010)."""
+    white_space = (
+        "char(9, 10, 11, 12, 13, 28, 29, 30, 31, 32, 133, 160, 5760, 8192, 8193, 8194, 8195, "
+        "8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288)"
+    )
+
+    def not_empty(column: str) -> str:
+        return (
+            f"CONSTRAINT ck_review_item_{column}_not_empty "
+            f"CHECK (trim({column}, {white_space}) != '')"
+        )
+
+    def unless_possible_duplicate(column: str) -> str:
+        return (
+            f"CONSTRAINT ck_review_item_{column}_unless_possible_duplicate "
+            f"CHECK (({column} IS NULL) = (kind = 'possible duplicate'))"
+        )
+
+    connection.exec_driver_sql(
+        f"""
+        CREATE TABLE review_item (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            kind TEXT NOT NULL,
+            record_table TEXT NOT NULL,
+            record_id INTEGER NOT NULL,
+            other_record_id INTEGER,
+            field TEXT,
+            source_id INTEGER,
+            source_address TEXT,
+            source_value TEXT,
+            reason TEXT NOT NULL,
+            state TEXT NOT NULL,
+            decided_by TEXT,
+            decided_at TEXT,
+            note TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            CONSTRAINT ck_review_item_record_id_positive CHECK (record_id > 0),
+            CONSTRAINT ck_review_item_other_record_id_after_record_id
+                CHECK (other_record_id > record_id),
+            CONSTRAINT ck_review_item_other_record_id_when_possible_duplicate
+                CHECK ((other_record_id IS NULL) = (kind != 'possible duplicate')),
+            {unless_possible_duplicate("field")},
+            {unless_possible_duplicate("source_id")},
+            {unless_possible_duplicate("source_address")},
+            {unless_possible_duplicate("source_value")},
+            CONSTRAINT ck_review_item_decided_by_when_decided
+                CHECK ((decided_by IS NULL) = (state = 'open')),
+            CONSTRAINT ck_review_item_decided_at_when_decided
+                CHECK ((decided_at IS NULL) = (state = 'open')),
+            CONSTRAINT fk_review_item_source_id_source
+                FOREIGN KEY(source_id) REFERENCES source (id),
+            CONSTRAINT ck_review_item_kind_one_of CHECK (kind IN (
+                'possible duplicate', 'sources disagree', 'value outside its rules'
+            )),
+            {not_empty("record_table")},
+            {not_empty("field")},
+            CONSTRAINT ck_review_item_source_address_web_address CHECK (
+                ((source_address GLOB '[Hh][Tt][Tt][Pp][Ss]://[^/?#]*')
+                 OR (source_address GLOB '[Hh][Tt][Tt][Pp]://[^/?#]*'))
+                AND NOT (source_address GLOB '*[' || {white_space} || ']*')
+                AND instr(source_address, char(0)) = 0
+            ),
+            {not_empty("reason")},
+            CONSTRAINT ck_review_item_state_one_of
+                CHECK (state IN ('open', 'accepted', 'rejected')),
+            {not_empty("decided_by")},
+            {not_empty("note")}
+        ) STRICT
+        """
+    )
+    connection.exec_driver_sql("CREATE INDEX ix_review_item_source_id ON review_item (source_id)")
+
+
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
@@ -269,4 +345,5 @@ MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_record_changes,
     let_the_record_changes_only_be_added_to,
     index_the_record_changes,
+    make_the_review_items,
 )

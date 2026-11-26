@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 60 | 38 |
+| 2 | Data store and published data (DAT, PUB) | 60 | 39 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-010 – Review queue.
+**Current task:** DAT-050 – One doubt is one review item.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1658,7 +1658,7 @@ one, with a decided item keeping its decision, is DAT-052.
 - **Plan:** `docs/plans/DAT-049.md`
 
 ### DAT-010 – Review queue
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store has a table of review items: what is in doubt about a record and why, and whether a person has decided it, how, who and when.
 - **Description:** Cut down in the planner's trial on 2026-11-26 (PLAN-029) to the table of the review items: that one doubt is one item is DAT-050, the function that opens an item is DAT-051, and the function that decides one, with a decided item keeping its decision, is DAT-052. One new table, `review_item`, with its model `ReviewItem` and the two lists `ReviewKind` (`possible duplicate`, `sources disagree`, `value outside its rules`) and `ReviewState` (`open`, `accepted`, `rejected`) in `motosphere.db.models.review_item`, made by the eighth migration, `make_the_review_items`; the schema is at version 8. One row is one doubt about one record, which is named as the history names it, by the name of its table and its key there. What else an item names goes with its kind: a possible duplicate names the other record of the same table, which has the greater key, so that a pair is said in one way and no record is its own duplicate; the two other kinds name the field, the source that says what it should hold, the address at which the source says so, and what it says, kept as the text it was and never run or followed. Every item says why in plain words, and may have a note, which never leaves the store. An open item says neither who decided nor when; an accepted or rejected item says both. Settled in the planner's trial: the records and the sources of an item are columns and not tables of their own, so that the table itself can hold an item to what its kind needs, with one check for each of the five columns; the three kinds are in one table; the moment of a decision is a column of its own, because a note added later moves `updated_at`; the index of the source, `ix_review_item_source_id`, comes with the table, because SQLite looks for the items of a source whenever a source is deleted, and the test of DAT-045 that reads that plan fails without it. The table holds no collected records and is on the list `NOT_COLLECTED` with its reason. Nothing opens or decides an item yet, the same doubt can still be stored twice and a decided item can still be put back to open: two tests put the last two on record, and the three tasks after this one change that. That the note is in no published file is held by PUB-005. No new package. The planner's trial has 108 new tests and detects 123 of 123 planted defects, and 407 of 407 of the earlier tasks whose files change.
 - **Acceptance criteria:**
@@ -1674,10 +1674,10 @@ one, with a decided item keeping its decision, is DAT-052.
   10. Two existing tests get an addition each and no other changes; all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
   11. `python scripts/check.py` reports 19 of 19 gates and 2201 tests (backend tests 1571); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 89 new integration tests in 27 functions, in a store the migrations built, on a real SQLite file, through the model and with plain SQL past it; 14 new unit tests of the two lists; 4 new tests of the history, of the eighth migration given to a store at the version before it; one new case of the rule of DAT-046; every other existing test, unchanged. Sixteen planted defects by the builder and the planner's own, with those of the earlier tasks whose files change; the real commands `migrate` and `schema` on a new store; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #133 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2201 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1571: 1463 before, 108 new); 123 planted defects in the model, the migration, the package of the models and the list of the tables that hold no collected records, 123 of 123 detected, the plan's sixteen prove-it steps among them with the results the plan gives; the 407 planted defects of the earlier tasks whose files changed were planted in the planner's trial, whose thirteen files those of the pull request are identical to, byte for byte: 407 of 407 detected (the table of the sources 51, the table of the offers 34, the table of the runs 76, their index 28, the rule of the tables of collected records 86, the table of the changes 64, its triggers 38 and its indexes 30). On GitHub, read by the planner from the runs and job logs: run 45790281444 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2201 passed, 0 failed, 0 skipped.", with 1571 backend tests on both machines, the three jobs after the gates skipped; run 45798813038 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 2201 / 0 tests (repository 41, script tests 206, backend 1571, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 123 / 0 new and 407 / 0 earlier planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-26. All 13 files are identical to the planner's trial. Two existing tests got an addition each (the name of the eighth migration, and the case of the new table in the test of the list), as the task said; no other existing test changed, and no package was added. The real commands were tried on a new store: `migrate` makes it at schema version 8 and `schema` says that it is up to date.
+- **Commit:** `5d88a7e`
 - **Plan:** `docs/plans/DAT-010.md`
 
 ### DAT-050 – One doubt is one review item

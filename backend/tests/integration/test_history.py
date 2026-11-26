@@ -51,6 +51,7 @@ def test_the_history_is_these_migrations_in_this_order() -> None:
         "make_the_record_changes",
         "let_the_record_changes_only_be_added_to",
         "index_the_record_changes",
+        "make_the_review_items",
     ]
 
 
@@ -393,6 +394,83 @@ def test_the_seventh_migration_does_not_pass_over_an_index_of_its_name_that_is_t
             "PRAGMA index_info(ix_record_change_collection_run_id)"
         ).all()
     assert [name for _, _, name in columns] == ["decided_by"]
+
+
+def test_the_eighth_migration_makes_the_table_of_the_review_queue_and_keeps_what_there_was(
+    store: Engine,
+) -> None:
+    migrate(store, MIGRATIONS[:7])
+    with store.begin() as connection:
+        connection.exec_driver_sql(
+            "INSERT INTO source (name, website, category, collection_method, switched_on, "
+            "created_at, updated_at) VALUES ('Example Federation', 'https://federation.example', "
+            "'governing body', 'rss feed', 0, '2026-11-19T08:00:00.000000+00:00', "
+            "'2026-11-19T08:00:00.000000+00:00')"
+        )
+        connection.exec_driver_sql(
+            "INSERT INTO record_change (record_table, record_id, field, old_value, new_value, "
+            "decided_by, created_at, updated_at) VALUES ('track', 7, 'name', 'Example Park', "
+            "'Example Raceway', 'Jo Example', '2026-11-25T22:00:00.000000+00:00', "
+            "'2026-11-25T22:00:00.000000+00:00')"
+        )
+    with store.connect() as connection:
+        sources = connection.exec_driver_sql("SELECT * FROM source").all()
+        changes = connection.exec_driver_sql("SELECT * FROM record_change").all()
+    before = (indexes(store), triggers(store))
+
+    migrate(store, MIGRATIONS[:8])
+
+    assert tables(store) == [
+        "collection_run",
+        "record_change",
+        "review_item",
+        "source",
+        "source_offer",
+    ]
+    assert len(before[0]) == 3
+    assert indexes(store) == sorted([*before[0], ("ix_review_item_source_id", "review_item")])
+    assert len(before[1]) == 4
+    assert triggers(store) == before[1]
+    with store.connect() as connection:
+        assert connection.exec_driver_sql("SELECT * FROM source").all() == sources
+        assert connection.exec_driver_sql("SELECT * FROM record_change").all() == changes
+        assert connection.exec_driver_sql("SELECT count(*) FROM review_item").scalar_one() == 0
+    assert (len(sources), len(changes)) == (1, 1)
+
+
+def test_the_eighth_migration_does_not_pass_over_a_table_of_its_name_that_is_there(
+    store: Engine,
+) -> None:
+    migrate(store, MIGRATIONS[:7])
+    with store.begin() as connection:
+        connection.exec_driver_sql("CREATE TABLE review_item (note TEXT)")
+        connection.exec_driver_sql("INSERT INTO review_item (note) VALUES ('kept')")
+
+    with pytest.raises(OperationalError) as refusal:
+        migrate(store, MIGRATIONS[:8])
+
+    assert str(refusal.value.orig) == "table review_item already exists"
+    assert schema_version(store) == 7
+    with store.connect() as connection:
+        assert connection.exec_driver_sql("SELECT * FROM review_item").all() == [("kept",)]
+
+
+def test_the_eighth_migration_does_not_pass_over_an_index_of_its_name_that_is_there(
+    store: Engine,
+) -> None:
+    # The index is the second thing the migration makes: its table is made
+    # before it, and taken back with the migration.
+    migrate(store, MIGRATIONS[:7])
+    with store.begin() as connection:
+        connection.exec_driver_sql("CREATE INDEX ix_review_item_source_id ON source (name)")
+
+    with pytest.raises(OperationalError) as refusal:
+        migrate(store, MIGRATIONS[:8])
+
+    assert str(refusal.value.orig) == "index ix_review_item_source_id already exists"
+    assert schema_version(store) == 7
+    assert tables(store) == ["collection_run", "record_change", "source", "source_offer"]
+    assert ("ix_review_item_source_id", "source") in indexes(store)
 
 
 def test_a_store_with_the_newest_schema_lacks_no_migration(newest: Engine) -> None:
