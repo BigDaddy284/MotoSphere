@@ -191,6 +191,18 @@ def test_the_real_schema_breaks_no_rule_of_where_records_came_from() -> None:
             ],
         ),
         ("record_change", [WITHOUT.format("record_change", 8, THE_EIGHT)]),
+        (
+            # It names a source and an address, but each can be without a
+            # value there, which no column of the set but one can.
+            "review_item",
+            [
+                WITHOUT.format(
+                    "review_item", 6, THE_EIGHT.removeprefix("source_id, source_address, ")
+                ),
+                NOT_AS_THE_SET.format("review_item", "source_id"),
+                NOT_AS_THE_SET.format("review_item", "source_address"),
+            ],
+        ),
         ("source", [WITHOUT.format("source", 8, THE_EIGHT)]),
         (
             "source_offer",
@@ -200,7 +212,7 @@ def test_the_real_schema_breaks_no_rule_of_where_records_came_from() -> None:
             ],
         ),
     ],
-    ids=["collection_run", "record_change", "source", "source_offer"],
+    ids=["collection_run", "record_change", "review_item", "source", "source_offer"],
 )
 def test_every_table_of_the_real_schema_is_named_as_soon_as_it_is_off_the_list(
     name: str, breaks: list[str]
