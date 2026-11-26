@@ -307,13 +307,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   decided counts as well, so that a person is not asked again what
   they have answered. The data store's schema is at version 9
   (DAT-050).
-- `open_possible_duplicate` in `motosphere.db.review`: one function
-  that puts two stored records of one table that may be the same thing
-  to the review queue, in either order, and gives back the item. A
-  doubt that is there already stays one item, also after it was
-  decided. A record that is not stored, two records of two tables,
-  rows of a table that holds no collected records and a record given
-  as its own duplicate are each refused in one sentence (DAT-051).
 
 ### Removed
 

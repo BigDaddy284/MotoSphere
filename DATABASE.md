@@ -22,9 +22,8 @@ queue: what is in doubt and waits for a person's decision (DAT-010;
 see "The review queue"), where the store itself refuses the same doubt
 a second time (DAT-050). One function
 changes a record and writes its history in the same unit of work
-(DAT-047; see "Changing a record"), and one puts two records that may
-be the same thing to the review queue (DAT-051; see "Opening a possible
-duplicate"); no real table holds records yet, so nothing calls them. The
+(DAT-047; see "Changing a record"); no real table holds records yet,
+so nothing calls it. The
 columns by which every collected record says where it came from are in
 the code, as one set that a model of collected records takes whole
 (DAT-008; see "Where a collected record came from"), and so are the two
@@ -1850,11 +1849,9 @@ its model `ReviewItem` is in `motosphere.db.models.review_item`, with
 the two lists an item is said by. The eighth migration makes the table
 and its index (`make_the_review_items`, DAT-010).
 
-This section is the table and its rules, and how an item is opened. A
-possible duplicate is opened by `open_possible_duplicate` (DAT-051; see
-"Opening a possible duplicate" below). The function that opens a doubt
-about a field is DAT-053, and the function that decides an item, with
-the rule that a decision is kept, is DAT-052.
+This section is the table and its rules. Nothing writes an item yet:
+the function that opens an item is DAT-051, and the function that
+decides one, with the rule that a decision is kept, is DAT-052.
 
 | Column | Holds | Rule |
 |---|---|---|
@@ -1896,9 +1893,8 @@ the rule that a decision is kept, is DAT-052.
   reason: an item can be about a record of any table, and a reference
   is to one table. So SQLite does not hold the two to a row that
   exists; a test stores an item about a record of a table that is not
-  there, so that this is on record. The functions that open an item
-  take them from the records themselves (DAT-051, DAT-053), so what
-  they open is about records that are stored. An item is about a record
+  there, so that this is on record. The function that opens an item
+  will take them from the record (DAT-051). An item is about a record
   that is stored: what the collecting does with a record it cannot
   store at all is for the tasks of the collecting.
 - **What else an item names goes with its kind**, and the table holds
@@ -1993,8 +1989,8 @@ the rule that a decision is kept, is DAT-052.
   and every item is without some of the six: the trial stored the
   same pair twice under such an index. The rows are known by a column
   and not by their kind for the sake of the question "is this doubt
-  there already?", which the functions that open an item ask
-  (DAT-051, DAT-053). A statement that asks for `other_record_id = ?`, or for
+  there already?", which the function that opens an item will ask
+  (DAT-051). A statement that asks for `other_record_id = ?`, or for
   `field = ?`, can only be answered by rows the index has, and SQLite
   knows that, so it answers by the index in one search. An index
   `WHERE kind = 'possible duplicate'` is of no use to a statement
@@ -2003,8 +1999,8 @@ the rule that a decision is kept, is DAT-052.
 - **A store that holds a doubt twice already** cannot be given the
   ninth migration. It fails and the store stays at version 8, with
   neither index: the migration does not choose which of two items to
-  keep, and a person looks. No real store has items yet, because
-  nothing collects yet.
+  keep, and a person looks. No store has items yet, because nothing
+  writes them.
 - **What the table does not hold yet.** A decided item can be put back
   to open, and any item can be deleted (DAT-052). A statement that
   says `INSERT OR REPLACE` is not refused either: SQLite puts the new
@@ -2018,80 +2014,6 @@ the rule that a decision is kept, is DAT-052.
   records came from, or why not"): an item is the store's own record
   of a doubt. What a source said is in it, with the source and the
   address, but the item is there to be decided and not to be shown.
-
-### Opening a possible duplicate
-
-`motosphere.db.review.open_possible_duplicate(work, record, other,
-reason=...)` (DAT-051) is what the collecting calls when two records
-may be the same thing and it cannot tell: "Do not automatically merge
-uncertain rider or track identities." (CLAUDE.md §11). It puts the two
-down as one open item of the review queue and gives the item back.
-Nothing calls it yet, because no real table holds records.
-
-- **It is given the two records themselves**, and takes the name of
-  their table and their keys from them, as `change` does (see
-  "Changing a record"). So an item it opens is about two records that
-  are stored, of one table. They can be given in either order: the
-  item names the one with the smaller key as its record and the one
-  with the greater as the other, which is the one way the table says
-  a pair.
-- **The reason** is why the two may be the same, in plain words, for
-  the person who decides. The code that calls the function writes it.
-- **A doubt that is there already stays one item.** When the queue
-  holds an item for these two records, that item is given back as it
-  is, and nothing is written: not a second item, and not a change to
-  the first. Its state, its reason, its note and its times stay what
-  they were, and the reason given the second time is not read. That
-  holds for an item that was decided as well, whichever way: a person
-  is not asked again what they have answered, and the code that
-  called sees from the item what the answer was.
-- **The records are not touched.** Nothing is merged and nothing is
-  written to the history of the changes. An item is a question; what
-  follows from its answer belongs to the tasks that decide and that
-  merge.
-- **It is part of the unit of work** it is given. The item is written
-  to it before the function returns, so it has its key then, and what
-  the store refuses is refused at the call: a reason that is empty.
-  Whatever is refused, the unit of work fails as a whole and no item
-  is kept. A unit of work that fails later leaves no item either.
-- **It looks, and then writes.** The look is one statement, for the
-  table and the two keys, and SQLite answers it by the index of the
-  pairs in one search (DAT-050). No other connection can store the
-  same doubt between the look and the write: SQLite keeps nothing
-  another connection writes while a unit of work that has read is
-  open, and says "database is locked" to the other. A test tries
-  exactly that. Past the function, the index refuses the same doubt
-  a second time, whatever writes it.
-
-What it refuses before anything is written, each with one sentence:
-
-| What is given | What the function says |
-|---|---|
-| A record that is not stored yet, or that this unit of work did not read or store | "Only records that are stored, and that this unit of work read or stored, are put to the review queue." |
-| Two records of two tables | "A possible duplicate is two records of one table: these are of … and of …." |
-| Two rows of a table that holds no collected records | "The review queue is for doubts about collected records, and the table … holds none." |
-| One record twice | "A record is not its own duplicate." |
-
-- **Stored, and of this unit of work.** A new record is given to the
-  unit of work and written to it (`work.flush()`) before it is put to
-  the queue with the one it may be the same as: only then has it a
-  key. A record that a unit of work read which has ended is read
-  again. The function does not write what is pending by itself, so
-  that it never stores what its caller has not yet said is ready.
-- **Tables that hold no collected records** are those on the list
-  `NOT_COLLECTED` (see "Every table says where its records came from,
-  or why not"): the sources and what they offer, the runs, the history
-  and the queue itself. Two of their rows are never a possible
-  duplicate in this sense: the queue is where the collecting puts
-  what it cannot settle about what it collected. Every other table
-  is taken, so a table of records needs nothing to be put to the
-  queue.
-- **What it does not do.** It does not say whether the item is new or
-  was there: the code that calls sees the state of the item, and
-  nothing asks for more yet. It does not look whether the two records
-  are alike in any way; that is the work of the code that finds
-  possible duplicates, which comes with the tasks that collect. A
-  doubt about a field is opened by a function of its own (DAT-053).
 
 ## What the store relies on in SQLite
 

@@ -347,10 +347,7 @@ pipeline's command line. The settings and logging modules stay.
   and with whether a person accepted or rejected it, who and when
   (DAT-010). One doubt is one item: the store refuses the same doubt a
   second time, also after it was decided, so that a person is not asked
-  again what they have answered (DAT-050). One function,
-  `open_possible_duplicate`, puts two stored records that may be the
-  same thing to the queue, and gives back the item that is there when
-  the doubt is one already (DAT-051).
+  again what they have answered (DAT-050).
 
 The schema is documented in DATABASE.md as tables are added.
 

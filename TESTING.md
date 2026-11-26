@@ -1346,57 +1346,6 @@ That the model and the ninth migration say the same two indexes, with
 the rows each is over, is proven by the test of the models and the
 migrations.
 
-### Opening a possible duplicate
-
-`backend/tests/integration/test_review_possible_duplicate.py` tests
-`open_possible_duplicate` (`motosphere.db.review`, DAT-051) in a store
-that the migrations built, on a real SQLite file, so an item is
-written to the real table of the review queue. The records are of
-tables of the tests' own, kept in a schema apart, because the real
-schema has no table of records yet. What the store holds afterwards
-is read with plain SQL, past the models.
-
-- **One open item**: it names the table and the two keys of its
-  records, the kind and the reason, and nothing else; it was stored at
-  one reading of the clock; and the item given back says the same.
-- **Either order**: six ways of giving two of three records, and the
-  smaller key is always the record.
-- **The same doubt again** gives the item that is there and stores
-  none, as before and turned round, in a later unit of work and in
-  the same one. Not one column of the item is another afterwards, its
-  times among them, and the clock is not asked. The reason given the
-  second time is not read, an empty one neither.
-- **A doubt that was decided** is given back as it was decided,
-  accepted or rejected, with who decided, when, and the note, and no
-  new item is stored.
-- **Another doubt**: a pair that has one record of the first, each
-  way, and the same two keys in another table, are four items.
-- **The unit of work**: the item has its key and is in the table
-  before the function returns, and another connection does not see it
-  until the unit ends; a unit that fails afterwards leaves no item.
-- **The records are not touched**, and the history gets no row. A
-  record stored earlier in the same unit of work can be given, and so
-  can collected records.
-- **What is refused**, each with its sentence, letter for letter, and
-  with nothing written: a record that is new, one that was given to
-  the unit of work and is not written yet, one the unit has deleted,
-  one of a unit that has ended and one of another unit that is open,
-  each as the record and as the other; a new record of another table;
-  two records of two tables that have the same key, each way; one
-  record twice; and two rows, and one row twice, of each of the five
-  tables that hold no collected records. A table that is put on that
-  list fails the test until it gets its two rows there.
-- **An empty reason** is refused by the store at the call, in three
-  spellings, and the unit of work fails as a whole: a record stored
-  in it before is not kept.
-- **What the function sends**: one look, given the table and the two
-  keys with the smaller first, and a write only where the doubt is
-  new. SQLite's own plan for the look is one step, a search of the
-  index of the pairs.
-- **Between the look and the write** another connection tries to
-  store the same doubt, and SQLite says "database is locked" to it:
-  the function's item is the only one.
-
 ## How far a collected record can be trusted
 
 `backend/tests/unit/test_db_models_provenance.py` tests the two lists of
