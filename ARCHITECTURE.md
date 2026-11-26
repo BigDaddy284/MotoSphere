@@ -329,7 +329,11 @@ pipeline's command line. The settings and logging modules stay.
   with the reason; a rule names a table that is off that list and
   without the set, or has a part of it otherwise, and a test holds the
   real schema to it (DAT-046). Changes are recorded
-  in a history table rather than overwritten.
+  in a history table rather than overwritten: the table `record_change`
+  keeps, for one field of one record, what it held before and holds now,
+  when it was changed, and the collection run or the person that caused
+  it (DAT-009). The function that writes a change with its history
+  comes with DAT-047.
   Ambiguous or conflicting records go to a review queue; uncertain identities
   are never merged automatically.
 

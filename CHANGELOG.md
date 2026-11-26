@@ -264,6 +264,13 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the check of its two times, unless it is on the list of the tables
   that hold no collected records, `NOT_COLLECTED`, which has each with
   its reason. A test holds the real schema to it (DAT-046).
+- The table of the changes to records, `record_change`, with its model
+  `RecordChange` and the fifth migration: for one field of one record,
+  what it held before and holds now, when it was changed, and the
+  collection run or the person that caused it. The table refuses a
+  change that changed nothing, one that nothing caused and one that two
+  things caused. The data store's schema is at version 5. Nothing
+  writes a change yet (DAT-009).
 
 ### Removed
 
