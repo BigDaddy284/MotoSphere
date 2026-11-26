@@ -755,7 +755,12 @@ store that has a source and a row of history, both are as they were,
 with the three indexes and the four triggers, and it fails, with the
 store left at its version, where a table of its name is there already,
 and where an index of its name is, with the table it had made before
-that taken back (DAT-010); a store with the newest
+that taken back (DAT-010); the ninth makes the two indexes of one
+doubt in a store that has an item of each shape, the items are as they
+were and each is found through its own index, and it fails, with the
+store left at its version and neither of its indexes kept, where a
+doubt is there twice, of either shape, and where an index of either of
+its names is there already (DAT-050); a store with the newest
 schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -1245,7 +1250,8 @@ no row.
 
 - **The table in the file** is as the model says it: its columns in
   their order, with their kinds and which may be without a value; its
-  one reference, to the sources; its one index, over the source; a
+  one reference, to the sources; its three indexes, the one over the
+  source and the two of one doubt; a
   strict table; and its seventeen checks by name, eleven of them
   letter for letter.
 - **What is stored is read back.** A possible duplicate, and an item
@@ -1279,12 +1285,14 @@ no row.
 - **What a source says is kept as the text it was**: empty text,
   spaces around it, markup and a statement of SQL among them, each
   read back letter for letter, with the table still there.
+- **One doubt is one item**: the same possible duplicate a second
+  time is refused, and the first is as it was (DAT-050; its own tests
+  are below).
 - **What the table does not hold**: an item about records of a table
-  that is not there is stored; the same doubt twice is two items; and
-  a decided item can be put back to open, or deleted. The tests are
-  there so that none of these is taken for something the table does,
-  and the last two are changed by the tasks that close them (DAT-050,
-  DAT-052).
+  that is not there is stored; and a decided item can be put back to
+  open, or deleted. The tests are there so that neither is taken for
+  something the table does, and the last is changed by the task that
+  closes it (DAT-052).
 
 `backend/tests/unit/test_db_models_review_item.py` tests the two lists
 without a store: their texts are written out in the test, in their
@@ -1297,6 +1305,46 @@ is proven by the test of the models and the migrations, and that the
 table is on the list of those that hold no collected records, with
 what the rule says of it once it is taken off, by the tests of that
 rule.
+
+### One doubt is one item
+
+`backend/tests/integration/test_review_item_one_doubt.py` tests the
+two indexes by which the store refuses the same doubt a second time
+(DAT-050), in a store that the migrations built, on a real SQLite
+file. What is refused is written past the model, as a row given to
+SQLite, and through the model as well.
+
+- **The indexes in the file**: their names, that each lets no two rows
+  be alike and is over some of the rows only, their columns in their
+  order, and the statement SQLite keeps for each, letter for letter,
+  with the rows it is over. The index of the source is as it was.
+- **The same doubt is refused**, with what SQLite says, and the first
+  item is as it was: a possible duplicate, whether the first is open,
+  accepted or rejected, and with another reason and a note the second
+  time; a doubt about a field, in the same three states, whichever of
+  the two kinds the first is and whichever the second, at another
+  address and for another reason.
+- **Through the model** the same doubt is refused too, of either
+  shape, and another doubt stored in the same unit of work before it
+  goes with it.
+- **Another doubt is stored**: a pair of another table, of another
+  record, with another record, and the other record of a pair with a
+  third; a doubt about a field of another table, another record,
+  another field, from another source, and with another thing said,
+  which is compared letter for letter: another value, empty text, a
+  space after the value and the number written otherwise are four
+  doubts more. A possible duplicate and a doubt about a field of the
+  same record stand in each other's way in neither index.
+- **SQLite's own plan** for the question "is this doubt there
+  already?", written with the model for each shape as the store's
+  code will ask it, without naming a kind: one step, a search of the
+  index of that shape. Without the two indexes the same statement
+  reads the whole table for a pair, and every item of the source for
+  a doubt about a field. The indexes change no answer.
+
+That the model and the ninth migration say the same two indexes, with
+the rows each is over, is proven by the test of the models and the
+migrations.
 
 ## How far a collected record can be trusted
 
