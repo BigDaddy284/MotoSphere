@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 57 | 36 |
+| 2 | Data store and published data (DAT, PUB) | 57 | 37 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-048 – A row of the history is neither edited nor deleted.
+**Current task:** DAT-049 – Indexes for the history of a record.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1612,7 +1612,7 @@ deleted is DAT-048, and the indexes of the history are DAT-049.
 - **Plan:** `docs/plans/DAT-047.md`
 
 ### DAT-048 – A row of the history is neither edited nor deleted
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** What the history said once it says for good: a row of `record_change` is added and never edited or deleted.
 - **Description:** Added on 2026-11-25 (PLAN-028), cut out of DAT-009, which asked that "history rows cannot be edited or deleted through the model". Settled in the planner's trial: the refusal stands in the store itself and not in the model, as four triggers on `record_change` that the sixth migration makes (`let_the_record_changes_only_be_added_to`), so it holds the models, plain SQL and a connection the store's code did not open alike, and one place says it. SQLite stops the statement and gives the trigger's sentence: `A row of the history (record_change) is never edited.` before any edit of a row, whatever it would change; `… is never deleted.` before a delete; `… is never replaced.` before a new row whose key a row already has, because `INSERT OR REPLACE` takes the old row out without firing the trigger for a delete, which the trial tried; and `A key of the history (record_change) is 1 or more.` after a new row whose key is below 1, because a new row that names no key shows -1 to the third trigger and a row with that key would stop every new row. The model says the same four statements as text and makes the triggers with the connection that has just made the table, so the test of the models and the migrations, which compares triggers already, holds the two together to the letter of each sentence. A statement that meets no row is not refused. `updated_at` stays, as every table has it, and never moves in this table. A refusal takes back the unit of work it is in. The rows that were there before the migration are held like any other. No table, column or index changes; no new package; `change` and the tests of DAT-009 and DAT-047 are unchanged and pass. The planner's trial has 47 new tests and detects 38 of 38 planted defects, and 253 of 253 of the earlier tasks whose files change.
 - **Acceptance criteria:**
@@ -1626,10 +1626,10 @@ deleted is DAT-048, and the indexes of the history are DAT-049.
   8. One existing test gets an addition (the sixth name) and no other changes; all tests pass, those of `change` and of the table of the changes among them, unchanged. The type check passes with no `ignore` and the lint with no `noqa`.
   9. `python scripts/check.py` reports 19 of 19 gates and 2068 tests (backend tests 1438); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 44 new integration tests in 12 functions, in a store the migrations built, on a real SQLite file with two rows of history in it, with plain SQL, through the model, on a connection made with Python's own `sqlite3`, and in a store made from the models; 3 new tests of the history, of the sixth migration given to a store at the version before it that has a row of history; every existing test, with one addition. Fifteen planted defects by the builder and the planner's own, those of the earlier tasks whose files change among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #129 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2068 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1438: 1391 before, 47 new); 38 planted defects in the model and the migration, 38 of 38 detected, the plan's fifteen prove-it steps among them with the results the plan gives; the 253 planted defects of the earlier tasks whose files changed were planted in the planner's trial, whose eight files those of the pull request are identical to, byte for byte: 253 of 253 detected (the table of the sources 51, the table of the offers 34, the table of the runs 76, their index 28 and the table of the changes 64). On GitHub, read by the planner from the runs and job logs: run 45743221806 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2068 passed, 0 failed, 0 skipped.", with 1438 backend tests on both machines, the three jobs after the gates skipped; run 45747407356 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 2068 / 0 tests (repository 41, script tests 206, backend 1438, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 38 / 0 new and 253 / 0 earlier planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-26. All 8 files are identical to the planner's trial. One existing test got one line (the sixth name), no other existing test changed, and no package was added. The refusals were proven on the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `0ad99e6`
 - **Plan:** `docs/plans/DAT-048.md`
 
 ### DAT-049 – Indexes for the history of a record
