@@ -6,14 +6,16 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 5 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 6 and
 has four tables: `source`, that of the information sources (DAT-006),
 `source_offer`, which says what kinds of information each of them offers
 (DAT-040; see "The information sources" for both), `collection_run`,
 the record of every time a source was collected from (DAT-007; see "The
 collection runs"), which has the store's first index (DAT-042), and
 `record_change`, which keeps what a field of a record held before it
-was changed (DAT-009; see "The changes to records"). One function
+was changed (DAT-009; see "The changes to records") and is only added
+to: the store itself refuses to edit, delete or replace a row of it
+(DAT-048; see "The history is only added to"). One function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"); no real table holds records yet,
 so nothing calls it. The
@@ -161,7 +163,7 @@ newest schema (DAT-024). It opens the store at `MOTOSPHERE_STORE_PATH`
 with `open_store`, which makes the file if it is not there, calls
 `migrate`, and writes one sentence to standard output, with the file's
 whole path and the store's version: "A new data store was made: …", "The
-data store was brought up to date: … went from schema version 2 to 5." or
+data store was brought up to date: … went from schema version 2 to 6." or
 "The data store is up to date: …". A store that cannot be opened, or that
 is refused, gives its one sentence on standard error, with nothing before
 or after it, and the exit code 1, and is left as it is. An error inside a
@@ -175,8 +177,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 5." or "The data store lacks 2
-migrations: … is at schema version 3, and the newest is version 5." In
+is up to date: … is at schema version 6." or "The data store lacks 3
+migrations: … is at schema version 3, and the newest is version 6." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -193,6 +195,7 @@ list of them, and nothing else (DAT-006):
 | 3 | `make_the_collection_runs` | Makes the table of the collection runs, `collection_run` | DAT-007 |
 | 4 | `index_the_runs_of_a_source` | Makes the index of the runs of one source in the order they started, `ix_collection_run_source_id_started_at` | DAT-042 |
 | 5 | `make_the_record_changes` | Makes the table of the changes to records, `record_change` | DAT-009 |
+| 6 | `let_the_record_changes_only_be_added_to` | Makes the four triggers by which no row of `record_change` is edited, deleted or replaced | DAT-048 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -894,10 +897,10 @@ two differ. It runs with every change, so a model cannot change without a
 migration, nor a migration without its model.
 
 - **What is compared** are the statements by which SQLite itself says
-  each table and index is made, which it keeps in the file
-  (`sqlite_master`), and those of a view or a trigger, should there ever
-  be one. What SQLite keeps for itself is left out: everything whose name
-  begins with `sqlite_`, which no other name may.
+  each table, index and trigger is made, which it keeps in the file
+  (`sqlite_master`), and that of a view, should there ever be one. What
+  SQLite keeps for itself is left out: everything whose name begins with
+  `sqlite_`, which no other name may.
 - **Two statements are the same when they are the same words in the same
   order.** How the words are spaced and where the lines end, large and
   small letters, quotes around a name and comments make no difference.
@@ -943,6 +946,13 @@ What follows for a migration:
 - **A constraint or an index gets a new name by building it anew.** A
   column renamed in place keeps the old names of its constraints, and the
   models name them after the new one.
+- **A trigger is said twice, as the statement that makes it** (DAT-048).
+  No model has a word for a trigger, so the module of the model has the
+  statement as text, and makes the trigger with the connection that has
+  just made the table, wherever the table is made from the model. The
+  migration writes the same statement out for itself. The two are
+  compared like every other statement, the text of the refusal letter
+  for letter.
 
 Where this ends:
 
@@ -961,9 +971,9 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have four tables and one index to agree on: `source`,
-`source_offer`, `collection_run`, `record_change` and the index of the
-runs of one source.
+Today the two have four tables, one index and four triggers to agree
+on: `source`, `source_offer`, `collection_run`, `record_change`, the
+index of the runs of one source and the triggers of `record_change`.
 That the comparison can fail is proven with two models and migrations of
 the tests' own (`TESTING.md`).
 
@@ -1517,8 +1527,9 @@ table (`make_the_record_changes`, DAT-009).
 
 This section is the table and its rules. The function that changes a
 record and writes its history in the same unit of work is the next
-section, "Changing a record" (DAT-047). That a row of the history can
-be neither edited nor deleted is DAT-048; its indexes are DAT-049.
+section, "Changing a record" (DAT-047). That a row of the history is
+neither edited nor deleted is the section after this one, "The history
+is only added to" (DAT-048); its indexes are DAT-049.
 
 | Column | Holds | Rule |
 |---|---|---|
@@ -1530,7 +1541,7 @@ be neither edited nor deleted is DAT-048; its indexes are DAT-049.
 | `new_value` | What the field holds now, as text | Can be without: the field has no value now. Never the same as `old_value` |
 | `collection_run_id` | The collection run that caused the change | A run that exists (`collection_run.id`), or none |
 | `decided_by` | The person who decided the change, by name | Not empty, or none |
-| `created_at`, `updated_at` | When the row was stored and changed | See "When a row was stored and changed" |
+| `created_at`, `updated_at` | When the row was stored and changed | See "When a row was stored and changed". A row is never edited, so `updated_at` stays what it was when the row was stored |
 
 - **One row is one field of one record that was changed.** A change to
   three fields of a record is three rows. So the history of one field
@@ -1589,6 +1600,82 @@ be neither edited nor deleted is DAT-048; its indexes are DAT-049.
 - **Not collected records.** The table is on the list of the tables
   that hold no collected records (see "Every table says where its
   records came from, or why not").
+
+## The history is only added to
+
+What a row of `record_change` said once it says for good. A history
+that can be put right afterwards proves nothing, so the store itself
+refuses to edit a row, to delete one, and to put a new row in the place
+of one (DAT-048). A row is added, and that is all that happens to it.
+
+**Decision:** the refusal stands in the file, as four triggers on the
+table, which the sixth migration makes
+(`let_the_record_changes_only_be_added_to`). SQLite stops the statement
+that fires one and gives its sentence as the error:
+
+| Trigger | Fires | The sentence |
+|---|---|---|
+| `tr_record_change_never_edited` | before a row is edited | `A row of the history (record_change) is never edited.` |
+| `tr_record_change_never_deleted` | before a row is deleted | `A row of the history (record_change) is never deleted.` |
+| `tr_record_change_never_replaced` | before a new row whose key a row already has | `A row of the history (record_change) is never replaced.` |
+| `tr_record_change_key_positive` | after a new row whose key is below 1 | `A key of the history (record_change) is 1 or more.` |
+
+- **Why in the file and not in the model.** A refusal in the model
+  holds whoever goes through the model, and nobody else: not a
+  statement that edits many rows at once, not plain SQL, not another
+  program that opens the file. A trigger is part of the file. It holds
+  the models, the store's own code, a migration, and a connection that
+  the store's code did not open, on which not even foreign keys are
+  switched on. One place says it, so there are no two sentences to
+  keep alike.
+- **An edit is any change to a row**: a value, the key, the moment in
+  `updated_at`, and also an edit that gives a column the value it
+  holds already. The store does not ask what would change.
+- **A row in the place of a row.** SQLite's REPLACE (`INSERT OR
+  REPLACE`) takes a row with the same key out and puts the new row in,
+  and fires no trigger for the row it takes out. That would be an edit
+  by another name, so the third trigger asks before every new row
+  whether its key is taken, and refuses if it is. It cannot tell what
+  the statement would have done then, so it refuses them all alike: a
+  plain INSERT with a key that is taken, one that would have passed
+  over the new row, and one that would have edited the old row
+  instead. A key that is free may be named.
+- **A key is 1 or more.** A new row that names no key has none yet
+  when the third trigger asks; SQLite shows it -1 then, and gives the
+  row the next key afterwards. A row with the key -1 would therefore
+  stop every new row. The fourth trigger refuses a row whose key is
+  below 1, so there is no such row. The store gives keys from 1 up, so
+  only a key written by hand is refused.
+- **A statement that meets no row is not refused.** The triggers fire
+  for the row that would be changed. An edit or a delete that names a
+  key no row has changes nothing, and neither does one in a history
+  without rows.
+- **A refusal takes back the unit of work it is in**, like every other
+  refusal of the store (see "Units of work").
+- **`updated_at`** is there because every table has it (see "When a
+  row was stored and changed"). In this table it never moves.
+- **The rows that were there before the triggers** are held like any
+  other: the migration asks nothing of them and changes none.
+- **The run that caused a change** still cannot be deleted, which the
+  reference holds (see "The changes to records"), so the history keeps
+  its cause too.
+- **`change` does not take a row of the history either** (see
+  "Changing a record"), and says so before it writes. The triggers
+  hold everything that does not go through it.
+
+Where this ends:
+
+- **Whoever can change the schema can take a trigger away**, or the
+  table. The schema changes by migrations only, which are reviewed and
+  tested, and the test of the models and the migrations fails when a
+  trigger is missing from one of the two.
+- **What a new row says is not held here.** The table's own checks hold
+  it (see "The changes to records"); nothing holds a row to the moment
+  it is written at, or to a record that exists.
+- **SQLite must be able to fire triggers**, which every SQLite can that
+  enforces foreign keys: a build without triggers has no foreign keys
+  either. The tests refuse an edit, a delete and a replacement on every
+  machine the gates run on.
 
 ## Changing a record
 
