@@ -26,6 +26,7 @@ from sqlalchemy import Connection
 
 __all__ = [
     "MIGRATIONS",
+    "hold_one_doubt_to_one_review_item",
     "index_the_record_changes",
     "index_the_runs_of_a_source",
     "let_the_record_changes_only_be_added_to",
@@ -337,6 +338,20 @@ def make_the_review_items(connection: Connection) -> None:
     connection.exec_driver_sql("CREATE INDEX ix_review_item_source_id ON review_item (source_id)")
 
 
+def hold_one_doubt_to_one_review_item(connection: Connection) -> None:
+    """9: the two indexes by which one doubt is one review item (DAT-050)."""
+    connection.exec_driver_sql(
+        "CREATE UNIQUE INDEX ix_review_item_record_table_record_id_other_record_id "
+        "ON review_item (record_table, record_id, other_record_id) "
+        "WHERE other_record_id IS NOT NULL"
+    )
+    connection.exec_driver_sql(
+        "CREATE UNIQUE INDEX ix_review_item_record_table_record_id_field_source_id_source_value "
+        "ON review_item (record_table, record_id, field, source_id, source_value) "
+        "WHERE field IS NOT NULL"
+    )
+
+
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
@@ -346,4 +361,5 @@ MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     let_the_record_changes_only_be_added_to,
     index_the_record_changes,
     make_the_review_items,
+    hold_one_doubt_to_one_review_item,
 )

@@ -299,6 +299,14 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   who and when. A note can be kept with it, which is never published.
   The data store's schema is at version 8. Nothing opens an item yet
   (DAT-010).
+- One doubt is one review item: the store itself refuses the same
+  doubt a second time, by two indexes the ninth migration makes. A
+  possible duplicate is the same doubt when it is about the same two
+  records, and a doubt about a field when the same source says the
+  same thing of the same field of the same record. A doubt that was
+  decided counts as well, so that a person is not asked again what
+  they have answered. The data store's schema is at version 9
+  (DAT-050).
 
 ### Removed
 

@@ -52,6 +52,7 @@ def test_the_history_is_these_migrations_in_this_order() -> None:
         "let_the_record_changes_only_be_added_to",
         "index_the_record_changes",
         "make_the_review_items",
+        "hold_one_doubt_to_one_review_item",
     ]
 
 
@@ -471,6 +472,129 @@ def test_the_eighth_migration_does_not_pass_over_an_index_of_its_name_that_is_th
     assert schema_version(store) == 7
     assert tables(store) == ["collection_run", "record_change", "source", "source_offer"]
     assert ("ix_review_item_source_id", "source") in indexes(store)
+
+
+# A store at version 8 for the tests of the ninth migration: its source,
+# and its review items as plain SQL, a possible duplicate and a doubt about
+# what the source says of a field.
+A_SOURCE_AT_VERSION_8 = (
+    "INSERT INTO source (name, website, category, collection_method, switched_on, "
+    "created_at, updated_at) VALUES ('Example Federation', 'https://federation.example', "
+    "'governing body', 'rss feed', 0, '2026-11-19T08:00:00.000000+00:00', "
+    "'2026-11-19T08:00:00.000000+00:00')"
+)
+AN_ITEM_AT_VERSION_8 = (
+    "INSERT INTO review_item (kind, record_table, record_id, other_record_id, field, "
+    "source_id, source_address, source_value, reason, state, created_at, updated_at) "
+    "VALUES (?, 'track', 7, ?, ?, ?, ?, ?, ?, 'open', '2026-11-26T09:00:00.000000+00:00', "
+    "'2026-11-26T09:00:00.000000+00:00')"
+)
+A_PAIR = ("possible duplicate", 12, None, None, None, None)
+OF_A_FIELD = (
+    "sources disagree",
+    None,
+    "length_in_metres",
+    1,
+    "https://federation.example/tracks/7",
+    "1750",
+)
+OF_A_PAIR = "ix_review_item_record_table_record_id_other_record_id"
+OF_WHAT_A_SOURCE_SAYS = "ix_review_item_record_table_record_id_field_source_id_source_value"
+
+
+def test_the_ninth_migration_makes_the_indexes_of_one_doubt_and_keeps_the_items(
+    store: Engine,
+) -> None:
+    migrate(store, MIGRATIONS[:8])
+    with store.begin() as connection:
+        connection.exec_driver_sql(A_SOURCE_AT_VERSION_8)
+        connection.exec_driver_sql(AN_ITEM_AT_VERSION_8, (*A_PAIR, "They have one name."))
+        connection.exec_driver_sql(AN_ITEM_AT_VERSION_8, (*OF_A_FIELD, "The record says 1600."))
+    with store.connect() as connection:
+        items = connection.exec_driver_sql("SELECT * FROM review_item ORDER BY id").all()
+    before = (tables(store), indexes(store), triggers(store))
+
+    migrate(store, MIGRATIONS[:9])
+
+    assert tables(store) == before[0]
+    assert len(before[1]) == 4
+    assert indexes(store) == sorted(
+        [*before[1], (OF_A_PAIR, "review_item"), (OF_WHAT_A_SOURCE_SAYS, "review_item")]
+    )
+    assert len(before[2]) == 4
+    assert triggers(store) == before[2]
+    with store.connect() as connection:
+        after = connection.exec_driver_sql("SELECT * FROM review_item ORDER BY id").all()
+        the_pair = connection.exec_driver_sql(
+            "SELECT id FROM review_item "
+            "INDEXED BY ix_review_item_record_table_record_id_other_record_id "
+            "WHERE record_table = 'track' AND record_id = 7 AND other_record_id = 12"
+        ).all()
+        of_the_field = connection.exec_driver_sql(
+            "SELECT id FROM review_item "
+            "INDEXED BY ix_review_item_record_table_record_id_field_source_id_source_value "
+            "WHERE record_table = 'track' AND record_id = 7 AND field = 'length_in_metres'"
+        ).all()
+    assert len(items) == 2
+    assert after == items
+    # The items that were there are in the new indexes, each in its own.
+    assert the_pair == [(1,)]
+    assert of_the_field == [(2,)]
+
+
+@pytest.mark.parametrize(
+    ("doubt", "index"),
+    [(A_PAIR, OF_A_PAIR), (OF_A_FIELD, OF_WHAT_A_SOURCE_SAYS)],
+    ids=["a possible duplicate", "a doubt about a field"],
+)
+def test_the_ninth_migration_fails_where_a_doubt_is_there_twice(
+    store: Engine, doubt: tuple[object, ...], index: str
+) -> None:
+    # A store at version 8 could hold the same doubt twice. The migration
+    # does not choose which of the two to keep: it fails, and the store is
+    # as it was, for a person to look at. Where the second index is the one
+    # that cannot be made, the first is taken back with the migration.
+    migrate(store, MIGRATIONS[:8])
+    with store.begin() as connection:
+        connection.exec_driver_sql(A_SOURCE_AT_VERSION_8)
+        connection.exec_driver_sql(AN_ITEM_AT_VERSION_8, (*doubt, "Found by the first run."))
+        connection.exec_driver_sql(AN_ITEM_AT_VERSION_8, (*doubt, "Found by the second run."))
+    before = indexes(store)
+
+    with pytest.raises(IntegrityError) as refusal:
+        migrate(store, MIGRATIONS[:9])
+
+    columns = {
+        OF_A_PAIR: ("record_table", "record_id", "other_record_id"),
+        OF_WHAT_A_SOURCE_SAYS: ("record_table", "record_id", "field", "source_id", "source_value"),
+    }[index]
+    assert str(refusal.value.orig) == "UNIQUE constraint failed: " + ", ".join(
+        f"review_item.{column}" for column in columns
+    )
+    assert schema_version(store) == 8
+    assert indexes(store) == before
+    with store.connect() as connection:
+        assert connection.exec_driver_sql("SELECT count(*) FROM review_item").scalar_one() == 2
+
+
+@pytest.mark.parametrize("index", [OF_A_PAIR, OF_WHAT_A_SOURCE_SAYS], ids=["first", "second"])
+def test_the_ninth_migration_does_not_pass_over_an_index_of_its_name_that_is_there(
+    store: Engine, index: str
+) -> None:
+    # Where the index that is there has the name of the second of the two,
+    # the first is made before it, and taken back with the migration.
+    migrate(store, MIGRATIONS[:8])
+    with store.begin() as connection:
+        connection.exec_driver_sql(f"CREATE INDEX {index} ON review_item (note)")
+    before = indexes(store)
+
+    with pytest.raises(OperationalError) as refusal:
+        migrate(store, MIGRATIONS[:9])
+
+    assert str(refusal.value.orig) == f"index {index} already exists"
+    assert schema_version(store) == 8
+    assert len(before) == 5
+    assert indexes(store) == before
 
 
 def test_a_store_with_the_newest_schema_lacks_no_migration(newest: Engine) -> None:
