@@ -332,9 +332,8 @@ pipeline's command line. The settings and logging modules stay.
   in a history table rather than overwritten: the table `record_change`
   keeps, for one field of one record, what it held before and holds now,
   when it was changed, and the collection run or the person that caused
-  it (DAT-009). One function, `change`, gives a record its new values
-  and writes a row of history for every field that differs, in the same
-  unit of work, so neither is kept without the other (DAT-047).
+  it (DAT-009). The function that writes a change with its history
+  comes with DAT-047.
   Ambiguous or conflicting records go to a review queue; uncertain identities
   are never merged automatically.
 

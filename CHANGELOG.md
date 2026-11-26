@@ -271,13 +271,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   change that changed nothing, one that nothing caused and one that two
   things caused. The data store's schema is at version 5. Nothing
   writes a change yet (DAT-009).
-- `change` in `motosphere.db.changes`: one function that gives a stored
-  record new values and writes what each changed field held before to
-  the table of the changes, in the same unit of work, with the
-  collection run or the person that caused it. A field that holds the
-  value already gets no row; values are compared as the text of what
-  the store keeps; and a change the store refuses leaves neither the
-  change nor its history (DAT-047).
 
 ### Removed
 
