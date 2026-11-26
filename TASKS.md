@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 60 | 39 |
+| 2 | Data store and published data (DAT, PUB) | 60 | 40 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-050 – One doubt is one review item.
+**Current task:** DAT-051 – Opening a review item.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1681,7 +1681,7 @@ one, with a decided item keeping its decision, is DAT-052.
 - **Plan:** `docs/plans/DAT-010.md`
 
 ### DAT-050 – One doubt is one review item
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store itself refuses a second review item for a doubt it already holds.
 - **Description:** Added on 2026-11-26 (PLAN-029), cut out of DAT-010, which asked that "opening the same doubt twice gives one item". Two indexes on `review_item` that let no two rows be alike, said by the model, named by the naming rule and made by the ninth migration, `hold_one_doubt_to_one_review_item`; the schema is at version 9. A possible duplicate is the same doubt when it is about the same two records of the same table (`ix_review_item_record_table_record_id_other_record_id`, over the rows that name another record); a doubt about a field is the same doubt when it is about the same field of the same record and the same source says the same thing of it (`ix_review_item_record_table_record_id_field_source_id_source_value`, over the rows that name a field). Settled in the planner's trial: a decided item counts, so that a person is not asked again what they have answered; the kind does not make another doubt between the two that are about a field, nor do the address, the reason or the note; what a source says is compared as the text it is, letter for letter; one unique index over all six columns refuses nothing, because SQLite counts two missing values as two different values, so each shape has its own index over its own rows; an index knows its rows by a column that only they have and not by their kind, because SQLite then answers "is this doubt there already?" by the index for a statement that does not name the kind, which the tests hold by reading SQLite's plan; a store that holds a doubt twice already is not given the migration, which fails and leaves it at version 8 with neither index; a statement that says `INSERT OR REPLACE` is not refused, which belongs to keeping a decision (DAT-052). The indexes of the open items and of all the items about one record are not made here: nothing asks for them yet. No column, check or table changes; no new package. The planner's trial has 42 new tests and detects 63 of 63 planted defects, and 444 of 444 of the earlier tasks whose files change.
 - **Acceptance criteria:**
@@ -1695,10 +1695,10 @@ one, with a decided item keeping its decision, is DAT-052.
   8. Three existing tests change (the ninth name; the table has three indexes, where it had one; the test of DAT-010 that stored the same doubt twice now holds the refusal) and no other; all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
   9. `python scripts/check.py` reports 19 of 19 gates and 2243 tests (backend tests 1613); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 36 new integration tests in 10 functions, in a store the migrations built, on a real SQLite file, past the model and through it, which also read SQLite's own plan for the statements the model really sends, with the indexes and without them; 6 new tests of the history, of the ninth migration given to a store at the version before it that has items, and that holds a doubt twice; every existing test, three of them changed. Thirteen planted defects by the builder and the planner's own, with those of the earlier tasks whose files change; the real commands `migrate` and `schema` on a new store; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #135 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2243 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1613: 1571 before, 42 new); 63 planted defects in the model and the migration, 63 of 63 detected with the results of the trial, the plan's thirteen prove-it steps among them, at the second run of the 63 (at the first, 62 were detected and one run named no failing test and its output was not kept; that defect was then planted twice alone and once more with all the others and detected each time, see PROGRESS.md); the 444 planted defects of the earlier tasks whose files changed were planted in the planner's trial, whose nine files those of the pull request are identical to, byte for byte: 444 of 444 detected (the table of the sources 51, the table of the offers 34, the table of the runs 76, their index 28, the table of the changes 64, its triggers 38, its indexes 30 and the table of the review queue 123). On GitHub, read by the planner from the runs and job logs: run 45831150527 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2243 passed, 0 failed, 0 skipped.", with 1613 backend tests on both machines, the three jobs after the gates skipped; run 45842391383 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 2243 / 0 tests (repository 41, script tests 206, backend 1613, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 63 / 0 new planted defects detected at the second run of them (62 at the first, where one run gave no result) and 444 / 0 earlier ones; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-26. All 9 files are identical to the planner's trial. Three existing tests changed as the task said (the ninth name; the table has three indexes, where it had one; the test of DAT-010 that stored the same doubt twice now holds the refusal); no other existing test changed, and no package was added. SQLite's plans were read on the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows. The real commands were tried on a new store: `migrate` makes it at schema version 9 and `schema` says that it is up to date.
+- **Commit:** `074ac00`
 - **Plan:** `docs/plans/DAT-050.md`
 
 ### DAT-051 – Opening a review item

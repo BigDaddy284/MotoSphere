@@ -25,7 +25,7 @@ the address at which it says so, and what it says.
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index
+from sqlalchemy import CheckConstraint, ForeignKey, Index, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from motosphere.db.base import Base
@@ -67,8 +67,8 @@ class ReviewItem(Base):
 
     The table itself refuses an item that does not name what goes with
     its kind, or names what does not; a record that is said to be its own
-    duplicate; a decision without who made it and when; and who or when
-    without a decision.
+    duplicate; a decision without who made it and when; who or when
+    without a decision; and the same doubt a second time.
     """
 
     __tablename__ = "review_item"
@@ -109,6 +109,30 @@ class ReviewItem(Base):
         # SQLite looks for the items that name a source before it lets
         # the source go, and indexes nothing by itself for a reference.
         Index(None, "source_id"),
+        # One doubt is one item. A possible duplicate is the same doubt
+        # when it is about the same two records, and an item about a
+        # field when it is about the same field of the same record and
+        # the same source says the same thing of it. Each index is over
+        # the items of its shape only, which it knows by a column that
+        # only they have.
+        Index(
+            None,
+            "record_table",
+            "record_id",
+            "other_record_id",
+            unique=True,
+            sqlite_where=text("other_record_id IS NOT NULL"),
+        ),
+        Index(
+            None,
+            "record_table",
+            "record_id",
+            "field",
+            "source_id",
+            "source_value",
+            unique=True,
+            sqlite_where=text("field IS NOT NULL"),
+        ),
     )
 
     kind: Mapped[ReviewKind] = mapped_column(OneOf(ReviewKind))

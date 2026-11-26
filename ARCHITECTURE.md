@@ -345,7 +345,9 @@ pipeline's command line. The settings and logging modules stay.
   records may be the same thing, a source says otherwise than the
   record, or a source says what the rules of a field refuse), with why,
   and with whether a person accepted or rejected it, who and when
-  (DAT-010).
+  (DAT-010). One doubt is one item: the store refuses the same doubt a
+  second time, also after it was decided, so that a person is not asked
+  again what they have answered (DAT-050).
 
 The schema is documented in DATABASE.md as tables are added.
 
