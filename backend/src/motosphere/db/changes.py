@@ -24,10 +24,10 @@ from motosphere.db import times
 from motosphere.db.base import Base
 from motosphere.db.models.record_change import RecordChange
 
-__all__ = ["change"]
+__all__ = ["THE_STORES_OWN", "change"]
 
 # The columns of every table that only the store's code sets.
-_THE_STORES_OWN = ("id", "created_at", "updated_at")
+THE_STORES_OWN = ("id", "created_at", "updated_at")
 
 
 def _as_the_store_keeps_it(
@@ -117,7 +117,7 @@ def change(
     table = str(type(record).__tablename__)
     columns = state.mapper.columns
     for field in to:
-        if field in _THE_STORES_OWN:
+        if field in THE_STORES_OWN:
             raise ValueError(
                 f"The column {field} is the store's own in every table: only the store's "
                 "code sets it."
