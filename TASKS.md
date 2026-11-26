@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 61 | 42 |
+| 2 | Data store and published data (DAT, PUB) | 62 | 42 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -914,6 +914,10 @@ The trial of the function that opens an item, DAT-051, cut it down to
 the possible duplicate (PLAN-030). The function that opens a doubt
 about a field is DAT-053, which stands between DAT-051 and DAT-052.
 
+The trial of the function that decides an item, DAT-052, left the rule
+that the store itself keeps a decision to a task of its own (PLAN-031):
+DAT-054, which stands after DAT-052.
+
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
 - **Objective:** Decide, with evidence, what the data store may rely on: which SQLite features every machine that runs the pipeline has, where the store is kept between scheduled runs, and which size limits bound it.
@@ -1750,11 +1754,33 @@ about a field is DAT-053, which stands between DAT-051 and DAT-052.
 - **Plan:** `docs/plans/DAT-053.md`
 
 ### DAT-052 – Deciding a review item
+- **Status:** IN PROGRESS
+- **Objective:** One function puts down a person's decision on an open review item, with who made it and when, and refuses an item that was decided already.
+- **Description:** Added on 2026-11-26 (PLAN-029), cut out of DAT-010, which asked that "a decided item keeps its decision and cannot be reopened silently". Cut down in the planner's trial on 2026-11-26 (PLAN-031) to the function; that the store itself keeps a decision is DAT-054. `decide(work, item, decision, by=..., note=...)` in `motosphere.db.review` is how a decision is written: accepted or rejected, by whom, and when. It gives nothing back. Settled in the planner's trial: the moment is not given but read from the store's clock, once, and is both when the item was decided and when it was last changed; the person is given by name, kept as given, and the table's own checks refuse an empty name and a decision by nobody; a note given takes the place of the note the item has, and without one that note stays; an item that was decided is refused whatever is given for it, the same decision again as well, because that would give the decision another person and another moment; the refusals are said in the order not stored, decided, no decision, so that who gives open for a decided item is told that a decision is kept; a decision is exactly one of the two values of the list, and text that is spelled like one is refused; only an item that is stored and that this unit of work read or stored is taken, by a rule written out in the function with a sentence of its own; a decision is not written to the history of the changes, because the item is itself the record of it and the table of the items holds no collected records; and the function sends one statement and does not read the item again, because SQLite keeps nothing another connection writes while a unit of work that has read is open, which a test tries on every run. No table, column, check, index or migration changes; one existing test changes, the one that holds the list of what the module gives; no new package. The planner's trial has 43 new tests and detects 50 of 50 new planted defects and 101 of 101 of the two earlier tasks whose module it adds to.
+- **Acceptance criteria:**
+  1. `decide(work, item, decision, by=..., note=...)` changes exactly four columns of an open item: its state, who decided, when it was decided and when it was last changed; and its note where one is given. The two moments are one reading of the store's clock. Both decisions are taken, for both shapes of item, and no other item is touched.
+  2. Without a note the note of the item stays; a note given is stored in its place, as it was given. The name is kept as it was given.
+  3. An item that was decided is refused with its sentence, whatever is given for it, in a later unit of work and in the same one: not one column is another, and the clock is not asked.
+  4. Anything but one of the two decisions is refused with its sentence: open, text that is spelled like a decision, nothing, a value of another list.
+  5. An item that is not stored or not of this unit of work is refused with its sentence, and nothing is decided. An item stored earlier in the same unit of work is decided.
+  6. An empty or blank name, a decision by nobody and an empty or blank note are refused by the store at the call, and the unit of work fails as a whole.
+  7. The decision is written to the unit of work before the function returns and is kept only when the unit ends; a unit of work that fails leaves the item open. Nothing but the item is touched, and the history gets no row.
+  8. The function sends one statement, which changes the item by its key. Another connection that decides the item just before that statement is told "database is locked".
+  9. One existing test changes, the one that holds the list of what the module gives; all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  10. `python scripts/check.py` reports 19 of 19 gates and 2404 tests (backend tests 1774); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 43 new integration tests in 15 functions, in a store the migrations built, on a real SQLite file, with the real table of the review items, every column of every item read back with plain SQL; they count the readings of the clock and the statements the function sends, and have another connection decide the item just before the function's statement; every existing test, one of them changed. Seventeen planted defects by the builder and the planner's own, those of DAT-051 and DAT-053 among them, because their module changes; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-052.md`
+
+### DAT-054 – A decided review item keeps its decision
 - **Status:** NOT STARTED
-- **Objective:** A person's decision on a review item is stored with who made it and when, and a decided item keeps its decision.
-- **Description:** Added on 2026-11-26 (PLAN-029), cut out of DAT-010, which asked that "a decided item keeps its decision and cannot be reopened silently". One function decides an open item: accepted or rejected, by whom, at the moment it is given, with a note where there is one. The planner's trial settles how a decision is kept: the function refuses an item that was decided already, and the trial tries whether the store itself refuses it too, by triggers as the history does (DAT-048), so that a decided item is neither put back to open, nor given the other decision, another person or another moment, nor deleted, nor replaced by a statement that says `INSERT OR REPLACE`, which SQLite does not refuse where a new item clashes with one that is there (found in the trial of DAT-050); whether that part is a task of its own; whether a note can still be added to a decided item; and whether a decision is written to the history of the changes. The test of DAT-010 that holds that the table does not yet keep a decision is changed to hold that it does. What follows from a decision for the records, the merging of two records or the new value of a field, is not this task: it belongs to the tasks that merge and that apply decisions.
-- **Acceptance criteria:** deciding an open item stores its state, who decided and when, and the note where one is given; deciding an item that was decided is refused in one plain sentence and the item is as it was; a decided item cannot be put back to open and cannot be given the other decision; an empty name of a person is refused; a unit of work that fails leaves the item open; the test of DAT-010 that puts a decided item back to open is changed to hold the refusal, and no other existing test changes.
-- **Tests required:** integration tests against a real SQLite file; the migration, if there is one, applied to a store at the version before it; planted defects, those of DAT-010 among them where its files change; the full run of all gates on both machines.
+- **Objective:** The store itself keeps a decision on a review item: a decided item is not put back to open, given another decision, deleted or replaced, whoever writes to the table.
+- **Description:** Added on 2026-11-26 (PLAN-031), cut out of DAT-052. DAT-010 asked that "a decided item keeps its decision and cannot be reopened silently". Since DAT-052 the function `decide` refuses an item that was decided; a statement written past it can still put a decided item back to open, give it the other decision, another person or another moment, or delete it, and a test of DAT-010 puts that on record. This task has the table refuse it, by triggers in a new migration, as the history is only added to (DAT-048). The planner's trial settles: which changes of a decided item are refused, and whether its note can still be changed; whether an open item can be deleted; that a statement that says `INSERT OR REPLACE` does not put a new row in the place of a decided item, which SQLite does not refuse where a new item clashes with one that is there (found in the trial of DAT-050), and whether the same is refused for an open item; whether an item can be stored as decided in one statement, as the tests of the opening functions do, or only be decided afterwards; whether the moment of a decision is held to the moment the item was stored; what a store that holds items already is given by the migration; and what `decide` and the two opening functions meet of the triggers. The test of DAT-010 that holds that the table does not yet keep a decision is changed to hold that it does.
+- **Acceptance criteria:** a decided item cannot be put back to open, cannot be given the other decision, another person or another moment, and cannot be deleted, each refused by the store in one plain sentence, also for a statement written past the models; an open item is decided as before, through `decide` and with plain SQL; `INSERT OR REPLACE` does not replace a decided item; the migration is applied to a store at the version before it, with and without items; the model and the migrations agree; the test of DAT-010 that puts a decided item back to open is changed to hold the refusal, and no other existing test changes unless the trial shows why it must.
+- **Tests required:** integration tests against a real SQLite file, with plain SQL and through the models; the migration applied to a store at the version before it; planted defects, those of DAT-010, DAT-050 and DAT-052 among them where their files change; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
