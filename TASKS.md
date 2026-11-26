@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 57 | 37 |
+| 2 | Data store and published data (DAT, PUB) | 57 | 38 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-049 – Indexes for the history of a record.
+**Current task:** DAT-010 – Review queue.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1633,7 +1633,7 @@ deleted is DAT-048, and the indexes of the history are DAT-049.
 - **Plan:** `docs/plans/DAT-048.md`
 
 ### DAT-049 – Indexes for the history of a record
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The history of one record, and the changes one collection run caused, are found without reading the whole table of the changes.
 - **Description:** Added on 2026-11-25 (PLAN-028), cut out of DAT-009. Two plain indexes on `record_change`, said by the model, named by the naming rule and made by the seventh migration, `index_the_record_changes`; the schema is at version 7. `ix_record_change_record_table_record_id`, over `record_table` and `record_id` in that order, finds the changes of one record; `ix_record_change_collection_run_id`, over `collection_run_id`, finds the changes one run caused, for whoever asks and for SQLite itself, which looks for them whenever a run is deleted or given another key and indexes nothing by itself for a reference. Settled in the planner's trial, by asking SQLite for its plan: SQLite ends every entry of an index with the key of its row, so the changes of one record stand in the index in the order they were made, and oldest first, newest first and only the last change are each one search with nothing sorted; `field` as a third column breaks that order and the history is sorted after it is found, so it is not in the index; the key before the table does the same for one record and cannot find the changes of one table; a partial index of a run is used the same and saves little, so the index is plain; the changes one person decided get no index, because nothing asks for them; the plans are the same with 100,000 rows and after `ANALYZE`, which nothing runs. No function that reads the history is added: nothing calls one yet, so the tests write eight questions with the model, as the store's code will ask them, and read SQLite's plan for the statement each really sends. Making an index writes no row, so the triggers that keep the history from being edited do not fire and the rows are as they were. No table, column, check or trigger changes; no new package. The planner's trial has 25 new tests and detects 30 of 30 planted defects, and 291 of 291 of the earlier tasks whose files change.
 - **Acceptance criteria:**
@@ -1646,10 +1646,10 @@ deleted is DAT-048, and the indexes of the history are DAT-049.
   7. One existing test gets an addition (the seventh name) and one has one assertion changed (the table has these two indexes, where it had none); no other existing test changes, and all pass, those of the triggers and of `change` among them. The type check passes with no `ignore` and the lint with no `noqa`.
   8. `python scripts/check.py` reports 19 of 19 gates and 2093 tests (backend tests 1463); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 22 new integration tests in 6 functions, in a store the migrations built, on a real SQLite file with a source, three runs and six changes, which read SQLite's own plan for the statements the model really sends, with the indexes and without them; 3 new tests of the history, of the seventh migration given to a store at the version before it that has two rows of history; every existing test, with one addition and one changed assertion. Twelve planted defects by the builder and the planner's own, those of the earlier tasks whose files change among them; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #131 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2093 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1463: 1438 before, 25 new); 30 planted defects in the model and the migration, 30 of 30 detected, the plan's twelve prove-it steps among them with the results the plan gives; the 291 planted defects of the earlier tasks whose files changed were planted in the planner's trial, whose nine files those of the pull request are identical to, byte for byte: 291 of 291 detected (the table of the sources 51, the table of the offers 34, the table of the runs 76, their index 28, the table of the changes 64 and its triggers 38), one of them at its second run, because its first gave no result at all. On GitHub, read by the planner from the runs and job logs: run 45760207591 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2093 passed, 0 failed, 0 skipped.", with 1463 backend tests on both machines, the three jobs after the gates skipped; run 45764237065 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 2093 / 0 tests (repository 41, script tests 206, backend 1463, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 30 / 0 new and 291 / 0 earlier planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-26. All 9 files are identical to the planner's trial. One existing test got one line (the seventh name) and one had one assertion changed (the table has these two indexes, where it had none), as the task said; no other existing test changed, and no package was added. SQLite's plans were read on the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `497e6ab`
 - **Plan:** `docs/plans/DAT-049.md`
 
 ### DAT-010 – Review queue
