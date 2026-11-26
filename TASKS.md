@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 57 | 35 |
+| 2 | Data store and published data (DAT, PUB) | 57 | 36 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-047 – A change is written with its history.
+**Current task:** DAT-048 – A row of the history is neither edited nor deleted.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1591,7 +1591,7 @@ deleted is DAT-048, and the indexes of the history are DAT-049.
 - **Plan:** `docs/plans/DAT-009.md`
 
 ### DAT-047 – A change is written with its history
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A field of a record is changed and the change is written to its history in the same unit of work, so that neither exists without the other.
 - **Description:** Added on 2026-11-25 (PLAN-028), cut out of DAT-009. One new module, `motosphere.db.changes`, with one function, `change(work, record, to, run=…)` or `change(work, record, to, decided_by=…)`. It gives a stored record its new values and adds one row to `record_change` for every field that then holds another value, and gives the rows back in the order the fields were given. Settled in the planner's trial: a value is compared, and written to the history, as the text of what the store keeps for it, which the type of the column says as it says it when a row is written, so the history holds the text SQLite itself gives for the column before and after; a column of text takes text and a column of whole numbers a whole number, and what is merely like one is refused, where SQLite would have made something of it; a number with a fraction and bytes have no text yet and a change to such a column is refused, because no real table has one and the choice matters for coordinates; a field that holds the value already gets no row, and when no field differs the record is not touched and the clock is not read; the clock is read once for one call, and every row of the call and the record's `updated_at` carry that moment; `id`, `created_at` and `updated_at` never go through the function; the columns that say where a collected record came from go through it like any other field, so a collector gives the new value and its new provenance in one call and the history holds the address, the day and the moments of the old value (CLAUDE.md §11); a record that is stored for the first time has no history, and a record that was only added is refused until the unit of work has written it; the function writes at once, so what SQLite refuses is refused at the call, the unit of work then fails as a whole, and one that caught the refusal cannot go on; a row of the history is not a record to change; nothing stops a change past the function, and a test stores one so that this is on record. No real table holds records before DAT-011, so three tables made for the tests prove it, in a store the migrations built, with the real table of the changes. No table, no migration, no new package, no existing file of code or tests changed. The planner's trial has 63 new tests and detects 65 of 65 planted defects.
 - **Acceptance criteria:**
@@ -1605,10 +1605,10 @@ deleted is DAT-048, and the indexes of the history are DAT-049.
   8. No existing test and no existing file of code changed, and all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
   9. `python scripts/check.py` reports 19 of 19 gates and 2021 tests (backend tests 1391); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 63 new integration tests in 24 functions, in a store the migrations built, on a real SQLite file, with three tables of the tests' own and the real table of the changes, read with plain SQL, past the models; every existing test, unchanged. Sixteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #127 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2021 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1391: 1328 before, 63 new); 65 planted defects in the function, 65 of 65 detected, the plan's sixteen prove-it steps among them with the results the plan gives. On GitHub, read by the planner from the runs and job logs: run 45730414725 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2021 passed, 0 failed, 0 skipped.", with 1391 backend tests on both machines, the three jobs after the gates skipped; run 45731962986 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 2021 / 0 tests (repository 41, script tests 206, backend 1391, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 65 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-26. All 6 files are identical to the planner's trial. No existing test changed, and no package was added. The texts of the history were held to what the real SQLite of three machines says it keeps: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `d3d118a`
 - **Plan:** `docs/plans/DAT-047.md`
 
 ### DAT-048 – A row of the history is neither edited nor deleted

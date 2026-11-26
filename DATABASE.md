@@ -13,8 +13,10 @@ has four tables: `source`, that of the information sources (DAT-006),
 the record of every time a source was collected from (DAT-007; see "The
 collection runs"), which has the store's first index (DAT-042), and
 `record_change`, which keeps what a field of a record held before it
-was changed (DAT-009; see "The changes to records"). Nothing writes a
-change yet: the function that does is a task of its own (DAT-047). The
+was changed (DAT-009; see "The changes to records"). One function
+changes a record and writes its history in the same unit of work
+(DAT-047; see "Changing a record"); no real table holds records yet,
+so nothing calls it. The
 columns by which every collected record says where it came from are in
 the code, as one set that a model of collected records takes whole
 (DAT-008; see "Where a collected record came from"), and so are the two
@@ -1513,10 +1515,10 @@ The table `record_change` keeps it, and its model `RecordChange` is in
 `motosphere.db.models.record_change`. The fifth migration makes the
 table (`make_the_record_changes`, DAT-009).
 
-This is the table and its rules, and no more. Nothing writes a change
-yet. The function that changes a record and writes its history in the
-same unit of work is DAT-047; that a row of the history can be neither
-edited nor deleted is DAT-048; its indexes are DAT-049.
+This section is the table and its rules. The function that changes a
+record and writes its history in the same unit of work is the next
+section, "Changing a record" (DAT-047). That a row of the history can
+be neither edited nor deleted is DAT-048; its indexes are DAT-049.
 
 | Column | Holds | Rule |
 |---|---|---|
@@ -1541,13 +1543,14 @@ edited nor deleted is DAT-048; its indexes are DAT-049.
   exists, because a reference is to one table. A test stores a change
   to a track in a store that has no table of tracks, so the price is
   on record. What holds the two to a record is the function that
-  writes a change with its history (DAT-047).
+  writes a change with its history: it takes them from the record it
+  changes (see "Changing a record").
 - **Values are kept as text, in the form the store keeps them in.** A
   moment, a day and a word of a list are text in the store already
   (see "Times", "Calendar days" and "One of a list"). A whole number
   is kept as its text, and so is a yes or no, which the store keeps
-  as 1 or 0 (see "Yes or no"); which text a value has is for the
-  function that writes it to say (DAT-047). The two columns are TEXT in
+  as 1 or 0 (see "Yes or no"); the function that writes a change says
+  which text a value has (see "Changing a record"). The two columns are TEXT in
   a strict table, and not of SQLite's kind `ANY`, which keeps a value
   as it is given: then "7" and 7 would be two values in one column,
   and whether a field changed would depend on how its value was
@@ -1586,6 +1589,102 @@ edited nor deleted is DAT-048; its indexes are DAT-049.
 - **Not collected records.** The table is on the list of the tables
   that hold no collected records (see "Every table says where its
   records came from, or why not").
+
+## Changing a record
+
+A record that is stored is changed with `change`, in
+`motosphere.db.changes` (DAT-047):
+
+```python
+with unit_of_work(store) as work:
+    track = work.get_one(Track, key)
+    change(work, track, {"name": "Example Raceway", "length_in_metres": 1750}, run=run)
+```
+
+It gives the record its new values and adds one row to `record_change`
+for every field that then holds another value, in the same unit of
+work. So a change and its history are kept together or taken back
+together: "neither exists without the other".
+
+- **What is given.** The unit of work, the record, the fields with
+  what each shall hold now, and the cause: the key of a collection run
+  (`run`) or the name of a person (`decided_by`). Exactly one of the
+  two, as the table asks; a call that names neither or both is refused
+  before anything is changed.
+- **A field that holds the value already is left alone.** It gets no
+  row, and when no field differs the record is not touched at all: not
+  even the moment it was last changed moves, and nothing is written.
+  The function gives back the rows it wrote, in the order the fields
+  were given, and an empty list when there were none.
+- **Values are compared as the text of what the store keeps.** The
+  type of the column is asked for what it keeps, as it is asked when a
+  row is written, and the history holds the text of that:
+
+  | The column keeps | Its text in the history | For example |
+  |---|---|---|
+  | Text, also text that must not be empty and a web address | The text itself, letter for letter | `Example Park` |
+  | A whole number | Its digits, with `-` before a number below nothing | `1600` |
+  | A time | The store's form of a time (see "Times") | `2026-11-25T09:30:00.000000+00:00` |
+  | A calendar day | The store's form of a day (see "Calendar days") | `1998-05-01` |
+  | A word of a list | The word (see "One of a list") | `hard pack` |
+  | Yes or no | `1` or `0` (see "Yes or no") | `1` |
+  | No value | No value | |
+
+  A test asks SQLite itself for `CAST(<field> AS TEXT)` before and
+  after a change, for a column of every one of these kinds, and the
+  history holds exactly those two texts. So a time said with another
+  offset is the same value when it is the same moment, and text that
+  differs by a capital letter or by a space at its end is another
+  value.
+- **A column of text takes text, and a column of whole numbers a whole
+  number.** `"1750"` for a whole number, `7` for a text and yes for a
+  whole number are refused in one sentence, where SQLite would have
+  made something of them. The record and its history then say the
+  same, and the record in the code holds what the store holds.
+- **A number with a fraction and bytes have no text yet.** A change to
+  a column that keeps either is refused. A number with a fraction has
+  more than one text (`1750.0`, `1.75e3`), and the one the history
+  uses must give the same number back to the last digit when it is
+  read. No real table has such a column, so nothing can be tried on
+  real values: the task that brings the first decides it, with
+  coordinates in view. A record that has such columns can have its
+  other fields changed.
+- **One moment for one call.** The clock is read once. Every row of
+  the call is stored at that moment (`created_at`), and the record
+  says it was last changed at the same moment (`updated_at`). So the
+  rows of one change are found together, and a record's last change
+  is the moment of its newest history.
+- **Everything is refused before anything is changed**, where the
+  function can tell: no cause or two; a record that is not stored yet,
+  that another unit of work holds, or that was deleted; a row of the
+  history itself; a field the table does not have; the three columns
+  that are the store's own in every table (`id`, `created_at`,
+  `updated_at`); and a value of the wrong kind. A good field given
+  beside a bad one in the same call is not changed either.
+- **What only the store can tell is refused when the function
+  writes**, which it does before it returns: a value the record's
+  table refuses, a run that does not exist, a person with an empty
+  name. The unit of work then fails as a whole and keeps nothing, and
+  whoever catches the refusal and carries on is stopped at the next
+  thing the unit of work is asked.
+- **A record that is stored for the first time has no history.** Its
+  first values are not a change. The function takes it once the unit
+  of work has written it.
+- **Where a collected record came from goes through the function
+  too.** The columns of the set (see "Where a collected record came
+  from") are fields like any other. When a source says something new,
+  the collector gives the new value and what says where it came from
+  in one call, and the history then holds the address, the day and the
+  moments that belonged to the old value: "Historical information must
+  retain its original date" (CLAUDE.md §11). A test does exactly this.
+- **Nothing stops a change past the function.** A field set by hand
+  on a record is written when the unit of work ends, without a row. A
+  test does this too, so that it is not taken for something the
+  function prevents. A field set by hand before the call is compared
+  as the unit of work holds it, so the history says what was set.
+  Whether a record that was merely seen again unchanged (only
+  `last_verified_at` moves) gets a row is for the code that collects
+  to decide, by calling the function or not.
 
 ## What the store relies on in SQLite
 
