@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 57 | 38 |
+| 2 | Data store and published data (DAT, PUB) | 60 | 38 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -905,6 +905,11 @@ the changes (PLAN-028). The function that writes a change with its
 history is DAT-047, that a row of the history is neither edited nor
 deleted is DAT-048, and the indexes of the history are DAT-049.
 
+The trial of the review queue, DAT-010, cut it down to the table of the
+review items (PLAN-029). That one doubt is one item is DAT-050, the
+function that opens an item is DAT-051, and the function that decides
+one, with a decided item keeping its decision, is DAT-052.
+
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
 - **Objective:** Decide, with evidence, what the data store may rely on: which SQLite features every machine that runs the pipeline has, where the store is kept between scheduled runs, and which size limits bound it.
@@ -1653,11 +1658,56 @@ deleted is DAT-048, and the indexes of the history are DAT-049.
 - **Plan:** `docs/plans/DAT-049.md`
 
 ### DAT-010 – Review queue
+- **Status:** IN PROGRESS
+- **Objective:** The store has a table of review items: what is in doubt about a record and why, and whether a person has decided it, how, who and when.
+- **Description:** Cut down in the planner's trial on 2026-11-26 (PLAN-029) to the table of the review items: that one doubt is one item is DAT-050, the function that opens an item is DAT-051, and the function that decides one, with a decided item keeping its decision, is DAT-052. One new table, `review_item`, with its model `ReviewItem` and the two lists `ReviewKind` (`possible duplicate`, `sources disagree`, `value outside its rules`) and `ReviewState` (`open`, `accepted`, `rejected`) in `motosphere.db.models.review_item`, made by the eighth migration, `make_the_review_items`; the schema is at version 8. One row is one doubt about one record, which is named as the history names it, by the name of its table and its key there. What else an item names goes with its kind: a possible duplicate names the other record of the same table, which has the greater key, so that a pair is said in one way and no record is its own duplicate; the two other kinds name the field, the source that says what it should hold, the address at which the source says so, and what it says, kept as the text it was and never run or followed. Every item says why in plain words, and may have a note, which never leaves the store. An open item says neither who decided nor when; an accepted or rejected item says both. Settled in the planner's trial: the records and the sources of an item are columns and not tables of their own, so that the table itself can hold an item to what its kind needs, with one check for each of the five columns; the three kinds are in one table; the moment of a decision is a column of its own, because a note added later moves `updated_at`; the index of the source, `ix_review_item_source_id`, comes with the table, because SQLite looks for the items of a source whenever a source is deleted, and the test of DAT-045 that reads that plan fails without it. The table holds no collected records and is on the list `NOT_COLLECTED` with its reason. Nothing opens or decides an item yet, the same doubt can still be stored twice and a decided item can still be put back to open: two tests put the last two on record, and the three tasks after this one change that. That the note is in no published file is held by PUB-005. No new package. The planner's trial has 108 new tests and detects 123 of 123 planted defects, and 407 of 407 of the earlier tasks whose files change.
+- **Acceptance criteria:**
+  1. The eighth migration makes the table `review_item` and the index `ix_review_item_source_id` in a store at version 7 and leaves a source, a row of history, the three indexes and the four triggers as they were; it fails, with the store left at version 7, where a table of its name is there already, and where an index of its name is, with the table it had made taken back. A new store is at schema version 8.
+  2. The model `ReviewItem` and the migration say the same table and index; in the file the table is strict, has the columns in the order of the model, one reference (to `source.id`), one index and seventeen checks.
+  3. An item of each of the three kinds is stored and read back with every column, and a new item is open; an accepted and a rejected item say by whom and when; a note is kept on an item in any state.
+  4. The table refuses: a kind or a state that is not on its list; an item without its kind, the table or the key of its record, its reason or its state; an empty name of a table, of a field or of a person, an empty reason and an empty note; a key of a record that is not above 0; and a value of the wrong kind for a column.
+  5. A possible duplicate is refused without the other record, with an other record whose key is not the greater, and with a field, a source, an address or what a source says. An item of each of the two other kinds is refused without any one of those four, and with another record.
+  6. The source of an item must exist, and where it says so is a web address; a source that an item names can neither be deleted nor have its key changed, one that none names can be deleted, and SQLite's plan for deleting a source searches the items by the index and reads no table whole.
+  7. An open item that says who decided or when is refused, and so is a decided item without either.
+  8. What a source says is kept as the text it was, empty text, markup and a statement of SQL among them.
+  9. `review_item` is on `NOT_COLLECTED` with a reason of its own, and the real schema breaks neither the rules every table keeps nor the rule of DAT-046.
+  10. Two existing tests get an addition each and no other changes; all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  11. `python scripts/check.py` reports 19 of 19 gates and 2201 tests (backend tests 1571); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 89 new integration tests in 27 functions, in a store the migrations built, on a real SQLite file, through the model and with plain SQL past it; 14 new unit tests of the two lists; 4 new tests of the history, of the eighth migration given to a store at the version before it; one new case of the rule of DAT-046; every other existing test, unchanged. Sixteen planted defects by the builder and the planner's own, with those of the earlier tasks whose files change; the real commands `migrate` and `schema` on a new store; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-010.md`
+
+### DAT-050 – One doubt is one review item
 - **Status:** NOT STARTED
-- **Objective:** Conflicting or doubtful information waits for a person's decision and is never merged by itself.
-- **Description:** Table, model and migration for review items: what is in doubt (a possible duplicate, two sources that disagree, a value outside its rules), the records and sources involved, the state (open, accepted, rejected), who decided and when, and a note that never leaves the store. One function opens an item, and opening the same doubt twice gives one item.
-- **Acceptance criteria:** an item names at least one record and why it is in doubt; the same doubt opened twice is one item; a decided item keeps its decision and cannot be reopened silently; the note is not in any published model.
-- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
+- **Objective:** The store itself refuses a second review item for a doubt it already holds.
+- **Description:** Added on 2026-11-26 (PLAN-029), cut out of DAT-010, which asked that "opening the same doubt twice gives one item". What the same doubt is: for a possible duplicate, the same two records of one table, which DAT-010 already says in one way; for the two other kinds, the same record and field with the same source saying the same thing. An item that was decided counts as well, so that a doubt a person rejected is not put to them again by the next collection run. The planner's trial settles how the store says it. SQLite counts two missing values as two different values, so one unique index over all the columns does not do it, and the trial tries an index for each shape of an item, over the rows of that shape only; it also settles whether the kind belongs to what makes a doubt the same, and whether the indexes by which the items of one record and the open items are found belong here or are a task of their own. The test of DAT-010 that holds that the table does not yet hold one doubt to one item is changed to hold that it does.
+- **Acceptance criteria:** a second possible duplicate for the same two records of one table is refused, and so is a second item for the same record and field with the same source saying the same thing, whatever the state of the first; an item that differs in any one of those is stored; what refuses it is in the model and in the real SQLite file, made by a migration that is given to a store at the version before it; the test of DAT-010 that stores the same doubt twice is changed to hold the refusal, and no other existing test changes.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects, those of DAT-010 among them; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-051 – Opening a review item
+- **Status:** NOT STARTED
+- **Objective:** One function puts a doubt into the review queue, and a doubt that is there already stays one item.
+- **Description:** Added on 2026-11-26 (PLAN-029), cut out of DAT-010, which said: "One function opens an item". It is what the collecting calls when it cannot settle something by itself. It is given the record, or the two records, what is in doubt and why, and for a doubt about a field the field, the source, the address and what the source says. It takes the table and the key from the records themselves, as `change` does (DAT-047), puts the two records of a possible duplicate in the order the table asks for, and gives back the item: the one that is there already when the doubt is one already, in whatever state. The planner's trial settles its shape (one function, or one for each kind of doubt), what it refuses and in which words, and whether it writes at once or with the unit of work.
+- **Acceptance criteria:** opening a doubt stores one open item with the table and the key of its record and the reason; opening the same doubt again gives back the same item and stores none, also where the two records are given the other way round and where the item was decided; a record that is not stored, two records of two tables and a record given as its own duplicate are each refused in one plain sentence; a unit of work that fails leaves no item.
+- **Tests required:** integration tests against a real SQLite file, with tables of the tests' own and the real table of the review items; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-052 – Deciding a review item
+- **Status:** NOT STARTED
+- **Objective:** A person's decision on a review item is stored with who made it and when, and a decided item keeps its decision.
+- **Description:** Added on 2026-11-26 (PLAN-029), cut out of DAT-010, which asked that "a decided item keeps its decision and cannot be reopened silently". One function decides an open item: accepted or rejected, by whom, at the moment it is given, with a note where there is one. The planner's trial settles how a decision is kept: the function refuses an item that was decided already, and the trial tries whether the store itself refuses it too, by triggers as the history does (DAT-048), so that a decided item is neither put back to open, nor given the other decision, another person or another moment, nor deleted; whether that part is a task of its own; whether a note can still be added to a decided item; and whether a decision is written to the history of the changes. The test of DAT-010 that holds that the table does not yet keep a decision is changed to hold that it does. What follows from a decision for the records, the merging of two records or the new value of a field, is not this task: it belongs to the tasks that merge and that apply decisions.
+- **Acceptance criteria:** deciding an open item stores its state, who decided and when, and the note where one is given; deciding an item that was decided is refused in one plain sentence and the item is as it was; a decided item cannot be put back to open and cannot be given the other decision; an empty name of a person is refused; a unit of work that fails leaves the item open; the test of DAT-010 that puts a decided item back to open is changed to hold the refusal, and no other existing test changes.
+- **Tests required:** integration tests against a real SQLite file; the migration, if there is one, applied to a store at the version before it; planted defects, those of DAT-010 among them where its files change; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
