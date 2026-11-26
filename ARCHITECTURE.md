@@ -340,12 +340,7 @@ pipeline's command line. The settings and logging modules stay.
   and writes a row of history for every field that differs, in the same
   unit of work, so neither is kept without the other (DAT-047).
   Ambiguous or conflicting records go to a review queue; uncertain identities
-  are never merged automatically. The queue is the table `review_item`:
-  one item is one doubt about one record, of one of three kinds (two
-  records may be the same thing, a source says otherwise than the
-  record, or a source says what the rules of a field refuse), with why,
-  and with whether a person accepted or rejected it, who and when
-  (DAT-010).
+  are never merged automatically.
 
 The schema is documented in DATABASE.md as tables are added.
 

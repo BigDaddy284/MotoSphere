@@ -6,20 +6,18 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 8 and
-has five tables: `source`, that of the information sources (DAT-006),
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 7 and
+has four tables: `source`, that of the information sources (DAT-006),
 `source_offer`, which says what kinds of information each of them offers
 (DAT-040; see "The information sources" for both), `collection_run`,
 the record of every time a source was collected from (DAT-007; see "The
-collection runs"), which has the store's first index (DAT-042),
+collection runs"), which has the store's first index (DAT-042), and
 `record_change`, which keeps what a field of a record held before it
 was changed (DAT-009; see "The changes to records") and is only added
 to: the store itself refuses to edit, delete or replace a row of it
 (DAT-048; see "The history is only added to"). Two indexes find the
 changes of one record and the changes one run caused without reading
-the whole table (DAT-049). The fifth is `review_item`, the review
-queue: what is in doubt and waits for a person's decision (DAT-010;
-see "The review queue"). One function
+the whole table (DAT-049). One function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"); no real table holds records yet,
 so nothing calls it. The
@@ -28,7 +26,7 @@ the code, as one set that a model of collected records takes whole
 (DAT-008; see "Where a collected record came from"), and so are the two
 lists that say how far such a record can be trusted (DAT-043; see "How
 far a collected record can be trusted"). No table has them yet: none of
-the five holds collected records, and a list in the code says of each
+the four holds collected records, and a list in the code says of each
 why not. A rule names every table that neither has the set nor is on
 that list (DAT-046; see "Every table says where its records came from,
 or why not"). The decisions the store rests on are recorded below, from
@@ -167,7 +165,7 @@ newest schema (DAT-024). It opens the store at `MOTOSPHERE_STORE_PATH`
 with `open_store`, which makes the file if it is not there, calls
 `migrate`, and writes one sentence to standard output, with the file's
 whole path and the store's version: "A new data store was made: …", "The
-data store was brought up to date: … went from schema version 2 to 8." or
+data store was brought up to date: … went from schema version 2 to 7." or
 "The data store is up to date: …". A store that cannot be opened, or that
 is refused, gives its one sentence on standard error, with nothing before
 or after it, and the exit code 1, and is left as it is. An error inside a
@@ -181,8 +179,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 8." or "The data store lacks 5
-migrations: … is at schema version 3, and the newest is version 8." In
+is up to date: … is at schema version 7." or "The data store lacks 4
+migrations: … is at schema version 3, and the newest is version 7." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -201,7 +199,6 @@ list of them, and nothing else (DAT-006):
 | 5 | `make_the_record_changes` | Makes the table of the changes to records, `record_change` | DAT-009 |
 | 6 | `let_the_record_changes_only_be_added_to` | Makes the four triggers by which no row of `record_change` is edited, deleted or replaced | DAT-048 |
 | 7 | `index_the_record_changes` | Makes the two indexes of `record_change`: of the changes of one record, `ix_record_change_record_table_record_id`, and of the changes one run caused, `ix_record_change_collection_run_id` | DAT-049 |
-| 8 | `make_the_review_items` | Makes the table of the review queue, `review_item`, and the index of the sources its items name, `ix_review_item_source_id` | DAT-010 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -977,11 +974,10 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have five tables, four indexes and four triggers to
+Today the two have four tables, three indexes and four triggers to
 agree on: `source`, `source_offer`, `collection_run`, `record_change`,
-`review_item`, the index of the runs of one source, the two indexes
-and the triggers of `record_change`, and the index of the sources that
-review items name.
+the index of the runs of one source, and the two indexes and the
+triggers of `record_change`.
 That the comparison can fail is proven with two models and migrations of
 the tests' own (`TESTING.md`).
 
@@ -1446,9 +1442,7 @@ holds the real schema to it.
   nobody reads. And a table on it that has all eight columns is named,
   because it holds collected records after all and must come off the
   list. A table on the list is not looked at otherwise: the runs and
-  the offers have a `source_id` of their own, which is not the set,
-  and a review item has a `source_id` and a `source_address` that can
-  both be without a value.
+  the offers have a `source_id` of their own, which is not the set.
 - **The set is said twice, and that is meant.** The rule does not take
   the columns from `Collected`: it says them again, in its own words.
   A change to the set is therefore made in two places, and a test,
@@ -1834,135 +1828,6 @@ together: "neither exists without the other".
   Whether a record that was merely seen again unchanged (only
   `last_verified_at` moves) gets a row is for the code that collects
   to decide, by calling the function or not.
-
-## The review queue
-
-Where the collecting cannot tell by itself what is right, it does not
-guess: "Do not automatically merge uncertain rider or track
-identities." and "Use review queues when information conflicts."
-(CLAUDE.md §11). What is in doubt is put down as an item and waits
-until a person decides. The table `review_item` keeps the items, and
-its model `ReviewItem` is in `motosphere.db.models.review_item`, with
-the two lists an item is said by. The eighth migration makes the table
-and its index (`make_the_review_items`, DAT-010).
-
-This section is the table and its rules. Nothing writes an item yet.
-That one doubt is one item is DAT-050, the function that opens an item
-is DAT-051, and the function that decides one, with the rule that a
-decision is kept, is DAT-052.
-
-| Column | Holds | Rule |
-|---|---|---|
-| `id` | The key of the item | Given by the store, and never given twice (see "The rules every table keeps") |
-| `kind` | What is in doubt | Never without it; one of the three kinds below |
-| `record_table` | The table of the record the item is about, by its name | Never without it; not empty |
-| `record_id` | The key of that record in its table | Never without it; above 0 |
-| `other_record_id` | The other record of a possible duplicate, by its key in the same table | With a possible duplicate, always; with no other kind. Greater than `record_id` |
-| `field` | The field that is in doubt, by the name of its column | With the two other kinds, always; never with a possible duplicate. Not empty |
-| `source_id` | The source that says what the field should hold | As `field`. A source that exists (`source.id`) |
-| `source_address` | The address at which the source says so | As `field`. A web address (see "A web address") |
-| `source_value` | What the source says the field holds, as text | As `field`. Can be empty text |
-| `reason` | Why the item is in doubt, in plain words, for the person who decides | Never without it; not empty |
-| `state` | Whether the item was decided, and how | Never without it; one of the three states below. A new item is open |
-| `decided_by` | The person who decided, by name | With a decision, always; never with an open item. Not empty |
-| `decided_at` | When it was decided | As `decided_by` (see "Times") |
-| `note` | What a person wants kept with the item | Not empty, or none |
-| `created_at`, `updated_at` | When the row was stored and changed | See "When a row was stored and changed" |
-
-**What is in doubt** is one of three kinds (`ReviewKind`):
-
-| Kind | What it says |
-|---|---|
-| `possible duplicate` | Two records of one table may be the same thing |
-| `sources disagree` | A source says that a field of a record holds another value than the record holds |
-| `value outside its rules` | A source says that a field of a record holds a value which the rules of the field refuse |
-
-**Whether it was decided** is one of three states (`ReviewState`):
-
-| State | What it says |
-|---|---|
-| `open` | Nobody has decided it yet |
-| `accepted` | What the item puts forward is taken: the two records are one, or the field shall hold what the source says |
-| `rejected` | It is not taken: the two records are two, or the record stays as it is |
-
-- **One item is one doubt about one record.** An item always names a
-  record, by the name of its table and its key there, as a change in
-  the history does (see "The changes to records"), and for the same
-  reason: an item can be about a record of any table, and a reference
-  is to one table. So SQLite does not hold the two to a row that
-  exists; a test stores an item about a record of a table that is not
-  there, so that this is on record. The function that opens an item
-  will take them from the record (DAT-051). An item is about a record
-  that is stored: what the collecting does with a record it cannot
-  store at all is for the tasks of the collecting.
-- **What else an item names goes with its kind**, and the table holds
-  it to that with a check for each column. A possible duplicate names
-  the other record and nothing else. The two other kinds name the
-  field, the source, the address and what the source says, all four,
-  and no other record. A table for each kind would say the record, the
-  reason and the decision three times; one table with columns that
-  are empty for some kinds says each once, and the checks make sure
-  that no item is half of one kind and half of another.
-- **The two records of a possible duplicate are said in one way**: the
-  record is the one with the smaller key, and the other record the one
-  with the greater. So "7 and 12" cannot also be stored as "12 and 7",
-  and no record is its own duplicate. Both are of the same table: a
-  track is not the duplicate of a rider.
-- **More than two.** Three records that may all be one thing are three
-  pairs, and three sources that say three things of a field are an
-  item for each source that does not say what the record holds. An
-  item stays small, and each can be decided by itself.
-- **What the source says is kept as text, as it was given.** It is what
-  a source said and no more. It is never run, followed or taken for an
-  instruction (CLAUDE.md §14), and whatever shows it later shows it as
-  inert text. Empty text is kept too: a source can say it of a field,
-  and that is then what is in doubt.
-- **Where the source says it** is kept with it, so that a person can
-  look: "Keep original source material or permitted evidence
-  references so that records can be checked later." (DESIGN.md §8).
-  When it was found is when the item was stored (`created_at`).
-- **Why, in words.** The kind says what sort of doubt it is. The
-  reason says why this one arose, to the person who has to decide:
-  that two tracks have one name and lie 140 metres apart, or what the
-  record holds where the source says otherwise. The code that opens
-  an item writes it. It can hold what a source said, and is shown as
-  inert text like it.
-- **A decision has who made it and when, and nothing else has.** Two
-  checks hold `decided_by` and `decided_at` to the state: both are
-  there when the item is accepted or rejected, and neither when it is
-  open. The name of the person is text, as in the history: MotoSphere
-  has no accounts, and who may decide is who may write to the
-  repository (ARCHITECTURE.md §9).
-- **What follows from a decision is not this table's.** Merging two
-  records that are one, and giving a field what a source says, are the
-  tasks that build them. An accepted value that the rules of its field
-  refuse cannot be stored as it is: either the person corrects it, or
-  the rule is wrong and is changed. The item says what was decided;
-  the history says what was then changed.
-- **The note never leaves the store.** It is for the person who
-  decides and for whoever looks at the item later. No published file
-  holds it; the task that publishes the detail files of the tracks
-  holds the published folder to that (PUB-005).
-- **A source that an item names cannot be deleted**, nor its key
-  changed: the reference says nothing of what happens then, and SQLite
-  refuses, as it does for the runs of a source.
-- **One index, over the source** (`ix_review_item_source_id`). SQLite
-  looks for the items that name a source before it lets the source go,
-  and indexes nothing by itself for a reference. A test of DAT-045
-  reads SQLite's plan for deleting a source and holds it to reading no
-  table whole, so the index comes with the table and not after it. It
-  forbids nothing. The indexes that find the open items and the items
-  of one record come with what asks for them (DAT-050, DAT-051).
-- **What the table does not hold yet.** The same doubt stored twice is
-  two items (DAT-050). A decided item can be put back to open, and any
-  item can be deleted (DAT-052). Nothing holds the moment of a
-  decision to the moment the item was stored. A test puts the first
-  two on record, and is changed by the task that closes each.
-- **Not collected records.** The table is on the list of the tables
-  that hold no collected records (see "Every table says where its
-  records came from, or why not"): an item is the store's own record
-  of a doubt. What a source said is in it, with the source and the
-  address, but the item is there to be decided and not to be shown.
 
 ## What the store relies on in SQLite
 

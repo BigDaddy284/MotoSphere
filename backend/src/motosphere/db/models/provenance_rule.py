@@ -52,10 +52,6 @@ NOT_COLLECTED: Final[Mapping[str, str]] = {
         "A change is the store's own record of what it did to a record. Where the new "
         "value came from is said by the record, and by the run that caused the change."
     ),
-    "review_item": (
-        "A review item is the store's own record of a doubt. What a source said is in it, "
-        "with the source that said it, and it is kept there to be decided, not to be shown."
-    ),
     "source": (
         "A source is where records come from. A person describes it and reads "
         "its terms: it is not collected from a source itself."

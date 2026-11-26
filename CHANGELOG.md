@@ -290,15 +290,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   also uses before it lets a run be deleted. Neither question reads the
   whole table any more. The data store's schema is at version 7
   (DAT-049).
-- The review queue: the table `review_item`, made by the eighth
-  migration. One item is one doubt about one record, of one of three
-  kinds: two records may be the same thing, a source says otherwise
-  than the record holds, or a source says a value that the rules of
-  its field refuse. An item says why, names what goes with its kind
-  and nothing else, and says whether a person accepted or rejected it,
-  who and when. A note can be kept with it, which is never published.
-  The data store's schema is at version 8. Nothing opens an item yet
-  (DAT-010).
 
 ### Removed
 
