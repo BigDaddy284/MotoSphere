@@ -1087,6 +1087,50 @@ past it.
 That the model and the fifth migration say the same table is proven by
 the test of the models and the migrations.
 
+## Changing a record with its history
+
+`backend/tests/integration/test_changes.py` tests `change`
+(`motosphere.db.changes`, DAT-047) in a store that the migrations
+built, on a real SQLite file. The history is written to the real table
+of the changes. The records are of three tables made for the tests,
+because the real schema has no table of records yet: one with a column
+of every kind the store keeps, one whose keys are the keys of the
+first, and one of collected records. What the store holds afterwards
+is read with plain SQL, past the models.
+
+- **A change** is in the record and its old value in the history,
+  with the cause and the moment; a change to three fields is three
+  rows of one moment, in the order given, after one reading of the
+  clock.
+- **The text of a value**: for a column of every kind, with and
+  without a value, SQLite is asked for the text of what it keeps
+  before and after the change, and the history holds those two.
+- **Nothing to change**: a field that holds the value already gets no
+  row, also a time said with another offset; when no field differs the
+  row in the file is the same to the last column and the clock was
+  not asked.
+- **The cause**: a run, a person; neither and both are refused before
+  anything is changed.
+- **Neither without the other**: a value the record's table refuses,
+  a run that does not exist and a person without a name each leave the
+  record as it was and no history; so does work that fails later in
+  the same unit; and a unit of work does not go on after a refusal
+  that was caught.
+- **Refused before anything is changed**: a value of the wrong kind
+  for its column, a column of numbers with a fraction or of bytes, a
+  time without an offset, the store's own three columns, a field the
+  table does not have, a record that is not stored yet, one of
+  another unit of work, a deleted one, and a row of the history.
+  Each time a good field given in the same call is not changed.
+- **More than one change**: two tables with the same keys are told
+  apart in the history; changes in one unit of work follow each
+  other, there and back again.
+- **A collected record**: what says where it came from is changed in
+  the same call as its value, and the history holds the old address,
+  day and moments.
+- **What the function does not do**: a field set by hand is written
+  without a row.
+
 ## How far a collected record can be trusted
 
 `backend/tests/unit/test_db_models_provenance.py` tests the two lists of
