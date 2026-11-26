@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 from sqlalchemy import Engine
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 from motosphere.db import history, migrations
 from motosphere.db.history import MIGRATIONS
@@ -32,6 +32,15 @@ def indexes(store: Engine) -> list[tuple[str, str]]:
         return [(str(name), str(table)) for name, table in found]
 
 
+def triggers(store: Engine) -> list[tuple[str, str]]:
+    """The triggers of the store, each with its table."""
+    with store.connect() as connection:
+        found = connection.exec_driver_sql(
+            "SELECT name, tbl_name FROM sqlite_master WHERE type = 'trigger' ORDER BY name"
+        )
+        return [(str(name), str(table)) for name, table in found]
+
+
 def test_the_history_is_these_migrations_in_this_order() -> None:
     # The list only grows at its end: a new migration adds its name here, last.
     assert [migration.__name__ for migration in MIGRATIONS] == [
@@ -40,6 +49,7 @@ def test_the_history_is_these_migrations_in_this_order() -> None:
         "make_the_collection_runs",
         "index_the_runs_of_a_source",
         "make_the_record_changes",
+        "let_the_record_changes_only_be_added_to",
     ]
 
 
@@ -237,6 +247,69 @@ def test_the_fifth_migration_does_not_pass_over_a_table_of_its_name_that_is_ther
     assert schema_version(store) == 4
     with store.connect() as connection:
         assert connection.exec_driver_sql("SELECT * FROM record_change").all() == [("kept",)]
+
+
+def test_the_sixth_migration_makes_the_triggers_of_the_changes_and_holds_what_there_was(
+    store: Engine,
+) -> None:
+    migrate(store, MIGRATIONS[:5])
+    a_change = (
+        "INSERT INTO record_change (record_table, record_id, field, old_value, new_value, "
+        "decided_by, created_at, updated_at) VALUES ('track', 7, 'name', 'Example Park', "
+        "'Example Raceway', 'Jo Example', '2026-11-25T22:00:00.000000+00:00', "
+        "'2026-11-25T22:00:00.000000+00:00')"
+    )
+    with store.begin() as connection:
+        connection.exec_driver_sql(a_change)
+    with store.connect() as connection:
+        before = connection.exec_driver_sql("SELECT * FROM record_change").all()
+    assert triggers(store) == []
+
+    migrate(store, MIGRATIONS[:6])
+
+    assert tables(store) == ["collection_run", "record_change", "source", "source_offer"]
+    assert indexes(store) == [("ix_collection_run_source_id_started_at", "collection_run")]
+    assert triggers(store) == [
+        ("tr_record_change_key_positive", "record_change"),
+        ("tr_record_change_never_deleted", "record_change"),
+        ("tr_record_change_never_edited", "record_change"),
+        ("tr_record_change_never_replaced", "record_change"),
+    ]
+    # The row that was there before the triggers is held by them as any other.
+    for statement, why in [
+        ("UPDATE record_change SET new_value = 'Example Ring'", "edited"),
+        ("DELETE FROM record_change", "deleted"),
+    ]:
+        with pytest.raises(IntegrityError) as refusal, store.begin() as connection:
+            connection.exec_driver_sql(statement)
+        assert str(refusal.value.orig) == f"A row of the history (record_change) is never {why}."
+    with store.begin() as connection:
+        connection.exec_driver_sql(a_change)
+    with store.connect() as connection:
+        after = connection.exec_driver_sql("SELECT * FROM record_change ORDER BY id").all()
+    assert len(before) == 1
+    assert after[0] == before[0]
+    assert [row[0] for row in after] == [1, 2]
+
+
+def test_the_sixth_migration_does_not_pass_over_a_trigger_of_its_name_that_is_there(
+    store: Engine,
+) -> None:
+    # The trigger that is there has the name of the last of the four: the
+    # three before it are made first, and taken back with the migration.
+    migrate(store, MIGRATIONS[:5])
+    with store.begin() as connection:
+        connection.exec_driver_sql(
+            "CREATE TRIGGER tr_record_change_key_positive AFTER INSERT ON record_change "
+            "BEGIN SELECT 1; END"
+        )
+
+    with pytest.raises(OperationalError) as refusal:
+        migrate(store, MIGRATIONS[:6])
+
+    assert str(refusal.value.orig) == "trigger tr_record_change_key_positive already exists"
+    assert schema_version(store) == 5
+    assert triggers(store) == [("tr_record_change_key_positive", "record_change")]
 
 
 def test_a_store_with_the_newest_schema_lacks_no_migration(newest: Engine) -> None:
