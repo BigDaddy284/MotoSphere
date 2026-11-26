@@ -750,7 +750,12 @@ the rows are as they were and are found through each index, the index
 of the runs and the four triggers are as they were, and it fails where
 an index of its name is there already, with the store left at its
 version and the index it had made before that one taken back
-(DAT-049); a store with the newest
+(DAT-049); the eighth makes the table `review_item` and its index in a
+store that has a source and a row of history, both are as they were,
+with the three indexes and the four triggers, and it fails, with the
+store left at its version, where a table of its name is there already,
+and where an index of its name is, with the table it had made before
+that taken back (DAT-010); a store with the newest
 schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -1028,7 +1033,7 @@ hand, each in a schema of its own, and two models of the tests' own,
 subclasses of the real `Collected`, hold the rule to what a model of
 collected records really gets.
 
-- **The real schema** breaks no rule. Each of its four tables is named
+- **The real schema** breaks no rule. Each of its five tables is named
   as soon as it is taken off the list, in the sentences the rule has
   for it, so the rule does look at the real tables. Every table on the
   list has a reason, and no two have the same.
@@ -1228,6 +1233,70 @@ is read with plain SQL, past the models.
   day and moments.
 - **What the function does not do**: a field set by hand is written
   without a row.
+
+## The review queue
+
+`backend/tests/integration/test_review_item.py` tests the table
+`review_item` (DAT-010) in a store that the migrations built, on a
+real SQLite file. Every refusal is written past the model, as a row
+given to SQLite, and those the model could stand in the way of are
+tested through the model as well. After every refusal the table holds
+no row.
+
+- **The table in the file** is as the model says it: its columns in
+  their order, with their kinds and which may be without a value; its
+  one reference, to the sources; its one index, over the source; a
+  strict table; and its seventeen checks by name, eleven of them
+  letter for letter.
+- **What is stored is read back.** A possible duplicate, and an item
+  of each of the two other kinds, each with every column; a new item
+  is open by itself. An accepted and a rejected item say by whom and
+  when, and keep a note. An open item can have a note, and is decided
+  afterwards through the model.
+- **The two lists.** A kind and a state that are not on their lists
+  are refused, in four spellings each.
+- **What an item cannot be without**: its kind, the table and the key
+  of its record, why, and its state; through the model the first four,
+  because the model gives a new item its state. Five texts are not
+  empty, and nothing but white space is empty too. The key of a record
+  is above 0.
+- **What goes with the kind.** A possible duplicate without the other
+  record is refused; so is one whose other record is the record itself
+  or has a smaller key; and one that names a field, a source, an
+  address or what a source says, a case for each. An item of each of
+  the two other kinds is refused without any one of those four, and
+  with another record.
+- **The source.** It must exist. A source that an item names cannot be
+  deleted, nor its key changed; one that no item names can. SQLite's
+  own plan for deleting a source searches the items by the index and
+  reads no table whole. Where the source says it is a web address.
+- **The decision.** An open item that says who decided, or when, is
+  refused, and so is an accepted and a rejected item without either:
+  six cases past the model and one through it.
+- **The table is strict**: a word for a key, a key with a fraction and
+  bytes for a text are refused by SQLite, and a number given for what
+  a source says is kept as its text.
+- **What a source says is kept as the text it was**: empty text,
+  spaces around it, markup and a statement of SQL among them, each
+  read back letter for letter, with the table still there.
+- **What the table does not hold**: an item about records of a table
+  that is not there is stored; the same doubt twice is two items; and
+  a decided item can be put back to open, or deleted. The tests are
+  there so that none of these is taken for something the table does,
+  and the last two are changed by the tasks that close them (DAT-050,
+  DAT-052).
+
+`backend/tests/unit/test_db_models_review_item.py` tests the two lists
+without a store: their texts are written out in the test, in their
+order; no text has two names; each is words in small letters with one
+space between two; open is the first state; and a column can be of
+each list, with a check that names its texts as SQLite is given them.
+
+That the model and the eighth migration say the same table and index
+is proven by the test of the models and the migrations, and that the
+table is on the list of those that hold no collected records, with
+what the rule says of it once it is taken off, by the tests of that
+rule.
 
 ## How far a collected record can be trusted
 
