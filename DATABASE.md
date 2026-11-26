@@ -6,7 +6,7 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 9 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 8 and
 has five tables: `source`, that of the information sources (DAT-006),
 `source_offer`, which says what kinds of information each of them offers
 (DAT-040; see "The information sources" for both), `collection_run`,
@@ -19,8 +19,7 @@ to: the store itself refuses to edit, delete or replace a row of it
 changes of one record and the changes one run caused without reading
 the whole table (DAT-049). The fifth is `review_item`, the review
 queue: what is in doubt and waits for a person's decision (DAT-010;
-see "The review queue"), where the store itself refuses the same doubt
-a second time (DAT-050). One function
+see "The review queue"). One function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"); no real table holds records yet,
 so nothing calls it. The
@@ -168,7 +167,7 @@ newest schema (DAT-024). It opens the store at `MOTOSPHERE_STORE_PATH`
 with `open_store`, which makes the file if it is not there, calls
 `migrate`, and writes one sentence to standard output, with the file's
 whole path and the store's version: "A new data store was made: …", "The
-data store was brought up to date: … went from schema version 2 to 9." or
+data store was brought up to date: … went from schema version 2 to 8." or
 "The data store is up to date: …". A store that cannot be opened, or that
 is refused, gives its one sentence on standard error, with nothing before
 or after it, and the exit code 1, and is left as it is. An error inside a
@@ -182,8 +181,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 9." or "The data store lacks 6
-migrations: … is at schema version 3, and the newest is version 9." In
+is up to date: … is at schema version 8." or "The data store lacks 5
+migrations: … is at schema version 3, and the newest is version 8." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -203,7 +202,6 @@ list of them, and nothing else (DAT-006):
 | 6 | `let_the_record_changes_only_be_added_to` | Makes the four triggers by which no row of `record_change` is edited, deleted or replaced | DAT-048 |
 | 7 | `index_the_record_changes` | Makes the two indexes of `record_change`: of the changes of one record, `ix_record_change_record_table_record_id`, and of the changes one run caused, `ix_record_change_collection_run_id` | DAT-049 |
 | 8 | `make_the_review_items` | Makes the table of the review queue, `review_item`, and the index of the sources its items name, `ix_review_item_source_id` | DAT-010 |
-| 9 | `hold_one_doubt_to_one_review_item` | Makes the two indexes by which one doubt is one review item, each of which lets no two rows be alike and is over the items of one shape: `ix_review_item_record_table_record_id_other_record_id` and `ix_review_item_record_table_record_id_field_source_id_source_value` | DAT-050 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -979,12 +977,11 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have five tables, six indexes and four triggers to
+Today the two have five tables, four indexes and four triggers to
 agree on: `source`, `source_offer`, `collection_run`, `record_change`,
 `review_item`, the index of the runs of one source, the two indexes
-and the triggers of `record_change`, and the three indexes of
-`review_item`. For an index that is over some rows only, which rows
-is part of the statement, and so of what must agree.
+and the triggers of `record_change`, and the index of the sources that
+review items name.
 That the comparison can fail is proven with two models and migrations of
 the tests' own (`TESTING.md`).
 
@@ -1849,9 +1846,10 @@ its model `ReviewItem` is in `motosphere.db.models.review_item`, with
 the two lists an item is said by. The eighth migration makes the table
 and its index (`make_the_review_items`, DAT-010).
 
-This section is the table and its rules. Nothing writes an item yet:
-the function that opens an item is DAT-051, and the function that
-decides one, with the rule that a decision is kept, is DAT-052.
+This section is the table and its rules. Nothing writes an item yet.
+That one doubt is one item is DAT-050, the function that opens an item
+is DAT-051, and the function that decides one, with the rule that a
+decision is kept, is DAT-052.
 
 | Column | Holds | Rule |
 |---|---|---|
@@ -1948,67 +1946,18 @@ decides one, with the rule that a decision is kept, is DAT-052.
 - **A source that an item names cannot be deleted**, nor its key
   changed: the reference says nothing of what happens then, and SQLite
   refuses, as it does for the runs of a source.
-- **The index over the source** (`ix_review_item_source_id`). SQLite
+- **One index, over the source** (`ix_review_item_source_id`). SQLite
   looks for the items that name a source before it lets the source go,
   and indexes nothing by itself for a reference. A test of DAT-045
   reads SQLite's plan for deleting a source and holds it to reading no
   table whole, so the index comes with the table and not after it. It
-  forbids nothing. The indexes that find the open items and all the
-  items about one record come with what asks for them.
-- **One doubt is one item**, and the store itself sees to it (DAT-050):
-  the same doubt a second time is refused, whatever writes it. Two
-  indexes that let no two rows be alike do that, made by the ninth
-  migration (`hold_one_doubt_to_one_review_item`). A possible
-  duplicate is the same doubt when it is about the same two records
-  of the same table
-  (`ix_review_item_record_table_record_id_other_record_id`); the pair
-  is said in one way, so it cannot come a second time the other way
-  round. An item about a field is the same doubt when it is about the
-  same field of the same record and the same source says the same
-  thing of it
-  (`ix_review_item_record_table_record_id_field_source_id_source_value`).
-- **What does not make it another doubt.** Its state: a doubt that a
-  person has decided is not put to them again by the next collection
-  run, whichever way it was decided. Its kind, between the two that
-  are about a field: whether what the source says is another value or
-  one the rules refuse can change when a rule changes, and the
-  question to the person is the same. Nor the address at which the
-  source says it, the reason or the note.
-- **What does.** Another table, another record, another field, another
-  source, and another thing said. What a source says is compared as
-  the text it is, letter for letter: `1750` and `1750.0` are two
-  doubts, and so are a value and the same value with a space after
-  it. Whether two texts mean the same is for the code that collects
-  to say before it opens an item. A source that says a new value
-  after its first was rejected opens a new doubt, as it should.
-- **Each of the two is over the items of its shape only**: the first
-  over the rows that name another record (`WHERE other_record_id IS
-  NOT NULL`), the second over those that name a field (`WHERE field
-  IS NOT NULL`). One index over all six columns would refuse nothing,
-  because SQLite counts two missing values as two different values,
-  and every item is without some of the six: the trial stored the
-  same pair twice under such an index. The rows are known by a column
-  and not by their kind for the sake of the question "is this doubt
-  there already?", which the function that opens an item will ask
-  (DAT-051). A statement that asks for `other_record_id = ?`, or for
-  `field = ?`, can only be answered by rows the index has, and SQLite
-  knows that, so it answers by the index in one search. An index
-  `WHERE kind = 'possible duplicate'` is of no use to a statement
-  that does not name the kind as well: the trial saw SQLite read the
-  whole table for it.
-- **A store that holds a doubt twice already** cannot be given the
-  ninth migration. It fails and the store stays at version 8, with
-  neither index: the migration does not choose which of two items to
-  keep, and a person looks. No store has items yet, because nothing
-  writes them.
-- **What the table does not hold yet.** A decided item can be put back
-  to open, and any item can be deleted (DAT-052). A statement that
-  says `INSERT OR REPLACE` is not refused either: SQLite puts the new
-  row in the place of the item it would clash with. Nothing in the
-  store's code says that, and that a decided item is kept from it
-  belongs to DAT-052 too. Nothing holds the moment of a decision to
-  the moment the item was stored. A test puts the first on record,
-  and is changed by the task that closes it.
+  forbids nothing. The indexes that find the open items and the items
+  of one record come with what asks for them (DAT-050, DAT-051).
+- **What the table does not hold yet.** The same doubt stored twice is
+  two items (DAT-050). A decided item can be put back to open, and any
+  item can be deleted (DAT-052). Nothing holds the moment of a
+  decision to the moment the item was stored. A test puts the first
+  two on record, and is changed by the task that closes each.
 - **Not collected records.** The table is on the list of the tables
   that hold no collected records (see "Every table says where its
   records came from, or why not"): an item is the store's own record

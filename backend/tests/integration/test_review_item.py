@@ -164,14 +164,9 @@ def test_in_the_file_the_table_is_as_the_model_says_it(newest: Engine) -> None:
         ("updated_at", "TEXT", True, False),
     ]
     assert refers == [("source", "source_id", "id", "NO ACTION", "NO ACTION")]
-    # The index over the source: two rows can be alike in it, a statement
-    # made it, and it is over all rows. The two others are those of one
-    # doubt, and test_review_item_one_doubt.py has their tests.
-    assert sorted(indexes) == [
-        ("ix_review_item_record_table_record_id_field_source_id_source_value", 1, "c", 1),
-        ("ix_review_item_record_table_record_id_other_record_id", 1, "c", 1),
-        ("ix_review_item_source_id", 0, "c", 0),
-    ]
+    # One index, over the source: two rows can be alike in it, a statement
+    # made it, and it is over all rows.
+    assert indexes == [("ix_review_item_source_id", 0, "c", 0)]
     assert indexed == ["source_id"]
     assert strict == 1
     assert "AUTOINCREMENT" in written
@@ -719,19 +714,13 @@ def test_the_table_does_not_hold_an_item_to_records_that_exist(newest: Engine) -
     assert held(newest) == [tuple(row.values())]
 
 
-def test_the_table_holds_one_doubt_to_one_item(newest: Engine) -> None:
-    # The same doubt a second time is refused, and the first item is as it
-    # was. What the same doubt is has its tests in
-    # test_review_item_one_doubt.py.
+def test_the_table_does_not_yet_hold_one_doubt_to_one_item(newest: Engine) -> None:
+    # The same doubt twice is two items here. That one doubt is one item
+    # is a task of its own, and this test is then changed with it.
+    write(newest, a_duplicate())
     write(newest, a_duplicate())
 
-    with refused(
-        "UNIQUE constraint failed: review_item.record_table, review_item.record_id, "
-        "review_item.other_record_id"
-    ):
-        write(newest, a_duplicate())
-
-    assert held(newest) == [tuple(a_duplicate().values())]
+    assert held(newest) == [tuple(a_duplicate().values())] * 2
 
 
 def test_the_table_does_not_yet_keep_a_decision(newest: Engine) -> None:
