@@ -117,7 +117,12 @@ def test_in_the_file_the_table_is_as_the_model_says_it(newest: Engine) -> None:
         ("updated_at", "TEXT", True, False),
     ]
     assert refers == [("collection_run", "collection_run_id", "id", "NO ACTION", "NO ACTION")]
-    assert indexes == []
+    assert sorted(
+        (name, unique, made_by, partial) for _, name, unique, made_by, partial in indexes
+    ) == [
+        ("ix_record_change_collection_run_id", 0, "c", 0),
+        ("ix_record_change_record_table_record_id", 0, "c", 0),
+    ]
     assert strict == 1
     assert "AUTOINCREMENT" in written
     in_one_line = " ".join(written.split())

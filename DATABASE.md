@@ -6,7 +6,7 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 6 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 7 and
 has four tables: `source`, that of the information sources (DAT-006),
 `source_offer`, which says what kinds of information each of them offers
 (DAT-040; see "The information sources" for both), `collection_run`,
@@ -15,7 +15,9 @@ collection runs"), which has the store's first index (DAT-042), and
 `record_change`, which keeps what a field of a record held before it
 was changed (DAT-009; see "The changes to records") and is only added
 to: the store itself refuses to edit, delete or replace a row of it
-(DAT-048; see "The history is only added to"). One function
+(DAT-048; see "The history is only added to"). Two indexes find the
+changes of one record and the changes one run caused without reading
+the whole table (DAT-049). One function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"); no real table holds records yet,
 so nothing calls it. The
@@ -163,7 +165,7 @@ newest schema (DAT-024). It opens the store at `MOTOSPHERE_STORE_PATH`
 with `open_store`, which makes the file if it is not there, calls
 `migrate`, and writes one sentence to standard output, with the file's
 whole path and the store's version: "A new data store was made: …", "The
-data store was brought up to date: … went from schema version 2 to 6." or
+data store was brought up to date: … went from schema version 2 to 7." or
 "The data store is up to date: …". A store that cannot be opened, or that
 is refused, gives its one sentence on standard error, with nothing before
 or after it, and the exit code 1, and is left as it is. An error inside a
@@ -177,8 +179,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 6." or "The data store lacks 3
-migrations: … is at schema version 3, and the newest is version 6." In
+is up to date: … is at schema version 7." or "The data store lacks 4
+migrations: … is at schema version 3, and the newest is version 7." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -196,6 +198,7 @@ list of them, and nothing else (DAT-006):
 | 4 | `index_the_runs_of_a_source` | Makes the index of the runs of one source in the order they started, `ix_collection_run_source_id_started_at` | DAT-042 |
 | 5 | `make_the_record_changes` | Makes the table of the changes to records, `record_change` | DAT-009 |
 | 6 | `let_the_record_changes_only_be_added_to` | Makes the four triggers by which no row of `record_change` is edited, deleted or replaced | DAT-048 |
+| 7 | `index_the_record_changes` | Makes the two indexes of `record_change`: of the changes of one record, `ix_record_change_record_table_record_id`, and of the changes one run caused, `ix_record_change_collection_run_id` | DAT-049 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -971,9 +974,10 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have four tables, one index and four triggers to agree
-on: `source`, `source_offer`, `collection_run`, `record_change`, the
-index of the runs of one source and the triggers of `record_change`.
+Today the two have four tables, three indexes and four triggers to
+agree on: `source`, `source_offer`, `collection_run`, `record_change`,
+the index of the runs of one source, and the two indexes and the
+triggers of `record_change`.
 That the comparison can fail is proven with two models and migrations of
 the tests' own (`TESTING.md`).
 
@@ -1529,7 +1533,8 @@ This section is the table and its rules. The function that changes a
 record and writes its history in the same unit of work is the next
 section, "Changing a record" (DAT-047). That a row of the history is
 neither edited nor deleted is the section after this one, "The history
-is only added to" (DAT-048); its indexes are DAT-049.
+is only added to" (DAT-048). Its two indexes are at the end of this
+section (DAT-049).
 
 | Column | Holds | Rule |
 |---|---|---|
@@ -1593,13 +1598,64 @@ is only added to" (DAT-048); its indexes are DAT-049.
   one value to another, back, and there again. The order of the
   changes to a field is the order of their keys, which the store
   gives in the order the rows were stored and never gives twice.
-- **No index yet.** The history of one record and the changes one run
-  caused will each be found through an index (DAT-049). SQLite
-  indexes nothing by itself for a reference, so until then both read
-  the whole table, which holds no rows yet.
 - **Not collected records.** The table is on the list of the tables
   that hold no collected records (see "Every table says where its
   records came from, or why not").
+
+**The two indexes of the history** (DAT-049). The table of the changes
+of every table grows with every change to every record, and two
+things are asked of it again and again. The model says an index for
+each, the naming rule names them, and the seventh migration makes them
+(`index_the_record_changes`):
+
+| Index | Over | What it finds |
+|---|---|---|
+| `ix_record_change_record_table_record_id` | `record_table`, `record_id`, in that order | The changes of one record |
+| `ix_record_change_collection_run_id` | `collection_run_id` | The changes one run caused |
+
+Neither forbids anything: a record is changed as often as it is, and a
+run causes as many changes as it does.
+
+- **What they are for.** SQLite says of a statement how it will answer
+  it, and a test reads that for eight questions about the history,
+  written as the store's code will ask them. With the indexes each is
+  one step, a search of the index (`SEARCH record_change USING INDEX
+  ix_record_change_record_table_record_id (record_table=? AND
+  record_id=?)`, or the same with the index of a run), and nothing is
+  sorted. Without them each is `SCAN record_change`: the whole history
+  is read to find the changes of one record.
+- **The order of the changes costs nothing.** SQLite ends every entry
+  of an index with the key of its row. So within one record the
+  entries stand in the order of the keys, which is the order the
+  changes were made in (see above): the history of a record is read
+  oldest first, or newest first, or only its last change, straight from
+  the index, and so are the changes of one run.
+- **Why the field is not in the index.** A third column, `field`, would
+  put the changes of a record in the order of the names of their
+  fields and only then of their keys. The planner's trial asked SQLite:
+  the history of a record in the order it happened is then sorted
+  after it is found (`USE TEMP B-TREE FOR ORDER BY`). The changes to
+  one field of a record are found by the index of the record and the
+  field is then looked at row by row, of which a record has few.
+- **Why the table comes before the key.** With the key first the index
+  would do the same for these questions. The table first also finds
+  every change to the records of one table, should that be asked.
+- **Deleting a run.** SQLite must look for the changes a run caused
+  before it lets the run go or lets its key change, because the
+  reference refuses both. It indexes nothing by itself for a reference,
+  so without the index of a run it reads the whole history for every
+  run that is deleted. With it, the test reads from SQLite's plan for
+  the two statements that the history is searched by the index and
+  that no table is read whole. It looks all the same for a run that
+  caused nothing, which can be deleted.
+- **What has no index.** Nothing asks for the changes one person
+  decided, and no index is made for a question nobody asks: every
+  index is paid for whenever a row is added. Ordering by `created_at`
+  instead of the key is sorted; the key says the same order and is
+  the one to ask for.
+- **The history is still only added to.** An index is not a row. The
+  seventh migration adds no row and edits none, and the triggers of
+  the table are as they were.
 
 ## The history is only added to
 

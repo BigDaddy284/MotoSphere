@@ -50,6 +50,7 @@ def test_the_history_is_these_migrations_in_this_order() -> None:
         "index_the_runs_of_a_source",
         "make_the_record_changes",
         "let_the_record_changes_only_be_added_to",
+        "index_the_record_changes",
     ]
 
 
@@ -310,6 +311,88 @@ def test_the_sixth_migration_does_not_pass_over_a_trigger_of_its_name_that_is_th
     assert str(refusal.value.orig) == "trigger tr_record_change_key_positive already exists"
     assert schema_version(store) == 5
     assert triggers(store) == [("tr_record_change_key_positive", "record_change")]
+
+
+def test_the_seventh_migration_makes_the_indexes_of_the_changes_and_keeps_the_history(
+    store: Engine,
+) -> None:
+    migrate(store, MIGRATIONS[:6])
+    with store.begin() as connection:
+        connection.exec_driver_sql(
+            "INSERT INTO source (name, website, category, collection_method, switched_on, "
+            "created_at, updated_at) VALUES ('Example Federation', 'https://federation.example', "
+            "'governing body', 'rss feed', 0, '2026-11-19T08:00:00.000000+00:00', "
+            "'2026-11-19T08:00:00.000000+00:00')"
+        )
+        connection.exec_driver_sql(
+            "INSERT INTO collection_run (source_id, started_at, outcome, records_seen, "
+            "records_added, records_changed, records_unchanged, created_at, updated_at) "
+            "VALUES (1, '2026-11-24T06:00:00.000000+00:00', 'running', 0, 0, 0, 0, "
+            "'2026-11-24T06:00:00.000000+00:00', '2026-11-24T06:00:00.000000+00:00')"
+        )
+        for run, person in ((1, None), (None, "Jo Example")):
+            connection.exec_driver_sql(
+                "INSERT INTO record_change (record_table, record_id, field, old_value, "
+                "new_value, collection_run_id, decided_by, created_at, updated_at) VALUES "
+                "('track', 7, 'name', 'Example Park', 'Example Raceway', ?, ?, "
+                "'2026-11-25T22:00:00.000000+00:00', '2026-11-25T22:00:00.000000+00:00')",
+                (run, person),
+            )
+    with store.connect() as connection:
+        before = connection.exec_driver_sql("SELECT * FROM record_change ORDER BY id").all()
+    assert indexes(store) == [("ix_collection_run_source_id_started_at", "collection_run")]
+
+    migrate(store, MIGRATIONS[:7])
+
+    assert tables(store) == ["collection_run", "record_change", "source", "source_offer"]
+    assert indexes(store) == [
+        ("ix_collection_run_source_id_started_at", "collection_run"),
+        ("ix_record_change_collection_run_id", "record_change"),
+        ("ix_record_change_record_table_record_id", "record_change"),
+    ]
+    assert len(triggers(store)) == 4
+    with store.connect() as connection:
+        after = connection.exec_driver_sql("SELECT * FROM record_change ORDER BY id").all()
+        by_the_run = connection.exec_driver_sql(
+            "SELECT id FROM record_change INDEXED BY ix_record_change_collection_run_id "
+            "WHERE collection_run_id = 1"
+        ).all()
+        of_the_record = connection.exec_driver_sql(
+            "SELECT id FROM record_change INDEXED BY ix_record_change_record_table_record_id "
+            "WHERE record_table = 'track' AND record_id = 7 ORDER BY id"
+        ).all()
+    assert len(before) == 2
+    assert after == before
+    # The rows that were there are in the new indexes.
+    assert by_the_run == [(1,)]
+    assert of_the_record == [(1,), (2,)]
+
+
+def test_the_seventh_migration_does_not_pass_over_an_index_of_its_name_that_is_there(
+    store: Engine,
+) -> None:
+    # The index that is there has the name of the second of the two: the
+    # first is made before it, and taken back with the migration.
+    migrate(store, MIGRATIONS[:6])
+    with store.begin() as connection:
+        connection.exec_driver_sql(
+            "CREATE INDEX ix_record_change_collection_run_id ON record_change (decided_by)"
+        )
+
+    with pytest.raises(OperationalError) as refusal:
+        migrate(store, MIGRATIONS[:7])
+
+    assert str(refusal.value.orig) == "index ix_record_change_collection_run_id already exists"
+    assert schema_version(store) == 6
+    assert indexes(store) == [
+        ("ix_collection_run_source_id_started_at", "collection_run"),
+        ("ix_record_change_collection_run_id", "record_change"),
+    ]
+    with store.connect() as connection:
+        columns = connection.exec_driver_sql(
+            "PRAGMA index_info(ix_record_change_collection_run_id)"
+        ).all()
+    assert [name for _, _, name in columns] == ["decided_by"]
 
 
 def test_a_store_with_the_newest_schema_lacks_no_migration(newest: Engine) -> None:
