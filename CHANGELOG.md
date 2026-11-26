@@ -284,6 +284,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`INSERT OR REPLACE`), and to store a row with a key below 1, each in
   one plain sentence, whoever writes to the file. The data store's
   schema is at version 6 (DAT-048).
+- Two indexes on the history of the records, made by the seventh
+  migration: one finds the changes of one record, in the order they
+  were made, and one the changes a collection run caused, which SQLite
+  also uses before it lets a run be deleted. Neither question reads the
+  whole table any more. The data store's schema is at version 7
+  (DAT-049).
 
 ### Removed
 
