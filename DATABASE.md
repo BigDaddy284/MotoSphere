@@ -24,9 +24,10 @@ a second time (DAT-050). One function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"), one puts two records that may
 be the same thing to the review queue (DAT-051; see "Opening a possible
-duplicate"), and one puts what a source says of a field of a record
-there (DAT-053; see "Opening a doubt about a field"); no real table
-holds records yet, so nothing calls them. The
+duplicate"), one puts what a source says of a field of a record
+there (DAT-053; see "Opening a doubt about a field"), and one puts
+down a person's decision on an item (DAT-052; see "Deciding an
+item"); no real table holds records yet, so nothing calls them. The
 columns by which every collected record says where it came from are in
 the code, as one set that a model of collected records takes whole
 (DAT-008; see "Where a collected record came from"), and so are the two
@@ -1852,12 +1853,13 @@ its model `ReviewItem` is in `motosphere.db.models.review_item`, with
 the two lists an item is said by. The eighth migration makes the table
 and its index (`make_the_review_items`, DAT-010).
 
-This section is the table and its rules, and how an item is opened. A
-possible duplicate is opened by `open_possible_duplicate` (DAT-051; see
-"Opening a possible duplicate" below), and a doubt about a field by
-`open_field_doubt` (DAT-053; see "Opening a doubt about a field"). The
-function that decides an item, with the rule that a decision is kept,
-is DAT-052.
+This section is the table and its rules, and how an item is opened
+and decided. A possible duplicate is opened by
+`open_possible_duplicate` (DAT-051; see "Opening a possible duplicate"
+below), and a doubt about a field by `open_field_doubt` (DAT-053; see
+"Opening a doubt about a field"). An item is decided by `decide`
+(DAT-052; see "Deciding an item"), which decides an item once. That
+the table itself keeps a decision, whoever writes to it, is DAT-054.
 
 | Column | Holds | Rule |
 |---|---|---|
@@ -2009,11 +2011,11 @@ is DAT-052.
   keep, and a person looks. No real store has items yet, because
   nothing collects yet.
 - **What the table does not hold yet.** A decided item can be put back
-  to open, and any item can be deleted (DAT-052). A statement that
+  to open, and any item can be deleted (DAT-054). A statement that
   says `INSERT OR REPLACE` is not refused either: SQLite puts the new
   row in the place of the item it would clash with. Nothing in the
   store's code says that, and that a decided item is kept from it
-  belongs to DAT-052 too. Nothing holds the moment of a decision to
+  belongs to DAT-054 too. Nothing holds the moment of a decision to
   the moment the item was stored. A test puts the first on record,
   and is changed by the task that closes it.
 - **Not collected records.** The table is on the list of the tables
@@ -2185,6 +2187,81 @@ What it refuses before anything is written, each with one sentence:
   field: an item of the kind `value outside its rules` says that the
   code that collects found it outside them. It does not look whether
   the source is one that offers this kind of information.
+
+### Deciding an item
+
+`motosphere.db.review.decide(work, item, decision, by=..., note=...)`
+(DAT-052) is how a person's decision on an open item is put down. It
+gives nothing back: the item it was given says the decision
+afterwards. Nothing calls it yet: what a person decides with comes
+with the tasks of the administration.
+
+| What is given | What it is |
+|---|---|
+| `item` | The item itself, as this unit of work read it |
+| `decision` | `ReviewState.ACCEPTED` or `ReviewState.REJECTED` |
+| `by` | The name of the person who decided |
+| `note` | What the person wants kept with the item, or nothing |
+
+- **What a decision changes of an item** is its state, who decided,
+  when, and when the item was last changed; and its note, where one
+  is given. Nothing else of the item is another afterwards, and no
+  other item is touched.
+- **When it was decided is not given.** It is the moment of the call,
+  by the store's clock, read once: the moment of the decision is the
+  moment the item was last changed.
+- **The name is kept as it was given**, letter for letter. The table
+  refuses one that is empty or blank, and a decision by nobody.
+- **A note given is the note of the item afterwards**, in the place
+  of one the item had, and kept as it was given. Without a note, the
+  note the item has stays. The table refuses a note that is empty.
+- **An item is decided once.** One that was decided already is
+  refused, whatever is given for it: the same decision again, the
+  other one, another person, and open, which would take the decision
+  back. The item stays as it was and the clock is not asked.
+- **Only the item is touched.** What follows from a decision, that
+  two records become one or that a field gets what a source says, is
+  not done here, and nothing is written to the history: the item is
+  itself the record of who decided what and when. The tasks that
+  merge records and that apply what a source says do what follows,
+  and write the history of what they change.
+- **It is part of the unit of work** it is given, and written to it
+  before the function returns. What the store refuses is refused at
+  the call, and the unit of work fails as a whole. A unit of work
+  that fails afterwards leaves the item open.
+- **It sends one statement**, which changes the item by its key. It
+  does not read the item again: the unit of work has read it, and
+  SQLite keeps nothing another connection writes while that unit is
+  open. So no other connection can decide the item between the
+  reading and the decision; a test tries exactly that, and SQLite
+  says "database is locked" to the other connection.
+
+What it refuses before anything is changed, each with one sentence:
+
+| What is given | What the function says |
+|---|---|
+| An item that is not stored yet, or that this unit of work did not read or store | "Only an item that is stored, and that this unit of work read or stored, is decided." |
+| An item that was decided | "The review item … was accepted already, and a decision is kept.", or "… was rejected already, …" |
+| Anything but one of the two decisions | "To decide an item is to accept it or to reject it." |
+
+- **The order** is the order of the table. An item that was decided
+  is refused for that, also where what is given is no decision: who
+  tries to put a decided item back to open is told that a decision
+  is kept.
+- **A decision is exactly one of the two values of the list.** Open is
+  none, and neither is text that is spelled like one, a value of
+  another list or nothing at all.
+- **An item stored earlier in the same unit of work can be decided.**
+  One that was given to the unit of work and is not written yet is
+  refused, like a record that is put to the queue: the code that
+  calls writes it first.
+- **What it does not do, and what is not done yet.** It does not say
+  who may decide: `by` is a name, and the administration will say
+  whose. It does not hold the name to a list of people. And it is the
+  function that refuses a second decision, not yet the table: a
+  statement written past the function can still put a decided item
+  back to open or delete it. That the store itself refuses that is
+  DAT-054.
 
 ## What the store relies on in SQLite
 
