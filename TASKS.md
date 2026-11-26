@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 61 | 40 |
+| 2 | Data store and published data (DAT, PUB) | 61 | 41 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-051 – Opening a possible duplicate.
+**Current task:** DAT-053 – Opening a doubt about a field.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1706,7 +1706,7 @@ about a field is DAT-053, which stands between DAT-051 and DAT-052.
 - **Plan:** `docs/plans/DAT-050.md`
 
 ### DAT-051 – Opening a possible duplicate
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One function puts two stored records that may be the same thing into the review queue, and a doubt that is there already stays one item.
 - **Description:** Added on 2026-11-26 (PLAN-029) as "Opening a review item", cut out of DAT-010, which said: "One function opens an item". Cut down in the planner's trial on 2026-11-26 (PLAN-030) to the possible duplicate; the function that opens a doubt about a field is DAT-053. `open_possible_duplicate(work, record, other, reason=...)` in a new module, `motosphere.db.review`, is what the collecting calls when two records may be the same thing and it cannot tell. It is given the two records themselves and takes the name of their table and their keys from them, as `change` does (DAT-047); it takes them in either order and names the one with the smaller key as the record, which is the one way the table says a pair. One statement looks for an item of that table and those two keys, answered by the index of DAT-050 in one search; if there is one, it is given back as it is and nothing is written, whatever its state, and the reason given the second time is not read; if not, one open item is written to the unit of work and given back. Settled in the planner's trial: one function for each shape of doubt, because the two take different things; only records that are stored and that this unit of work read or stored are taken, as with `change`, and the function does not write what is pending by itself; rows of the tables on the list `NOT_COLLECTED` (DAT-046) are refused, because the queue is for what the collecting cannot settle about what it collected; the refusals are said in the order stored, two tables, the list, one record twice; an empty reason is refused by the store's own check at the call; the item is part of the unit of work and written to it before the function returns; and no other connection can store the same doubt between the look and the write, because SQLite keeps nothing another connection writes while a unit of work that has read is open, which a test tries on every run. No table, column, check, index or migration changes; no existing test changes; no new package. The planner's trial has 54 new tests and detects 45 of 45 planted defects.
 - **Acceptance criteria:**
@@ -1721,10 +1721,10 @@ about a field is DAT-053, which stands between DAT-051 and DAT-052.
   9. No existing test changes; all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
   10. `python scripts/check.py` reports 19 of 19 gates and 2297 tests (backend tests 1667); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 54 new integration tests in 20 functions, in a store the migrations built, on a real SQLite file, with tables of the tests' own and the real table of the review items, read back with plain SQL; they read SQLite's own plan for the statement the function really sends, and have another connection write between the function's look and its write; every existing test, unchanged. Sixteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #137 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2297 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1667: 1613 before, 54 new); 45 planted defects in the function, 45 of 45 detected with the results of the trial, the plan's sixteen prove-it steps among them; no planted defect of an earlier task was planted again, because no existing code file changed. On GitHub, read by the planner from the runs and job logs: run 45879366641 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2297 passed, 0 failed, 0 skipped.", with 1667 backend tests on both machines, the three jobs after the gates skipped; run 45883224839 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 2297 / 0 tests (repository 41, script tests 206, backend 1667, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 45 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-26. All 6 files are identical to the planner's trial. No existing test changed, and no package was added. SQLite's plan for the function's look, and what SQLite says to another connection that writes between the look and the write, were read on the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `d21bc7d`
 - **Plan:** `docs/plans/DAT-051.md`
 
 ### DAT-053 – Opening a doubt about a field
