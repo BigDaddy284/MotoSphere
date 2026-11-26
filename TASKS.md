@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 60 | 40 |
+| 2 | Data store and published data (DAT, PUB) | 61 | 40 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-051 – Opening a review item.
+**Current task:** DAT-051 – Opening a possible duplicate.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -910,6 +910,10 @@ review items (PLAN-029). That one doubt is one item is DAT-050, the
 function that opens an item is DAT-051, and the function that decides
 one, with a decided item keeping its decision, is DAT-052.
 
+The trial of the function that opens an item, DAT-051, cut it down to
+the possible duplicate (PLAN-030). The function that opens a doubt
+about a field is DAT-053, which stands between DAT-051 and DAT-052.
+
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
 - **Objective:** Decide, with evidence, what the data store may rely on: which SQLite features every machine that runs the pipeline has, where the store is kept between scheduled runs, and which size limits bound it.
@@ -1701,12 +1705,34 @@ one, with a decided item keeping its decision, is DAT-052.
 - **Commit:** `074ac00`
 - **Plan:** `docs/plans/DAT-050.md`
 
-### DAT-051 – Opening a review item
+### DAT-051 – Opening a possible duplicate
+- **Status:** IN PROGRESS
+- **Objective:** One function puts two stored records that may be the same thing into the review queue, and a doubt that is there already stays one item.
+- **Description:** Added on 2026-11-26 (PLAN-029) as "Opening a review item", cut out of DAT-010, which said: "One function opens an item". Cut down in the planner's trial on 2026-11-26 (PLAN-030) to the possible duplicate; the function that opens a doubt about a field is DAT-053. `open_possible_duplicate(work, record, other, reason=...)` in a new module, `motosphere.db.review`, is what the collecting calls when two records may be the same thing and it cannot tell. It is given the two records themselves and takes the name of their table and their keys from them, as `change` does (DAT-047); it takes them in either order and names the one with the smaller key as the record, which is the one way the table says a pair. One statement looks for an item of that table and those two keys, answered by the index of DAT-050 in one search; if there is one, it is given back as it is and nothing is written, whatever its state, and the reason given the second time is not read; if not, one open item is written to the unit of work and given back. Settled in the planner's trial: one function for each shape of doubt, because the two take different things; only records that are stored and that this unit of work read or stored are taken, as with `change`, and the function does not write what is pending by itself; rows of the tables on the list `NOT_COLLECTED` (DAT-046) are refused, because the queue is for what the collecting cannot settle about what it collected; the refusals are said in the order stored, two tables, the list, one record twice; an empty reason is refused by the store's own check at the call; the item is part of the unit of work and written to it before the function returns; and no other connection can store the same doubt between the look and the write, because SQLite keeps nothing another connection writes while a unit of work that has read is open, which a test tries on every run. No table, column, check, index or migration changes; no existing test changes; no new package. The planner's trial has 54 new tests and detects 45 of 45 planted defects.
+- **Acceptance criteria:**
+  1. `open_possible_duplicate(work, record, other, reason=...)` stores one open item of the kind "possible duplicate" that names the table and the two keys of the records and the reason, and nothing else, at one reading of the clock, and gives it back.
+  2. The two records can be given in either order: the smaller key is the record and the greater the other.
+  3. The same doubt again gives back the item that is there and stores none, as before and turned round, in a later unit of work and in the same one, and also where the item was accepted or rejected: not one column of it is another afterwards, and the reason given the second time is not read.
+  4. A pair that shares one record with another pair, and the same two keys in another table, are other doubts and are stored.
+  5. The item is written to the unit of work before the function returns and is kept only when the unit ends; a unit of work that fails leaves no item. The records are not touched and the history gets no row.
+  6. Refused before anything is written, each with its one sentence: a record that is not stored or not of this unit of work, as the record and as the other; two records of two tables; two rows, and one row twice, of each table that holds no collected records; and one record twice.
+  7. An empty reason is refused by the store at the call, and the unit of work fails as a whole.
+  8. The function sends one look, answered by the index of the pairs in one search, and a write only where the doubt is new. Another connection that tries to store the same doubt between the look and the write is told "database is locked".
+  9. No existing test changes; all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  10. `python scripts/check.py` reports 19 of 19 gates and 2297 tests (backend tests 1667); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 54 new integration tests in 20 functions, in a store the migrations built, on a real SQLite file, with tables of the tests' own and the real table of the review items, read back with plain SQL; they read SQLite's own plan for the statement the function really sends, and have another connection write between the function's look and its write; every existing test, unchanged. Sixteen planted defects by the builder and the planner's own; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-051.md`
+
+### DAT-053 – Opening a doubt about a field
 - **Status:** NOT STARTED
-- **Objective:** One function puts a doubt into the review queue, and a doubt that is there already stays one item.
-- **Description:** Added on 2026-11-26 (PLAN-029), cut out of DAT-010, which said: "One function opens an item". It is what the collecting calls when it cannot settle something by itself. It is given the record, or the two records, what is in doubt and why, and for a doubt about a field the field, the source, the address and what the source says. It takes the table and the key from the records themselves, as `change` does (DAT-047), puts the two records of a possible duplicate in the order the table asks for, and gives back the item: the one that is there already when the doubt is one already, in whatever state. The planner's trial settles its shape (one function, or one for each kind of doubt), what it refuses and in which words, and whether it writes at once or with the unit of work.
-- **Acceptance criteria:** opening a doubt stores one open item with the table and the key of its record and the reason; opening the same doubt again gives back the same item and stores none, also where the two records are given the other way round and where the item was decided; a record that is not stored, two records of two tables and a record given as its own duplicate are each refused in one plain sentence; a unit of work that fails leaves no item.
-- **Tests required:** integration tests against a real SQLite file, with tables of the tests' own and the real table of the review items; planted defects; the full run of all gates on both machines.
+- **Objective:** One function puts a doubt about what a source says of a field of a record into the review queue, and a doubt that is there already stays one item.
+- **Description:** Added on 2026-11-26 (PLAN-030), cut out of DAT-051. It is what the collecting calls when a source says that a field of a stored record holds another value than the record holds, or a value that the rules of the field refuse, and it cannot settle which is right. It is given the record, the field, the source, the address at which the source says so, what it says, which of the two kinds of doubt it is and why. It takes the table and the key from the record itself, as `open_possible_duplicate` does (DAT-051), and gives back the item: the one that is there already when the same source says the same thing of the same field of the same record, in whatever state and of whichever of the two kinds (DAT-050). It is added to `motosphere.db.review`. The planner's trial settles: whether the field must be a column of the record's table, and whether the three columns that are the store's own in every table are refused, as `change` refuses them; how the source is given, as a stored record or by its key, and what is said of one that is not stored; in which form what the source says is given and kept, which is text as the source said it (DAT-010), and whether a value that is no text is refused or made text; whether a doubt of the kind "sources disagree" is refused where the record already holds what the source says; and what the function shares with `open_possible_duplicate`, so that the rule for which records and which tables are taken is said once.
+- **Acceptance criteria:** opening a doubt about a field stores one open item with the table and the key of its record, the field, the source, the address, what the source says and the reason; opening the same doubt again gives back the same item and stores none, also where the item was decided, where the kind is the other of the two and where the address or the reason differs; another field, another source and another thing said are other doubts; a record that is not stored, a row of a table that holds no collected records and a field its table does not have are each refused in one plain sentence; a unit of work that fails leaves no item.
+- **Tests required:** integration tests against a real SQLite file, with tables of the tests' own and the real table of the review items; SQLite's plan for the statement the function sends; planted defects, those of DAT-051 among them where its code changes; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
