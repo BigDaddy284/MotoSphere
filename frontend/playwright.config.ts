@@ -26,7 +26,27 @@ export default defineConfig({
     // Every test runs in a browser started this way (e2e/browser.ts).
     launchOptions: TEST_BROWSER,
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // The planner's measurement: the tests run in a browser without 3D pictures,
+  // and the measurement beside them, one at a time, in a browser that draws them.
+  projects: [
+    {
+      name: 'chromium',
+      testIgnore: 'measure.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          ...TEST_BROWSER,
+          args: [...(TEST_BROWSER.args ?? []), '--disable-3d-apis'],
+        },
+      },
+    },
+    {
+      name: 'globe',
+      testMatch: 'measure.spec.ts',
+      workers: 1,
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
   webServer: {
     command: `npm run data && npm run build && npm run preview -- --host ${HOST} --port ${PORT} --strictPort`,
     url: BASE_URL,
