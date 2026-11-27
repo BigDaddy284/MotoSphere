@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 58 | 57 |
-| 2 | Data store and published data (DAT, PUB) | 71 | 54 |
+| 2 | Data store and published data (DAT, PUB) | 71 | 55 |
 | 3 | Interactive 3D Earth (GLB) | 28 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-061 – A command loads the countries.
+**Current task, track A (data store):** DAT-013 – Regions table.
 
 **Current task, track B (globe):** FND-060 – A browser test can read a pixel of what the page shows.
 
@@ -2634,7 +2634,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-063.md`
 
 ### DAT-061 – A command loads the countries
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One command, `python -m motosphere countries`, loads the countries of the reference file into the store, and says what the loading found.
 - **Description:** Added on 2026-11-27 (PLAN-049), cut out of DAT-059; made exact on 2026-11-27 from the planner's trial. The command takes no argument. It is given the store by `store_to_work_on` (DAT-063), reads the reference file that comes with the pipeline, and calls the loading (DAT-059, which puts the source of the countries in the store first, DAT-060) in one unit of work. Nothing is fetched. It says on standard output what the loading found. The first line is always there and adds up: "Of the 249 countries of release 4.20.1 of iso-codes, 249 were added to the data store … and none was there already.", with the whole path of the store. A second line names, by their codes of two letters, the countries the store says something else of, and says that they were left as they are and that what the release says waits in the review queue (DAT-062); a third names the countries of the store that the release does not have. Each is there only when there is such a country. The exit code is then 0, also where the store says something else of a country: the command did what it was asked, and what follows is a person's decision. Run again, the first line says "none was added … and 249 were there already", and nothing is written; the command says what the loading found, not what it wrote, and that nothing was written is held by the tests. A store that is not ready, a damaged countries file and a source that is described otherwise are refused with the error's own sentence on standard error and the exit code 1 (`EXIT_NOT_LOADED`), and the store is left as it was. No other error is caught. The help of the command line gets wider with the longer name, so three existing tests of the help no longer count the blanks between a command's name and what it does. What the published data must say of the licence is PUB-003.
 - **Acceptance criteria:**
@@ -2652,10 +2652,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   12. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   13. Only the fourteen files under "Scope" of the plan changed.
 - **Tests required:** 17 new integration tests in 15 functions that call the command for real against a real SQLite file the real `migrate` command made, with the reference file that comes with the pipeline, and read the store with SQLite alone: a new store; a second run; countries taken out by hand; a name and a code changed by hand, once and again; one such country; one and two countries the release does not have; all three lines; no store; a store that lacks a migration; a file `migrate` would refuse; a damaged countries file; a source described otherwise; a loading the store refuses in the middle; nothing fetched; a relative path. 17 new unit tests of the sentences and of the help. 2 new tests that run the command in a process of its own. Three existing tests of the help, changed as the plan says. Planted defects in the command. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #210, merged there with `main` as it was then (`1144a61`, which has FND-059) (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32): the full run, 19 of 19 gates passed, "Tests: 3568 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2588: 2552 before, 36 new; browser tests 273). The command run by hand, as the plan says: without a store it says that there is none and to run `migrate` first, with the exit code 1, and makes no file; after `migrate` it adds 249 countries, and none at the second run. The planner's 55 planted defects, one at a time, in the command of the pull request (its line in the command line, the store it is given, the unit of work, each of the three lines, the refusals and the exit codes), each against the 86 tests of the two new files, of the file that runs the command line in a process of its own and of the three files of the help: 55 of 55 detected, each by the same test functions as in the planner's trial. The plan's nine prove-it steps, run by the planner too: each fails the tests the plan names (14 tests in 12 functions, 4, 1, 1, 1, 12 in 10, 3, 6 in 4, and 6 in 3). On GitHub, read by the planner from the runs and job logs: run 46075889530 on the pull request's commit, which started from `main` before FND-059, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3565 passed, 0 failed, 0 skipped.", with 2588 backend tests on both machines, the three jobs after the gates skipped; run 46081234845 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3568 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3568 / 0 tests on both machines on GitHub for `main`, and locally with `main` merged in (repository 82, script tests 219, backend 2588, frontend unit 406, browser 273); 3565 / 0 on both machines for the pull request; all 19 gates passed; 55 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 14 files are the same change as the planner's trial. Of the existing tests only the three of the help changed, as the plan names them. No model, migration or other command changed, and no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #207, run 46071142778). The builder's report names the same counts as the planner found (54, 32 and 2588 passed), what the command said when it was run by hand, and for the nine prove-it steps the same failing tests; it started from `main` at `ec548a3`. The builder reports of its own environment, which the planner has not seen: its first full run ended with 18 of 19 gates, because the globe test `shows 3D pictures, drawn in software, without a word of its own` failed with four warnings ("GPU stall due to ReadPixels"); a wrapper around the browser there starts Chromium 158.0.8127.36 in place of Playwright's 153.0.8010.12 and takes `--use-angle=swiftshader` away. With `CHROMIUM_HEADLESS_SHELL=playwright` and `CHROMIUM_KEEP_GL_SWITCHES=1` set, the full run there gave 19 of 19 gates and 3565 tests. The task changes nothing of the browser tests, and GitHub's machines have no such wrapper.
+- **Commit:** `86a0c90`
 - **Plan:** `docs/plans/DAT-061.md`
 
 ### DAT-013 – Regions table
