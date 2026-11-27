@@ -309,6 +309,23 @@ the Python standard library only and accepts an address without encryption
 only on this computer. Its tests (`tests/scripts/test_live.py`) run it
 against a small web server on this computer and reach nothing else.
 
+The check has a rule for every kind of file the site is made of: what a
+browser must be told a page, a script, a style sheet, a JSON file, an XML
+file, a text, a picture of each of four kinds and a program for the
+browser's own machine (`.wasm`) is. A browser compiles such a program while
+it arrives only when it is served as `application/wasm`, and a text served
+as anything but text is offered for saving and not shown. For the four
+kinds that came with the engine of the globe and the list of the licences,
+what GitHub Pages says a file is was read from the published site on
+2026-11-27 and not assumed: `application/wasm`, `image/jpeg`,
+`application/xml` and `text/plain`. `frontend/e2e/siteKinds.json` lists
+the kinds, each by the end of a file's name. A browser test
+(`e2e/site.spec.ts`) holds that list to the site as it was built for the
+run, and a test of the check holds the check's rules to the list: a rule
+for every listed kind, and none for another. A site that gains a kind of
+file so fails the gates until the kind is listed and has its rule, before
+anything is published.
+
 When "Check the published site" fails, its log names each file that is
 wrong. The site may then be broken for visitors: the run for the next
 change to `main` publishes and checks again, and starting the failed job
