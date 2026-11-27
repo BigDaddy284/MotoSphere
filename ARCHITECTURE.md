@@ -107,7 +107,7 @@ it is everything that runs behind the published site.
 | Data loading | TanStack Query over `fetch` of published files | Caching, cancellation and loading/error states for viewport-driven loading. Introduced by the first task that needs more than one file. |
 | Styling | Plain CSS with design tokens (CSS custom properties) and CSS modules | No heavy UI kit. The owner's Graphite theme (see below) is kept consistent through our own tokens. |
 | Unit tests | Vitest + Testing Library | Native to Vite. |
-| Browser tests | Playwright (Chromium, software WebGL) | Real globe rendering and interaction can be verified headlessly. |
+| Browser tests | Playwright (Chromium, software WebGL) | Real globe rendering and interaction can be verified headlessly. The tests of the globe are a project of their own, in a browser told to draw in software and one test at a time (FND-058, TESTING.md). |
 | Lint/format | oxlint + Prettier | oxlint has the React hooks, accessibility, import, Vitest and TypeScript rules built in as one dependency, and is what the current Vite template ships. ESLint was the first choice, but `typescript-eslint` depends on the older JavaScript compiler API and the project uses the native TypeScript 7 compiler. Type errors are covered by the type-check gate. |
 
 **Visual identity (owner, 2026-11-17).** The owner supplied the look, and the
