@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 55 | 55 |
-| 2 | Data store and published data (DAT, PUB) | 69 | 52 |
+| 2 | Data store and published data (DAT, PUB) | 70 | 52 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-061 – A command loads the countries.
+**Current task, track A (data store):** DAT-062 – What the file says otherwise of a country waits in the review queue.
 
 **Current task, track B (globe):** GLB-002 – The globe shows the Earth.
 
@@ -225,6 +225,28 @@ different things of a country in two ways only: a person changed the store
 by hand, or a newer release was taken into the repository. Either way a
 person is at hand to decide which is right. The command of DAT-061 says what
 the loading named.
+
+**What the file says otherwise waits in the review queue (PLAN-051):** "Use
+review queues when information conflicts." (CLAUDE.md §11). The loading of
+the countries finds such conflicts: the store has a country with another
+name or another code than the file. Since DAT-059 it names the country to
+whoever called it and keeps the conflict nowhere. PLAN-050 gave as the
+reason that a person is at hand whenever the store and the file come to
+differ. That does not keep the conflict: what a command says scrolls away,
+and the administration that will list what waits for a decision (Phase 10)
+reads the review queue. The queue has a function for exactly this,
+`open_field_doubt` (DAT-053): what a source says of a field of a stored
+record, kept once, and not asked again once a person has answered. So the
+loading puts what the file says to the review queue, one item for each field
+the two differ in: the code of three letters or the name of the stored
+country, or, where the store has the file's code of three under another code
+of two, the code of two letters of that country. It still changes no country
+and deletes none, and what it gives back is unchanged. A country of the
+store that the file does not have is no doubt, because the file says nothing
+of it. That is a task of its own, DAT-062, and it stands before the command
+of DAT-061, so that the command's sentences are settled once. The plan has
+one task more than before, 293. Order on track A: DAT-062, DAT-061, then
+DAT-013.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -2445,10 +2467,37 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Commit:** `2063f15`
 - **Plan:** `docs/plans/DAT-059.md`
 
+### DAT-062 – What the file says otherwise of a country waits in the review queue
+- **Status:** IN PROGRESS
+- **Objective:** Where the store and the reference file say different things of a country, the loading puts what the file says to the review queue, one item for each field the two differ in, and still changes no country.
+- **Description:** Added on 2026-11-27 (PLAN-051). "Use review queues when information conflicts." (CLAUDE.md §11). The loading of the countries finds such conflicts: the store has a country with another name or another code than the file. Since DAT-059 it names the country to whoever called it and keeps the conflict nowhere. PLAN-050 gave as the reason that a person is at hand whenever the store and the file come to differ. That does not keep the conflict: what a command says scrolls away, and the administration that will list what waits for a decision (Phase 10) reads the review queue. The queue has a function for exactly this, `open_field_doubt` (DAT-053): what a source says of a field of a stored record, kept once, and not asked again once a person has answered. So the loading puts what the file says to the review queue, one item for each field the two differ in: the code of three letters or the name of the stored country, or, where the store has the file's code of three under another code of two, the code of two letters of that country. It still changes no country and deletes none, and what it gives back is unchanged. A country of the store that the file does not have is no doubt, because the file says nothing of it. `load_countries` gathers the countries the store says otherwise of as before and, when there is one, hands them to a helper, `_put_to_the_review_queue`, which reads the stored countries that have one of their codes and opens the items with `open_field_doubt`, in the order of the file and for one country in the order code of three, name, the other country: kind `sources disagree`, the source of the countries, the address of the release, what the file says, and a reason in one sentence such as "Release 4.20.1 of iso-codes has another name for the country TR." An item the queue holds already, open or decided, is given back as it is, so a second loading writes nothing. What follows from a decision, that a country gets what the file says, is done by no code yet. No model, migration or command changes, and nothing of the review queue itself. The planner's trial has 16 new tests and changes two existing ones, which said what DAT-059 did and this task changes.
+- **Acceptance criteria:**
+  1. A country the store has with another code of three than the file opens one item of the review queue about that country: the field `alpha_3`, and the file's code of three as what the source says.
+  2. A country the store has with another name than the file opens one item about that country: the field `name`, and the file's name. A name is compared letter for letter.
+  3. A country of the file whose code of three the store has under another code of two opens one item about the country that has the code of three: the field `alpha_2`, and the file's code of two.
+  4. Every item is of the kind `sources disagree`, open, names the source of the countries and `ADDRESS`, and has the reason in the words of the plan.
+  5. The items are opened in the order of the file, and for one country in the order code of three, name, the other country.
+  6. No item is opened where the store is as the file has it, for a country that is added, or for a country of the store that the file does not have.
+  7. A second loading of the same countries sends SQLite no statement that writes: an item that is there, open or decided, is not opened again and not changed.
+  8. A file that says yet another thing of the same field opens an item beside the one that is there.
+  9. No country is changed or deleted, and `load_countries` gives back what it gave back before.
+  10. The items are kept or taken back with their unit of work.
+  11. No model, migration or command changed, and nothing of `motosphere.db`. Of the existing tests, only the two the plan names changed.
+  12. The five documents and the note beside the file say that what the file says otherwise waits in the review queue.
+  13. `python scripts/check.py` reports 19 of 19 gates, with 2535 backend tests, and 16 tests more in all than `main` gives at the commit the branch starts from (3503 when that is `2063f15`).
+  14. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
+  15. Only the eight files under "Scope" of the plan changed.
+- **Tests required:** 16 new integration tests in 11 functions against a real SQLite file that the migrations built, the items read back as SQLite holds them: for each of the six ways in which the store says otherwise, the items that are opened; every column of two items, with the clock set; a code of three under another code of two, and a country that differs both ways; the order of the file; no item where there is no conflict; loaded again, no statement that writes; an item a person has decided; a file that says yet another thing; the unit of work. Two existing tests say what is now so: that a loading stores no run and no history, and that with every kind of finding at once the only statements that write store the source, its offer and two items. Planted defects in the module, those of DAT-059 among them. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-062.md`
+
 ### DAT-061 – A command loads the countries
 - **Status:** NOT STARTED
 - **Objective:** One command loads the countries of the reference file into the store, and says what the loading found.
-- **Description:** Added on 2026-11-27 (PLAN-049), cut out of DAT-059. A command of `python -m motosphere` opens the store and loads the countries of the reference file (DAT-059, which puts the source of the countries in the store first, DAT-060), in one unit of work, and says on standard output what the loading found: how many countries were added and how many were as they were, and, by their codes, which countries the store says otherwise of and which the file does not have (PLAN-050). A store that cannot be opened or is not at the newest schema, a damaged countries file and a source that is described otherwise are refused with their sentence on standard error and the exit code 1, and the store is left as it was. Run again, it writes nothing and says so. Nothing is fetched while it runs. What the published data must say of the licence is PUB-003. The name of the command, its sentences, and its exit code when the store says otherwise of a country are settled in the planner's trial.
+- **Description:** Added on 2026-11-27 (PLAN-049), cut out of DAT-059. A command of `python -m motosphere` opens the store and loads the countries of the reference file (DAT-059, which puts the source of the countries in the store first, DAT-060), in one unit of work, and says on standard output what the loading found: how many countries were added and how many were as they were, and, by their codes, which countries the store says otherwise of and which the file does not have (PLAN-050), and that what the file says of the former waits in the review queue (DAT-062). A store that cannot be opened or is not at the newest schema, a damaged countries file and a source that is described otherwise are refused with their sentence on standard error and the exit code 1, and the store is left as it was. Run again, it writes nothing and says so. Nothing is fetched while it runs. What the published data must say of the licence is PUB-003. The name of the command, its sentences, and its exit code when the store says otherwise of a country are settled in the planner's trial.
 - **Acceptance criteria:** the command, run for real on a new store, leaves the source and the 249 countries of the file in it and says so; run again it writes nothing and says so; a country the store says otherwise of, and one the file does not have, are named; each refusal gives its sentence, the exit code 1 and an unchanged store; `--help` names the command. The criteria are made exact in the plan, from the trial.
 - **Tests required:** unit tests of the command's sentences; integration tests that run the command for real against a real SQLite file; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
