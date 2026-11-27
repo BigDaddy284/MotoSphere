@@ -1009,15 +1009,26 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-050.md`
 
 ### FND-051 – A licence file beneath the top folder of a package goes with the site
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The site's file of licences holds every licence file a shipped package brings, at any depth of its folder.
-- **Description:** Added on 2026-11-27 (PLAN-039), found by the planner while reading the licences for FND-050. The step of FND-047 reads the licence files in the top folder of an installed package. A package may bring code of others in a folder of its own, with their licence beside it: `protobufjs` brings `google/LICENSE`, Google's licence for the files of its folder `google`, and its own licence says that such a file holds for the folder it is in. That text is not in `licences.txt` today. The step looks into every folder of a package, but not into `node_modules` beneath it, where other packages are put and are held by themselves, and it does not follow a link to a folder. Each text is given by the path of its file from the package's folder. The trial also found that the unit test of the order of the files proves nothing on Linux, where Node.js gives the entries of a folder by name already: in the unit tests every folder gives its entries out of order, so that the order in the file is the step's own work on every computer. It stands on track B after FND-050 and before FND-049, and before GLB-022, the first task that puts files of the engine into the site.
-- **Acceptance criteria:** the built file holds both licence files of `protobufjs`; a licence file at any depth of a package is written with its path; what the packages put beneath a package bring is not written as its own; a folder that leads back to itself ends; the order of the texts is the same on every computer and a test holds it on every computer; no package is added.
-- **Tests required:** unit tests on made-up package folders and on the project as installed, with every licence file of every shipped package found another way than the step finds it; planted defects in the step, with those of FND-047 again; the browser tests of the file on the built site; the full run of all gates on both machines; the deployment and the check of the published site.
+- **Description:** Added on 2026-11-27 (PLAN-039), found by the planner while reading the licences for FND-050. The step of FND-047 read the licence files in the top folder of an installed package. A package may bring code of others in a folder of its own, with their licence beside it: `protobufjs` brings `google/LICENSE`, Google's licence for the files of its folder `google`, and its own licence says that such a file holds for the folder it is in. A new private function of the step, `licenceFilesOf`, lists the licence files of a package at any depth: it looks into every folder, but not into a folder `node_modules`, where other packages are put and are held by themselves, and it does not follow a link to a folder, so a folder that leads back to itself ends. Each text is given by the path of its file from the package's folder, with `/` between the parts on every computer; the files of a folder come before those of the folders in it, each by name. The built file gains one text, the second of `protobufjs`. The trial also found that the unit test of the order of the files proved nothing on Linux, where Node.js gives the entries of a folder by name already: in the unit tests the one call that lists a folder now has a stand-in that gives the entries with the first one last, so that the order in the file is the step's own work on every computer. No package is added and the browser tests are unchanged.
+- **Acceptance criteria:**
+  1. The built `licences.txt` holds both licence files of `protobufjs`, `LICENSE` and then `google/LICENSE`.
+  2. A licence file at any depth of a package's folder is among its texts, given by its path with `/` between the parts.
+  3. What the packages put beneath a package bring (a folder `node_modules` at any depth) is not among its texts; a folder whose name is only like that is read.
+  4. A link to a folder is not followed; a folder that leads back to itself ends.
+  5. The files of a folder come before those of the folders in it, each by name, and the unit tests hold the order on every computer.
+  6. A refused file beneath the top folder is named by its whole path.
+  7. On the project as installed, every licence file of every shipped package, found another way than the step finds it, is among the texts.
+  8. No package is added, the lock file is unchanged and no existing test is rewritten; all tests pass.
+  9. `python scripts/check.py` reports 19 of 19 gates, with 304 frontend unit tests and 180 browser tests, and 11 tests more in all than `main` gives at the commit the branch starts from (2631 when that is `808e6b7`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  10. Only the five files under "Scope" of the plan changed.
+- **Tests required:** 11 new unit tests, on made-up package folders (with a link to a folder, a junction on Windows) and on the project as installed, with every licence file of every shipped package found another way than the step finds it; planted defects in the new function, with those of FND-047 in the step and against the browser tests again; the full run of all gates on both machines; the deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-051.md`
 
 ---
 
