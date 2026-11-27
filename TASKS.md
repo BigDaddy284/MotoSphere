@@ -13,9 +13,9 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 49 | 48 |
+| 1 | Foundation (FND) | 51 | 49 |
 | 2 | Data store and published data (DAT, PUB) | 64 | 45 |
-| 3 | Interactive 3D Earth (GLB) | 23 | 1 |
+| 3 | Interactive 3D Earth (GLB) | 25 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-055 – A decided review item is not replaced.
 
-**Current task, track B (globe):** FND-049 – The top bar keeps its height when the data arrives.
+**Current task, track B (globe):** FND-052 – The site under test answers a missing file as the published site does.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -90,6 +90,18 @@ reads the top folder of a package only. One shipped package, `protobufjs`,
 brings a second licence beneath it, `google/LICENSE`, for the files of
 that folder, and it is not in the site's file of licences. That is
 FND-051, on track B after FND-050 and before FND-049.
+
+**The engine's files, in four steps (PLAN-041):** the planner's trial of
+GLB-022 found that the site the browser tests run against answers an
+address that names no file with the page, where the published site
+answers "not found"; a test that a file was left out of the site could
+not fail. That is FND-052, and it stands first. GLB-022 itself was three
+objectives (the built site, the development server, and telling the
+engine its address) and is now the first of them; the other two are
+GLB-024 and GLB-025. The check of the published site learns the two
+kinds of file the engine brings that a browser is particular about in
+FND-053, after GLB-022, when such files are published. Order on track B:
+FND-052, GLB-022, FND-053, GLB-024, GLB-025, then GLB-002.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -976,7 +988,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-048.md`
 
 ### FND-049 – The top bar keeps its height when the data arrives
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** On a narrow screen the top bar is as tall while the data loads as afterwards, so that nothing under it moves when the data arrives.
 - **Description:** Added on 2026-11-27 (PLAN-036). On a phone the top bar put the data status and the day on one line while it said "Loading data…", and on two lines once it said when the data was updated, because the two pieces wrapped by how long their words were. The bar grew by a line (from 78 to 99 pixels at 360 pixels wide), and the globe stage under it moved down, a moment after the page had appeared. Now the width of the screen alone decides, in the layout's style sheet: below 640 pixels each piece has a line of its own from the start, and from 640 pixels up to the wide screen the two share one line and are never wrapped. A piece too long for its line ends in "…"; on a shared line the data status stays whole and the date gives way. The 640 comes from measuring both pieces in each of the 61 languages the test browser writes dates in, on every day of a year: the widest pair needs 572 pixels with the edges of the bar. A failed load ("Data unavailable", "Reload the page to see the data") shows the same bar. A new file of browser tests, `frontend/e2e/arrival.spec.ts`, holds the data back and measures the page before and after it arrives. No component changes, and a wide screen is as it was.
 - **Acceptance criteria:**
@@ -991,10 +1003,10 @@ Windows 11. No database and no globe yet.
   9. `python scripts/check.py` reports 19 of 19 gates, with 217 browser tests and 304 frontend unit tests, and 37 tests more in all than `main` gives at the commit the branch starts from (2668 when that is `3e5007d`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   10. Only the seven files under "Scope" of the plan changed.
 - **Tests required:** 37 new browser tests that hold the data back and measure the top bar, the globe stage and every piece of the top bar before and after it arrives, at seven narrow widths and at a wide one, with a load that fails in two ways, one pixel on either side of the 640, and with words made too long for their line; the unit test of the widths the style sheet asks about, changed; planted defects in the style sheet against the browser tests and against the unit test; the full run of all gates on both machines; the deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #159, merged there with `main` as it stood after the other track's DAT-056 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run once, 19 of 19 gates, "Tests: 2739 passed, 0 failed, 0 skipped." (browser tests 217: 180 before, 37 new; frontend unit tests 304, unchanged). The total holds the 71 tests of DAT-056 too; the pull request by itself gives 2668. The planner's 20 planted defects in the style sheet, each against the 112 browser tests of the two files with the site built anew: 20 of 20 detected. The 6 planted defects in the questions the style sheet asks about width, each against the unit tests of the layout: 6 of 6 detected. Each with the same result as in the trial. On GitHub, run 45957502131 for the pull request and run 45962108033 for `main` after the merge, read from the job logs: both gates jobs green on Linux and on Windows, with 304 frontend unit tests and 217 browser tests on both machines; on `main` the site was republished and "Check the published site" ended "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 8 of 8 files."
+- **Passed / Failed:** 2739 / 0 tests locally and on both machines on GitHub for `main` (repository 80, script tests 206, backend 1932, frontend unit 304, browser 217); 2668 / 0 on both machines for the pull request by itself; all 19 gates passed; 26 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 7 files are identical to the planner's trial. One unit test and one number of a browser test file changed, as the plan says and for its reasons; no package was added and the lock file is unchanged. The heights and the lines of the top bar are the same with the fonts of Windows as with those of Linux, at all eight sizes of screen. The builder's report gave the same numbers: 2668 tests locally and on both machines, 112 in the two browser files, and all thirteen prove-it steps with the plan's counts and names; it names no deviation.
+- **Commit:** `4f41491`
 - **Plan:** `docs/plans/FND-049.md`
 
 ### FND-050 – The licences of the shipped packages are ones the project has accepted
@@ -1114,6 +1126,37 @@ its own (PLAN-037): DAT-055, which stands after DAT-054.
 The trial of DAT-055 found that it stands on a rule the review queue
 did not have, that a key is 1 or more, and made that a task of its own
 (PLAN-040): DAT-056, which stands before DAT-055.
+
+### FND-052 – The site under test answers a missing file as the published site does
+- **Status:** IN PROGRESS
+- **Objective:** The server the browser tests run against answers an address that names no file with "not found" (404), as GitHub Pages does, and not with the page.
+- **Description:** Added on 2026-11-27 (PLAN-041), found by the planner's trial of GLB-022. The published site is files on GitHub Pages, and an address that names no file is answered there with the status 404. The server of the build under test (`vite preview`) and the development server answered such an address with the page itself and the status 200, because Vite takes a site for an application that reads the address itself unless it is told otherwise. A browser test that asked for a file the build had left out was so given an answer, and the file would have been missing on the published site only. One setting in `frontend/vite.config.ts`, `appType: 'mpa'`, makes both servers answer 404; the page is still answered at the site's path, at `index.html` and with a question after the path. The built site does not change. Thirteen new browser tests in `frontend/e2e/site.spec.ts` hold it for the site under test; the development server was asked by hand in the trial, and gets a test with GLB-024.
+- **Acceptance criteria:**
+  1. The site under test answers each of nine addresses that name no file (a name without an ending, with the ending of a picture and of a page, in a folder that is not there, in `data/` and in `assets/`, the two folders themselves, and a path past the file of the page) with the status 404, at the address that was asked for, and the answer is not the page.
+  2. The page is answered with the status 200, as HTML, at the site's path, at `index.html` and at the path with a question after it.
+  3. A browser that opens an address that names no file is told "not found", and no top bar is shown.
+  4. No existing test changes, and each passes as before.
+  5. The built site is what it was: from the same data, the build gives the same files with the setting as without it.
+  6. No package is added; all tests pass.
+  7. `python scripts/check.py` reports 19 of 19 gates, with 230 browser tests and 304 frontend unit tests, and 13 tests more in all than `main` gives at the commit the branch starts from (2752 when that is `26abe02`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  8. Only the five files under "Scope" of the plan changed.
+- **Tests required:** 13 new browser tests against the built site: nine addresses that name no file, three at which the page is still answered, and one opened in the browser; planted defects in the setting against the 20 browser tests of the file; the two builds compared; the full run of all gates on both machines; the deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-052.md`
+
+### FND-053 – The check of the published site knows the engine's kinds of file
+- **Status:** NOT STARTED
+- **Objective:** The check of the published site holds a program for the browser's own machine (`.wasm`) and a JPEG picture (`.jpg`) to the type a browser must be told they are.
+- **Description:** Added on 2026-11-27 (PLAN-041). After every deployment `scripts/live.py` fetches each published file, compares it byte for byte with the built one, and for seven kinds of file also holds what the server says the file is, because a script served as plain text is not run. The engine's files (GLB-022) are of two more kinds a browser is particular about: a `.wasm` program is compiled while it arrives only when it is served as `application/wasm`, and the pictures of the Earth are `.jpg`. The task stands after GLB-022, when such files are published and what GitHub Pages says they are can be read from the real site and not assumed. What is said of the other kinds the engine brings without a rule (`.xml`, and the licence, `.md`) is read then too, and each gets a rule or a written reason for none.
+- **Acceptance criteria:** the check has a rule for `.wasm` and one for `.jpg`; a published file of either kind that is served as another type fails the check with a plain sentence that names the file, the type it was served as and the type expected; the published site passes the check with the new rules; every kind of file the built site holds either has a rule or is named with the reason it has none, and a test fails when the site gains a kind that is neither.
+- **Tests required:** script tests of the new rules with stand-in answers; a test that reads the kinds of file of a built site; planted defects; the full run of all gates on both machines; the deployment and the check of the published site, which is where the rules meet GitHub Pages.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -2280,10 +2323,32 @@ What holds for every task of the phase:
 
 ### GLB-022 – The engine's own files in the built site
 - **Status:** NOT STARTED
-- **Objective:** The files the engine fetches while it runs are part of the site, under the site's own path, in development and in the built site alike.
-- **Description:** Added on 2026-11-27 (PLAN-033), cut out of the old GLB-001. The engine does part of its work in background scripts and reads pictures and tables from files of its own; it asks for them at one base address. The build puts those files into the site under one folder, the development server serves the same folder, and the application tells the engine the address before the engine is loaded. No new package is used for the copying. The engine's licence text is published with its files. The trial settles which of the engine's folders are needed, how the check of the published site copes with a few hundred more files, and which kinds of file need a rule for their content type.
-- **Acceptance criteria:** the built site holds the engine's files under one folder of the site's path and nowhere else; the development server answers the same addresses with the same files; the engine is told that address, built from the one place that names the site's path; a file the engine did not ship is not served from the folder; the engine's licence is among the published files; the check of the published site compares every one of them and passes after deployment.
-- **Tests required:** unit tests of the build step on a temporary folder; browser tests that fetch engine files of each kind from the built site with the right content type; script tests of the site check where its rules change; planted defects; the full run of all gates on both machines; the deployment and the check of the published site.
+- **Objective:** The files the engine fetches while it runs are part of the built site, under one folder of the site's path.
+- **Description:** Added on 2026-11-27 (PLAN-033), cut out of the old GLB-001; cut to the built site by PLAN-041. The engine does part of its work in background scripts and reads programs, tables and pictures from files of its own, which come with the package in its folder `Build` (277 files, 8.4 MB, with `@cesium/engine` 26.5.0) and are not code the build takes in. A step of the build puts them into the site as they are, under the folder `cesium/`, with the engine's licence beside them. Two of the files are left out, each with its reason written beside its name: the logos of Bing Maps and of Google Earth, which the engine shows only with imagery of those companies; the globe uses none, and a provider of imagery is taken on with its terms read (GLB-012). The development server (GLB-024) and telling the engine the address (GLB-025) are tasks of their own.
+- **Acceptance criteria:** the built site holds every file the engine brings in its folder `Build`, but for those listed as left out, byte for byte, under one folder of the site's path, and the engine's licence beside them; no file of the engine is anywhere else in the site; the list of what is left out names each file with its reason, and the build stops when a listed file is not there, when the engine is not installed, and when a link is among its files; a file that is left out, a file the engine does not bring, and the rest of the engine's package are answered "not found" by the site under test; one file of each kind is answered there with the type a browser needs; the published site is the site that was built, with the engine's files among those the check compares.
+- **Tests required:** unit tests of the build step on a temporary folder, with the entries of a folder given in an order that is not that of their names, and on the engine as it is installed; browser tests that compare the built folder with the installed engine and fetch every file through the site under test; planted defects; the full run of all gates on both machines; the deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-024 – The engine's own files in development
+- **Status:** NOT STARTED
+- **Objective:** In development the engine's files are answered at the same addresses as in the built site, with the same bytes.
+- **Description:** Added on 2026-11-27 (PLAN-041), cut out of GLB-022. The step of GLB-022 works when the site is built. `npm run dev` builds nothing: the development server answers from the folder of the project, where the engine's files are not. The same step is taught to answer the folder `cesium/` of the site's path from the installed engine while the development server runs, with the same list of what is left out, so that the globe is developed against what the site will hold. A test starts the development server itself; the same test holds that it answers an address that names no file with "not found" (FND-052 asked that by hand).
+- **Acceptance criteria:** the development server answers every address the built site has under `cesium/` with the file of the installed engine and the type a browser needs; a file that is left out, a file the engine does not bring, and an address outside the folder that names no file are answered "not found"; the application is served as before; the built site does not change.
+- **Tests required:** tests that start the development server on a free port and ask it, on Linux and on Windows; unit tests of the step where it changes; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-025 – The engine is told where its files are
+- **Status:** NOT STARTED
+- **Objective:** Before the engine is first used, the application tells it the address of its own files, built from the one place that names the site's path.
+- **Description:** Added on 2026-11-27 (PLAN-041), cut out of GLB-022. The engine asks for its files beneath one base address. Left to itself it works that address out from where its own code was loaded, which in a built site is a file of the build with a name of its own, and not the folder of GLB-022. One module of the application gives the address (the site's path and the folder of the engine's files) and sets it for the engine before any other code of the engine runs.
+- **Acceptance criteria:** one module names the address, built from `frontend/site.ts` and the folder the build step names, and nothing else in the application writes it; with it set, the engine as installed builds the address of a background script, of a table and of a picture beneath it; the address is set before the engine is used, whichever module asks for the engine first; no address of another computer is in it.
+- **Tests required:** unit tests through the real engine of the addresses it builds; a test that the module is the only place that sets the address; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
