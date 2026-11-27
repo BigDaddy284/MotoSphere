@@ -67,17 +67,21 @@ describe('the files of an engine that go into the site', () => {
   })
 
   it('give the files of a folder before those of the folders in it, each by name', () => {
-    bring(['b/2.js', 'b/1.js', 'c.js', 'a.js', 'b/a/z.js', 'b/a/y.js', 'B/1.js', 'a/1.js'])
+    // A capital letter comes before every small one, on every computer. No
+    // two names here differ in their capitals alone: on Windows such names
+    // are one name, and the second file would be written over the first.
+    bring(['c/2.js', 'c/1.js', 'd.js', 'a.js', 'C.js', 'c/a/z.js', 'c/a/y.js', 'B/1.js', 'a/1.js'])
 
     expect(engineFiles(project, NOTHING_LEFT_OUT)).toEqual([
+      'C.js',
       'a.js',
-      'c.js',
+      'd.js',
       'B/1.js',
       'a/1.js',
-      'b/1.js',
-      'b/2.js',
-      'b/a/y.js',
-      'b/a/z.js',
+      'c/1.js',
+      'c/2.js',
+      'c/a/y.js',
+      'c/a/z.js',
     ])
   })
 
