@@ -1489,15 +1489,26 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/FND-059.md`
 
 ### FND-060 – A browser test can read a pixel of what the page shows
-- **Status:** NOT STARTED
-- **Objective:** A helper of the browser tests gives the colour of a point of the page as a person sees it, without the page reading its own 3D picture.
-- **Description:** Added on 2026-11-27 (PLAN-053), for GLB-003, which proves from the pixels that the Earth is drawn. In the planner's trial a page that read its own 3D picture (`gl.readPixels`) made the browser log a warning, and a browser test fails on a warning. So the tests read the picture from outside: Playwright takes a picture of one pixel of the page, and the helper reads its colour from the PNG with what Node.js brings (`node:zlib`); the trial read a picture of one pixel that way. No package is added. The task has no globe in it: the helper is tested with a page of colours the test itself puts there, drawn in 2D in the project of the other tests and in 3D in the project of the globe.
-- **Acceptance criteria:** for a page of known colours the helper gives each colour exactly, at the corners and edges of the page too; a 3D picture of a known colour is read in the project `globe` with nothing on the console; a point outside the page is refused with a sentence; a PNG of a kind the helper does not read is refused with a sentence and not misread; no package is added.
-- **Tests required:** browser tests of the helper in both projects; tests of the reading of a PNG with pictures made in the test; planted defects in the helper; the full run of all gates on both machines.
+- **Status:** IN PROGRESS
+- **Objective:** A helper of the browser tests gives the colour of a point of the page as the browser shows it, a 3D picture too, without the page reading its own picture.
+- **Description:** Added on 2026-11-27 (PLAN-053), for GLB-003, which proves from the pixels that the Earth is drawn; made exact on 2026-11-27 from the planner's trial. In the planner's trial for PLAN-053 a page that read its own 3D picture (`gl.readPixels`) made the browser log a warning, and a browser test fails on a warning. So the tests read the picture from outside. `colourAt(page, x, y)` in the new module `frontend/e2e/pixel.ts` asks the page how large it is, refuses a point that is not a point of the page, has Playwright take a picture of that one pixel (`scale: 'css'`, so that one pixel of the page is one pixel of the picture on any screen), and gives the colour `colourOfOnePixel` reads from the PNG with what Node.js brings (`inflateSync` and `crc32` of `node:zlib`): red, green and blue, each from 0 to 255. Read are the two kinds of PNG a browser makes, eight bits for each of red, green and blue, with or without a fourth byte, not interlaced; every chunk is checked against its checksum, and the data of all `IDAT` chunks is put together, because the browser's own picture of one pixel has two. A picture that is no PNG, is damaged anywhere, has more or fewer pixels than one, is of another kind, or whose pixel is not opaque is refused with a sentence and is not read as a colour. No package is added. The task has no globe in it: the helper is tested with colours the test itself puts on the page, flat in the project of the other tests and in 3D in the project of the globe. Nothing under `frontend/src` changes, and no test that was there.
+- **Acceptance criteria:**
+  1. For a page of known colours `colourAt` gives each colour exactly, at the four corners and the edges of the page too.
+  2. A 3D picture of known colours is read exactly in the project `globe`, with nothing on the console.
+  3. A point that is not a point of the page is refused with its sentence.
+  4. A PNG of a kind the helper does not read, of another size, with a pixel that is not opaque, or damaged anywhere is refused with its sentence and is not read as a colour.
+  5. On a screen that is sharper than the page, one pixel of the page is one answer.
+  6. No package was added, nothing under `frontend/src` changed, and no test, fixture or setting that was there changed.
+  7. `TESTING.md` says how a test reads what the page shows, why from outside the page, and what is refused.
+  8. `python scripts/check.py` reports 19 of 19 gates, with 291 browser tests, and 18 tests more in all than `main` gives at the commit the branch starts from (3550 when that is `ed7ad55`).
+  9. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
+  10. Only the six files under "Scope" of the plan changed.
+- **Tests required:** 17 new browser tests in the project `chromium`: 13 of the reading of a PNG, with pictures made in the test chunk by chunk and one picture as the browser made it (both kinds, each of the five filters, data in several pieces, every refusal, the picture cut short after each of its bytes, and each of its bytes in turn changed); 4 that ask a page (eighteen points of a flat picture, the corners among them; what the page shows when it is asked; nine points that are not points of the page; a page on a screen that is larger and twice as sharp). 1 new browser test in the project `globe`: a 3D picture of two colours read at ten points with nothing on the console. Planted defects in the helper. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-060.md`
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
