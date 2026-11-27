@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 43 | 43 |
+| 1 | Foundation (FND) | 44 | 43 |
 | 2 | Data store and published data (DAT, PUB) | 62 | 43 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-054 – A decided review item keeps its decision.
 
-**Current task, track B (globe):** GLB-001 – The Cesium engine installed.
+**Current task, track B (globe):** FND-046 – The least Node.js is what the locked packages need.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -49,6 +49,13 @@ by then, and a plan says which total it was written against. This is the
 owner's newer rule where CLAUDE.md §2 says "Never work on multiple
 development tasks simultaneously."; everything else in CLAUDE.md holds
 on each track (PLAN-033).
+
+**The least Node.js (PLAN-034):** the trial of GLB-001 read which
+Node.js every locked package of the front end runs on, and found that
+the project asks for an older one (22.12) than the packages of its own
+unit tests need (22.22.2). That is a defect of the foundation and not of
+the globe, so it is a task of Phase 1, FND-046, and it stands first on
+track B, before GLB-001.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -874,6 +881,25 @@ Windows 11. No database and no globe yet.
 - **Verification status:** Verified by the planner on 2026-11-19. All 3 files are identical to the planner's trial. Nothing under `frontend/src` changed, no other test changed, and no test was added, removed or skipped. The fault was a race in the test, not in the page: the page says "Loading data…" before it asks for the data, and the test expected the request to be there as soon as the page said so. It could not be met by repeating the test (450 passes of 450) and was met every time with a late request. The other browser tests were searched for the same fault, and none has it. That a test cannot fail by chance cannot be proven by running it; what is shown is that the one known cause is gone.
 - **Commit:** `846e470`
 - **Plan:** `docs/plans/FND-043.md`
+
+### FND-046 – The least Node.js is what the locked packages need
+- **Status:** IN PROGRESS
+- **Objective:** The project asks for the oldest Node.js that every package in the frontend's lock file runs on, which is 22.22.2, in the package file, the lock file and the README, and a repository check holds it there.
+- **Description:** Added on 2026-11-27 (PLAN-034), found by the planner's trial of GLB-001. `frontend/package.json` and the README say Node.js 22.12 or newer, but `jsdom` and `w3c-xmlserializer`, on which every unit test of the frontend runs, say in the lock file that they need 22.22.2, and seven more packages need a Node.js between 22.13 and 22.19. npm installs a package on an older Node.js with a warning only, and every computer that runs the gates has a newer one, so nothing failed; but the check of the tools a computer needs says `FOUND` for a Node.js 22.12, and the README tells a person that it is enough. The task changes that one number in three files and adds one file of repository checks, which read the range of every locked package and hold the least Node.js to the oldest that all of them allow. No package changes. It stands first on track B because the tasks of the globe add packages with needs of their own.
+- **Acceptance criteria:**
+  1. `frontend/package.json` asks for `"node": ">=22.22.2"`, and the project's own entry in `frontend/package-lock.json` says the same. The lock file differs from before in that one line, and `npm ci` installs what it installed.
+  2. `README.md` says "22.22.2 or newer" in each of the three places where it names a Node.js.
+  3. `python scripts/tools.py` prints `(22.22.2 or newer is needed)` for Node.js, with no change to the script.
+  4. The repository checks hold that every locked package allows the least Node.js; that it is the oldest Node.js all of them allow; that the lock file's entry for the project says the same; that the lock file holds the packages the project names; and that the README names that number wherever it names one.
+  5. The checks read the four forms of range the lock file uses and refuse any other; their reading of a range, a lock file, a package file and a text is tested on made-up ones.
+  6. No existing test changes; all tests pass. The type check of the tooling passes with no `ignore` and its lint with no `noqa`.
+  7. `python scripts/check.py` reports 19 of 19 gates, with 53 repository checks, and 12 tests more in all than `main` gives at the commit the branch starts from (2416 when that is `1035375`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 12 new repository checks in 3 classes, standard library only: the reading of a range at the edges of each form, of forms that are refused, and of the oldest Node.js that made-up sets of ranges allow; the reading of made-up lock files, package files and texts; and five checks of the real package file, lock file and README. 51 planted defects, in what the project says, in the README, in the lock file and in the checks' own reading. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-046.md`
 
 ---
 
@@ -2043,10 +2069,10 @@ What holds for every task of the phase:
 
 ### GLB-001 – The Cesium engine installed
 - **Status:** NOT STARTED
-- **Objective:** The front end has the Cesium engine as a locked dependency, and the project asks for the Node.js that its locked packages need.
-- **Description:** The package `@cesium/engine` (Apache 2.0) is added to the front end: the engine without the ready-made widgets of the full `cesium` package, which MotoSphere does not use because its controls are its own. Nothing of the application imports it yet, so the built site is what it was. The engine needs a newer Node.js than the project asks for today; the least version the project asks for is raised to what every locked package needs, and a repository test holds that from now on. The planner's trial settles the exact version, whether any package runs a script at install, and how the test reads the version ranges.
-- **Acceptance criteria:** `npm ci` installs the engine on Linux and on Windows from the lock file; the dependency audit reports no advisory; the type check, the lint and the build pass with the engine installed; a unit test imports the engine and gets from it the position of a point on the Earth that the reference ellipsoid gives; the least Node.js the project asks for is enough for every package in the lock file, and a test fails when it is not; the README and the check of the tools a computer needs say the same least version; the built site holds the same files as before.
-- **Tests required:** frontend unit tests of the engine's arithmetic through the real package; repository tests of the least Node.js against every locked package, with planted defects; the full run of all gates on both machines.
+- **Objective:** The front end has the Cesium engine as a locked dependency.
+- **Description:** The package `@cesium/engine` (Apache 2.0) is added to the front end: the engine without the ready-made widgets of the full `cesium` package, which MotoSphere does not use because its controls are its own. Nothing of the application imports it yet, so the built site is what it was. The engine and its packages say which Node.js they need; since FND-046 a repository check holds the project's least Node.js to that, so this task changes the number only if the check asks for it. The planner's trial settles the exact version and whether any package runs a script at install.
+- **Acceptance criteria:** `npm ci` installs the engine on Linux and on Windows from the lock file; the dependency audit reports no advisory; the type check, the lint and the build pass with the engine installed; a unit test imports the engine and gets from it the position of a point on the Earth that the reference ellipsoid gives; the check of the least Node.js (FND-046) passes with the engine's packages in the lock file; the built site holds the same files as before.
+- **Tests required:** frontend unit tests of the engine's arithmetic through the real package; the repository checks with the new lock file; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
