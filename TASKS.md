@@ -15,7 +15,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 |---|---|---|---|
 | 1 | Foundation (FND) | 52 | 51 |
 | 2 | Data store and published data (DAT, PUB) | 65 | 47 |
-| 3 | Interactive 3D Earth (GLB) | 25 | 2 |
+| 3 | Interactive 3D Earth (GLB) | 25 | 3 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-057 – A source says its country.
 
-**Current task, track B (globe):** GLB-024 – The engine's own files in development.
+**Current task, track B (globe):** GLB-025 – The engine is told where its files are.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -2436,7 +2436,7 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-022.md`
 
 ### GLB-024 – The engine's own files in development
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** In development the engine's files are answered at the same addresses as in the built site, with the same bytes.
 - **Description:** Added on 2026-11-27 (PLAN-041), cut out of GLB-022; settled in the planner's trial. The step of GLB-022 works when the site is built. `npm run dev` builds nothing: the development server answers from the folder of the project, where the engine's files are not. A second step in the same file, `engineFilesInDevelopment`, answers the folder `cesium/` of the site's path from the installed engine while the development server runs. It goes by the same list as the build (`engineFiles`), so the two cannot differ in which files they hold: each file the built site has is answered, read anew for every request, with its length and the type a browser needs (a table of the eight kinds the engine brings, `SERVED_AS`), and every other address in that folder is answered "not found" by the step itself, the two logos that are left out and a file the project or its folder `public/` has there among them. A name is looked up in the list and never on the disk, so a name that leaves the folder and a name in other capitals than the file has are "not found" on every computer. The server does not start when the engine is not installed, when a listed file is not there, and when the engine brings a file of a kind the table has no type for, which it names. The task spoke of teaching the same step; a step of Vite is for the build or for the server, so it is a second one beside it, and the step of the build and its tests stay as they are. The tests start the development server itself, on this computer only and on a port that is free; the same tests hold that it answers an address that names no file with "not found" and not with the page (FND-052 asked that by hand).
 - **Acceptance criteria:**
@@ -2452,10 +2452,10 @@ What holds for every task of the phase:
   10. `python scripts/check.py` reports 19 of 19 gates, with 371 frontend unit tests, and 51 tests more in all than `main` gives at the commit the branch starts from (3007 when that is `2802943`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   11. Only the seven files under "Scope" of the plan changed.
 - **Tests required:** 51 new unit tests that start the development server on a free port and ask it over the network, on Linux and on Windows: with the project's own settings, every one of the 275 files with its bytes, its type and its length, what is "not found" in the folder and outside it, and the application as before; with projects made up for the test, the path of another site, what the project has in that folder, a file that changed, and the three cases in which the server does not start. Planted defects in the step and in the settings. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #173, whose branch starts from `main` after the other track's DAT-011 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates, "Tests: 3161 passed, 0 failed, 0 skipped.", exit code 0 (frontend unit tests 371: 320 before, 51 new). The planner's 49 planted defects in the step and in the settings, against the 51 new tests and the 16 unit tests of GLB-022: 49 of 49 detected, each by as many tests as in the trial. On GitHub, read by the planner from the runs and job logs: run 45991278599 on the pull request, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3161 passed, 0 failed, 0 skipped.", with 371 frontend unit tests on both machines, the three jobs after the gates skipped; run 45993425176 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3161 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3161 / 0 tests locally and on both machines on GitHub, for the pull request and for `main` (repository 80, script tests 219, backend 2237, frontend unit 371, browser 254); all 19 gates passed; 49 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 7 files are identical to the planner's trial, put on the `main` the branch starts from. No existing test changed, no package was added and the lock file is unchanged. The built site is unchanged: the same 283 files. The planner's trial had failed on GitHub's Windows machine at first, in one test of its own that expected a whole path where Windows has a short and a long name for one folder; the step was right, the test was corrected before the plan was written, and the pull request passed on both machines at the first attempt. One sentence of `TESTING.md` that FND-053 had made out of date was brought up to date with this task. The builder's branch started from `main` at `15d08b3`, one merged task of the other track later than the plan's commit; the builder reported the full run with 3161 tests there, the fourteen prove-it steps with the plan's results and no deviation.
+- **Commit:** `e2024a0`
 - **Plan:** `docs/plans/GLB-024.md`
 
 ### GLB-025 – The engine is told where its files are
