@@ -2422,15 +2422,27 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-022.md`
 
 ### GLB-024 – The engine's own files in development
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** In development the engine's files are answered at the same addresses as in the built site, with the same bytes.
-- **Description:** Added on 2026-11-27 (PLAN-041), cut out of GLB-022. The step of GLB-022 works when the site is built. `npm run dev` builds nothing: the development server answers from the folder of the project, where the engine's files are not. The same step is taught to answer the folder `cesium/` of the site's path from the installed engine while the development server runs, with the same list of what is left out, so that the globe is developed against what the site will hold. A test starts the development server itself; the same test holds that it answers an address that names no file with "not found" (FND-052 asked that by hand).
-- **Acceptance criteria:** the development server answers every address the built site has under `cesium/` with the file of the installed engine and the type a browser needs; a file that is left out, a file the engine does not bring, and an address outside the folder that names no file are answered "not found"; the application is served as before; the built site does not change.
-- **Tests required:** tests that start the development server on a free port and ask it, on Linux and on Windows; unit tests of the step where it changes; planted defects; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-27 (PLAN-041), cut out of GLB-022; settled in the planner's trial. The step of GLB-022 works when the site is built. `npm run dev` builds nothing: the development server answers from the folder of the project, where the engine's files are not. A second step in the same file, `engineFilesInDevelopment`, answers the folder `cesium/` of the site's path from the installed engine while the development server runs. It goes by the same list as the build (`engineFiles`), so the two cannot differ in which files they hold: each file the built site has is answered, read anew for every request, with its length and the type a browser needs (a table of the eight kinds the engine brings, `SERVED_AS`), and every other address in that folder is answered "not found" by the step itself, the two logos that are left out and a file the project or its folder `public/` has there among them. A name is looked up in the list and never on the disk, so a name that leaves the folder and a name in other capitals than the file has are "not found" on every computer. The server does not start when the engine is not installed, when a listed file is not there, and when the engine brings a file of a kind the table has no type for, which it names. The task spoke of teaching the same step; a step of Vite is for the build or for the server, so it is a second one beside it, and the step of the build and its tests stay as they are. The tests start the development server itself, on this computer only and on a port that is free; the same tests hold that it answers an address that names no file with "not found" and not with the page (FND-052 asked that by hand).
+- **Acceptance criteria:**
+  1. With `npm run dev`, every address the built site has under `cesium/` of the site's path is answered with the file of the installed engine, byte for byte, with the status 200, its length and the type `SERVED_AS` has for its kind.
+  2. `SERVED_AS` has a type for each kind of file the installed engine brings, and for no other.
+  3. Every other address in that folder is answered "not found" with no content: the two logos, a file the engine does not bring, the folder itself, a name that leaves the folder, a name in other capitals than the file has, and a file the project or its folder `public/` has there.
+  4. A request that would change something is answered with no file of the engine.
+  5. An address outside the folder that names no file is answered "not found" and not with the page; the engine's files are not at the root of the server; the page, the application's code and an icon are answered as before.
+  6. A file is answered as it is on the disk now.
+  7. The development server does not start, and says why, when the engine is not installed, when a file listed as left out is not there, and when the engine brings a file of a kind without a type.
+  8. The step is for the development server only; the step of the build and the built site are unchanged, and no existing test changes.
+  9. No package is added; all tests pass.
+  10. `python scripts/check.py` reports 19 of 19 gates, with 371 frontend unit tests, and 51 tests more in all than `main` gives at the commit the branch starts from (3007 when that is `2802943`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  11. Only the seven files under "Scope" of the plan changed.
+- **Tests required:** 51 new unit tests that start the development server on a free port and ask it over the network, on Linux and on Windows: with the project's own settings, every one of the 275 files with its bytes, its type and its length, what is "not found" in the folder and outside it, and the application as before; with projects made up for the test, the path of another site, what the project has in that folder, a file that changed, and the three cases in which the server does not start. Planted defects in the step and in the settings. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/GLB-024.md`
 
 ### GLB-025 – The engine is told where its files are
 - **Status:** NOT STARTED
