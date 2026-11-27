@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 55 | 52 |
+| 1 | Foundation (FND) | 55 | 53 |
 | 2 | Data store and published data (DAT, PUB) | 67 | 49 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-058 – A kind of source for reference lists.
 
-**Current task, track B (globe):** FND-055 – The unit tests that start the page leave nothing of it running.
+**Current task, track B (globe):** FND-054 – The browser tests do not run out of network connections on Windows.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -1238,7 +1238,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Commit:** –
 
 ### FND-055 – The unit tests that start the page leave nothing of it running
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Each of the two unit tests that start the whole page ends only when React has nothing left to do, so that no work of the page can run after the test's document is gone.
 - **Description:** Added on 2026-11-27 (PLAN-046), after the run for `main` at `e39aab3` failed on GitHub's Linux machine with every test passed (run 46006701452): the frontend unit tests ended `387 passed` and `Errors  1 error`, "ReferenceError: window is not defined", from `src/globe/engineAddress.test.ts`. Two unit tests start the whole page by bringing in `src/main.tsx`. React shows a page a moment after it is asked to, and does what follows a moment after that. The test of GLB-025 did not wait for either, its file ended, the test's document was taken away, and React's work ran after it. The planner counted what is waiting when each file ends: one piece of React's work at the end of `engineAddress.test.ts` in every run, none after the change. Both tests now start the page inside React's `act`, which comes back when React's queue is empty, and look at the page at once, so that a start outside `act` fails the test every time. The application does not change.
 - **Acceptance criteria:**
@@ -1250,10 +1250,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   6. `python scripts/check.py` reports 19 of 19 gates, with 387 frontend unit tests, and as many tests in all as `main` gives at the commit the branch starts from (3364 when that is `0bbc7b8`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   7. Only the four files under "Scope" of the plan changed.
 - **Tests required:** the two changed unit tests; two prove-it steps, each run three times with the same result; the planner's count of what is waiting at the end of each unit test file, before and after; the planted defects of GLB-025 against the changed file; the full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #186 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the two changed files, `Tests  18 passed (18)` in each of three runs; the full run, 19 of 19 gates passed, "Tests: 3364 passed, 0 failed, 0 skipped.", exit code 0, the unit tests ending `Test Files  18 passed (18)` and `Tests  387 passed (387)` with no line `Errors`. The count of what is waiting when a unit test file ends, with the planner's probe set in front of the set-up for the time of the count and taken out again: in 3 runs of the two changed files and one run of all 18 files (387 tests passed, no error), 24 file ends in all, none of React's work was waiting at any of them. 15 ended with nothing waiting; the 8 ends of the two files that start the page had 8 pieces each, all of them the test document's own work for its style sheets (jsdom), which it drops with the document; and one file of the whole run ended with one piece asked for by the network code of Node (undici), not by React. The plan's two prove-it steps, each run three times by the planner: with `act` taken away from `main.test.tsx`, `Tests  1 failed | 1 passed (2)` all three times, the failed test `renders the application into the root element`; with it taken away from `engineAddress.test.ts`, `Tests  1 failed | 15 passed (16)` all three times, the failed test `has told the engine by the time it has started`. The 37 planted defects of GLB-025 (in the application, the build, the configuration of the tests and of the development server), one at a time against the unit tests of the pull request: 37 of 37 detected, each by as many tests as in the planner's trial. On GitHub, read by the planner from the runs and job logs: run 46030678437 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3364 passed, 0 failed, 0 skipped.", with `Test Files  18 passed (18)` and no line `Errors`, the three jobs after the gates skipped. Run 46033625132 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3364 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3364 / 0 tests on both machines on GitHub for `main` (repository 82, script tests 219, backend 2420, frontend unit 387, browser 256) and for the pull request, and locally; all 19 gates passed; 37 / 0 planted defects detected; both prove-it steps fail as planned, three times each.
+- **Verification status:** Verified by the planner on 2026-11-27. All 4 files are the same change as the planner's trial. No file of the application changed, no test was added or taken out, and no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #184, run 46028611624). The builder's report agrees with what the planner found, and names the same run on GitHub. The builder's Node was 22.23.5.
+- **Commit:** `9b46186`
 - **Plan:** `docs/plans/FND-055.md`
 
 ### FND-056 – A unit test file that ends with work of the page waiting fails
