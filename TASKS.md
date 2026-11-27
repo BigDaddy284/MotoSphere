@@ -14,8 +14,8 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 52 | 51 |
-| 2 | Data store and published data (DAT, PUB) | 65 | 47 |
-| 3 | Interactive 3D Earth (GLB) | 25 | 3 |
+| 2 | Data store and published data (DAT, PUB) | 67 | 48 |
+| 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -27,9 +27,9 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-057 – A source says its country.
+**Current task, track A (data store):** DAT-012 – The countries reference file.
 
-**Current task, track B (globe):** GLB-025 – The engine is told where its files are.
+**Current task, track B (globe):** FND-054 – The browser tests do not run out of network connections on Windows.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -118,6 +118,17 @@ the table of the countries, and the country of a source, which is a
 column of a table that is there and holds rows, with a migration of
 another kind. DAT-011 is now the table; the column is DAT-057, which
 follows it. Order on track A: DAT-011, DAT-057, then DAT-012.
+
+**The countries' list, in three steps (PLAN-044):** DAT-012 was written
+as one task: find a source for the countries of ISO 3166-1, bring its
+file into the repository, register the source in the store, and load the
+file with a command. Those are three objectives with three kinds of
+test, and the planner's trial found that none of the twelve kinds of
+source fits a project that keeps the lists of a standard. DAT-012 is now
+the file, its licence and its reader, with the source recorded in
+`DATA_SOURCES.md`; DAT-058 gives the list of the kinds of source a kind
+for it; DAT-059 registers the source and loads the countries. Order on
+track A: DAT-057, DAT-012, DAT-058, DAT-059, then DAT-013.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -2146,7 +2157,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-011.md`
 
 ### DAT-057 – A source says its country
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A source can say which country it is of, so that sources can be found by country.
 - **Description:** Added on 2026-11-27 (PLAN-042), cut out of DAT-011; settled in the planner's trial. One column of `source`, `country_id`: the key of a row of `country`, after `switched_on` and before the two times. It may be without a value, because a body for the whole world is of no one country, and of a source that was stored before somebody looked nobody has said yet; the table does not tell the two apart. The foreign key, `fk_source_country_id_country`, says nothing of deleting: a country that a source is of cannot be deleted. An index over the column, `ix_source_country_id`, finds the sources of one country and answers what SQLite asks before a country is deleted. The fourteenth migration, `let_a_source_say_its_country`, is the first that changes a table that is there and holds rows. It builds the table anew, because SQLite puts an added column after all the others and cannot give it a foreign key with a name, and the table would not be as its model makes it: with the foreign keys left on and checked when the transaction ends, the rows are copied aside, the table is dropped, made again with the column and filled from the copy, every source with its key and everything it had and with no country. The highest key the table has given, which SQLite forgets when a table is dropped, is kept and put back, so the key of a deleted source is still never given again. The four tables whose rows point to a source are not touched. The sources and the countries now point to each other, the only two tables that do: a source is stored before its countries and is said to be of one of them afterwards. The schema goes to version 14. The planner's trial has 40 new tests and detects 57 of 57 planted defects.
 - **Acceptance criteria:**
@@ -2164,18 +2175,52 @@ did not have, that a key is 1 or more, and made that a task of its own
   12. `python scripts/check.py` reports 19 of 19 gates, with 2277 backend tests, and 40 tests more in all than `main` gives at the commit the branch starts from (3201 when that is `839e225`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   13. Only the ten files under "Scope" of the plan changed.
 - **Tests required:** 25 new integration tests in 19 functions, in a store the migrations built, with one source and the two countries that came from it, on a real SQLite file, through the model and past it as plain SQL, each refusal with what SQLite said: a source with and without a country; a country that is not there; what is not a whole number; a country that a source is of; the two tables pointing to each other; the column, its foreign key and its index as SQLite has them, with the query plans. 6 new unit tests of the model. 8 new tests of the fourteenth migration, in a store that holds sources with a gap in their keys and a row in each of the four tables that point to a source, and one case more of the test that tries every migration alone. Planted defects in the model and the migration. The full run of all gates on both machines.
+- **Tests executed:** In a clean checkout of pull request #175 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 3201 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2277: 2237 before, 40 new). The planner's 73 planted defects, one at a time, on the pull request: 57 in the model and in the migration against the 584 tests of the twelve files that hold a source's country, the sources and their offers, the countries, the history, the migrations, the whole schema and the rules every table keeps, 57 of 57 detected; and the plan's 16 prove-it steps against all backend tests, 16 of 16 detected, each with the numbers the plan names. On GitHub, read by the planner from the runs and job logs: run 46000506998 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3201 passed, 0 failed, 0 skipped.", with 2277 backend tests on both machines, the three jobs after the gates skipped; run 46006732397 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3219 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files." The other track's GLB-025 was merged in between, so `main` has its 16 unit tests and 2 browser tests too: 3219 there, where the pull request by itself gives 3201.
+- **Passed / Failed:** 3219 / 0 tests on both machines on GitHub for `main` (repository 80, script tests 219, backend 2277, frontend unit 387, browser 256); 3201 / 0 locally and on both machines for the pull request; all 19 gates passed; 73 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 10 files are identical to the planner's trial. Two existing tests changed, the list of the migrations' names and one row of a source read whole, as the plan says; no package was added. In the planner's trial one planted defect had passed every test at first, a migration after which every table forgot the highest key it had given; the test of the migration now holds the highest key of every table, and all 57 were run again. The builder reported 2277 backend tests and the full run with 3201 tests passed in its own checkout, a new store at schema version 14, and the plan's 16 prove-it steps, each with the plan's closing line and function names; its only deviation was Node 22.23.5 where the plan's trial had 22.23.4.
+- **Commit:** `cd3f42a`
+- **Plan:** `docs/plans/DAT-057.md`
+
+### DAT-012 – The countries reference file
+- **Status:** IN PROGRESS
+- **Objective:** The list of the countries of ISO 3166-1 is in the repository, unchanged from a source whose licence allows it, with that source and its licence recorded, and a reader gives its countries or refuses the file whole.
+- **Description:** Narrowed on 2026-11-27 (PLAN-044) from "Countries reference data": registering the source is DAT-058 and DAT-059, and loading is DAT-059. The planner's trial found the source and read its licence: the project iso-codes of Debian, whose file `data/iso_3166-1.json` is the list of the standard, 249 entries, under LGPL-2.1-or-later (copyright 2016 Dr. Tobias Quathamer, as the release's `REUSE.toml` states). The licence permits copying and passing on; it asks that a copy keeps the notice and comes with the licence, that a changed copy says so, and that a work which takes over part of the list is passed on under the same licence. The file and the licence of release 4.20.1 are in `backend/src/motosphere/reference/iso-codes/`, unchanged, with a note of where they came from; the release was fetched once, as its makers published it, from the Ubuntu archive, because the project's own server could not be reached. Every entry's code of three letters and number agree with what Unicode's Common Locale Data Repository gives for its code of two letters. A reader, `motosphere.reference.countries`, gives the countries of such a file, each with its two codes and its name as the file writes it, in the file's order; it reads those three values of an entry and nothing else, and refuses a damaged file whole with a sentence that says what is wrong. `DATA_SOURCES.md` has the source, its licence, what was checked and what else was looked at; ISO's own page could not be read and nothing is said of its terms. Nothing is fetched while the pipeline runs, and nothing is in the store yet.
+- **Acceptance criteria:**
+  1. `backend/src/motosphere/reference/iso-codes/` holds three files and no other: the countries file and the licence, each the file of release 4.20.1 of iso-codes byte for byte, and a note that names both with their SHA-256, the release, the notice of copyright and the licence as the release states them, where the release was fetched, and that the files are unchanged.
+  2. `DATA_SOURCES.md` has the source in its registry and a section with what it is, what is taken, its licence as read and what it asks, how it was fetched, what was checked, what else was looked at, and why the source has no category yet.
+  3. `countries_of_the_project()` gives the 249 countries of the file in the file's order, each with its code of two letters, its code of three and its name as the file writes it.
+  4. `read_countries` reads an entry's two codes and its name and leaves unread whatever more the entry holds.
+  5. It refuses, each with a sentence of its own: content that is not UTF-8; that cannot be read as JSON; that has a word JSON does not have; that is nested too deeply; that has a name twice in one place; that is not one list under the name `3166-1` and nothing else; a list without countries; an entry that is not names and values; an entry without text under one of the three names.
+  6. It refuses a code that is not two, or three, of the 26 capital letters and nothing else, and one code in two entries.
+  7. It refuses a name that is empty, that has white space around it, that has white space inside other than a plain space, or that has a control character.
+  8. A file with one wrong entry gives no country at all.
+  9. Nothing is fetched, no row is written, and no existing file of the pipeline's code changes; no package is added; no existing test changes; all tests pass.
+  10. `python scripts/check.py` reports 19 of 19 gates, with 2420 backend tests, and 143 tests more in all than `main` gives at the commit the branch starts from (3362 when that is `08c6ebb`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  11. Only the ten files under "Scope" of the plan changed.
+- **Tests required:** 143 new unit tests in 44 functions: the two files held to the release by their SHA-256, on Linux and on Windows, and the note beside them; the countries of the project's file; what the reader reads, on files made up for the test; and everything it refuses, each with its sentence word for word. Planted defects in the files, in the note and in the reader. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
-- **Plan:** `docs/plans/DAT-057.md`
+- **Plan:** `docs/plans/DAT-012.md`
 
-### DAT-012 – Countries reference data
+### DAT-058 – A kind of source for reference lists
 - **Status:** NOT STARTED
-- **Objective:** The countries of ISO 3166-1 are in the store, from a source whose licence allows it, with that source recorded.
-- **Description:** The planner's trial finds and records the source and its licence in `DATA_SOURCES.md` before the plan is written; if none allows redistribution the task is `BLOCKED – EXTERNAL DEPENDENCY`. A reference file in the repository with its origin and licence beside it, the source registered in the store, and a command that loads the file: countries are added or updated through the history of DAT-009, never deleted, and a second load changes nothing. Nothing is fetched while the command runs.
-- **Acceptance criteria:** after loading, the store holds exactly the countries of the file, each with provenance naming the source; loading twice leaves the same rows and no new history; a changed name in the file becomes one change with history; a malformed file is refused whole and the store is unchanged.
-- **Tests required:** unit tests of the file's reader; integration tests against a real SQLite file with the real reference file and with damaged ones; the command run for real; planted defects; the full run of all gates on both machines.
+- **Objective:** A source can be described as a publisher of reference lists, so that the source of the countries is registered as what it is.
+- **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012. A source is described by one of twelve kinds (`SourceCategory`, DAT-039), each a kind of website of the sport. A project that keeps the lists of a standard, as iso-codes does, is none of them, and the record of DAT-006 left that to the trial of DAT-012. The list gains one text for it, and a migration lets the table `source` take it, because the table's check names the texts. The text and its place in the list are settled in the planner's trial. DESIGN.md §7.1 names the twelve; the thirteenth is this project's, and `DATABASE.md` and `DATA_SOURCES.md` say so.
+- **Acceptance criteria:** the list has the new kind, with what it means; after the migration the table takes a source of that kind and still refuses every text that is not of the list; every source that is there keeps what it had, its key too; the model and the migration agree; `DATA_SOURCES.md` gives the row of iso-codes its category.
+- **Tests required:** unit tests of the list; integration tests against a real SQLite file, with the migration applied to a store that holds sources and what points to them; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-059 – The countries are loaded into the store
+- **Status:** NOT STARTED
+- **Objective:** The countries of the reference file are in the store, each naming the source it came from, through a command that changes nothing when it is run again.
+- **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012. A command registers the source of the countries (iso-codes, with its licence, where its terms are and when they were read, as `DATA_SOURCES.md` has them) and brings the countries of the file of DAT-012 into the table of DAT-011: a country that is not there is added, a country whose name the file has changed is changed through the history of DAT-009, and no country is ever deleted. Every row says which source it came from and when. Nothing is fetched while the command runs. The planner's trial settles whether registering the source and loading the countries are one task or two, how a country that is in the store and not in the file any more is treated, and what the published data must say of the licence (PUB-003).
+- **Acceptance criteria:** after loading, the store holds exactly the countries of the file, each with provenance naming the source; loading twice leaves the same rows and no new history; a changed name in the file becomes one change with history; a malformed file is refused whole and the store is unchanged; the source is registered once, however often the command runs.
+- **Tests required:** integration tests against a real SQLite file with the real reference file and with damaged ones; the command run for real; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -2294,7 +2339,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 ### PUB-003 – Countries file
 - **Status:** NOT STARTED
 - **Objective:** The countries in the store are published for the browser.
-- **Description:** The export writes one file with the countries that have at least one published record or are needed to name one, in a fixed order, listed in the manifest and checked against the contract. Internal fields stay in the store.
+- **Description:** The export writes one file with the countries that have at least one published record or are needed to name one, in a fixed order, listed in the manifest and checked against the contract. Internal fields stay in the store. Added on 2026-11-27 (PLAN-044): the countries are from iso-codes under LGPL-2.1-or-later, which asks that what takes over part of the list names its notice and its licence and is passed on under it (`DATA_SOURCES.md`, "The countries: iso-codes"); the plan of this task says how the published file does that.
 - **Acceptance criteria:** the file holds exactly those countries, each with its codes and name; it is listed in the manifest with the right hash; the same store gives the same bytes; with no countries the file is not written and the manifest says so.
 - **Tests required:** integration tests of the export against a real store; contract validation; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
@@ -2459,7 +2504,7 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-024.md`
 
 ### GLB-025 – The engine is told where its files are
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Before the engine is first used, the application tells it the address of its own files, built from the one place that names the site's path.
 - **Description:** Added on 2026-11-27 (PLAN-041), cut out of GLB-022; settled in the planner's trial. The engine asks for its files beneath one base address. Left to itself it works that address out from where its own code was loaded, which in a built site is a file of the build with a name of its own, and not the folder of GLB-022. One module of the application, `frontend/src/globe/engineAddress.ts`, builds the address from the site's path and the name of the folder, both in `frontend/site.ts`, and puts it under the name the engine reads (`CESIUM_BASE_URL`); the build and the development server take the folder's name from the same place. The application tells the engine where it starts, in `main.tsx`, before it shows anything and nowhere else: the engine reads the address the first time it needs a file, and keeps it. The address is a path and names no computer, so the engine asks the site the page came from and nobody else. The engine's own function for this (`buildModuleUrl.setBaseUrl`) is not used: it is not in the engine's type declarations, and calling it needs the engine loaded, which GLB-002 does only when the globe is shown. Nothing of the application loads the engine yet. A test of the engine when nobody tells it was tried and dropped: the engine keeps the address, and the test runner gives a test no second engine.
 - **Acceptance criteria:**
@@ -2474,10 +2519,10 @@ What holds for every task of the phase:
   9. `python scripts/check.py` reports 19 of 19 gates, with 387 frontend unit tests and 256 browser tests, and 18 tests more in all than `main` gives at the commit the branch starts from (3179 when that is `4dc58fb`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   10. Only the nine files under "Scope" of the plan changed.
 - **Tests required:** 16 new unit tests: of the address; of the telling; through the real engine as installed, of the addresses it builds; from the text of the application's code, of the page and of the settings of the build, that one module names the address and the engine's word for it and that the application tells in one place, before it shows anything; and by starting the application. 2 new browser tests on the built site: the page has told the address, and the browser gets a file of each kind beneath it. Planted defects against the unit tests and against the browser tests. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #177 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates, "Tests: 3179 passed, 0 failed, 0 skipped.", exit code 0 (frontend unit tests 387: 371 before, 16 new; browser tests 256: 254 before, 2 new). The planner's 47 planted defects, one at a time, on the pull request: 37 against the 16 new unit tests, the tests of `main.tsx` and the unit tests of the step of the build and of the development server, 37 of 37 detected; and 10 against the browser tests of the engine's files and of the site, with the site built anew for each, 10 of 10 detected, four of them written so that the type check passes and the browser tests are the judge. On GitHub, read by the planner from the runs and job logs: run 46001452662 on the pull request, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3179 passed, 0 failed, 0 skipped.", with 387 frontend unit tests and 256 browser tests on both machines, the three jobs after the gates skipped; run 46003159351 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3179 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3179 / 0 tests on both machines on GitHub for `main` (repository 80, script tests 219, backend 2237, frontend unit 387, browser 256); 3179 / 0 locally and on both machines for the pull request; all 19 gates passed; 47 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 9 files are identical to the planner's trial. No existing test changed, no package was added and the lock file is unchanged. The built site has 283 files as before. The planner's trial on GitHub (pull request #174, run 45996124551) failed on the Windows machine at its first attempt in one browser test this task does not touch, which could not open the page (`net::ERR_NO_BUFFER_SPACE`): the fault of FND-054, for the third time. Every other test passed there, the two new browser tests among them, and the job passed when it was run once more. The builder reported the full run with 3179 tests passed in its own checkout and the plan's 13 prove-it steps, each with the plan's result, and no deviation from the plan but Node 22.23.5 where the plan's trial had 22.23.4.
+- **Commit:** `63d2c54`
 - **Plan:** `docs/plans/GLB-025.md`
 
 ### GLB-002 – The globe shows the Earth

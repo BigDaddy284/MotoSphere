@@ -125,6 +125,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   files with the same bytes, and "not found" for every other address in
   their folder. Tests start the development server itself and ask it
   (GLB-024).
+- The application tells the globe engine where its own files are: the
+  folder of this site that holds them. It does so where it starts,
+  before anything is shown, and the address names no other computer
+  (GLB-025).
 - The data store's first decisions (`DATABASE.md`): what it relies on in
   SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
   gates run on, and where the store is kept between scheduled runs
@@ -380,6 +384,14 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   first table of collected records: every row says which source it
   came from, where, when and how, and how far it can be trusted. The
   table has no rows yet (DAT-011).
+- A source can say which country it is of: a new column of `source`,
+  which may be without a value, with an index, so that the sources of
+  one country are found. A country that a source is of cannot be
+  deleted. The fourteenth migration builds the table of the sources
+  anew for it, the first to change a table that holds rows: every
+  source keeps what it had and its key, every row that points to a
+  source points to the same one, and the key of a source that was
+  deleted is still not given again (DAT-057).
 
 ### Removed
 

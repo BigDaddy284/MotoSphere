@@ -229,9 +229,8 @@ Rules:
   companies. The globe uses neither, and a provider of imagery is taken
   on with its terms read, its pictures with it (§8). The files are
   passed on unchanged, as the package brings them under the engine's
-  licence, whose text is in `licences.txt`. The engine is not yet told
-  its address (GLB-025), and nothing of the application asks for a file
-  of it, so a visitor's browser fetches none.
+  licence, whose text is in `licences.txt`. Nothing of the application
+  asks for a file of it yet, so a visitor's browser fetches none.
 - In development nothing is built, and the development server answers
   from the folder of the project, where the engine's files are not. A
   second step in the same file answers the folder `cesium/` of the
@@ -243,6 +242,23 @@ Rules:
   the site will hold. The server does not start when the engine is not
   installed, or when the engine brings a file of a kind the step has no
   type for: a person then says what a browser must be told it is.
+- The engine asks for its files beneath one address. Left to itself it
+  works that address out from where its own code was loaded, which in
+  the built site is a file of the build with a name of its own, and the
+  engine's files are not beside it. So the application tells it
+  (GLB-025). One module, `src/globe/engineAddress.ts`, builds the
+  address from the site's path and the name of the folder, and puts it
+  under the name the engine reads, `CESIUM_BASE_URL`. Both parts are in
+  `frontend/site.ts`, and the build and the development server take the
+  folder's name from there too, so the files cannot be put in one place
+  and looked for in another. The application tells the engine where it
+  starts, before it shows anything, and nowhere else: the engine reads
+  the address the first time it needs a file, and keeps it. The address
+  is a path and names no computer, so the engine asks the site the page
+  came from and nobody else. The engine also has a function for this,
+  `buildModuleUrl.setBaseUrl`. It is not used: calling it needs the
+  engine loaded, and the engine is loaded only when the globe is shown
+  (GLB-002).
 - A name the engine has moved to `@cesium/core` (`Cartesian3`,
   `Ellipsoid`, `Math` and about 150 in all) is imported from there. The
   engine still hands those names out, with a warning, and says it will
@@ -449,6 +465,10 @@ pipeline's command line. The settings and logging modules stay.
   columns every collected record has. The table knows the form of a
   code and not the standard's list: the countries themselves are
   loaded from a source whose licence allows it (DAT-012, DATABASE.md).
+  A source can say which country it is of (DAT-057), so the two tables
+  point to each other: a source is stored before its countries and is
+  said to be of one of them afterwards, and a country that a source is
+  of cannot be deleted.
 
 The schema is documented in DATABASE.md as tables are added.
 

@@ -859,7 +859,23 @@ and a review item, both are as they were, with the six indexes and
 the ten triggers, a country of the source that was there is then
 stored, and it fails, with the store left at its version, where a
 table of its name is there already, and where an index of its name is,
-with the table it had made before that taken back (DAT-011); a store
+with the table it had made before that taken back (DAT-011); the
+fourteenth builds the table of the sources anew in a store that has two
+sources, two more that were deleted, so that the keys have a gap and
+the highest key given is above every key that is there, and a row in
+each of the four tables that point to a source: every source has what
+it had, its key too, and is of no country, every row of the four tables
+is as it was, the highest key each table has given is as it was, no
+pointer is broken, the two copies are gone, and the seven indexes and
+ten triggers are there with the new index beside them; the key of a
+deleted source is not given again afterwards, in a
+table without sources too, whether it ever had one or not; the rows are
+held to their sources again, and a source to a country that is there;
+and it fails, with the store left at its version, the table without the
+column and every row and the highest key as before, where a table of
+the name of either copy is there already, and where an index of its
+name is, which is its last statement, after the table was dropped, made
+anew and filled (DAT-057); a store
 with the newest schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -906,6 +922,35 @@ word, and so which constraint refused it.
   be switched on later; it is switched on once they were read; a source
   that is switched on cannot lose the time; and it can be switched off
   again and keeps it. A source that is changed says when.
+
+`backend/tests/integration/test_source_country.py` tests the country a
+source is of (DAT-057), in a store that the migrations built and that
+has one source and the two countries that came from it. A source says
+its country and is read back with it, through the model and as SQLite
+holds it; a source of which none is said has none; a row written past
+the model is read with its country. The country must be there, when a
+source is stored and when it is moved, and a key that is not a whole
+number is refused in four ways, with what SQLite said, while a whole
+number written as text or with a point is stored as the key it is. A
+source is given a country later, another, and none; two sources can be
+of one country. A country that a source is of cannot be deleted,
+through the model or past it; one that no source is of can; and it can
+once its source was moved to no country, to another, or deleted. A
+source can be of a country that came from it; the two then keep each
+other, and are taken away in one order, which the test walks. The
+table has the column before its two times, as a whole number that may
+be without a value, with a foreign key that does nothing for the
+source when the country goes. The sources of one country are found by
+the index, which also answers what SQLite asks before a country is
+deleted, and are asked for through the model.
+
+`backend/tests/unit/test_db_models_source_country.py` reads the same
+from the model, without a store: where the column stands, that it may
+be without a value and is given none, the name and the target of its
+foreign key, the one index and that it is not a unique one; that the
+sources and the countries are the only two tables of the schema that
+point to each other, and that nothing else goes round; and that the
+schema with the column keeps every rule.
 
 `backend/tests/integration/test_source_offer.py` tests the table of what
 the sources offer (DAT-040), in a store that the migrations built. An
@@ -2140,6 +2185,29 @@ when a file listed as left out is not there, and when the engine brings
 a file of a kind the step has no type for. The step has a type for
 exactly the eight kinds the installed engine brings, and is for the
 development server and not for the build.
+
+The address the engine is told (`frontend/src/globe/engineAddress.test.ts`,
+unit tests, GLB-025): the address is the folder of the engine's files
+beneath the site's path, written out, and it names no other computer: it
+is a path from the top of a site, and read from a page it stays on the
+computer of that page. Telling puts the address under the name the engine
+reads, also over another address. The engine as installed, once it is
+told, builds the address of a background script, of a program, of a
+table, of a picture of the Earth and of the description of those pictures
+beneath the folder, on the computer of the page. The rest is read from
+the text of the application's code, of the page and of the settings of
+the build: the engine's own word for the address is in one module only;
+the address is built in one module only and written out nowhere; the
+folder's name is taken from where the build and the development server
+take it; and the application tells the engine in one place, where it
+starts, before it shows anything, with nothing before it but what it
+brings in. Started for the test, the application has told the engine,
+also when it cannot start. On the built site
+(`frontend/e2e/engine.spec.ts`, two browser tests): the page as it was
+built has told the address; and the browser, asked from the page for a
+file of each of the eight kinds beneath the address it was told, gets
+each with the status 200, at the address the site has for it, with the
+length of the engine's file.
 
 After a deployment the check of the published site fetches each of these
 files with the rest and compares it byte for byte with the built one. It
