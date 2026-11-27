@@ -15,7 +15,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 |---|---|---|---|
 | 1 | Foundation (FND) | 51 | 50 |
 | 2 | Data store and published data (DAT, PUB) | 64 | 45 |
-| 3 | Interactive 3D Earth (GLB) | 25 | 1 |
+| 3 | Interactive 3D Earth (GLB) | 25 | 2 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-055 – A decided review item is not replaced.
 
-**Current task, track B (globe):** GLB-022 – The engine's own files in the built site.
+**Current task, track B (globe):** FND-053 – The check of the published site knows the engine's kinds of file.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -2335,7 +2335,7 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-001.md`
 
 ### GLB-022 – The engine's own files in the built site
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The files the engine fetches while it runs are part of the built site, under one folder of the site's path.
 - **Description:** Added on 2026-11-27 (PLAN-033), cut out of the old GLB-001; cut to the built site by PLAN-041. The engine does part of its work in background scripts and reads programs, tables and pictures from files of its own, which come with the package in its folder `Build` (277 files with `@cesium/engine` 26.5.0) and are not code the build takes in. A step of the build, `frontend/sitebuild/engineFiles.ts`, puts every file beneath that folder into the site as it is, under the folder `cesium/`, in a set order; none is picked by hand, so that another version of the engine brings what it needs. Two files are left out, each named in the step with its reason: the logos of Bing Maps and of Google Earth, which the engine shows only with imagery of those companies; the build stops when a listed file is not there any more. The site so gets 275 files, 8.3 MB, and has 283 in all. The engine's licence is in the site's `licences.txt` already (FND-047). Nothing of the application asks for a file of the folder yet, so a visitor's browser fetches none. The development server (GLB-024), telling the engine the address (GLB-025) and what GitHub Pages says a `.wasm` and a `.jpg` file are (FND-053) are tasks of their own.
 - **Acceptance criteria:**
@@ -2351,10 +2351,10 @@ What holds for every task of the phase:
   10. `python scripts/check.py` reports 19 of 19 gates, with 320 frontend unit tests and 253 browser tests, and 39 tests more in all than `main` gives at the commit the branch starts from (2791 when that is `26a396c`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   11. Only the seven files under "Scope" of the plan changed.
 - **Tests required:** 16 new unit tests of the step: on folders made up for the test, with the entries of a folder given in an order that is not that of their names, and on the engine as it is installed. 23 new browser tests that compare the built folder with the installed engine on the disk and fetch every file through the site under test, with the two logos named in the tests themselves. Planted defects in the step against the unit tests and against the browser tests. The full run of all gates on both machines. The deployment and the check of the published site, which then compares 283 files.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #165 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates, "Tests: 2791 passed, 0 failed, 0 skipped." (frontend unit tests 320: 304 before, 16 new; browser tests 253: 230 before, 23 new). The planner's 51 planted defects in the step: 36 against the 16 unit tests, 36 of 36 detected; 15 against the browser tests of the engine's files and of the licences, with the site built anew for each, 15 of 15 detected. On GitHub, read by the planner from the runs and job logs: run 45972388594 on the pull request, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2791 passed, 0 failed, 0 skipped.", with 320 frontend unit tests and 253 browser tests on both machines, the three jobs after the gates skipped; run 45974353239 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 2791 passed, 0 failed, 0 skipped.", the site republished with the engine's files, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 2791 / 0 tests locally and on both machines on GitHub for `main` (repository 80, script tests 206, backend 1932, frontend unit 320, browser 253); 2791 / 0 on both machines for the pull request, merged with `main` as it then stood; all 19 gates passed; 51 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 7 files are identical to the planner's trial. No existing test changed, no package was added and the lock file is unchanged. The step gives the same 275 files in the same order on Windows as on Linux. The builder reported the full run with 2791 tests, 283 files in the built site with 275 of them under `cesium/`, the fifteen prove-it steps with the plan's results and no deviation.
+- **Commit:** `d52fce0`
 - **Plan:** `docs/plans/GLB-022.md`
 
 ### GLB-024 – The engine's own files in development
