@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 55 | 54 |
-| 2 | Data store and published data (DAT, PUB) | 69 | 50 |
+| 2 | Data store and published data (DAT, PUB) | 69 | 51 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-060 – The source of the countries can be put in the store.
+**Current task, track A (data store):** DAT-059 – The countries are loaded into the store.
 
 **Current task, track B (globe):** FND-056 – No unit test ends with work of the page waiting.
 
@@ -2378,7 +2378,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-058.md`
 
 ### DAT-060 – The source of the countries can be put in the store
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One function gives the row of the source of the countries in the store, and stores that row first when the store does not have it: once, as `DATA_SOURCES.md` describes the source, and switched off.
 - **Description:** Added on 2026-11-27 (PLAN-049), cut out of DAT-059; settled in the planner's trial. A new module, `motosphere.reference.countries_source`, says what the store is told of the project iso-codes: its name, its website, its kind (`reference list`, DAT-058), how it is collected from (`public dataset`), its licence (`LGPL-2.1-or-later`), what the licence asks in three sentences, that it has no page of terms, and that it offers `reference data`. `source_of_the_countries(work)` looks for a source of that name. Where there is none it stores one as described, with its offer, and writes both before it returns. Where there is one as described it gives it as it is and writes nothing: what people have said of it (whether its terms were read, whether it is switched on, how often it is looked at, which country it is of) is not looked at, and neither is what else it offers. A source of the name that is described otherwise, in one of the six described columns or because it does not offer `reference data`, is refused with a `CountriesSourceError` whose sentence names everything that differs, and is left as it is: the code does not write over what the store holds, and does not load countries under a description that is not its own. A new row is switched off and says that nobody has read its terms. The planner read the licence of iso-codes, and `DATA_SOURCES.md` says what it found; the column says when a person last read a source's terms, and no person has. The source need not be switched on for its countries to be loaded, because nothing is fetched from it: its file is in the repository. The owner switches it on, or leaves it, after reading the licence. Nothing calls the function yet; no model, migration or command changes. The planner's trial has 38 new tests.
 - **Acceptance criteria:**
@@ -2395,10 +2395,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   11. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   12. Only the eight files under "Scope" of the plan changed.
 - **Tests required:** 12 new unit tests of the description, without a store: its texts, each written out a second time; that it names columns of a source in the order of the table; that every column of a source is described, for people, or the store's own; that the note beside the file names the same website and licence. 26 new integration tests in 15 functions against a real SQLite file that the migrations built, every row read back as SQLite holds it: stored as described; stored once; beside another source; a source of another name; given as it is, with what people said of it and with more offers; refused for each described column and for the offer, with the sentence word for word; kept or taken back with its unit of work. Planted defects in the module. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #195 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32): the full run, 19 of 19 gates passed, "Tests: 3428 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2479: 2441 before, 38 new). The planner's 38 planted defects, one at a time, in the new module of the pull request (eleven in what the store is told, two in what the source offers, four in the words a refusal has for a column, two in its sentence, three in how it lists what differs, one in the error, two in how the source is found, six in the new row, seven in a source that is there), each against the 38 tests of the two new files: 38 of 38 detected, each by the same tests as in the planner's trial. The plan's nine prove-it steps, run by the planner too: each fails the tests the plan names (9, 4, 3, 3, 6, 14, 4, 1 and 2 tests). On GitHub, read by the planner from the runs and job logs: run 46046592677 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3428 passed, 0 failed, 0 skipped.", with 2479 backend tests on both machines, the three jobs after the gates skipped; run 46048935568 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3428 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3428 / 0 tests on both machines on GitHub for `main` and for the pull request, and locally (repository 82, script tests 219, backend 2479, frontend unit 387, browser 261); all 19 gates passed; 38 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 8 files are the same change as the planner's trial. No existing test changed, no model, migration or command changed, and no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #193, run 46044799028). The builder's report agrees with what the planner found: no deviation from the plan, the same counts, and all nine prove-it steps with the results the plan names. The builder's Node was 22.23.5.
+- **Commit:** `c55099e`
 - **Plan:** `docs/plans/DAT-060.md`
 
 ### DAT-059 – The countries are loaded into the store
