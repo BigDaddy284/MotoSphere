@@ -21,6 +21,8 @@
     "data": "uv run --locked --directory ../backend python -m motosphere export --out ../frontend/public/data"
   },
   "dependencies": {
+    "@cesium/core": "^0.1.1",
+    "@cesium/engine": "^26.5.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
