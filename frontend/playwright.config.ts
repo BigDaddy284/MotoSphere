@@ -26,16 +26,7 @@ export default defineConfig({
     // Every test runs in a browser started this way (e2e/browser.ts).
     launchOptions: TEST_BROWSER,
   },
-  // The planner's measurement runs first and alone; the tests follow it.
-  projects: [
-    { name: 'measure', testMatch: 'measure.spec.ts', use: { ...devices['Desktop Chrome'] } },
-    {
-      name: 'chromium',
-      testIgnore: 'measure.spec.ts',
-      dependencies: ['measure'],
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command: `npm run data && npm run build && npm run preview -- --host ${HOST} --port ${PORT} --strictPort`,
     url: BASE_URL,

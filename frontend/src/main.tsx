@@ -19,25 +19,3 @@ createRoot(rootElement).render(
     <App />
   </StrictMode>,
 )
-
-async function spike(): Promise<void> {
-  const times: Record<string, number> = { importAsked: performance.now() }
-  Object.assign(globalThis, { spikeTimes: times })
-  new PerformanceObserver((list) => {
-    for (const entry of list.getEntries()) {
-      times['longTasks'] = (times['longTasks'] ?? 0) + 1
-      times['longTaskMs'] = (times['longTaskMs'] ?? 0) + entry.duration
-      times['longestTask'] = Math.max(times['longestTask'] ?? 0, entry.duration)
-    }
-  }).observe({ type: 'longtask', buffered: true })
-  const { start } = await import('./globe/spike.ts')
-  times['imported'] = performance.now()
-  const stage = document.querySelector('main')
-  if (stage !== null) {
-    start(stage, times)
-  }
-}
-
-if (globalThis.location.search.includes('spike')) {
-  void spike()
-}
