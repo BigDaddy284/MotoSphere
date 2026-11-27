@@ -6,8 +6,8 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 12 and
-has five tables: `source`, that of the information sources (DAT-006),
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 13 and
+has six tables: `source`, that of the information sources (DAT-006),
 `source_offer`, which says what kinds of information each of them offers
 (DAT-040; see "The information sources" for both), `collection_run`,
 the record of every time a source was collected from (DAT-007; see "The
@@ -24,21 +24,24 @@ a second time (DAT-050) and keeps a decision: an item that was decided
 is neither edited nor deleted (DAT-054; see "A decision is kept"), and
 no row takes its place (DAT-055; see "A decided item is never
 replaced"). A key of the queue is 1 or more (DAT-056; see "A key is 1
-or more"). One function
+or more"). The sixth is `country`, the countries by their two codes of
+ISO 3166-1, and the first table of collected records (DAT-011; see
+"The countries"); it has no rows yet. One function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"), one puts two records that may
 be the same thing to the review queue (DAT-051; see "Opening a possible
 duplicate"), one puts what a source says of a field of a record
 there (DAT-053; see "Opening a doubt about a field"), and one puts
 down a person's decision on an item (DAT-052; see "Deciding an
-item"); no real table holds records yet, so nothing calls them. The
+item"); nothing calls them yet. The
 columns by which every collected record says where it came from are in
 the code, as one set that a model of collected records takes whole
 (DAT-008; see "Where a collected record came from"), and so are the two
 lists that say how far such a record can be trusted (DAT-043; see "How
-far a collected record can be trusted"). No table has them yet: none of
-the five holds collected records, and a list in the code says of each
-why not. A rule names every table that neither has the set nor is on
+far a collected record can be trusted"). The countries are the first
+table that has them. The other five tables hold no collected records,
+and a list in the code says of each why not. A rule names every table
+that neither has the set nor is on
 that list (DAT-046; see "Every table says where its records came from,
 or why not"). The decisions the store rests on are recorded below, from
 task DAT-001 on.
@@ -176,7 +179,7 @@ newest schema (DAT-024). It opens the store at `MOTOSPHERE_STORE_PATH`
 with `open_store`, which makes the file if it is not there, calls
 `migrate`, and writes one sentence to standard output, with the file's
 whole path and the store's version: "A new data store was made: …", "The
-data store was brought up to date: … went from schema version 2 to 12." or
+data store was brought up to date: … went from schema version 2 to 13." or
 "The data store is up to date: …". A store that cannot be opened, or that
 is refused, gives its one sentence on standard error, with nothing before
 or after it, and the exit code 1, and is left as it is. An error inside a
@@ -190,8 +193,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 12." or "The data store lacks 9
-migrations: … is at schema version 3, and the newest is version 12." In
+is up to date: … is at schema version 13." or "The data store lacks 10
+migrations: … is at schema version 3, and the newest is version 13." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -215,6 +218,7 @@ list of them, and nothing else (DAT-006):
 | 10 | `keep_the_decision_of_a_review_item` | Makes the two triggers by which a decided row of `review_item` is neither edited nor deleted | DAT-054 |
 | 11 | `hold_the_key_of_a_review_item_to_1_or_more` | Makes the two triggers by which a row of `review_item` has a key of 1 or more | DAT-056 |
 | 12 | `keep_a_decided_review_item_from_being_replaced` | Makes the two triggers by which no row takes the place of a decided row of `review_item` | DAT-055 |
+| 13 | `make_the_countries` | Makes the table `country` and the index over the source of its rows | DAT-011 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -990,11 +994,12 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have five tables, six indexes and ten triggers to
+Today the two have six tables, seven indexes and ten triggers to
 agree on: `source`, `source_offer`, `collection_run`, `record_change`,
-`review_item`, the index of the runs of one source, the two indexes
-and the four triggers of `record_change`, and the three indexes and
-the six triggers of `review_item`. For an index that is over some
+`review_item`, `country`, the index of the runs of one source, the two
+indexes and the four triggers of `record_change`, the three indexes
+and the six triggers of `review_item`, and the index of the countries
+of one source. For an index that is over some
 rows only, which rows is part of the statement, and so of what must
 agree.
 That the comparison can fail is proven with two models and migrations of
@@ -1052,8 +1057,9 @@ What the planner's trial settled:
 - **How often a source is scanned is said in whole hours**: 24 is daily and
   168 weekly. A source without a number is not looked at by the clock, as
   a file that is loaded once by a command is not.
-- **What is not in the table.** The country of a source comes with the
-  table of the countries (DAT-011). The kinds of information it offers
+- **What is not in the table.** The country of a source is a task of
+  its own (DAT-057), now that there is a table of the countries
+  (DAT-011). The kinds of information it offers
   are in a table of their own, `source_offer` (below). When it was last
   scanned, how it is doing and its last error are what its runs say, and
   one function reads it from them ("How a source is doing"). They are not
@@ -1324,9 +1330,10 @@ class Track(Collected):
 
 Its table then has the key, the columns the model names, the eight
 columns of the set, and the two times every table ends with, and an
-index over the source of its records (DAT-045). No table has the set
-yet: the first table of collected records brings it, with the migration
-that makes that table.
+index over the source of its records (DAT-045). The first table that
+has the set is `country` (DAT-011; see "The countries"). The migration
+that makes a table of collected records writes the eight columns, their
+checks and the index out with the table, as it writes everything.
 
 | Column | In the design | What it holds | May be without a value |
 |---|---|---|---|
@@ -1427,6 +1434,7 @@ holds the real schema to it.
   |---|---|
   | `collection_run` | A run is the store's own record of its work: it is what collects, and not what is collected |
   | `record_change` | A change is the store's own record of what it did to a record. Where the new value came from is said by the record, and by the run that caused the change |
+  | `review_item` | A review item is the store's own record of a doubt. What a source said is in it, with the source that said it, and it is kept there to be decided, not to be shown |
   | `source` | A source is where records come from. A person describes it and reads its terms: it is not collected from a source itself |
   | `source_offer` | What a source offers is part of the description of the source, which a person gives |
 
@@ -1483,8 +1491,8 @@ holds the real schema to it.
 Two of the columns every collected record has are one of a list each:
 its confidence and its verification status (see "Where a collected
 record came from"). The two lists are in
-`motosphere.db.models.provenance` (DAT-043). No table has a column of
-them yet: the first table of collected records brings them.
+`motosphere.db.models.provenance` (DAT-043). The first table with a
+column of each is `country` (DAT-011).
 
 They are two questions, and neither answers the other:
 
@@ -1809,7 +1817,7 @@ together: "neither exists without the other".
   a column that keeps either is refused. A number with a fraction has
   more than one text (`1750.0`, `1.75e3`), and the one the history
   uses must give the same number back to the last digit when it is
-  read. No real table has such a column, so nothing can be tried on
+  read. No real table has such a column yet, so nothing can be tried on
   real values: the task that brings the first decides it, with
   coordinates in view. A record that has such columns can have its
   other fields changed.
@@ -2042,7 +2050,7 @@ reason=...)` (DAT-051) is what the collecting calls when two records
 may be the same thing and it cannot tell: "Do not automatically merge
 uncertain rider or track identities." (CLAUDE.md §11). It puts the two
 down as one open item of the review queue and gives the item back.
-Nothing calls it yet, because no real table holds records.
+Nothing calls it yet.
 
 - **It is given the two records themselves**, and takes the name of
   their table and their keys from them, as `change` does (see
@@ -2117,7 +2125,7 @@ collecting calls when a source says something of a field of a stored
 record and it cannot settle whether that is right: "Use review queues
 when information conflicts." (CLAUDE.md §11). It puts that down as one
 open item of the review queue and gives the item back. Nothing calls
-it yet, because no real table holds records.
+it yet.
 
 | What is given | What it is |
 |---|---|
@@ -2454,6 +2462,81 @@ model makes the same two wherever the table is made from it:
   no table whole; no test holds that.
 - **Whoever can change the schema can take a trigger away**, here as
   with a kept decision.
+
+## The countries
+
+A country is where a track, an event, a rider or a source is, and the
+table `country` knows the countries (DAT-011). Its model is `Country`,
+in `motosphere.db.models.country`, and the thirteenth migration,
+`make_the_countries`, makes the table and its index. A country is
+known by its two codes of ISO 3166-1, the international standard for
+the names of countries. The table has no rows yet: the countries of
+the standard are loaded by a task of its own, from a source whose
+licence allows it (DAT-012).
+
+| Column | What it holds | May be without a value |
+|---|---|---|
+| `alpha_2` | Its code of two letters, as `NZ` for New Zealand | No |
+| `alpha_3` | Its code of three letters, as `NZL` | No |
+| `name` | What it is called in English: the short name of the standard, as its source writes it. Text that is not empty (see "Text that must not be empty") | No |
+| the eight columns of a collected record | Where the row came from and how far it can be trusted (see "Where a collected record came from") | Only `published_on` |
+
+The key is before these columns and the two times are after them, as
+in every table.
+
+- **A country is a collected record**, the first the store has. Its
+  codes and its name are read from a source, and every row says which
+  one, at which address, when, how, and how far it can be trusted.
+  `Country` is a subclass of `Collected` and names three columns; the
+  eight, their checks, the reference to `source`, the index over
+  `source_id` (`ix_country_source_id`) and the check that holds the two
+  times together come with that. A country comes from a source that is
+  there, and a source that countries came from cannot be deleted.
+- **A code is capital letters of its number, and nothing else.** Two
+  checks, `ck_country_alpha_2_two_capitals` and
+  `ck_country_alpha_3_three_capitals`, refuse every other text: small
+  letters, too few and too many, a figure, white space before or
+  after, and a letter that is not one of the 26 from `A` to `Z`, also
+  where it looks like one, as a Greek or a wide capital does. Each is
+  written with SQLite's `GLOB`, which tells small letters from large
+  ones on every machine, and with a second question, because `GLOB`
+  reads text up to a character with the number 0 and no further: a
+  code with such a character in it is refused too (as in "A web
+  address").
+- **A code is stored as it is given, or refused.** Neither the model
+  nor the table puts a code into capitals. A source that writes `nz`
+  has written something other than the standard's code, and whoever
+  reads that source decides what it means; a code that was put right
+  in silence would hide it.
+- **The table knows the form of a code, not the standard's list.**
+  `ZZ` is taken, and so is `XK`, which the standard leaves to its users
+  and which is in use for Kosovo. Which codes there are is what the
+  source says, and comes with the rows (DAT-012).
+- **No two countries have one code**, of two letters or of three:
+  `uq_country_alpha_2` and `uq_country_alpha_3`. Each code is held by
+  itself, so a row with a new code of two letters and a code of three
+  that is taken is refused. Codes are told apart letter for letter,
+  which is all there is to tell where every letter is a capital.
+- **Two rows can hold one name.** A country is known by its codes. A
+  name is text as its source writes it, with the white space and the
+  capitals it has, and the table does not judge whether two rows mean
+  one country. Names in other languages, and the other names a country
+  is known by, are not in this table.
+- **Nothing gives itself a value.** A row cannot be without a code, a
+  name or any of the seven things that are known of every collected
+  record, and neither the model nor the table makes one up.
+- **A country is changed with its history**, by `change` (see
+  "Changing a record"), like every record: a name that its source
+  writes otherwise from one day on becomes one row of history with
+  what it was. Nothing in the table stops a change past that
+  function, here as elsewhere. A country can be deleted while nothing
+  refers to it; the first table that refers to the countries decides
+  what holds them.
+- **What is not in the table.** The number the standard gives each
+  country, which nothing in the design asks for. The parts of a
+  country, which are a table of their own (DAT-013). The country of a
+  source, which is a column of `source` and a task of its own
+  (DAT-057).
 
 ## What the store relies on in SQLite
 
