@@ -9,10 +9,3 @@
  * this is the one place to change.
  */
 export const SITE_PATH = '/MotoSphere/'
-
-/**
- * The folder of the site that holds the files the engine of the globe
- * fetches while it runs. The build puts them there, the development server
- * answers them there, and the application tells the engine to look there.
- */
-export const ENGINE_FOLDER = 'cesium'

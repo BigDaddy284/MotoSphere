@@ -3,7 +3,6 @@ import { extname, join } from 'node:path'
 import { BROUGHT_IN, ENGINE_FOLDER, ENGINE_PACKAGE, engineFiles } from '../sitebuild/engineFiles.ts'
 import { LICENCES_FILE } from '../sitebuild/licences.ts'
 import { SITE_PATH } from '../site.ts'
-import { ENGINE_ADDRESS } from '../src/globe/engineAddress.ts'
 import { expect, test } from './fixtures'
 
 /**
@@ -163,46 +162,5 @@ test.describe("the engine's own files in the built site", () => {
     })
 
     expect(response.status()).toBe(404)
-  })
-})
-
-test.describe('the address the application tells the engine', () => {
-  test("is the folder of the engine's files, told by the page as it was built", async ({
-    page,
-  }) => {
-    await page.goto('')
-
-    const told = await page.evaluate(() => globalThis.CESIUM_BASE_URL)
-
-    expect(told).toBe(`${SITE_PATH}${ENGINE_FOLDER}/`)
-    expect(told).toBe(ENGINE_ADDRESS)
-  })
-
-  // The browser asks, as the engine will: for a file by its name beneath
-  // the address the page was told, from the page.
-  test('is where the site answers the browser with a file of each kind', async ({ page }) => {
-    await page.goto('')
-
-    const answered = await page.evaluate(
-      async (files) => {
-        const answers: [string, number, number, string][] = []
-        for (const file of files) {
-          const response = await fetch(`${globalThis.CESIUM_BASE_URL ?? 'not told/'}${file}`)
-          const content = await response.arrayBuffer()
-          answers.push([file, response.status, content.byteLength, new URL(response.url).pathname])
-        }
-        return answers
-      },
-      ONE_OF_EACH_KIND.map(([file]) => file),
-    )
-
-    expect(answered).toEqual(
-      ONE_OF_EACH_KIND.map(([file]) => [
-        file,
-        200,
-        readFileSync(join(INSTALLED, BROUGHT_IN, file)).length,
-        `${SITE_PATH}${ENGINE_FOLDER}/${file}`,
-      ]),
-    )
   })
 })

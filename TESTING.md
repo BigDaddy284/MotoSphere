@@ -2141,29 +2141,6 @@ a file of a kind the step has no type for. The step has a type for
 exactly the eight kinds the installed engine brings, and is for the
 development server and not for the build.
 
-The address the engine is told (`frontend/src/globe/engineAddress.test.ts`,
-unit tests, GLB-025): the address is the folder of the engine's files
-beneath the site's path, written out, and it names no other computer: it
-is a path from the top of a site, and read from a page it stays on the
-computer of that page. Telling puts the address under the name the engine
-reads, also over another address. The engine as installed, once it is
-told, builds the address of a background script, of a program, of a
-table, of a picture of the Earth and of the description of those pictures
-beneath the folder, on the computer of the page. The rest is read from
-the text of the application's code, of the page and of the settings of
-the build: the engine's own word for the address is in one module only;
-the address is built in one module only and written out nowhere; the
-folder's name is taken from where the build and the development server
-take it; and the application tells the engine in one place, where it
-starts, before it shows anything, with nothing before it but what it
-brings in. Started for the test, the application has told the engine,
-also when it cannot start. On the built site
-(`frontend/e2e/engine.spec.ts`, two browser tests): the page as it was
-built has told the address; and the browser, asked from the page for a
-file of each of the eight kinds beneath the address it was told, gets
-each with the status 200, at the address the site has for it, with the
-length of the engine's file.
-
 After a deployment the check of the published site fetches each of these
 files with the rest and compares it byte for byte with the built one. It
 also holds what GitHub Pages says each kind of file is, the engine's

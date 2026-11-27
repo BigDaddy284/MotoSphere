@@ -1,7 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { extname, join } from 'node:path'
 import type { Plugin } from 'vite'
-import { ENGINE_FOLDER } from '../site.ts'
 
 /**
  * The engine's own files, in the site.
@@ -17,9 +16,8 @@ import { ENGINE_FOLDER } from '../site.ts'
  * addresses from the installed engine: the same files, and no other.
  */
 
-// The folder of the site that holds the engine's files is named where the
-// site's path is, because the application needs it too.
-export { ENGINE_FOLDER }
+/** The folder of the site that holds the engine's files. */
+export const ENGINE_FOLDER = 'cesium'
 
 /** The engine as it is installed, from the folder of the project. */
 export const ENGINE_PACKAGE = 'node_modules/@cesium/engine'
