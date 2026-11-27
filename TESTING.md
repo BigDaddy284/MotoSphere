@@ -480,6 +480,33 @@ once refused and once given: Windows removes no file that a connection
 still holds. `tests/unit/test_cli_store.py` holds the advice to the
 command line's own name.
 
+The command `countries` (DAT-061) is tested in the same three places as
+`migrate` and `schema`. `tests/integration/test_countries_command.py`,
+17 tests, calls it in the test's process against a real SQLite file
+that the real `migrate` command made with the pipeline's own
+migrations, and with the reference file that comes with the pipeline;
+what the command leaves in the store is read with SQLite alone, and
+what it must leave as it is was written the same way. On a new store
+the 249 countries of the file are there afterwards, each as the file
+has it, with their one source. Run again, the command adds nothing and
+the file is byte for byte as it was. Countries that were taken out are
+added again; a country whose name or code was changed by hand is named,
+left as it is, and waits in the review queue; a country the release
+does not have is named and left. Each refusal (no store, a store that
+lacks a migration, a file `migrate` would refuse, a damaged countries
+file, a source described otherwise) gives one line on standard error,
+the exit code 1 and a file that is byte for byte as it was. One test
+has the store itself refuse the last country of the file, with a
+trigger, and finds none of the 248 before it in the store: the loading
+is one unit of work. One test runs the command with the making of a
+network socket taken away. `test_command_line.py` runs the command in a
+process of its own, twice on a new store and once without one.
+`tests/unit/test_cli_countries.py`, 17 tests, holds the sentences by
+themselves, with none, one and several countries of each kind, and the
+command's help. Three tests of the help of the other commands no longer
+count the blanks between a command's name and what it does: a longer
+name moves that column.
+
 ## The rules every table keeps
 
 `backend/tests/integration/test_base.py` has two models of its own,
