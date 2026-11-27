@@ -71,7 +71,17 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
+      # The tests make their files in the system's folder for temporary
+      # files, and the tests of the pipeline make a store there for each
+      # test that needs one. On GitHub's Windows machine that folder is on
+      # the system disk, where saving a store takes many times as long as on
+      # the work disk (TESTING.md, "Continuous integration"). So the gates
+      # are given the runner's own folder for temporary files, which is on
+      # the work disk and is emptied when the job ends.
       - name: Run every gate
+        env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
         run: python scripts/check.py
 
   # The three jobs below publish the site and check it. They run for a
