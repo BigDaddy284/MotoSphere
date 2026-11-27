@@ -8,8 +8,8 @@ restrictions and collection status.
 No source is registered in the store yet. One source has been found, its
 licence read, and its file taken into the repository: the list of the
 countries, from the project iso-codes (DAT-012, below). The pipeline can
-put that source in a store, as it is described here (DAT-060); it does
-so when the countries are loaded (DAT-059).
+put that source in a store, as it is described here (DAT-060), and its
+countries with it (DAT-059). No command does so yet (DAT-061).
 
 ## How a source is described
 
@@ -58,7 +58,7 @@ collecting.
 
 | Name | Website | Country | Category | Information types | Collection method | Licence / terms | Restrictions | Status |
 |---|---|---|---|---|---|---|---|---|
-| iso-codes | <https://salsa.debian.org/iso-codes-team/iso-codes> | – (of no one country) | `reference list` | `reference data` | `public dataset` | LGPL-2.1-or-later, © 2016 Dr. Tobias Quathamer; read in release 4.20.1 on 2026-11-27 | Every copy keeps the notice and comes with the licence; a changed copy says that it was changed and when; a work that takes over part of the list is passed on under the same licence | File in the repository, unchanged (DAT-012). Described for the store (DAT-060): switched off, its terms read by no person yet. In no store until the countries are loaded (DAT-059) |
+| iso-codes | <https://salsa.debian.org/iso-codes-team/iso-codes> | – (of no one country) | `reference list` | `reference data` | `public dataset` | LGPL-2.1-or-later, © 2016 Dr. Tobias Quathamer; read in release 4.20.1 on 2026-11-27 | Every copy keeps the notice and comes with the licence; a changed copy says that it was changed and when; a work that takes over part of the list is passed on under the same licence | File in the repository, unchanged (DAT-012). Described for the store (DAT-060): switched off, its terms read by no person yet. Its countries can be loaded into a store (DAT-059); no command does so yet (DAT-061) |
 
 ## The countries: iso-codes
 
@@ -161,3 +161,16 @@ what it found. The store asks when a *person* last read a source's
 terms, and no person has: that is for the owner. Nothing is fetched
 from this source, so it need not be switched on for its countries to be
 loaded from the file in the repository.
+
+**The countries in the store.** One function loads them
+(`motosphere.reference.countries_load`, DAT-059; `DATABASE.md`, "The
+loading of the countries"). Every row names this source, the address
+the release was fetched from (the file `iso-codes_4.20.1.orig.tar.xz` at
+the Ubuntu archive, above), the day the release was published
+(2026-01-01) and the moment it was loaded. It is of high confidence,
+because the file gives each value in a field made for it, and
+`independent`, because iso-codes is not the body that keeps the
+standard. A loading is not a collection run: nothing is fetched. It
+adds what the store does not have and changes nothing; where the store
+and the file say different things of a country, it names the country
+and a person decides.
