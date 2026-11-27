@@ -172,6 +172,17 @@ Rules:
   lock file must hold one copy of each: with two copies of `@cesium/core`,
   a position the application makes would not be one the engine knows as
   its own.
+- The licences of the packages the site is built with go with the site.
+  Most of them ask that their text go with every copy, and the build
+  takes such notices out of the code it makes. So a step of the build
+  (`frontend/sitebuild/licences.ts`) writes one file, `licences.txt`,
+  beside the page: the name, the version and the licence of every
+  package the lock file installs that is not only for the work, each
+  with the licence files the installed package brings, letter for
+  letter. The build fails when a package brings no such file, unless the
+  step names the package whose file gives its licence; a person who has
+  read both puts that there. The source of the page says in a comment
+  where the file is.
 - A name the engine has moved to `@cesium/core` (`Cartesian3`,
   `Ellipsoid`, `Math` and about 150 in all) is imported from there. The
   engine still hands those names out, with a warning, and says it will

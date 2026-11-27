@@ -367,3 +367,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and five tests measured it, or what lies under it, without waiting for
   the data. Every test of the narrow screen now waits for the data
   before it measures anything, and a test holds that rule (FND-048).
+- The site carried no licence text. It ships React, whose licence asks
+  that its notice go with every copy, and the build takes the notices
+  out of the code. The build now writes `licences.txt` into the site,
+  with the licence of every package the site is built with as the
+  package itself brings it, and fails when one brings none (FND-047).

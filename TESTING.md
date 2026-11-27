@@ -1643,6 +1643,42 @@ elsewhere; in these tests a warning is an error, so a name taken from
 the wrong package fails the test that uses it. Nothing of the
 application uses the engine yet, so the built site is what it was.
 
+## The licences that go with the site
+
+The build writes the licences of the packages the site is built with
+into one file of the site, `licences.txt` (ARCHITECTURE.md §3). The step
+that does it (`frontend/sitebuild/licences.ts`) is tested in three ways.
+
+On made-up lock files and made-up package folders
+(`frontend/sitebuild/licences.test.ts`, unit tests, each folder made for
+the test and taken away after it): which packages of a lock file count,
+one for every place a package is put, and what the step refuses in a
+lock file (no list of packages, a package with no version or with no
+licence named); which files of a package hold a licence, by their names,
+and that a text is kept letter for letter but for its line ends and the
+empty lines around it; that a file that is not text, or is empty, is
+refused; that a package which must be there and is not installed stops
+the build, and one that may be left out does not; and every way the list
+of packages without a text of their own can be wrong: a package that
+brings no text and is not on the list, one on the list that brings a
+text, one on the list that is not shipped, and one whose licence is said
+to come with a package that brings none.
+
+On this project as it is installed (the same file): every package the
+project names as shipped is in the file with a text of its own, no
+package that is only for the work is in it, React comes with the words
+of its licence, and the packages without a text of their own are the
+five a person has read, each given with a package that is there.
+
+On the built site (`frontend/e2e/licences.spec.ts`, browser tests): the
+file is served as plain text under the path of the site and not at the
+root of the server, it is letter for letter what the step writes for the
+packages installed, it names React with the words of its licence, and
+the source of the page names it. The server of these tests answers a
+path under the site that it does not know with the page itself, so a
+test that the file is there goes by its text and its kind, never by the
+status of the answer alone.
+
 ## Latest results
 
 Results are recorded per task in [PROGRESS.md](PROGRESS.md).
