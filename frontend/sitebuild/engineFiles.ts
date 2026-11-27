@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { extname, join } from 'node:path'
 import type { Plugin } from 'vite'
 
 /**
@@ -11,6 +11,9 @@ import type { Plugin } from 'vite'
  * in its folder `Build`, and are not code the build takes in. This step puts
  * them into the site as they are, under one folder. The engine's licence is
  * in the site's file of licences, with those of the other packages.
+ *
+ * In development nothing is built, so a second step answers the same
+ * addresses from the installed engine: the same files, and no other.
  */
 
 /** The folder of the site that holds the engine's files. */
@@ -115,6 +118,84 @@ export function engineFilesInTheSite(): Plugin {
           source: readFileSync(join(brought, file)),
         })
       }
+    },
+  }
+}
+
+/**
+ * What the development server says each kind of the engine's files is. A
+ * browser runs a script and compiles a program only when it is told that
+ * this is what arrives. A kind the engine did not bring before has no type
+ * here, and the server does not start until a person has given it one.
+ */
+export const SERVED_AS: Readonly<Record<string, string>> = {
+  '.css': 'text/css',
+  '.jpg': 'image/jpeg',
+  '.js': 'text/javascript',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml',
+  '.wasm': 'application/wasm',
+  '.xml': 'application/xml',
+}
+
+/**
+ * The path an address asks for, without what follows a "?", and with what was
+ * written as "%" and two figures read as the character it stands for. An
+ * address that cannot be read so asks for nothing.
+ */
+function pathAsked(address: string | undefined): string | undefined {
+  const path = (address ?? '').split('?', 1)[0] ?? ''
+  try {
+    return decodeURIComponent(path)
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * The step of the development server that answers the engine's files. The
+ * development server builds nothing and answers from the folder of the
+ * project, where the engine's files are not. This step answers the folder of
+ * the site that holds them from the installed engine: each file the built
+ * site has, with its bytes, and "not found" for every other address in that
+ * folder, a file that is left out among them.
+ */
+export function engineFilesInDevelopment(): Plugin {
+  return {
+    name: 'motosphere:engine-files-in-development',
+    apply: 'serve',
+    configureServer(server) {
+      const project = server.config.root
+      const brought = join(project, ENGINE_PACKAGE, BROUGHT_IN)
+      const folder = `${server.config.base}${ENGINE_FOLDER}/`
+      const files = new Set(engineFiles(project))
+      for (const file of files) {
+        if (!Object.hasOwn(SERVED_AS, extname(file))) {
+          throw new EngineFilesError(`${file} is of a kind the development server has no type for.`)
+        }
+      }
+      server.middlewares.use((request, response, next) => {
+        const path = pathAsked(request.url)
+        const reads = request.method === 'GET' || request.method === 'HEAD'
+        if (path === undefined || !reads || !path.startsWith(folder)) {
+          next()
+          return
+        }
+        const file = path.slice(folder.length)
+        const kind = SERVED_AS[extname(file)]
+        if (!files.has(file) || kind === undefined) {
+          response.statusCode = 404
+          response.end()
+          return
+        }
+        const content = readFileSync(join(brought, file))
+        response.statusCode = 200
+        response.setHeader('Content-Type', kind)
+        response.setHeader('Content-Length', content.length)
+        // To a question about the file alone, the server sends no content.
+        response.end(content)
+      })
     },
   }
 }

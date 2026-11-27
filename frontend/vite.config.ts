@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
-import { engineFilesInTheSite } from './sitebuild/engineFiles.ts'
+import { engineFilesInDevelopment, engineFilesInTheSite } from './sitebuild/engineFiles.ts'
 import { licences } from './sitebuild/licences.ts'
 import { SITE_PATH } from './site.ts'
 
@@ -13,5 +13,5 @@ export default defineConfig({
   // that is for an application that reads the address itself, which this one
   // does not. With this setting both answer as the published site does.
   appType: 'mpa',
-  plugins: [react(), licences(), engineFilesInTheSite()],
+  plugins: [react(), licences(), engineFilesInTheSite(), engineFilesInDevelopment()],
 })

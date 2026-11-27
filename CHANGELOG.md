@@ -120,6 +120,11 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   A list of the site's kinds of file is held to the built site by one
   test and to the check's rules by another, so a site with a new kind of
   file does not pass the gates without a rule for it (FND-053).
+- In development the files of the globe engine are answered at the same
+  addresses as in the built site, from the installed engine: the same
+  files with the same bytes, and "not found" for every other address in
+  their folder. Tests start the development server itself and ask it
+  (GLB-024).
 - The data store's first decisions (`DATABASE.md`): what it relies on in
   SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
   gates run on, and where the store is kept between scheduled runs
