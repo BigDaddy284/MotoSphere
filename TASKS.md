@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 55 | 55 |
-| 2 | Data store and published data (DAT, PUB) | 70 | 52 |
+| 2 | Data store and published data (DAT, PUB) | 70 | 53 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-062 – What the file says otherwise of a country waits in the review queue.
+**Current task, track A (data store):** DAT-061 – A command loads the countries.
 
 **Current task, track B (globe):** GLB-002 – The globe shows the Earth.
 
@@ -2468,7 +2468,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-059.md`
 
 ### DAT-062 – What the file says otherwise of a country waits in the review queue
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Where the store and the reference file say different things of a country, the loading puts what the file says to the review queue, one item for each field the two differ in, and still changes no country.
 - **Description:** Added on 2026-11-27 (PLAN-051). "Use review queues when information conflicts." (CLAUDE.md §11). The loading of the countries finds such conflicts: the store has a country with another name or another code than the file. Since DAT-059 it names the country to whoever called it and keeps the conflict nowhere. PLAN-050 gave as the reason that a person is at hand whenever the store and the file come to differ. That does not keep the conflict: what a command says scrolls away, and the administration that will list what waits for a decision (Phase 10) reads the review queue. The queue has a function for exactly this, `open_field_doubt` (DAT-053): what a source says of a field of a stored record, kept once, and not asked again once a person has answered. So the loading puts what the file says to the review queue, one item for each field the two differ in: the code of three letters or the name of the stored country, or, where the store has the file's code of three under another code of two, the code of two letters of that country. It still changes no country and deletes none, and what it gives back is unchanged. A country of the store that the file does not have is no doubt, because the file says nothing of it. `load_countries` gathers the countries the store says otherwise of as before and, when there is one, hands them to a helper, `_put_to_the_review_queue`, which reads the stored countries that have one of their codes and opens the items with `open_field_doubt`, in the order of the file and for one country in the order code of three, name, the other country: kind `sources disagree`, the source of the countries, the address of the release, what the file says, and a reason in one sentence such as "Release 4.20.1 of iso-codes has another name for the country TR." An item the queue holds already, open or decided, is given back as it is, so a second loading writes nothing. What follows from a decision, that a country gets what the file says, is done by no code yet. No model, migration or command changes, and nothing of the review queue itself. The planner's trial has 16 new tests and changes two existing ones, which said what DAT-059 did and this task changes.
 - **Acceptance criteria:**
@@ -2488,10 +2488,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   14. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   15. Only the eight files under "Scope" of the plan changed.
 - **Tests required:** 16 new integration tests in 11 functions against a real SQLite file that the migrations built, the items read back as SQLite holds them: for each of the six ways in which the store says otherwise, the items that are opened; every column of two items, with the clock set; a code of three under another code of two, and a country that differs both ways; the order of the file; no item where there is no conflict; loaded again, no statement that writes; an item a person has decided; a file that says yet another thing; the unit of work. Two existing tests say what is now so: that a loading stores no run and no history, and that with every kind of finding at once the only statements that write store the source, its offer and two items. Planted defects in the module, those of DAT-059 among them. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #201 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32): the full run, 19 of 19 gates passed, "Tests: 3503 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2535: 2519 before, 16 new). The planner's 74 planted defects, one at a time, in the module of the pull request (the 44 of DAT-059, five of them rewritten for what the task changes, and 30 new ones in what is put to the review queue), each against the 56 tests of the two files of the loading: 74 of 74 detected, each by the same tests as in the planner's trial. The plan's ten prove-it steps, run by the planner too: each fails the tests the plan names (14, 22, 1, 1, 8, 1, 4, 8, 2 and 1 tests). On GitHub, read by the planner from the runs and job logs: run 46061657693 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3503 passed, 0 failed, 0 skipped.", with 2535 backend tests on both machines, the three jobs after the gates skipped; run 46063503848 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3503 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3503 / 0 tests on both machines on GitHub for `main` and for the pull request, and locally (repository 82, script tests 219, backend 2535, frontend unit 406, browser 261); all 19 gates passed; 74 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 8 files are the same change as the planner's trial. Two existing tests changed, as the plan names them: they said what DAT-059 did and this task changes, and no assertion was dropped. No model, migration or command changed, nothing of the review queue itself, and no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #199, run 46059688563). The builder's report agrees with all of this: the same counts locally (with Node 22.23.5) and on GitHub, the ten prove-it steps with the results the plan names, a branch that starts from `764c7e1`, and no deviation from the plan.
+- **Commit:** `297d95d`
 - **Plan:** `docs/plans/DAT-062.md`
 
 ### DAT-061 – A command loads the countries
