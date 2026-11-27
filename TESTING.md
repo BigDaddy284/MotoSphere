@@ -904,7 +904,21 @@ and it fails, with the store left at its version, the table without the
 column and every row and the highest key as before, where a table of
 the name of either copy is there already, and where an index of its
 name is, which is its last statement, after the table was dropped, made
-anew and filled (DAT-057); a store
+anew and filled (DAT-057); the fifteenth builds the table of the sources
+anew once more, in the same store with one source of a country: before
+it a source of the kind `reference list` is refused; after it every
+source has all it had, its key and its country too, every row of the
+four tables and the highest key of each table is as it was, no pointer
+is broken, and of all the tables and indexes, as SQLite holds them,
+only `source` is written otherwise, in the one text more; a source can
+be of each of the thirteen kinds, and eight texts that are not of the
+list are refused, those nearly the new one among them; the key of a
+deleted source is not given again, in a table without sources too; the
+rows are held to their sources again, a source to a country that is
+there, and a country that a source is of cannot be deleted; and it
+fails, with the store as it was, where a table of the name of either
+copy is there already, and at its last statement, where a table of the
+index's name stands in the index's place (DAT-058); a store
 with the newest schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -942,7 +956,7 @@ word, and so which constraint refused it.
 - Two sources cannot have one name, names are told apart letter for
   letter, and two sources can have one website.
 - The table refuses what is not on a list, in six ways, and a source can
-  be of each of the twelve kinds and collected from in each of the ten
+  be of each of the thirteen kinds and collected from in each of the ten
   ways; it refuses what is not a web address, in four ways for each of its
   two addresses; and empty text, in two ways for each of three columns.
 - A source is scanned every so many whole hours: nought, less and part of
@@ -997,9 +1011,11 @@ source's offers stay.
 sources, without a store: the two a source is described by (DAT-039) and
 the kinds of information one can offer (DAT-040). The texts of the lists
 are written out in the test, so a text changed by mistake fails there:
-each list has exactly its texts in their order, twelve kinds of source,
-ten ways of collecting and nine kinds of information; no text has two
-names; each of the 31 texts is words in small letters with one space
+each list has exactly its texts in their order, thirteen kinds of
+source, of which the last is this project's own and stands after the
+twelve of the design (DAT-058), ten ways of collecting and nine kinds
+of information; no text has two names; each of the 32 texts is words
+in small letters with one space
 between two; and a column can be of each list, with a check that names
 its texts in their order, as SQLite is given it. That SQLite refuses a
 text that is not on a list is proven for every list by the tests of "One

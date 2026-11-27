@@ -28,6 +28,7 @@ CATEGORIES = [
     "community website",
     "social media page",
     "historical archive",
+    "reference list",
 ]
 METHODS = [
     "official api",
@@ -59,9 +60,17 @@ EACH = pytest.mark.parametrize(
 )
 
 
-def test_there_are_the_twelve_kinds_of_source_and_the_ten_ways_of_collecting() -> None:
-    assert (len(CATEGORIES), len(METHODS)) == (12, 10)
-    assert (len(SourceCategory), len(CollectionMethod)) == (12, 10)
+def test_there_are_the_thirteen_kinds_of_source_and_the_ten_ways_of_collecting() -> None:
+    assert (len(CATEGORIES), len(METHODS)) == (13, 10)
+    assert (len(SourceCategory), len(CollectionMethod)) == (13, 10)
+
+
+def test_the_kind_that_is_this_projects_own_stands_after_the_twelve_of_the_design() -> None:
+    # DESIGN.md 7.1 has twelve kinds of source, each a kind of website of
+    # the sport. A keeper of reference lists is none of them (DAT-058).
+    assert SourceCategory.REFERENCE.value == "reference list"
+    assert list(SourceCategory).index(SourceCategory.REFERENCE) == 12
+    assert list(SourceCategory)[11] is SourceCategory.ARCHIVE
 
 
 def test_there_are_the_nine_kinds_of_information() -> None:
