@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 53 | 52 |
+| 1 | Foundation (FND) | 55 | 52 |
 | 2 | Data store and published data (DAT, PUB) | 67 | 49 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-058 – A kind of source for reference lists.
 
-**Current task, track B (globe):** FND-054 – The browser tests do not run out of network connections on Windows.
+**Current task, track B (globe):** FND-055 – The unit tests that start the page leave nothing of it running.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -126,6 +126,21 @@ track B and stands first, before everything else on either track, because no
 pull request can be verified on Windows without it. DAT-012 is merged and is
 recorded as verified when a run for `main` has passed on both machines.
 Order on track B: FND-057, FND-054, then GLB-002.
+
+**Tests that leave work of the page running (PLAN-046):** a run for `main`
+failed on GitHub's Linux machine although every test passed (run
+46006701452): a unit test of GLB-025 that starts the whole page ended while
+React still had work waiting, and the work ran after the test's document was
+gone. Which of the two comes first is a matter of moments, so it shows
+rarely; what is waiting when a file ends can be counted, and was. FND-055
+makes the two unit tests that start the page end only when React has nothing
+left to do. FND-056 then makes every unit test file fail that ends with work
+of the page waiting, so that a test written later cannot bring the fault
+back unseen. Both are tasks of Phase 1 on track B. FND-055 stands first,
+before FND-054, because the fault can fail any run on either machine;
+FND-056 stands before GLB-002, whose component loads the engine a moment
+after it is shown. Order on track B: FND-055, FND-054, FND-056, then
+GLB-002.
 
 **The countries, in two steps (PLAN-042):** DAT-011 was two objectives:
 the table of the countries, and the country of a source, which is a
@@ -1217,6 +1232,36 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Description:** Added on 2026-11-27 (PLAN-043). Twice a run for `main` failed on Windows in one browser test that could not open the page: "page.goto: net::ERR_NO_BUFFER_SPACE at http://127.0.0.1:4173/MotoSphere/" (run 44429659797 with FND-019, run 45984920265 with FND-053). The message is Windows's for a machine that has no room left for one more network connection, here between the test browser and the test server on the same machine. Both times the task had changed no file the failed test reads, every other browser test passed, and the failed job passed when it was run once more. The record of the first time said that a second time makes it a task of its own. What is not known: what the machine ran out of (the ports it gives to connections made from it, which Windows keeps back for a time after a connection ends, or something else); what used it up (the gates that run before the browser tests on the same machine, the browser tests themselves, each of which opens the page anew, or something of the machine's own); and whether more connections make it likelier, which matters before GLB-002, the first task whose browser tests make the browser fetch the engine's files. The planner's trial measures on GitHub's Windows machine before anything is changed, and the plan follows what was measured. A browser test is not given a second try: a test that is run again until it passes hides a defect of the application as well as a fault of a machine.
 - **Acceptance criteria:** what GitHub's Windows machine has room for, and how much of it is in use before and after each gate that opens connections, is measured there and written down; the cause of the two failures is named from the measurement, or it is written down exactly what was measured and what is still unknown; where the cause is in how the project's tests or its test server use connections, that is changed and a measured figure shows the difference; no browser test is skipped, weakened or given a second try; all tests pass on both machines. The criteria are made exact in the plan, from the trial.
 - **Tests required:** the measurement on GitHub's Windows machine, in a trial run and in the pull request's run; the tests the remedy needs, settled in the trial; planted defects where code changes; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-055 – The unit tests that start the page leave nothing of it running
+- **Status:** IN PROGRESS
+- **Objective:** Each of the two unit tests that start the whole page ends only when React has nothing left to do, so that no work of the page can run after the test's document is gone.
+- **Description:** Added on 2026-11-27 (PLAN-046), after the run for `main` at `e39aab3` failed on GitHub's Linux machine with every test passed (run 46006701452): the frontend unit tests ended `387 passed` and `Errors  1 error`, "ReferenceError: window is not defined", from `src/globe/engineAddress.test.ts`. Two unit tests start the whole page by bringing in `src/main.tsx`. React shows a page a moment after it is asked to, and does what follows a moment after that. The test of GLB-025 did not wait for either, its file ended, the test's document was taken away, and React's work ran after it. The planner counted what is waiting when each file ends: one piece of React's work at the end of `engineAddress.test.ts` in every run, none after the change. Both tests now start the page inside React's `act`, which comes back when React's queue is empty, and look at the page at once, so that a start outside `act` fails the test every time. The application does not change.
+- **Acceptance criteria:**
+  1. In `frontend/src/main.test.tsx`, the test `renders the application into the root element` brings in `main.tsx` inside `act` and expects the heading with `screen.getByRole`, without waiting.
+  2. In `frontend/src/globe/engineAddress.test.ts`, the test `has told the engine by the time it has started` brings in `main.tsx` inside `act`, takes the root element out of the document right after, and expects it not to be empty and the address to be told.
+  3. With `act` taken away from either test, that test fails, every time.
+  4. No file of the application changed; no test was added or taken out; the frontend unit tests are 387.
+  5. `TESTING.md` has the section "A unit test that starts the page", and `CHANGELOG.md` the bullet under Fixed.
+  6. `python scripts/check.py` reports 19 of 19 gates, with 387 frontend unit tests, and as many tests in all as `main` gives at the commit the branch starts from (3364 when that is `0bbc7b8`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  7. Only the four files under "Scope" of the plan changed.
+- **Tests required:** the two changed unit tests; two prove-it steps, each run three times with the same result; the planner's count of what is waiting at the end of each unit test file, before and after; the planted defects of GLB-025 against the changed file; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-055.md`
+
+### FND-056 – A unit test file that ends with work of the page waiting fails
+- **Status:** NOT STARTED
+- **Objective:** A unit test file that ends while React still has work waiting fails, with a sentence that says so, on every run and not by chance.
+- **Description:** Added on 2026-11-27 (PLAN-046). FND-055 puts right the two tests that left React's work waiting. Nothing yet stops a test written later from doing the same, and the fault then shows only in a run now and then. The planner's probe of FND-055 counted what was waiting at the end of every file; this task makes such a count part of the set-up of the unit tests, so that a file which ends with work of the page waiting fails every time and names what was waiting. How the count is taken, and what it costs each test, is settled in the planner's trial.
+- **Acceptance criteria:** a unit test file that ends with React's work waiting fails on every run, with a sentence that names the fault; a file that ends with nothing of React's waiting passes as before; the guard is proven against a test that leaves work waiting on purpose; what the test's document itself has waiting is not counted; no existing test is weakened; all tests pass on both machines. The criteria are made exact in the plan, from the trial.
+- **Tests required:** unit tests of the guard, with a file that leaves work waiting and one that does not; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
