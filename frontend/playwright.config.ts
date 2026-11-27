@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
-import { TEST_BROWSER } from './e2e/browser.ts'
+import { GLOBE_BROWSER, TEST_BROWSER } from './e2e/browser.ts'
 import { SITE_PATH } from './site.ts'
 
 const HOST = '127.0.0.1'
@@ -26,7 +26,25 @@ export default defineConfig({
     // Every test runs in a browser started this way (e2e/browser.ts).
     launchOptions: TEST_BROWSER,
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    // Every test that is not about the globe.
+    {
+      name: 'chromium',
+      testIgnore: '**/e2e/globe/**',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    // The tests of the globe, in `e2e/globe`: in a browser that is told how
+    // to draw 3D pictures, and one test at a time, whatever the number of
+    // workers. Two globes drawn at once in software take each other's
+    // processor time, and on GitHub's Windows machine neither is then loaded
+    // within forty seconds (FND-058; TESTING.md has what was measured).
+    {
+      name: 'globe',
+      testDir: './e2e/globe',
+      workers: 1,
+      use: { ...devices['Desktop Chrome'], launchOptions: GLOBE_BROWSER },
+    },
+  ],
   webServer: {
     command: `npm run data && npm run build && npm run preview -- --host ${HOST} --port ${PORT} --strictPort`,
     url: BASE_URL,
