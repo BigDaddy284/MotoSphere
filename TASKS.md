@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 49 | 46 |
-| 2 | Data store and published data (DAT, PUB) | 63 | 43 |
+| 2 | Data store and published data (DAT, PUB) | 63 | 44 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-054 – A decided review item keeps its decision.
+**Current task, track A (data store):** DAT-055 – A decided review item is not replaced.
 
 **Current task, track B (globe):** FND-050 – The licences of the shipped packages are ones the project has accepted.
 
@@ -1947,7 +1947,7 @@ its own (PLAN-037): DAT-055, which stands after DAT-054.
 - **Plan:** `docs/plans/DAT-052.md`
 
 ### DAT-054 – A decided review item keeps its decision
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store itself keeps a decision on a review item: an item that was decided is neither edited nor deleted, whoever writes to the table.
 - **Description:** Added on 2026-11-26 (PLAN-031), cut out of DAT-052. DAT-010 asked that "a decided item keeps its decision and cannot be reopened silently". Since DAT-052 the function `decide` refuses an item that was decided, but a statement written past it could still change or delete the item. Cut down in the planner's trial on 2026-11-27 (PLAN-037) to what two triggers hold: a row of `review_item` whose state was not open is not changed, in any column, and not deleted. They are made by a tenth migration, `keep_the_decision_of_a_review_item`, and by the model alike, as the triggers of the history are (DAT-048). They ask what the item was before the statement, so an open item is changed, decided and deleted as before, and `decide` is unchanged. The note of a decided item is kept with the rest. A store that holds decided items already is given the triggers and nothing else. That a decided item is not replaced (`INSERT OR REPLACE`) is DAT-055. The schema goes to version 10. No column, check or index changes.
 - **Acceptance criteria:**
@@ -1961,10 +1961,10 @@ its own (PLAN-037): DAT-055, which stands after DAT-054.
   8. Three existing tests change: the list of the migrations gets its tenth name; the test of the triggers of the history asks for those of its table; and the test of DAT-010 that put on record that the table did not keep a decision is turned round. No other existing test changes, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
   9. `python scripts/check.py` reports 19 of 19 gates, with 1861 backend tests, and 87 tests more in all than `main` gives at the commit the branch starts from (2527 when that is `5214df7`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 83 new integration tests in 18 functions, in a store the migrations built, on a real SQLite file, with four items written past the model and every column of every item read back with plain SQL after each refusal: every column of the table on an accepted and on a rejected item, statements over many items, items decided with plain SQL and through `decide`, the models, a connection made with Python's own `sqlite3`, a store made from the models, and what a statement that says `REPLACE` still does. 3 new tests of the tenth migration, from a store at version 9 that holds an open and a decided item, and one case more of the test that tries every migration alone. Planted defects in the triggers, the model and the migration, and those of every earlier task whose code or tests this task changes, again. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #151, merged there with `main` as it stood after the other track's FND-047 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2602 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1861: 1774 before, 87 new; the 75 tests of FND-047 are in the total). The planner's 83 planted defects in the two triggers, in the migration and in the model, each against all the backend tests, in three checkouts of the pull request: 83 of 83 detected, each with the same number of failing tests as in the planner's trial. The plan's nineteen prove-it steps are among them, and the builder ran them with the plan's results. On GitHub, read by the planner from the runs and job logs: run 45942122305 on the pull request's commit, before FND-047 was merged, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2527 passed, 0 failed, 0 skipped.", with 1861 backend tests on both machines, the three jobs after the gates skipped; run 45945737789 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 2602 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 8 of 8 files."
+- **Passed / Failed:** 2602 / 0 tests (repository 62, script tests 206, backend 1861, frontend unit 293, browser 180); all 19 gates passed, locally and on both machines on GitHub; 83 / 0 new planted defects detected on the pull request, and 507 / 0 of nine earlier tasks in the trial
+- **Verification status:** Verified by the planner on 2026-11-27. All 10 files are identical to the planner's trial. Three existing tests changed, as the plan says and for its reasons; no package was added. What SQLite does with the two triggers was read on the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `e2bcff4`
 - **Plan:** `docs/plans/DAT-054.md`
 
 ### DAT-055 – A decided review item is not replaced
