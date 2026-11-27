@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 52 | 51 |
-| 2 | Data store and published data (DAT, PUB) | 65 | 48 |
+| 2 | Data store and published data (DAT, PUB) | 67 | 48 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-012 – Countries reference data.
+**Current task, track A (data store):** DAT-012 – The countries reference file.
 
 **Current task, track B (globe):** FND-054 – The browser tests do not run out of network connections on Windows.
 
@@ -118,6 +118,17 @@ the table of the countries, and the country of a source, which is a
 column of a table that is there and holds rows, with a migration of
 another kind. DAT-011 is now the table; the column is DAT-057, which
 follows it. Order on track A: DAT-011, DAT-057, then DAT-012.
+
+**The countries' list, in three steps (PLAN-044):** DAT-012 was written
+as one task: find a source for the countries of ISO 3166-1, bring its
+file into the repository, register the source in the store, and load the
+file with a command. Those are three objectives with three kinds of
+test, and the planner's trial found that none of the twelve kinds of
+source fits a project that keeps the lists of a standard. DAT-012 is now
+the file, its licence and its reader, with the source recorded in
+`DATA_SOURCES.md`; DAT-058 gives the list of the kinds of source a kind
+for it; DAT-059 registers the source and loads the countries. Order on
+track A: DAT-057, DAT-012, DAT-058, DAT-059, then DAT-013.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -2170,12 +2181,46 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Commit:** `cd3f42a`
 - **Plan:** `docs/plans/DAT-057.md`
 
-### DAT-012 – Countries reference data
+### DAT-012 – The countries reference file
+- **Status:** IN PROGRESS
+- **Objective:** The list of the countries of ISO 3166-1 is in the repository, unchanged from a source whose licence allows it, with that source and its licence recorded, and a reader gives its countries or refuses the file whole.
+- **Description:** Narrowed on 2026-11-27 (PLAN-044) from "Countries reference data": registering the source is DAT-058 and DAT-059, and loading is DAT-059. The planner's trial found the source and read its licence: the project iso-codes of Debian, whose file `data/iso_3166-1.json` is the list of the standard, 249 entries, under LGPL-2.1-or-later (copyright 2016 Dr. Tobias Quathamer, as the release's `REUSE.toml` states). The licence permits copying and passing on; it asks that a copy keeps the notice and comes with the licence, that a changed copy says so, and that a work which takes over part of the list is passed on under the same licence. The file and the licence of release 4.20.1 are in `backend/src/motosphere/reference/iso-codes/`, unchanged, with a note of where they came from; the release was fetched once, as its makers published it, from the Ubuntu archive, because the project's own server could not be reached. Every entry's code of three letters and number agree with what Unicode's Common Locale Data Repository gives for its code of two letters. A reader, `motosphere.reference.countries`, gives the countries of such a file, each with its two codes and its name as the file writes it, in the file's order; it reads those three values of an entry and nothing else, and refuses a damaged file whole with a sentence that says what is wrong. `DATA_SOURCES.md` has the source, its licence, what was checked and what else was looked at; ISO's own page could not be read and nothing is said of its terms. Nothing is fetched while the pipeline runs, and nothing is in the store yet.
+- **Acceptance criteria:**
+  1. `backend/src/motosphere/reference/iso-codes/` holds three files and no other: the countries file and the licence, each the file of release 4.20.1 of iso-codes byte for byte, and a note that names both with their SHA-256, the release, the notice of copyright and the licence as the release states them, where the release was fetched, and that the files are unchanged.
+  2. `DATA_SOURCES.md` has the source in its registry and a section with what it is, what is taken, its licence as read and what it asks, how it was fetched, what was checked, what else was looked at, and why the source has no category yet.
+  3. `countries_of_the_project()` gives the 249 countries of the file in the file's order, each with its code of two letters, its code of three and its name as the file writes it.
+  4. `read_countries` reads an entry's two codes and its name and leaves unread whatever more the entry holds.
+  5. It refuses, each with a sentence of its own: content that is not UTF-8; that cannot be read as JSON; that has a word JSON does not have; that is nested too deeply; that has a name twice in one place; that is not one list under the name `3166-1` and nothing else; a list without countries; an entry that is not names and values; an entry without text under one of the three names.
+  6. It refuses a code that is not two, or three, of the 26 capital letters and nothing else, and one code in two entries.
+  7. It refuses a name that is empty, that has white space around it, that has white space inside other than a plain space, or that has a control character.
+  8. A file with one wrong entry gives no country at all.
+  9. Nothing is fetched, no row is written, and no existing file of the pipeline's code changes; no package is added; no existing test changes; all tests pass.
+  10. `python scripts/check.py` reports 19 of 19 gates, with 2420 backend tests, and 143 tests more in all than `main` gives at the commit the branch starts from (3362 when that is `08c6ebb`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  11. Only the ten files under "Scope" of the plan changed.
+- **Tests required:** 143 new unit tests in 44 functions: the two files held to the release by their SHA-256, on Linux and on Windows, and the note beside them; the countries of the project's file; what the reader reads, on files made up for the test; and everything it refuses, each with its sentence word for word. Planted defects in the files, in the note and in the reader. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-012.md`
+
+### DAT-058 – A kind of source for reference lists
 - **Status:** NOT STARTED
-- **Objective:** The countries of ISO 3166-1 are in the store, from a source whose licence allows it, with that source recorded.
-- **Description:** The planner's trial finds and records the source and its licence in `DATA_SOURCES.md` before the plan is written; if none allows redistribution the task is `BLOCKED – EXTERNAL DEPENDENCY`. A reference file in the repository with its origin and licence beside it, the source registered in the store, and a command that loads the file: countries are added or updated through the history of DAT-009, never deleted, and a second load changes nothing. Nothing is fetched while the command runs.
-- **Acceptance criteria:** after loading, the store holds exactly the countries of the file, each with provenance naming the source; loading twice leaves the same rows and no new history; a changed name in the file becomes one change with history; a malformed file is refused whole and the store is unchanged.
-- **Tests required:** unit tests of the file's reader; integration tests against a real SQLite file with the real reference file and with damaged ones; the command run for real; planted defects; the full run of all gates on both machines.
+- **Objective:** A source can be described as a publisher of reference lists, so that the source of the countries is registered as what it is.
+- **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012. A source is described by one of twelve kinds (`SourceCategory`, DAT-039), each a kind of website of the sport. A project that keeps the lists of a standard, as iso-codes does, is none of them, and the record of DAT-006 left that to the trial of DAT-012. The list gains one text for it, and a migration lets the table `source` take it, because the table's check names the texts. The text and its place in the list are settled in the planner's trial. DESIGN.md §7.1 names the twelve; the thirteenth is this project's, and `DATABASE.md` and `DATA_SOURCES.md` say so.
+- **Acceptance criteria:** the list has the new kind, with what it means; after the migration the table takes a source of that kind and still refuses every text that is not of the list; every source that is there keeps what it had, its key too; the model and the migration agree; `DATA_SOURCES.md` gives the row of iso-codes its category.
+- **Tests required:** unit tests of the list; integration tests against a real SQLite file, with the migration applied to a store that holds sources and what points to them; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-059 – The countries are loaded into the store
+- **Status:** NOT STARTED
+- **Objective:** The countries of the reference file are in the store, each naming the source it came from, through a command that changes nothing when it is run again.
+- **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012. A command registers the source of the countries (iso-codes, with its licence, where its terms are and when they were read, as `DATA_SOURCES.md` has them) and brings the countries of the file of DAT-012 into the table of DAT-011: a country that is not there is added, a country whose name the file has changed is changed through the history of DAT-009, and no country is ever deleted. Every row says which source it came from and when. Nothing is fetched while the command runs. The planner's trial settles whether registering the source and loading the countries are one task or two, how a country that is in the store and not in the file any more is treated, and what the published data must say of the licence (PUB-003).
+- **Acceptance criteria:** after loading, the store holds exactly the countries of the file, each with provenance naming the source; loading twice leaves the same rows and no new history; a changed name in the file becomes one change with history; a malformed file is refused whole and the store is unchanged; the source is registered once, however often the command runs.
+- **Tests required:** integration tests against a real SQLite file with the real reference file and with damaged ones; the command run for real; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -2294,7 +2339,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 ### PUB-003 – Countries file
 - **Status:** NOT STARTED
 - **Objective:** The countries in the store are published for the browser.
-- **Description:** The export writes one file with the countries that have at least one published record or are needed to name one, in a fixed order, listed in the manifest and checked against the contract. Internal fields stay in the store.
+- **Description:** The export writes one file with the countries that have at least one published record or are needed to name one, in a fixed order, listed in the manifest and checked against the contract. Internal fields stay in the store. Added on 2026-11-27 (PLAN-044): the countries are from iso-codes under LGPL-2.1-or-later, which asks that what takes over part of the list names its notice and its licence and is passed on under it (`DATA_SOURCES.md`, "The countries: iso-codes"); the plan of this task says how the published file does that.
 - **Acceptance criteria:** the file holds exactly those countries, each with its codes and name; it is listed in the manifest with the right hash; the same store gives the same bytes; with no countries the file is not written and the manifest says so.
 - **Tests required:** integration tests of the export against a real store; contract validation; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –

@@ -7,9 +7,9 @@ references are copied from real output, never estimated.
 ## Current state
 
 - **Phases:** 2 – Data store and published data (track A) and 3 – Interactive 3D Earth (track B), side by side since 2026-11-27 (PLAN-033); Phase 1 – Foundation has one task that was added to it later and is open, FND-054, which stands on track B after GLB-025
-- **Current task, track A (data store):** DAT-012 – Countries reference data (`NOT STARTED`, the planner is trialling it and writing its plan)
+- **Current task, track A (data store):** DAT-012 – The countries reference file (`IN PROGRESS`, with a builder)
 - **Current task, track B (globe):** FND-054 – The browser tests do not run out of network connections on Windows (`NOT STARTED`, the planner is trialling it and writing its plan)
-- **Tasks verified:** 103 of 285
+- **Tasks verified:** 103 of 287
 - **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar has the data status and the date under its first line, on two lines below 640 pixels and on one from there on, so that it is as tall while the data loads as afterwards, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (3219 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store has its first four tables, and no rows yet: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (there are fourteen so far, which make the tables of the information sources, of what they offer, of the collection runs and of the changes to records, an index that takes SQLite straight to the runs of one source, the triggers by which the history of the records is only added to, two indexes that take SQLite straight to the changes of one record and to the changes one run caused, the table of the review queue, where what is in doubt waits for a person's decision, the two indexes by which the store refuses the same doubt a second time, the two triggers by which the store itself refuses to edit or delete an item of that queue once it is decided, the two triggers by which it refuses a key below 1 for an item of that queue, the two by which it refuses a row that would take the place of a decided item, and the table of the countries, the first table of collected records, with the index that takes SQLite straight to the countries of one source, and the column by which a source says which country it is of, with its index; one function puts two records that may be the same thing to that queue, another what a source says of a field of a record, and a third puts down a person's decision on an item, and nothing calls them yet); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, and only `migrate` writes to it; there is a base for all models, which makes every table strict and names its constraints and indexes by one rule, and a test that holds every table to that; a time is stored as text in one form, in UTC with its offset written out, a time without an offset is refused, and a model's `datetime` column gets that type from the base; every model gets its key from the base, a whole number `id` that SQLite never gives twice, and the two times `created_at` and `updated_at`, which the store's code sets from the store's one clock; the test that holds every table to the rules names a table without that key or without those two times, and a name that more than one constraint or index of a table has; a model can say of a column that its text must not be empty, and SQLite itself then refuses empty text in it, also text of nothing but white space, and the test that holds every table to the rules names such a column whose table is without the check for it; any column type can bring the check for its column in that way; a model can say of a column that it is yes or no, and SQLite itself then refuses every number but 1 and 0 in it; a model can say that a column's value is one of a list the code knows, and SQLite itself then refuses any text that is not on that list; a model can say that a column is a web address, and SQLite itself then refuses text that does not begin as one or has white space in it; the store has its first table, that of the information sources, each described by one of twelve kinds of source and one of ten ways of collecting, and switched off until a person has read its terms; a second table says which of nine kinds of information each source offers, and a source that has offers cannot be deleted; a third table records every collection run, with its source, its start and end, how it ended and what it counted, and one function, `mark_interrupted`, marks the runs a dead job left running as interrupted; another, `standing_of`, says how a source is doing (its last attempt, its last success, its last error and its health) by reading its runs, and stores none of it; the code has the two lists that say how far a collected record can be trusted, three levels of confidence and four verification statuses from official to unverified, and no table has a column of them yet; a model can say that a column is a calendar day, which is kept as text such as `2026-11-24` with no time made up for it and which the store refuses when no calendar has it, and no table has such a column yet either; the columns by which every collected record says where it came from are one set in the code, which a model of collected records takes whole, and with them an index that takes SQLite straight to the records of one source, and no table has them yet; a rule names every table that neither has those columns nor is on the list of the tables that hold no collected records, where each stands with its reason, and a test holds the real schema to it; one table is there to keep, for one field of one record, what it held before it was changed and what it holds now, with the collection run or the person that caused the change, and one function changes a stored record and writes that history in the same unit of work, so that neither is kept without the other, which nothing calls yet because no table holds records; that history is only added to, because the store itself refuses to edit, delete or replace a row of it, whoever writes to the file; the migrations are written in a module of their own, as plain SQL that names nothing of the code; one test holds the models and the migrations together, and fails with a sentence for each table or index that is not the same in both (`DATABASE.md`). No globe yet: its engine, `@cesium/engine` with `@cesium/core`, is installed and tested as installed, and nothing of the application uses it so far. The published site carries the licences of the packages it is built with, in one file, `licences.txt`, which the build writes from the packages as they are installed, with every licence file a package brings, at any depth of its folder. A repository check holds the licence of each of those packages to a list of the licences the project has read and accepted.
 
 ## Reports
@@ -9882,3 +9882,68 @@ deviation was Node 22.23.5 where the plan's trial had 22.23.4.
 Commit: `cd3f42a` (squash merge of pull request #175).
 
 Next task on track A: DAT-012 – Countries reference data.
+
+### PLAN-044 – The countries' list, in three steps (2026-11-27)
+
+Not a development task: no application code changed.
+
+DAT-012 was written as one task: find a source for the countries of ISO
+3166-1, record it and its licence, bring its file into the repository,
+register the source in the store, and load the file with a command through
+the history. The planner's trial, which the task asks for before its plan,
+did the first part and found the task to be three.
+
+The source. The project iso-codes of Debian keeps the lists of several ISO
+standards; its file `data/iso_3166-1.json` is the list of ISO 3166-1, 249
+entries. The release 4.20.1 of 2026-01-01 was fetched once, as its makers
+published it (`iso-codes_4.20.1.orig.tar.xz`), from the Ubuntu archive,
+whose description of the source package names the same SHA-256 for it; the
+project's own server could not be reached from where the planner works. The
+release's `REUSE.toml` says of `data/*json`: copyright 2016 Dr. Tobias
+Quathamer, `LGPL-2.1-or-later`. The text of that licence is in the release
+and was read: it permits copying and passing on, and asks that a copy keeps
+the notice and comes with the licence, that a changed copy says so, and that
+a work which takes over part of the list is passed on under the same
+licence.
+
+What was checked. The file has 249 entries; no code of two letters, code of
+three letters, number or name stands twice; every code is capitals of the 26
+letters. Every entry's code of three letters and its number are the ones
+Unicode's Common Locale Data Repository gives for its code of two letters
+(`territoryCodes`, as it stood on 2026-11-27, read from its repository on
+GitHub). Unicode's own list is not the list of the standard: it has 257
+regions in ordinary use, these 249 and AC, CP, CQ, DG, EA, IC, TA and XK.
+ISO's page of the standard could not be read, so nothing is recorded about
+ISO's terms, and the list is not taken from ISO. GeoNames could not be
+reached; the United Nations' list, Wikidata and Natural Earth were not
+looked into.
+
+Why three tasks. The file with its reader, the registering of the source and
+the loading have three kinds of test (a reader on files; a migration on a
+store that holds sources; a command on a store with history). And the list
+of the kinds of source (DAT-039) has twelve, each a kind of website of the
+sport; the record of DAT-006 said that they name no publisher of reference
+data and left it to this trial. A source is not put under a kind that does
+not fit, so the list needs a thirteenth, which is a migration of its own.
+
+- DAT-012 – The countries reference file: the file and the licence of the release, unchanged, a
+  note of where they came from, the reader, and the source in
+  `DATA_SOURCES.md`. Its plan is `docs/plans/DAT-012.md`.
+- DAT-058 – A kind of source for reference lists.
+- DAT-059 – The countries are loaded into the store.
+
+PUB-003, which publishes the countries, now says that the published file has
+to name the source and its licence.
+
+A note for later, not a task yet: the names are the short names of the
+standard as iso-codes writes them. Fifteen have a comma ("Korea, Republic
+of"), and some are not what a visitor would call the place; iso-codes has a
+common name for eleven. The store keeps the name as the source writes it.
+Which name the site shows is decided where countries are first shown.
+
+Phase 2 now has 67 tasks; the plan has two more than before, 287.
+
+Order on track A from here: DAT-012, DAT-058, DAT-059, then
+DAT-013 – Regions table.
+
+Next task on track A: DAT-012 – The countries reference file.
