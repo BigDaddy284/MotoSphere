@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 55 | 55 |
-| 2 | Data store and published data (DAT, PUB) | 71 | 53 |
+| 2 | Data store and published data (DAT, PUB) | 71 | 54 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-063 – A command is given the store only when it is ready.
+**Current task, track A (data store):** DAT-061 – A command loads the countries.
 
 **Current task, track B (globe):** GLB-002 – The globe shows the Earth.
 
@@ -2517,7 +2517,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-062.md`
 
 ### DAT-063 – A command is given the store only when it is ready
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One function gives a command the data store the settings name, and only when the store is there and at the newest schema. It makes no file and gives the store no migration, and it says in one sentence what is wrong.
 - **Description:** Added on 2026-11-27 (PLAN-052), cut out of DAT-061. The two commands that use the store are about the store itself: `migrate` makes it and brings it to the newest schema, and `schema` looks. The command that loads the countries (DAT-061) is the first that works on what is in the store, and many follow it. Each needs the same thing first: the store as it is, at the schema the code was written for. `open_store` alone does not give that: it makes the file where there is none, and it gives a store that lacks migrations. Nor is it for such a command to migrate the store by itself: a command that was asked for one thing would then do another as well. So one function, `store_to_work_on` in a new module `motosphere.cli.store`, gives a command the store the settings name, and only when it is there and at the newest schema. It makes no file and gives the store no migration. What is wrong is said in one sentence (`StoreNotReadyError`): where there is no file and where the store lacks migrations, in the words the command `schema` has for it, followed by the advice to run `python -m motosphere migrate` first; where `migrate` would refuse the store or it cannot be opened, in the words `migrate` has for it, and with no advice. The function takes the settings, as a command has them, and gives the engine `open_store` made. It is built from `open_store`, `pending` and the `report` of the command `schema`, which all stay as they are. The advice is written out in the module (`MIGRATE_FIRST`), because the module that has the program's name imports every command, and a unit test holds it to that name. Nothing is written, and no connection to the store is left open. No command calls the function yet; the first is DAT-061. No command, model or migration changes.
 - **Acceptance criteria:**
@@ -2535,10 +2535,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   12. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   13. Only the seven files under "Scope" of the plan changed.
 - **Tests required:** 16 new integration tests in 10 functions against a real SQLite file that the real `migrate` command or SQLite alone made, most of them with a list of migrations of the test's own in the place of the pipeline's: no file; a store at the newest schema, given, with a unit of work on it kept and its connections enforcing foreign keys; a store at the newest schema of the pipeline's own list; a store that lacks three, two or one of three migrations; each of the four stores `migrate` refuses, held to what the real command then says; a file that is no database; a folder in the store's place; a relative path; and that no connection is left open, after a refusal and after the store was given. Every test of a refusal compares the file byte for byte. 1 new unit test of the advice. Planted defects in the module. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #204 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32): the full run, 19 of 19 gates passed, "Tests: 3520 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2552: 2535 before, 17 new). The planner's 22 planted defects, one at a time, in the new module of the pull request (what is done where there is no file, with a store that lacks migrations, with a store `migrate` would refuse, with a store that is ready, the path, the words, and a connection left open), each against the 17 tests of the two new files: 22 of 22 detected, each by the same test functions as in the planner's trial. The plan's nine prove-it steps, run by the planner too: each fails the tests the plan names (2, 9, 3, 3, 4, 5, 1, 3 and 2 tests). On GitHub, read by the planner from the runs and job logs: run 46066334569 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3520 passed, 0 failed, 0 skipped.", with 2552 backend tests on both machines, the three jobs after the gates skipped; run 46067805543 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3520 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3520 / 0 tests on both machines on GitHub for `main` and for the pull request, and locally (repository 82, script tests 219, backend 2552, frontend unit 406, browser 261); all 19 gates passed; 22 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 7 files are the same change as the planner's trial. No existing test changed, no command, model or migration changed, and no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #203, run 46064716341). The builder's report names the same counts and the same failing tests for the nine steps; its Node was 22.23.5, the planner's 22.23.4.
+- **Commit:** `ead1ec1`
 - **Plan:** `docs/plans/DAT-063.md`
 
 ### DAT-061 – A command loads the countries
