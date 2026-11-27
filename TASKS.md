@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 49 | 48 |
-| 2 | Data store and published data (DAT, PUB) | 63 | 44 |
+| 2 | Data store and published data (DAT, PUB) | 64 | 44 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-055 – A decided review item is not replaced.
+**Current task, track A (data store):** DAT-056 – A key of the review queue is 1 or more.
 
 **Current task, track B (globe):** FND-049 – The top bar keeps its height when the data arrives.
 
@@ -1100,6 +1100,10 @@ The trial of DAT-054 kept a decided item from being edited and from
 being deleted, and left the rule that it is not replaced to a task of
 its own (PLAN-037): DAT-055, which stands after DAT-054.
 
+The trial of DAT-055 found that it stands on a rule the review queue
+did not have, that a key is 1 or more, and made that a task of its own
+(PLAN-040): DAT-056, which stands before DAT-055.
+
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
 - **Objective:** Decide, with evidence, what the data store may rely on: which SQLite features every machine that runs the pipeline has, where the store is kept between scheduled runs, and which size limits bound it.
@@ -1978,10 +1982,31 @@ its own (PLAN-037): DAT-055, which stands after DAT-054.
 - **Commit:** `e2bcff4`
 - **Plan:** `docs/plans/DAT-054.md`
 
+### DAT-056 – A key of the review queue is 1 or more
+- **Status:** IN PROGRESS
+- **Objective:** The store itself refuses a key below 1 for an item of the review queue, for a new item and for one that is given another key.
+- **Description:** Added on 2026-11-27 (PLAN-040), cut out of DAT-055 in the planner's trial of it. To keep a decided item from being replaced, the store asks before every new row whether a decided item has the key of that row. A new row that names no key has none until it is written, and SQLite shows -1 for it until then; a decided item with the key -1 would so stop every new item that names no key. The history of changes holds its keys to 1 or more for the same reason (DAT-048). Two triggers on `review_item`, `tr_review_item_key_positive` (after a new row) and `tr_review_item_key_stays_positive` (after a row was given another key), refuse a key below 1 with "A key of the review queue (review_item) is 1 or more." They are made by an eleventh migration, `hold_the_key_of_a_review_item_to_1_or_more`, and by the model alike. Both ask after the row is written, when a new item has the key the store gave it. The second fires only for a statement that names the key, so an item that has a key below 1 already can still be changed and given a key of 1 or more; the migration reads and changes no row. Of a decided item the store says first that it is never edited. The schema goes to version 11. No column, check or index changes, and nothing of `motosphere.db.review`.
+- **Acceptance criteria:**
+  1. The schema is at version 11. The eleventh migration makes the two triggers on `review_item` and nothing else; a store at version 10 that holds an item with a key below 1 and one above keeps both as they were, and the first can still be changed and given a key of 1 or more. Where a trigger of either name is there already the migration fails, and the store stays at version 10 with neither kept.
+  2. A new item with a key below 1 is refused, open or decided, of either kind, also where the statement says `OR REPLACE` or `OR IGNORE`, and in a queue without items.
+  3. A new item that names no key is given the next one as before, with plain SQL and through the model, and a named key of 1 or more is taken as before.
+  4. An open item is not given a key below 1, and is given another key of 1 or more as before. A statement over several items that would give one of them such a key changes none.
+  5. Of a decided item the store says first that it is never edited.
+  6. The refusal stops the statement and no more; in a unit of work the unit fails as a whole.
+  7. The refusal holds through the models, and on a connection the store's code did not open, with foreign keys off. A store made from the models has the same four triggers and refuses the same; the test of the models and the migrations passes unchanged.
+  8. Two existing tests change: the list of the migrations gets its eleventh name, and the test of DAT-054 that held the table to its two triggers asks for the two of a kept decision by their names. No other existing test changes, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  9. `python scripts/check.py` reports 19 of 19 gates, with 1932 backend tests, and 71 tests more in all than `main` gives at the commit the branch starts from (2702 when that is `b085856`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 67 new integration tests in 16 functions, in a store the migrations built, on a real SQLite file, with two open items and a decided one written past the model and every column of every item read back with plain SQL after each refusal: keys below 1 for a new item in five ways and for a changed key in four, statements over several items, the model, a connection made with Python's own `sqlite3`, a store made from the models. 3 new tests of the eleventh migration, from a store at version 10 that holds an item with a key below 1, and one case more of the test that tries every migration alone. Planted defects in the triggers, the model and the migration, and those of DAT-054 again. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-056.md`
+
 ### DAT-055 – A decided review item is not replaced
 - **Status:** NOT STARTED
 - **Objective:** The store itself refuses a statement that would put another row in the place of a decided review item.
-- **Description:** Added on 2026-11-27 (PLAN-037), cut out of DAT-054. Since DAT-054 a decided item is neither edited nor deleted. But `INSERT OR REPLACE`, `REPLACE` and `UPDATE OR REPLACE` take out the row their new row clashes with, by its key or as the same doubt (the two indexes of DAT-050), and SQLite fires no trigger for a row it takes out in that way; a test of DAT-054 puts that on record with four statements. Nothing in the store's code says `REPLACE`. The planner's trial settles how the store asks, before every new and every changed row, whether it would take the place of a decided item (by the key, by the pair of records, by what a source says); what the refusals of DAT-050 say where the item that is there was decided; whether a key below 1 is refused, as in the history; and whether an open item may still be replaced.
+- **Description:** Added on 2026-11-27 (PLAN-037), cut out of DAT-054. Since DAT-054 a decided item is neither edited nor deleted. But `INSERT OR REPLACE`, `REPLACE` and `UPDATE OR REPLACE` take out the row their new row clashes with, by its key or as the same doubt (the two indexes of DAT-050), and SQLite fires no trigger for a row it takes out in that way; a test of DAT-054 puts that on record with four statements. Nothing in the store's code says `REPLACE`. The planner's trial settles how the store asks, before every new and every changed row, whether it would take the place of a decided item (by the key, by the pair of records, by what a source says); what the refusals of DAT-050 say where the item that is there was decided; and whether an open item may still be replaced. That a key is 1 or more, which the asking by the key stands on, is DAT-056 (PLAN-040), before this task.
 - **Acceptance criteria:** each of the four statements of DAT-054's test is refused by the store in one plain sentence and the decided item is as it was, also through the models and on a connection the store's code did not open; a new item that clashes with no decided item is stored as before; `open_possible_duplicate`, `open_field_doubt` and `decide` do and say what they did; a store at the version before is given the migration with its items as they were; the test of DAT-054 that puts the gap on record is turned round.
 - **Tests required:** integration tests against a real SQLite file, with plain SQL and through the models; the migration applied to a store at the version before it; planted defects, those of the earlier tasks of the table again; the full run of all gates on both machines.
 - **Tests executed:** –
