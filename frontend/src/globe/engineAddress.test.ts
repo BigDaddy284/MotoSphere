@@ -103,10 +103,7 @@ describe('the application', () => {
 
   it('builds the address in one module only', () => {
     expect(thatSay('ENGINE_FOLDER')).toEqual(['../../site.ts', './engineAddress.ts'])
-    // The folder written out, which the name of the engine's package is not.
-    expect(
-      application.filter(([, text]) => /(?<!@)cesium\//.test(text)).map(([path]) => path),
-    ).toEqual([])
+    expect(thatSay('cesium/')).toEqual([])
   })
 
   it('takes the folder from where the build and the development server take it', () => {
