@@ -5,7 +5,6 @@ import type { LaunchOptions, Page } from '@playwright/test'
 import {
   FEATURES_OFF,
   GLOBE_BROWSER,
-  NO_3D_SWITCH,
   PLAYWRIGHTS_OWN_FEATURES_OFF,
   PLAYWRIGHTS_OWN_SWITCH,
   RANDOM_PORTS_FEATURE,
@@ -28,38 +27,6 @@ async function featuresOffOf(options: LaunchOptions = {}): Promise<string[]> {
     await started.close()
   }
 }
-
-/**
- * Starts one more browser as the browser of this project is started, and
- * gives every word it was started with that begins as `word` does.
- */
-async function toldOf(word: string): Promise<string[]> {
-  const started = await chromium.launchServer()
-  try {
-    return started.process().spawnargs.filter((told) => told.startsWith(word))
-  } finally {
-    await started.close()
-  }
-}
-
-/** Has the page ask for a picture of each kind, each on a canvas of its own. */
-const ASK_FOR_PICTURES = `(() => {
-  const given = (kind) => document.createElement('canvas').getContext(kind) !== null
-  const flat = document.createElement('canvas')
-  flat.width = 2
-  flat.height = 2
-  const pen = flat.getContext('2d')
-  if (pen === null) {
-    return { webgl2: given('webgl2'), webgl: given('webgl'), flat: null }
-  }
-  pen.fillStyle = 'rgb(10, 200, 30)'
-  pen.fillRect(0, 0, 2, 2)
-  return {
-    webgl2: given('webgl2'),
-    webgl: given('webgl'),
-    flat: [...pen.getImageData(1, 1, 1, 1).data],
-  }
-})()`
 
 /** How many connections the test of the ports has the browser open. */
 const CONNECTIONS = 40
@@ -145,29 +112,7 @@ test.describe('the browser of the tests', () => {
     expect(inOrder).toBeGreaterThanOrEqual(atLeast)
   })
 
-  test('is told once to give its pages no 3D picture', async () => {
-    expect(await toldOf(NO_3D_SWITCH)).toEqual([NO_3D_SWITCH])
-    expect(NO_3D_SWITCH).toBe('--disable-3d-apis')
-    expect(TEST_BROWSER).toEqual({
-      ignoreDefaultArgs: [PLAYWRIGHTS_OWN_SWITCH],
-      args: [TEST_BROWSER_SWITCH, NO_3D_SWITCH],
-    })
-  })
-
-  test('gives a page no 3D picture, and a flat one as before, without a word of its own', async ({
-    page,
-  }) => {
-    // The fixture of every browser test fails this test for any warning or
-    // error on the console.
-    await page.goto('./')
-    expect(await page.evaluate(ASK_FOR_PICTURES)).toEqual({
-      webgl2: false,
-      webgl: false,
-      flat: [10, 200, 30, 255],
-    })
-  })
-
-  test('is set for the project of these tests, and the browser of the globe for its project', ({
+  test('is set for every project, and for the project of the globe with one word more', ({
     browserName,
   }, testInfo) => {
     expect(browserName).toBe('chromium')

@@ -94,8 +94,7 @@ fails on any other. The rule has tests of its own (`e2e/fixtures.spec.ts`).
 The browser tests are in two projects. The tests of the globe are the
 files in `frontend/e2e/globe`: they run in a browser that is told how to
 draw 3D pictures, and one at a time. Every other test is in the project
-`chromium`, whose browser gives a page no 3D picture (see "The browser
-of the globe tests").
+`chromium` (see "The browser of the globe tests").
 
 A browser test waits for what it checks. A check that does not wait, on
 something the test collected while the page ran (the requests it recorded
@@ -2333,9 +2332,8 @@ has it. Five browser tests (`frontend/e2e/browser.spec.ts`) hold it:
   list `browser.ts` calls Playwright's own. **This is the test that
   fails after an upgrade of Playwright that changes its list:** the
   list in `browser.ts` then has to follow;
-- the project of these tests is given these options, and the project
-  of the globe tests the options of its own browser (see the next
-  section);
+- both projects of the settings are given these options, the project
+  of the globe tests with one word more (see the next section);
 - the browser is seen to take its ports in order. The test starts a
   server of its own, which closes every connection after one answer,
   has the page open 40 connections to it one after another, and reads
@@ -2420,12 +2418,10 @@ more than one worker, by a change to the settings or by an upgrade of
 Playwright that reads them otherwise, fails its tests and does not
 starve them.
 
-Ten browser tests (`frontend/e2e/globe/browser.spec.ts`) hold this:
+Nine browser tests (`frontend/e2e/globe/browser.spec.ts`) hold this:
 
 - the browser of the project is started with the list of features to
   turn off that every test's browser has, and with the word;
-- it is not told the word that takes 3D pictures away from the other
-  tests (see below);
 - a page shows thirty 3D pictures one after another, drawn in software,
   and the browser says nothing on the console. **This is the test that
   fails when a later browser no longer knows the word:** the four
@@ -2442,29 +2438,8 @@ Ten browser tests (`frontend/e2e/globe/browser.spec.ts`) hold this:
   fail when the project is given more than one worker:** two of them
   then run at once, and the one that comes second is refused the turn.
 
-**The other tests run in a browser that gives no 3D picture
-(FND-059).** One globe at a time holds only as long as no test outside
-the project of the globe draws a 3D picture, and once the globe is in
-the page, every test that opens the page would. So the browser of the
-project `chromium` is started with one word more, `--disable-3d-apis`
-(`NO_3D_SWITCH` in `frontend/e2e/browser.ts`). A page that asks such a
-browser for a 3D picture is given none, as in a browser that cannot
-draw one; a flat picture it gets as before, and the browser says
-nothing on the console about either. The browser of the globe tests
-names every word it is started with itself, and this is not one of
-them.
-
-Two browser tests (`frontend/e2e/browser.spec.ts`) hold it:
-
-- the browser of the project is started with the word, once;
-- a page of the site asks for a 3D picture of each of the two kinds a
-  browser has (`webgl2` and `webgl`) and gets neither, draws a flat
-  picture and reads its colour back, and nothing is on the console.
-  **This is the test that fails when a later browser no longer knows
-  the word:** a page would be given a 3D picture again.
-
-What a page of the site shows a person whose browser gives no 3D
-picture is GLB-026.
+The other tests are not held to a browser without 3D pictures yet. They
+show none: the globe is not in the page yet.
 
 ## The tools a computer needs
 

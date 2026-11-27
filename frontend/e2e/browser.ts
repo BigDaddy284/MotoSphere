@@ -48,22 +48,9 @@ export const PLAYWRIGHTS_OWN_SWITCH = `${FEATURES_OFF}${PLAYWRIGHTS_OWN_FEATURES
 /** What the browser of the tests is told instead. */
 export const TEST_BROWSER_SWITCH = `${PLAYWRIGHTS_OWN_SWITCH},${RANDOM_PORTS_FEATURE}`
 
-/**
- * The word that takes 3D pictures away from the pages of a browser.
- *
- * A page that asks such a browser for a 3D picture is given none, as in a
- * browser that cannot draw one; a flat picture it still gets, and the
- * browser says nothing about it. The tests that are not about the globe run
- * in such a browser, so that the tests of the globe are the only ones that
- * draw a 3D picture: two drawn at once in software take each other's
- * processor time (FND-059; TESTING.md, "The browser of the globe tests").
- */
-export const NO_3D_SWITCH = '--disable-3d-apis'
-
-/** How the browser of every test that is not a globe test is started. */
 export const TEST_BROWSER: LaunchOptions = {
   ignoreDefaultArgs: [PLAYWRIGHTS_OWN_SWITCH],
-  args: [TEST_BROWSER_SWITCH, NO_3D_SWITCH],
+  args: [TEST_BROWSER_SWITCH],
 }
 
 /**
@@ -82,10 +69,8 @@ export const TEST_BROWSER: LaunchOptions = {
 export const SOFTWARE_3D_SWITCH = '--use-angle=swiftshader'
 
 /**
- * How the browser of the globe tests is started: without the features the
- * browser of every test runs without, and told to draw 3D pictures in
- * software. It is not told the word that takes them away: it names every
- * word it is told itself.
+ * How the browser of the globe tests is started: as the browser of every
+ * test, and told to draw 3D pictures in software.
  */
 export const GLOBE_BROWSER: LaunchOptions = {
   ...TEST_BROWSER,
