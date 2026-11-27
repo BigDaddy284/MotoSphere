@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-058 – A kind of source for reference lists.
 
-**Current task, track B (globe):** FND-054 – The browser tests do not run out of network connections on Windows.
+**Current task, track B (globe):** FND-054 – The browser tests do not ask Windows for random ports.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -141,6 +141,25 @@ before FND-054, because the fault can fail any run on either machine;
 FND-056 stands before GLB-002, whose component loads the engine a moment
 after it is shown. Order on track B: FND-055, FND-054, FND-056, then
 GLB-002.
+
+**What the Windows machine was short of (PLAN-047):** nothing. The planner
+measured on GitHub's Windows machine, in three runs of a trial pull request
+(#178, not merged). The machine has room: it gives out 16,384 ports, and in
+a whole run of all gates the most connections held at one moment were 774
+(run 46003052257). The browser the tests use (Chromium 153.0.8010.12) has a
+feature, `TcpPortRandomizationWin`, that is on by default for Windows 11
+22H2 and later, Windows Server 2025 among them: before every connection it
+asks Windows for a local port picked at random instead of the next free one.
+With the feature on, 8 of 53,978 connections failed, 2 with
+`net::ERR_NO_BUFFER_SPACE` and 6 with `net::ERR_ADDRESS_IN_USE`, and one
+page could not be opened; with it off, none of 53,993 failed, in the same
+jobs, in turns of a minute (runs 46005653032 and 46009747401). So the fault
+is in how the browser asks Windows for a port, not in the application, the
+test server or the number of connections. FND-054 starts the browser of the
+tests with that one feature off, and is named after its cause from here on:
+it was "The browser tests do not run out of network connections on Windows".
+A browser test is still not given a second try. Order on track B: FND-054,
+FND-056, then GLB-002.
 
 **The countries, in two steps (PLAN-042):** DAT-011 was two objectives:
 the table of the countries, and the country of a source, which is a
@@ -1226,16 +1245,25 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Commit:** `b129b71`
 - **Plan:** `docs/plans/FND-053.md`
 
-### FND-054 – The browser tests do not run out of network connections on Windows
-- **Status:** NOT STARTED
-- **Objective:** It is known from measurement why GitHub's Windows machine sometimes has no room for a network connection during the browser tests, and the browser tests no longer fail for it.
-- **Description:** Added on 2026-11-27 (PLAN-043). Twice a run for `main` failed on Windows in one browser test that could not open the page: "page.goto: net::ERR_NO_BUFFER_SPACE at http://127.0.0.1:4173/MotoSphere/" (run 44429659797 with FND-019, run 45984920265 with FND-053). The message is Windows's for a machine that has no room left for one more network connection, here between the test browser and the test server on the same machine. Both times the task had changed no file the failed test reads, every other browser test passed, and the failed job passed when it was run once more. The record of the first time said that a second time makes it a task of its own. What is not known: what the machine ran out of (the ports it gives to connections made from it, which Windows keeps back for a time after a connection ends, or something else); what used it up (the gates that run before the browser tests on the same machine, the browser tests themselves, each of which opens the page anew, or something of the machine's own); and whether more connections make it likelier, which matters before GLB-002, the first task whose browser tests make the browser fetch the engine's files. The planner's trial measures on GitHub's Windows machine before anything is changed, and the plan follows what was measured. A browser test is not given a second try: a test that is run again until it passes hides a defect of the application as well as a fault of a machine.
-- **Acceptance criteria:** what GitHub's Windows machine has room for, and how much of it is in use before and after each gate that opens connections, is measured there and written down; the cause of the two failures is named from the measurement, or it is written down exactly what was measured and what is still unknown; where the cause is in how the project's tests or its test server use connections, that is changed and a measured figure shows the difference; no browser test is skipped, weakened or given a second try; all tests pass on both machines. The criteria are made exact in the plan, from the trial.
-- **Tests required:** the measurement on GitHub's Windows machine, in a trial run and in the pull request's run; the tests the remedy needs, settled in the trial; planted defects where code changes; the full run of all gates on both machines.
+### FND-054 – The browser tests do not ask Windows for random ports
+- **Status:** IN PROGRESS
+- **Objective:** The browser of the browser tests is started with the one feature turned off that makes a connection fail by chance on Windows, and browser tests hold it there.
+- **Description:** Added on 2026-11-27 (PLAN-043) as "The browser tests do not run out of network connections on Windows", and named after its cause on 2026-11-27 (PLAN-047). Three times a run on GitHub's Windows machine failed in one browser test that could not open the page: "page.goto: net::ERR_NO_BUFFER_SPACE at http://127.0.0.1:4173/MotoSphere/" (run 44429659797 with FND-019, run 45984920265 with FND-053, run 45996124551 in a trial for GLB-025). Each time it was another test, every other test passed, and the job passed when it was run once more. The planner measured on GitHub's Windows machine, in three runs of a trial pull request (#178, not merged). The machine has room: it gives out 16,384 ports, and in a whole run of all gates the most connections held at one moment were 774 (run 46003052257). The browser the tests use (Chromium 153.0.8010.12) has a feature, `TcpPortRandomizationWin`, that is on by default for Windows 11 22H2 and later, Windows Server 2025 among them: before every connection it asks Windows for a local port picked at random instead of the next free one. With the feature on, 8 of 53,978 connections failed, 2 with `net::ERR_NO_BUFFER_SPACE` and 6 with `net::ERR_ADDRESS_IN_USE`, and one page could not be opened; with it off, none of 53,993 failed, in the same jobs, in turns of a minute (runs 46005653032 and 46009747401). The browser of the tests is now started with that feature off. A browser takes one list of features to turn off and Playwright already gives it one, of 15 names, so Playwright's own list is taken out and given again with the one name added (`frontend/e2e/browser.ts`, used by `frontend/playwright.config.ts`). The list is written out as Playwright 1.63.0 has it, and a browser test holds it to what Playwright really gives, so an upgrade that changes the list fails that test until the file follows. Another browser test sees from outside that the feature is off: on Windows, of 40 connections the browser opens one after another, at least half must come from a port that is one to four after the one before. On GitHub's Windows machine that test failed when the planner gave the feature a name the browser does not know (none of 40 ports in order, run 46035698271) and passed with the right name (run 46034370005). A browser test is not given a second try: a test that is run again until it passes hides a defect of the application as well as a fault of a machine.
+- **Acceptance criteria:**
+  1. `frontend/e2e/browser.ts` exports `TEST_BROWSER`, which takes Playwright's own `--disable-features=` word out and gives it again with `TcpPortRandomizationWin` added, last.
+  2. `frontend/playwright.config.ts` sets `launchOptions: TEST_BROWSER` for every test, and nothing else of the settings changed: `retries` is 0 as before.
+  3. `frontend/e2e/browser.spec.ts` has the five tests, and all five pass on Linux and on Windows.
+  4. With the feature left out, under another name, turned on, or beside Playwright's list in a second word; with Playwright's list changed; or with the settings not using `TEST_BROWSER`: a browser test fails.
+  5. `TESTING.md` has the section "The browser of the browser tests" with what was measured, and `CHANGELOG.md` the bullet under Fixed.
+  6. `python scripts/check.py` reports 19 of 19 gates, with 261 browser tests, and 5 tests more in all than `main` gives at the commit the branch starts from (3369 when that is `9b46186`).
+  7. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, with 261 browser tests on both machines, and the three jobs after the gates are skipped.
+  8. Only the five files under "Scope" of the plan changed.
+- **Tests required:** 5 new browser tests: the words the browser of the tests is started with, read from a browser started as the tests start theirs; the list as Playwright gives it, read from a browser started with none of the project's options; the settings; and the order of the ports of 40 connections, which holds something on Windows only. Planted defects in the new file and in the settings. The fifth of them on GitHub's Windows machine with the feature under a name the browser does not know, where it must fail. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-054.md`
 
 ### FND-055 – The unit tests that start the page leave nothing of it running
 - **Status:** PASSED – VERIFIED
