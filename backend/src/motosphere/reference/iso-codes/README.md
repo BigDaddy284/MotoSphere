@@ -51,4 +51,5 @@ in this folder is edited by hand.
 
 A store that was loaded from the older file keeps its rows. The loading
 adds the countries that are new, and names those the newer file says
-something else of; nothing is changed without a person's decision.
+something else of. What the newer file says of them is put to the review
+queue; no country is changed without a person's decision.

@@ -7,12 +7,17 @@ new row says where it came from: the source of the countries
 was fetched from, the day the release was published and the moment of
 the loading.
 
-The loading adds, and it does nothing else. A country the store has is
-left as it is, also when the file says something else of it, and no
+The loading adds countries, and it changes none. A country the store has
+is left as it is, also when the file says something else of it, and no
 country is ever taken out. What the loading found and did not put right
 is told to whoever called it: which countries of the file the store says
 otherwise of, and which countries of the store the file does not have.
-Which of the two is right there is for a person to decide.
+
+Where the store and the file say different things of a country, which
+of the two is right is for a person to decide. So what the file says is
+put to the review queue (:mod:`motosphere.db.review`), one item for each
+field the two differ in, and waits there. A doubt the queue holds
+already, open or decided, is not put to it again.
 
 Nothing is fetched. The file was fetched once, by hand, and is part of
 the project; the note beside it says from where and when. That is why a
@@ -25,13 +30,15 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Final
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from motosphere.db import times
 from motosphere.db.models.country import Country
 from motosphere.db.models.provenance import Confidence, VerificationStatus
+from motosphere.db.models.review_item import ReviewKind
 from motosphere.db.models.source import CollectionMethod
+from motosphere.db.review import open_field_doubt
 from motosphere.reference.countries import ReferenceCountry
 from motosphere.reference.countries_source import source_of_the_countries
 
@@ -68,7 +75,8 @@ class CountriesLoaded:
     # The countries of the file that the store says something else of: it
     # has the code of two letters with another code of three or another
     # name, or it has the code of three letters under another code of
-    # two. Nothing was done about them. In the order of the file.
+    # two. They were left as they are, and what the file says of them
+    # waits in the review queue. In the order of the file.
     said_otherwise: tuple[str, ...]
     # The countries of the store whose code of two letters the file does
     # not have. Nothing was done about them. In the order of their codes.
@@ -86,13 +94,21 @@ def load_countries(work: Session, countries: Iterable[ReferenceCountry]) -> Coun
     the store has with the same code of three letters and the same name
     is left alone. One the store says something else of is left alone
     too, and so is a country of the store that the file does not have:
-    both are named in what is given back, and nothing is changed and
-    nothing deleted.
+    both are named in what is given back, and no country is changed and
+    none deleted.
+
+    What the file says of a country and the store does not is put to the
+    review queue as what this source says of a field of the stored
+    country: its code of three letters, its name, or, where the store
+    has the file's code of three letters under another code of two, the
+    code of two letters of that country. Each is one item of the kind
+    ``sources disagree``, with the address of the release. An item the
+    queue holds already, open or decided, stays as it is.
 
     All rows of one loading say one moment, for when they were collected
     and when they were last seen: the clock is read once. A loading
-    that finds nothing to add writes no country, and nothing at all
-    when the store has the source already.
+    that finds nothing to add and nothing new to doubt writes nothing at
+    all when the store has the source already.
 
     Everything is part of the unit of work ``work`` and is written to it
     before the function returns, so what the store refuses is refused
@@ -109,7 +125,7 @@ def load_countries(work: Session, countries: Iterable[ReferenceCountry]) -> Coun
 
     new: list[Country] = []
     as_they_were: list[str] = []
-    said_otherwise: list[str] = []
+    said_otherwise: list[ReferenceCountry] = []
     in_the_file: set[str] = set()
     for country in countries:
         in_the_file.add(country.alpha_2)
@@ -117,7 +133,7 @@ def load_countries(work: Session, countries: Iterable[ReferenceCountry]) -> Coun
         if there == (country.alpha_3, country.name):
             as_they_were.append(country.alpha_2)
         elif there is not None or country.alpha_3 in codes_of_three:
-            said_otherwise.append(country.alpha_2)
+            said_otherwise.append(country)
         else:
             new.append(
                 Country(
@@ -138,9 +154,65 @@ def load_countries(work: Session, countries: Iterable[ReferenceCountry]) -> Coun
             )
     work.add_all(new)
     work.flush()
+    if said_otherwise:
+        _put_to_the_review_queue(work, source.id, said_otherwise)
     return CountriesLoaded(
         added=tuple(country.alpha_2 for country in new),
         as_they_were=tuple(as_they_were),
-        said_otherwise=tuple(said_otherwise),
+        said_otherwise=tuple(country.alpha_2 for country in said_otherwise),
         not_in_the_file=tuple(sorted(code for code in by_code if code not in in_the_file)),
     )
+
+
+def _put_to_the_review_queue(work: Session, source: int, countries: list[ReferenceCountry]) -> None:
+    """Put what the file says of these countries, and the store does not, to the review queue.
+
+    In the order of the file, and for one country in this order: its
+    code of three letters, its name, and the code of two letters of the
+    country that has its code of three.
+    """
+    stored = work.scalars(
+        select(Country).where(
+            or_(
+                Country.alpha_2.in_([country.alpha_2 for country in countries]),
+                Country.alpha_3.in_([country.alpha_3 for country in countries]),
+            )
+        )
+    ).all()
+    by_code_of_two = {record.alpha_2: record for record in stored}
+    by_code_of_three = {record.alpha_3: record for record in stored}
+
+    def doubt(record: Country, field: str, says: str, reason: str) -> None:
+        open_field_doubt(
+            work,
+            record,
+            field,
+            kind=ReviewKind.SOURCES_DISAGREE,
+            source=source,
+            address=ADDRESS,
+            says=says,
+            reason=f"Release {RELEASE} of iso-codes {reason}.",
+        )
+
+    for country in countries:
+        there = by_code_of_two.get(country.alpha_2)
+        if there is not None and there.alpha_3 != country.alpha_3:
+            doubt(
+                there,
+                "alpha_3",
+                country.alpha_3,
+                f"has another code of three letters for the country {country.alpha_2}",
+            )
+        if there is not None and there.name != country.name:
+            doubt(
+                there, "name", country.name, f"has another name for the country {country.alpha_2}"
+            )
+        other = by_code_of_three.get(country.alpha_3)
+        if other is not None and other is not there:
+            doubt(
+                other,
+                "alpha_2",
+                country.alpha_2,
+                f"has the code of three letters {country.alpha_3} for the country "
+                f"{country.alpha_2}, and the store has it for the country {other.alpha_2}",
+            )
