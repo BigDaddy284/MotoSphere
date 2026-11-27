@@ -5,7 +5,9 @@ restrictions and collection status.
 
 ## Current state
 
-No sources have been registered yet.
+No source is registered in the store yet. One source has been found, its
+licence read, and its file taken into the repository: the list of the
+countries, from the project iso-codes (DAT-012, below).
 
 ## How a source is described
 
@@ -54,3 +56,90 @@ collecting.
 
 | Name | Website | Country | Category | Information types | Collection method | Licence / terms | Restrictions | Status |
 |---|---|---|---|---|---|---|---|---|
+| iso-codes | <https://salsa.debian.org/iso-codes-team/iso-codes> | – (of no one country) | – (none of the list fits: see below) | `reference data` | `public dataset` | LGPL-2.1-or-later, © 2016 Dr. Tobias Quathamer; read in release 4.20.1 on 2026-11-27 | Every copy keeps the notice and comes with the licence; a changed copy says that it was changed and when; a work that takes over part of the list is passed on under the same licence | File in the repository, unchanged (DAT-012). Not in the store yet |
+
+## The countries: iso-codes
+
+**What it is.** iso-codes is a project of Debian that keeps the lists of
+several ISO standards in one place, "rather than repeated in many
+programs throughout the system" (its `README.md`). Its file
+`data/iso_3166-1.json` is the list of ISO 3166-1, the international
+standard for the names of countries: 249 entries, each with its code of
+two letters, its code of three letters, its number and its name in
+English.
+
+**What MotoSphere takes.** That one file, unchanged, from release 4.20.1
+of 2026-01-01, with the licence of the release beside it and a note that
+says where both came from
+(`backend/src/motosphere/reference/iso-codes/`). A test holds both files
+to the release, byte for byte. MotoSphere reads the two codes of letters
+and the name of each entry, and nothing else. Nothing is fetched while
+the pipeline runs: a newer release is taken by a person, as the note
+beside the files says.
+
+**Its licence, as read.** The release says of its files `data/*json`, in
+its `REUSE.toml`: copyright 2016 Dr. Tobias Quathamer, licence
+`LGPL-2.1-or-later`, the GNU Lesser General Public License, version 2.1
+or any later version. The text of the licence comes with the release and
+is in the repository beside the file. It permits copying the file and
+passing it on. It asks three things, which every task that passes the
+list on has to keep:
+
+- every copy keeps the notice of copyright and comes with the licence;
+- a changed copy says that it was changed, and when;
+- a work that takes over the list, or part of it, is passed on under the
+  same licence, free of charge.
+
+The file in the repository is an unchanged copy with its notice and its
+licence, so the first is kept and the second does not arise. The third
+matters once the countries are published with the site's data: the
+published file then names iso-codes and this licence. That is for the
+task that publishes them (PUB-003).
+
+**How it was fetched.** The release as its makers published it,
+`iso-codes_4.20.1.orig.tar.xz`, from the Ubuntu archive
+(<https://archive.ubuntu.com/ubuntu/pool/main/i/iso-codes/>), once, on
+2026-11-27. Its SHA-256 is the one the description of the source package
+there names for it. The project's own server could not be reached from
+where the planner works.
+
+**What was checked.** The file is JSON with one list of 249 entries. No
+two entries have one code of two letters, one code of three letters, one
+number or one name. Every code of two letters is two capitals of the 26
+letters, and every code of three is three. Every one of the 249 entries
+has the same code of three letters and the same number as Unicode's
+Common Locale Data Repository gives for its code of two letters
+(`territoryCodes` in `common/supplemental/supplementalData.xml`, as it
+stood on 2026-11-27): a second list, kept by other people, agrees with
+all of it.
+
+**The names are the standard's.** A name is the short name of the
+standard in English, as iso-codes writes it. Most read as one expects
+("New Zealand", "Türkiye"). Fifteen are written with a comma
+("Korea, Republic of"), and some are not what a visitor would call the
+place. iso-codes has a second, common name for eleven of them ("South
+Korea"). MotoSphere stores the name as the source writes it. Which name
+the site shows is decided where countries are first shown.
+
+**What else was looked at.**
+
+- **Unicode's Common Locale Data Repository** (Unicode License v3, read
+  in its repository). Its list of regions is not the list of ISO 3166-1:
+  it has 257 regions in ordinary use, the 249 of the standard and eight
+  more (AC, CP, CQ, DG, EA, IC, TA, XK), and nothing in it says which are
+  which. Its English names are its own. It is used here as the check
+  above and for nothing else; nothing of it is in the repository.
+- **ISO itself.** The page of the standard could not be read from where
+  the planner works, so nothing is said here about its terms. The list
+  is not taken from ISO.
+- **Not looked into:** GeoNames (its server could not be reached), the
+  United Nations' list of countries and areas, Wikidata and Natural
+  Earth. None was needed once a source was found that has the list
+  itself under a licence that allows passing it on.
+
+**Why it has no category yet.** A source is described by one of twelve
+kinds (`SourceCategory`, DAT-039), each a kind of website of the sport: a
+governing body, a championship, a track, a club and so on. A project
+that keeps the lists of a standard is none of them, and it is not put
+under one that does not fit. The kind it needs is a task of its own,
+before the source is registered in the store.

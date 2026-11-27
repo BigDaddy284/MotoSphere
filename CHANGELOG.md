@@ -392,6 +392,13 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   source keeps what it had and its key, every row that points to a
   source points to the same one, and the key of a source that was
   deleted is still not given again (DAT-057).
+- The countries of the world as a list that comes with the pipeline:
+  the file of ISO 3166-1 from the project iso-codes (release 4.20.1),
+  unchanged, with its licence (LGPL-2.1-or-later) and a note of where it
+  came from beside it, and a reader that gives its 249 countries, each
+  with its two codes and its English name, or refuses a damaged file
+  whole. `DATA_SOURCES.md` has the source, its licence and what else was
+  looked at. Nothing of it is in the store yet (DAT-012).
 
 ### Removed
 
