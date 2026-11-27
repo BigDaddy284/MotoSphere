@@ -6,8 +6,9 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 13 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 14 and
 has six tables: `source`, that of the information sources (DAT-006),
+each of which can say which country it is of (DAT-057),
 `source_offer`, which says what kinds of information each of them offers
 (DAT-040; see "The information sources" for both), `collection_run`,
 the record of every time a source was collected from (DAT-007; see "The
@@ -193,8 +194,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 13." or "The data store lacks 10
-migrations: … is at schema version 3, and the newest is version 13." In
+is up to date: … is at schema version 14." or "The data store lacks 11
+migrations: … is at schema version 3, and the newest is version 14." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -219,6 +220,7 @@ list of them, and nothing else (DAT-006):
 | 11 | `hold_the_key_of_a_review_item_to_1_or_more` | Makes the two triggers by which a row of `review_item` has a key of 1 or more | DAT-056 |
 | 12 | `keep_a_decided_review_item_from_being_replaced` | Makes the two triggers by which no row takes the place of a decided row of `review_item` | DAT-055 |
 | 13 | `make_the_countries` | Makes the table `country` and the index over the source of its rows | DAT-011 |
+| 14 | `let_a_source_say_its_country` | Builds the table `source` anew with the column `country_id`, every source with what it had, and makes the index over that column, `ix_source_country_id` | DAT-057 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -243,7 +245,9 @@ keys stay on: it asks SQLite to check them only when the transaction ends
 the table aside, drops it, makes it anew under its own name, fills it again
 and drops the copy. If a row that is pointed to was lost on the way, the
 commit is refused and the store is as it was before. The tests do exactly
-this on every machine the gates run on.
+this on every machine the gates run on. The fourteenth migration is the
+first that does it to a table of the store (DAT-057; see "A source says
+which country it is of").
 
 The mark was chosen on 2026-11-19 (DAT-023). SQLite's own list of the
 marks it knows (`magic.txt` in its source, read that day) names Fossil,
@@ -994,12 +998,14 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have six tables, seven indexes and ten triggers to
+Today the two have six tables, eight indexes and ten triggers to
 agree on: `source`, `source_offer`, `collection_run`, `record_change`,
 `review_item`, `country`, the index of the runs of one source, the two
 indexes and the four triggers of `record_change`, the three indexes
-and the six triggers of `review_item`, and the index of the countries
-of one source. For an index that is over some
+and the six triggers of `review_item`, the index of the countries
+of one source, and the index of the sources of one country. For
+`source` the two agree on the table as the fourteenth migration built
+it anew, not as the first made it. For an index that is over some
 rows only, which rows is part of the statement, and so of what must
 agree.
 That the comparison can fail is proven with two models and migrations of
@@ -1018,7 +1024,10 @@ for a few that belong together. The package names every model, and
 `SCHEMA` there is the whole schema.
 
 **The table `source`.** Its key and its two times are those of every
-table. The first migration makes it (`make_the_sources`).
+table. The first migration makes it (`make_the_sources`), and the
+fourteenth builds it anew with the column `country_id`
+(`let_a_source_say_its_country`; see "A source says which country it is
+of" below).
 
 | Column | What it holds | When it is without a value | What the table refuses |
 |---|---|---|---|
@@ -1032,6 +1041,7 @@ table. The first migration makes it (`make_the_sources`).
 | `usage_restrictions` | What its terms ask for or forbid, in plain words | None is known | Empty text |
 | `terms_read_at` | When a person last read its terms | Nobody has yet | |
 | `switched_on` | Whether MotoSphere collects from it | Never | A number that is not 1 or 0; yes, while `terms_read_at` is without a value |
+| `country_id` | The country it is of: the key of a row of `country` | It is of no one country, or nobody has said yet | A key that no country has; what is not a whole number |
 
 What the planner's trial settled:
 
@@ -1057,13 +1067,78 @@ What the planner's trial settled:
 - **How often a source is scanned is said in whole hours**: 24 is daily and
   168 weekly. A source without a number is not looked at by the clock, as
   a file that is loaded once by a command is not.
-- **What is not in the table.** The country of a source is a task of
-  its own (DAT-057), now that there is a table of the countries
-  (DAT-011). The kinds of information it offers
+- **What is not in the table.** The kinds of information it offers
   are in a table of their own, `source_offer` (below). When it was last
   scanned, how it is doing and its last error are what its runs say, and
   one function reads it from them ("How a source is doing"). They are not
   stored a second time here, where the two could come to disagree.
+
+**A source says which country it is of** (DAT-057), so that the sources
+of one country can be found: the federation of a country, its clubs,
+its tracks. The column `country_id` holds the key of a row of `country`
+("The countries").
+
+- **A source may be without a country.** A body for the whole world is
+  of no one country, and of a source that was stored before somebody
+  looked, nobody has said yet. The table does not tell the two apart:
+  no value means only that no country is said. Neither the model nor
+  the table gives the column a value.
+- **The country must be there.** The foreign key
+  `fk_source_country_id_country` refuses a key that no country has,
+  when a source is stored and when it is changed. The column is a whole
+  number: the table is strict, so text and part of a number are refused,
+  and a whole number written as text is read by SQLite as the number it
+  is and then held to the same rule.
+- **A country that a source is of cannot be deleted.** Nothing is done
+  for the source when its country would go: SQLite refuses to delete
+  the country. Once no source is of it any more, because each was moved
+  to another country, to none, or was itself deleted, the country can
+  go. Two sources can be of one country.
+- **The sources of one country are found by an index**,
+  `ix_source_country_id`, over the column alone. SQLite also uses it
+  for the question it asks itself before a country is deleted, whether
+  a source is of it, and answers that from the index without reading
+  the table.
+- **The two tables point to each other.** A country says which source
+  it came from, and a source says which country it is of. A body that
+  publishes the list of the countries is itself of one of them. So
+  such a source is stored first, of no country; its countries follow;
+  and then it is said which of them it is of. To take them away, the
+  source is first of no country again, then its countries go, then the
+  source. While the two point to each other neither can be deleted.
+  Nothing else in the schema goes round, and a test holds that:
+  SQLAlchemy cannot put two such tables in an order (`sorted_tables`
+  warns, and a warning fails a test here), and nothing in the store's
+  code asks it to. Making the tables from the models needs no order in
+  SQLite, where a table can name one that is not there yet.
+- **How the migration adds the column.** SQLite puts a column that is
+  added to a table that is there after all the others, and cannot give
+  it a foreign key with a name, so the table would not be as its model
+  makes it ("The models and the migrations agree"). The fourteenth
+  migration builds the table anew ("How the schema changes"): it asks
+  SQLite to check the foreign keys only when the transaction ends,
+  copies the rows of `source` aside (`source_before`), drops the table,
+  makes it again with the column and fills it from the copy, every
+  source with what it had and with its key, and of no country. Then it
+  drops the copy and makes the index. The four tables whose rows point
+  to a source (`source_offer`, `collection_run`, `review_item` and
+  `country`) are not touched, and their rows point to the same sources
+  afterwards; if one did not, the migration would be refused as a
+  whole.
+- **The highest key is kept.** SQLite remembers for a table whose keys
+  are never given twice the highest key it has given (in its own table
+  `sqlite_sequence`), and forgets it when the table is dropped. Filled
+  again, the new table would know only the keys of the sources that
+  are there, and the key of a source that was deleted would be given
+  to the next one. So the migration reads the highest key before it
+  drops the table (`source_key_before`) and puts it back after filling
+  it. A table that never gave a key has none before and none after.
+- **The migration is all or nothing**, like every migration. Where a
+  table of the name of one of its two copies is there already, or an
+  index of the name of its index, it fails and the store is as it was:
+  at version 13, the table without the column, every row and the
+  highest key as before. A test makes it fail at its very last
+  statement, after the table was dropped, made anew and filled.
 
 Each list is said once, in the code, as a `StrEnum` whose values are the
 texts that are stored (see "One of a list"). The texts are words in small
@@ -2530,13 +2605,13 @@ in every table.
   writes otherwise from one day on becomes one row of history with
   what it was. Nothing in the table stops a change past that
   function, here as elsewhere. A country can be deleted while nothing
-  refers to it; the first table that refers to the countries decides
-  what holds them.
+  refers to it. The sources are the first to refer to the countries: a
+  country that a source is of cannot be deleted (DAT-057; see "A source
+  says which country it is of").
 - **What is not in the table.** The number the standard gives each
   country, which nothing in the design asks for. The parts of a
   country, which are a table of their own (DAT-013). The country of a
-  source, which is a column of `source` and a task of its own
-  (DAT-057).
+  source is a column of `source` (DAT-057).
 
 ## What the store relies on in SQLite
 

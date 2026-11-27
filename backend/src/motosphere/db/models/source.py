@@ -143,6 +143,9 @@ class Source(Base):
     terms_read_at: Mapped[datetime | None]
     # Whether MotoSphere collects from it.
     switched_on: Mapped[bool] = mapped_column(default=False)
+    # The country it is of. No value: it is of no one country, as a body
+    # for the whole world is, or nobody has said yet.
+    country_id: Mapped[int | None] = mapped_column(ForeignKey("country.id"), index=True)
 
 
 class SourceOffer(Base):
