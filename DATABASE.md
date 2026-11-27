@@ -6,7 +6,7 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 10 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 11 and
 has five tables: `source`, that of the information sources (DAT-006),
 `source_offer`, which says what kinds of information each of them offers
 (DAT-040; see "The information sources" for both), `collection_run`,
@@ -21,7 +21,8 @@ the whole table (DAT-049). The fifth is `review_item`, the review
 queue: what is in doubt and waits for a person's decision (DAT-010;
 see "The review queue"), where the store itself refuses the same doubt
 a second time (DAT-050) and keeps a decision: an item that was decided
-is neither edited nor deleted (DAT-054; see "A decision is kept"). One
+is neither edited nor deleted (DAT-054; see "A decision is kept"). A
+key of the queue is 1 or more (DAT-056; see "A key is 1 or more"). One
 function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"), one puts two records that may
@@ -174,7 +175,7 @@ newest schema (DAT-024). It opens the store at `MOTOSPHERE_STORE_PATH`
 with `open_store`, which makes the file if it is not there, calls
 `migrate`, and writes one sentence to standard output, with the file's
 whole path and the store's version: "A new data store was made: …", "The
-data store was brought up to date: … went from schema version 2 to 10." or
+data store was brought up to date: … went from schema version 2 to 11." or
 "The data store is up to date: …". A store that cannot be opened, or that
 is refused, gives its one sentence on standard error, with nothing before
 or after it, and the exit code 1, and is left as it is. An error inside a
@@ -188,8 +189,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 10." or "The data store lacks 7
-migrations: … is at schema version 3, and the newest is version 10." In
+is up to date: … is at schema version 11." or "The data store lacks 8
+migrations: … is at schema version 3, and the newest is version 11." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -211,6 +212,7 @@ list of them, and nothing else (DAT-006):
 | 8 | `make_the_review_items` | Makes the table of the review queue, `review_item`, and the index of the sources its items name, `ix_review_item_source_id` | DAT-010 |
 | 9 | `hold_one_doubt_to_one_review_item` | Makes the two indexes by which one doubt is one review item, each of which lets no two rows be alike and is over the items of one shape: `ix_review_item_record_table_record_id_other_record_id` and `ix_review_item_record_table_record_id_field_source_id_source_value` | DAT-050 |
 | 10 | `keep_the_decision_of_a_review_item` | Makes the two triggers by which a decided row of `review_item` is neither edited nor deleted | DAT-054 |
+| 11 | `hold_the_key_of_a_review_item_to_1_or_more` | Makes the two triggers by which a row of `review_item` has a key of 1 or more | DAT-056 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -986,11 +988,11 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have five tables, six indexes and six triggers to
+Today the two have five tables, six indexes and eight triggers to
 agree on: `source`, `source_offer`, `collection_run`, `record_change`,
 `review_item`, the index of the runs of one source, the two indexes
 and the four triggers of `record_change`, and the three indexes and
-the two triggers of `review_item`. For an index that is over some
+the four triggers of `review_item`. For an index that is over some
 rows only, which rows is part of the statement, and so of what must
 agree.
 That the comparison can fail is proven with two models and migrations of
@@ -2335,6 +2337,49 @@ migrations agree"):
 - **Whoever can change the schema can take a trigger away.** The test
   of the models and the migrations fails when one of the two is
   missing from either.
+
+### A key is 1 or more
+
+The store gives the items of the queue their keys, from 1 up. The
+eleventh migration (`hold_the_key_of_a_review_item_to_1_or_more`,
+DAT-056) makes two triggers on `review_item` that refuse a key below 1
+written by hand, and the model makes the same two wherever the table is
+made from it:
+
+| Trigger | Fires | What SQLite says |
+|---|---|---|
+| `tr_review_item_key_positive` | After a new row whose key is below 1 | "A key of the review queue (review_item) is 1 or more." |
+| `tr_review_item_key_stays_positive` | After a row was given a key below 1 | "A key of the review queue (review_item) is 1 or more." |
+
+- **Why.** A new item that names no key has none until its row is
+  written, and SQLite shows -1 for it until then. The task that keeps
+  a decided item from being replaced (DAT-055) asks before every new
+  row whether its key is that of a decided item. A decided item with
+  the key -1 would then stop every new item that names no key. So
+  there is no such item: the same rule, for the same reason, as in the
+  history (see "The history is only added to").
+- **Both ask after the row is written**, when a new item has the key
+  the store gave it, and SQLite takes the row back with the statement.
+  A trigger that asked before would refuse every new item that names
+  no key.
+- **A new item**: its key may be named, when it is 1 or more. Below 1
+  it is refused, open or decided, of either shape, and also where the
+  statement says `OR REPLACE` or `OR IGNORE`.
+- **A changed key**: an open item may be given another key of 1 or
+  more, as before, and none below 1. The second trigger fires only
+  for a statement that names the key (`UPDATE OF id`), so every other
+  change costs nothing more.
+- **A decided item** is not given any other key: the triggers of a
+  kept decision ask before the row is changed, these after it, so
+  SQLite says "A decided review item (review_item) is never edited."
+- **SQLite stops the statement, and no more**, as with a kept
+  decision: what the statement had done to other rows is taken back
+  with it, what the work did before stays, and in a unit of work the
+  unit fails as a whole.
+- **An item that has a key below 1 already** is left as it is: the
+  migration reads and changes no row. Such an item can still be
+  changed, and given a key of 1 or more. No real store has items yet,
+  and the store itself never gave such a key.
 
 ## What the store relies on in SQLite
 
