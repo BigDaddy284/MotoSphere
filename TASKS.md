@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 52 | 51 |
+| 1 | Foundation (FND) | 53 | 51 |
 | 2 | Data store and published data (DAT, PUB) | 67 | 48 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-012 – The countries reference file.
 
-**Current task, track B (globe):** FND-054 – The browser tests do not run out of network connections on Windows.
+**Current task, track B (globe):** FND-057 – The checks on GitHub's Windows machine do not run out of time.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -112,6 +112,20 @@ time makes it a task of its own. That is FND-054, a task of Phase 1 on
 track B. It stands after GLB-025 and before GLB-002, the first task
 whose browser tests make the browser fetch the engine's files. Order on
 track B: GLB-024, GLB-025, FND-054, then GLB-002.
+
+**A machine that ran out of time (PLAN-045):** on 2026-11-27 the job that
+runs every gate on GitHub's Windows machine was cut off at its limit of 20
+minutes four times, with no test failed, the last time in the run for `main`
+after DAT-012 was merged. The planner measured the cause on that machine:
+the tests make their files on its system disk, a store for each test of the
+pipeline that needs one, and saving takes about twenty times as long there
+as on its work disk (the 2420 tests of the pipeline: 635.19 s and 81.99 s in
+one job). FND-057 gives the step that runs the gates the runner's own folder
+for temporary files, which is on the work disk. It is a task of Phase 1 on
+track B and stands first, before everything else on either track, because no
+pull request can be verified on Windows without it. DAT-012 is merged and is
+recorded as verified when a run for `main` has passed on both machines.
+Order on track B: FND-057, FND-054, then GLB-002.
 
 **The countries, in two steps (PLAN-042):** DAT-011 was two objectives:
 the table of the countries, and the country of a source, which is a
@@ -1207,6 +1221,26 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+
+### FND-057 – The checks on GitHub's Windows machine do not run out of time
+- **Status:** IN PROGRESS
+- **Objective:** The step that runs every gate on GitHub keeps its temporary files in the runner's own folder for them, which on the Windows machine is on the work disk, so that the Windows job ends well within its 20 minutes again.
+- **Description:** Added on 2026-11-27 (PLAN-045), after the job "All gates (Windows)" was cut off at its limit of 20 minutes four times on that day with no test failed (run 46011384280 for `main` at `3da560f`; run 46013480988, a trial of the planner, in both attempts; run 46016966535 for `main` at `307f1ac`, after DAT-012 was merged). Measured on that machine (trial pull request #181, run 46020195509): the system's folder for temporary files is on the system disk, `C:`, and the checkout and the runner's own folder for temporary files are on the work disk, `D:`. One saved change to a store took 19.40 ms on the system disk and 1.01 ms on the work disk, a store made and given every migration 385.8 ms and 33.5 ms, and the 2420 tests of the pipeline 635.19 s and 81.99 s, both ways in one job. The machine's virus scanner does not watch files as they are written, and the machine has 4 processors as before. The step "Run every gate" is given `TEMP` and `TMP`, the two names Windows has for the folder of temporary files, both set to `runner.temp`. The time limit stays at 20 minutes, no test changes, and a developer's machine is told nothing.
+- **Acceptance criteria:**
+  1. In `.github/workflows/checks.yml`, the step "Run every gate" of the gates job has `env:` with `TEMP: ${{ runner.temp }}` and `TMP: ${{ runner.temp }}`, and runs `python scripts/check.py` as before. No other step and no job has an `env:`.
+  2. `timeout-minutes: 20` of the gates job is unchanged, and so is every other line of the workflow.
+  3. `tests/repo/test_ci_workflow.py` has the two new checks, and `runner.temp` is on the list of expressions a workflow may contain. The repository checks are 82.
+  4. With the lines taken out, renamed, given another value or moved to the job, a repository check fails.
+  5. `TESTING.md` has the paragraphs with the table under "Continuous integration" and the bullet, and `CHANGELOG.md` the bullet under Fixed.
+  6. `python scripts/check.py` reports 19 of 19 gates, with 82 repository checks, and two tests more in all than `main` gives at the commit the branch starts from (3364 when that is `307f1ac`).
+  7. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, the Windows job ends within its 20 minutes, and the three jobs after the gates are skipped.
+  8. Only the four files under "Scope" of the plan changed.
+- **Tests required:** the two new repository checks; five prove-it steps; the planner's planted defects in the workflow; the full run of all gates on both machines, with the time of the tests of the pipeline and of the whole job on Windows read from the log; after the merge, the run for `main` with its deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-057.md`
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
