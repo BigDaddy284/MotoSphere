@@ -458,3 +458,11 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   published site answers "not found". A test could so be given an answer
   for a file the build had left out. Both now answer "not found"
   (FND-052).
+- The checks on GitHub's Windows machine no longer run out of time. The
+  tests made their files on that machine's system disk, a store for each
+  test of the pipeline that needs one, and saving takes many times as
+  long there as on its work disk. The job was cut off at its limit of 20
+  minutes with no test failed. The gates now keep their temporary files
+  in the runner's own folder, on the work disk: the 2420 tests of the
+  pipeline took 82 seconds there, against 635 on the system disk in the
+  same job (FND-057).

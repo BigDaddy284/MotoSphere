@@ -25,60 +25,10 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # TRIAL ONLY (FND-057): the short measurements, in a job of their own.
-  trialbench:
-    name: TRIAL what a store costs (Windows)
-    runs-on: windows-2025
-    timeout-minutes: 15
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Install Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: "3.12"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        with:
-          version: "0.11.32"
-
-      - name: TRIAL the machine
-        shell: pwsh
-        run: |
-          "TEMP=$env:TEMP"
-          "RUNNER_TEMP=$env:RUNNER_TEMP"
-          "processors=$env:NUMBER_OF_PROCESSORS"
-          Get-PSDrive -PSProvider FileSystem | Format-Table Name, Used, Free, Root
-          Get-MpComputerStatus | Format-List AMServiceEnabled, AntivirusEnabled, RealTimeProtectionEnabled, OnAccessProtectionEnabled, BehaviorMonitorEnabled
-          Get-MpPreference | Format-List DisableRealtimeMonitoring, ExclusionPath, ExclusionProcess, ExclusionExtension
-
-      - name: TRIAL install the backend
-        working-directory: backend
-        run: uv sync --locked
-
-      - name: TRIAL what a store costs, by where its file is
-        shell: pwsh
-        working-directory: backend
-        run: uv run python ../trial/storebench.py "$env:TEMP\storebench" "$env:RUNNER_TEMP\storebench" "$env:GITHUB_WORKSPACE\storebench"
-
-      - name: TRIAL the slowest tests of four files, as they are run now
-        shell: pwsh
-        working-directory: backend
-        run: uv run pytest -q --durations=15 -p no:cacheprovider tests/integration/test_source.py tests/integration/test_country.py tests/integration/test_runs.py tests/unit/test_reference_countries.py
-
-      - name: TRIAL the same with their folders on the work disk
-        shell: pwsh
-        working-directory: backend
-        run: uv run pytest -q --durations=15 -p no:cacheprovider --basetemp="$env:RUNNER_TEMP\pytest-trial" tests/integration/test_source.py tests/integration/test_country.py tests/integration/test_runs.py tests/unit/test_reference_countries.py
-
   gates:
     name: All gates (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
+    timeout-minutes: 20
     strategy:
       # Each system gives its own result: one failing does not stop the other.
       fail-fast: false
@@ -121,42 +71,18 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
+      # The tests make their files in the system's folder for temporary
+      # files, and the tests of the pipeline make a store there for each
+      # test that needs one. On GitHub's Windows machine that folder is on
+      # the system disk, where saving a store takes many times as long as on
+      # the work disk (TESTING.md, "Continuous integration"). So the gates
+      # are given the runner's own folder for temporary files, which is on
+      # the work disk and is emptied when the job ends.
       - name: Run every gate
-        if: runner.os != 'Windows'
+        env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
         run: python scripts/check.py
-
-      # TRIAL ONLY (FND-057), Windows: where the time of the backend tests goes.
-      - name: TRIAL the machine
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          "TEMP=$env:TEMP"
-          "RUNNER_TEMP=$env:RUNNER_TEMP"
-          "processors=$env:NUMBER_OF_PROCESSORS"
-          Get-PSDrive -PSProvider FileSystem | Format-Table Name, Used, Free, Root
-          Get-MpComputerStatus | Format-List AMServiceEnabled, AntivirusEnabled, RealTimeProtectionEnabled, OnAccessProtectionEnabled, BehaviorMonitorEnabled
-          Get-MpPreference | Format-List DisableRealtimeMonitoring, ExclusionPath, ExclusionProcess, ExclusionExtension
-
-      - name: TRIAL what a store costs, by where its file is
-        if: runner.os == 'Windows'
-        shell: pwsh
-        working-directory: backend
-        run: |
-          uv sync --locked
-          uv run python ../trial/storebench.py "$env:TEMP\storebench" "$env:RUNNER_TEMP\storebench"
-
-      - name: TRIAL the backend tests with their folders on the work disk
-        if: runner.os == 'Windows'
-        shell: pwsh
-        working-directory: backend
-        run: uv run pytest -q --durations=25 -p no:cacheprovider --basetemp="$env:RUNNER_TEMP\pytest-trial"
-
-      - name: TRIAL the backend tests as they are run now
-        if: always() && runner.os == 'Windows'
-        shell: pwsh
-        working-directory: backend
-        run: uv run pytest -q --durations=25 -p no:cacheprovider
-
 
   # The three jobs below publish the site and check it. They run for a
   # change to `main` only, never for a pull request, and only after every
