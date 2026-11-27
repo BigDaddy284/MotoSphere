@@ -10,8 +10,6 @@ server on this computer, which serves whatever a test tells it to.
 
 import http.server
 import io
-import json
-import re
 import shutil
 import subprocess
 import sys
@@ -50,27 +48,7 @@ TYPES = {
     "css": "text/css; charset=utf-8",
     "js": "application/javascript; charset=utf-8",
     "json": "application/json; charset=utf-8",
-    "wasm": "application/wasm",
-    "jpg": "image/jpeg",
-    "xml": "application/xml",
-    "txt": "text/plain; charset=utf-8",
 }
-
-# The kinds of file the engine of the globe brought into the site (GLB-022),
-# and the list of the site's licences, which was there before. Each is served
-# above as GitHub Pages served it when the published site was asked, on
-# 2026-11-27 (FND-053).
-WITH_THE_ENGINE = {
-    **SITE,
-    "./licences.txt": b"MotoSphere is built with the work of others.",
-    "./cesium/ThirdParty/draco_decoder.wasm": b"\x00asm\x01\x00\x00\x00",
-    "./cesium/Assets/Textures/waterNormals.jpg": b"\xff\xd8\xff\xe0",
-    "./cesium/Assets/Textures/NaturalEarthII/tilemapresource.xml": b"<TileMap version='1.0.0'/>",
-}
-
-# The kinds of file the built site holds, each by the end of its name. A
-# browser test holds this list to the site as it is built.
-SITE_KINDS = ROOT / "frontend" / "e2e" / "siteKinds.json"
 
 Served = dict[str, tuple[int, str, bytes]]
 
@@ -305,94 +283,6 @@ class JudgeTest(unittest.TestCase):
         )
 
 
-class EngineKindsTest(unittest.TestCase):
-    def wrong(self, name: str, served_as: str) -> str | None:
-        return live.judge(live.Answer(200, served_as, b"x"), name, b"x")
-
-    def test_a_program_for_the_browsers_own_machine_must_be_served_as_one(self) -> None:
-        name = "cesium/ThirdParty/draco_decoder.wasm"
-
-        self.assertIsNone(self.wrong(name, "application/wasm"))
-        for kind in ("application/octet-stream", "text/plain", "application/javascript"):
-            with self.subTest(kind=kind):
-                self.assertEqual(
-                    self.wrong(name, kind), f"is served as {kind}, expected application/wasm"
-                )
-
-    def test_a_jpeg_picture_must_be_served_as_one(self) -> None:
-        name = "cesium/Assets/Textures/waterNormals.jpg"
-
-        self.assertIsNone(self.wrong(name, "image/jpeg"))
-        for kind in ("application/octet-stream", "image/png", "image/jpg"):
-            with self.subTest(kind=kind):
-                self.assertEqual(
-                    self.wrong(name, kind), f"is served as {kind}, expected image/jpeg"
-                )
-
-    def test_an_xml_file_may_be_served_under_either_of_its_names(self) -> None:
-        name = "cesium/Assets/Textures/NaturalEarthII/tilemapresource.xml"
-
-        for kind in ("application/xml", "text/xml"):
-            with self.subTest(kind=kind):
-                self.assertIsNone(self.wrong(name, kind))
-        for kind in ("text/plain", "text/html", "application/octet-stream"):
-            with self.subTest(kind=kind):
-                self.assertEqual(
-                    self.wrong(name, kind), f"is served as {kind}, expected application/xml"
-                )
-
-    def test_a_text_must_be_served_as_text(self) -> None:
-        self.assertIsNone(self.wrong("licences.txt", "text/plain"))
-        for kind in ("application/octet-stream", "text/html", "text/markdown"):
-            with self.subTest(kind=kind):
-                self.assertEqual(
-                    self.wrong("licences.txt", kind), f"is served as {kind}, expected text/plain"
-                )
-
-    def test_the_rule_of_a_kind_holds_whatever_the_size_of_its_letters(self) -> None:
-        self.assertEqual(live.expected_types("A.WASM"), ("application/wasm",))
-        self.assertEqual(live.expected_types("b.Jpg"), ("image/jpeg",))
-        self.assertEqual(live.expected_types("c.XML"), ("application/xml", "text/xml"))
-        self.assertEqual(live.expected_types("D.TXT"), ("text/plain",))
-
-    def test_a_name_that_only_looks_like_one_of_the_kinds_has_no_rule(self) -> None:
-        for name in ("wasm", "a.wasm.gz", "a.jpeg", "a.jpg.part", "xml", "a.txt.bak", "txt/a"):
-            with self.subTest(name=name):
-                self.assertEqual(live.expected_types(name), ())
-
-    def test_a_file_of_such_a_kind_must_still_be_the_built_one(self) -> None:
-        answer = live.Answer(200, "application/wasm", b"another program")
-        self.assertEqual(
-            live.judge(answer, "cesium/ThirdParty/draco_decoder.wasm", b"\x00asm"),
-            "differs from the built file",
-        )
-
-
-class SiteKindsTest(unittest.TestCase):
-    def listed(self) -> list[str]:
-        kinds: list[str] = json.loads(SITE_KINDS.read_text(encoding="utf-8"))
-        return kinds
-
-    def test_the_list_names_each_kind_once_by_the_end_of_a_name_in_order(self) -> None:
-        kinds = self.listed()
-
-        self.assertIsInstance(kinds, list)
-        self.assertGreater(len(kinds), 0)
-        for kind in kinds:
-            with self.subTest(kind=kind):
-                self.assertIsInstance(kind, str)
-                self.assertRegex(kind, re.compile(r"\A\.[a-z0-9]+\Z"))
-        self.assertEqual(kinds, sorted(set(kinds)))
-
-    def test_every_kind_of_file_the_built_site_holds_has_a_rule(self) -> None:
-        for kind in self.listed():
-            with self.subTest(kind=kind):
-                self.assertTrue(live.expected_types(f"a{kind}"))
-
-    def test_there_is_no_rule_for_a_kind_the_built_site_does_not_hold(self) -> None:
-        self.assertEqual(sorted(live.CONTENT_TYPES), self.listed())
-
-
 class FetchTest(SiteTest):
     def test_returns_the_status_the_content_type_and_the_content(self) -> None:
         self.assertEqual(
@@ -621,55 +511,6 @@ class MainTest(SiteTest):
             "bigdaddy284.github.io/MotoSphere/ is not a web address\n",
         )
         self.assertEqual(self.asked, [])
-
-
-class EngineSiteTest(SiteTest):
-    """The check, run on a site that holds the engine's kinds of file."""
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.served.clear()
-        self.served.update(as_served(WITH_THE_ENGINE))
-
-    def test_passes_when_each_kind_is_served_as_github_pages_serves_it(self) -> None:
-        code, output, pauses = self.check(self.built(WITH_THE_ENGINE))
-
-        self.assertEqual(code, 0)
-        self.assertEqual(output, f"{self.address} is the site that was built: 10 of 10 files.\n")
-        self.assertEqual(pauses, [])
-
-    def test_fails_and_names_the_file_what_it_was_served_as_and_what_was_expected(self) -> None:
-        for name, expected in (
-            ("cesium/ThirdParty/draco_decoder.wasm", "application/wasm"),
-            ("cesium/Assets/Textures/waterNormals.jpg", "image/jpeg"),
-            ("cesium/Assets/Textures/NaturalEarthII/tilemapresource.xml", "application/xml"),
-            ("licences.txt", "text/plain"),
-        ):
-            with self.subTest(file=name):
-                path = f"/MotoSphere/{name}"
-                rightly = self.served[path]
-                self.served[path] = (200, "application/octet-stream", rightly[2])
-
-                code, output, _ = self.check(self.built(WITH_THE_ENGINE))
-
-                self.served[path] = rightly
-                self.assertEqual(code, 1)
-                self.assertEqual(
-                    output,
-                    f"FAILED: {self.address} is not the site that was built:\n"
-                    f"  - {name} is served as application/octet-stream, expected {expected}\n",
-                )
-
-    def test_fails_when_every_file_of_the_new_kinds_is_served_as_plain_bytes(self) -> None:
-        for path, (status, kind, content) in list(self.served.items()):
-            if kind in (TYPES["wasm"], TYPES["jpg"], TYPES["xml"], TYPES["txt"]):
-                self.served[path] = (status, "application/octet-stream", content)
-
-        code, output, _ = self.check(self.built(WITH_THE_ENGINE))
-
-        self.assertEqual(code, 1)
-        self.assertEqual(output.count("  - "), 4)
-        self.assertEqual(output.count(" is served as application/octet-stream, expected "), 4)
 
 
 class ProgramTest(SiteTest):

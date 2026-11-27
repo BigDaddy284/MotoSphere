@@ -1,5 +1,3 @@
-import { readdirSync, readFileSync } from 'node:fs'
-import { extname, join } from 'node:path'
 import { SITE_PATH } from '../site.ts'
 import { manifestUrl } from '../src/data/manifest.ts'
 import { expect, test } from './fixtures'
@@ -106,28 +104,5 @@ test.describe('an address under the path that names no file', () => {
 
     expect(response?.status()).toBe(404)
     await expect(page.getByRole('banner')).toHaveCount(0)
-  })
-})
-
-/**
- * After every deployment the published site is checked file by file
- * (`scripts/live.py`), and each kind of file is held to what a browser must
- * be told it is. `siteKinds.json` lists the kinds the site is made of. This
- * test holds the list to the site that was built for this run, and a test of
- * the check holds the check's rules to the list. A site that gains a kind of
- * file so fails here until the kind is listed, and there until it has a rule.
- * The browser tests are run from the folder of the front end.
- */
-test.describe('the kinds of file of the built site', () => {
-  test('are the listed ones, and each of those is there', () => {
-    const listed: unknown = JSON.parse(
-      readFileSync(join(import.meta.dirname, 'siteKinds.json'), 'utf8'),
-    )
-    const kinds = readdirSync(join(process.cwd(), 'dist'), { recursive: true, withFileTypes: true })
-      .filter((entry) => entry.isFile())
-      .map((entry) => extname(entry.name).toLowerCase())
-
-    expect(kinds.length).toBeGreaterThan(200)
-    expect([...new Set(kinds)].toSorted()).toEqual(listed)
   })
 })

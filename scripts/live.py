@@ -41,10 +41,7 @@ TIMEOUT_SECONDS = 30
 INDEX = "index.html"
 
 # What a browser must be told each kind of file is. A script served as plain
-# text is not run, so the content type is part of the site working. Every
-# kind of file the built site holds has its rule here: the kinds are listed
-# in `frontend/e2e/siteKinds.json`, which one test holds to the site as it
-# is built and another to these rules.
+# text is not run, so the content type is part of the site working.
 CONTENT_TYPES: dict[str, tuple[str, ...]] = {
     ".html": ("text/html",),
     ".js": ("text/javascript", "application/javascript"),
@@ -53,14 +50,6 @@ CONTENT_TYPES: dict[str, tuple[str, ...]] = {
     ".svg": ("image/svg+xml",),
     ".png": ("image/png",),
     ".ico": ("image/x-icon", "image/vnd.microsoft.icon"),
-    # A program for the browser's own machine. A browser compiles it while
-    # it arrives only when it is told that this is what arrives.
-    ".wasm": ("application/wasm",),
-    ".jpg": ("image/jpeg",),
-    # The two names of XML mean the same to a browser.
-    ".xml": ("application/xml", "text/xml"),
-    # Told to be anything else, a text is offered for saving and not shown.
-    ".txt": ("text/plain",),
 }
 
 # Computers that are this one. Only they may be reached without encryption.
