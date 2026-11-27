@@ -13,7 +13,6 @@ from motosphere.db.base import Base
 from motosphere.db.models.collection_run import CollectionRun
 from motosphere.db.models.country import Country
 from motosphere.db.models.record_change import RecordChange
-from motosphere.db.models.region import Region
 from motosphere.db.models.review_item import ReviewItem
 from motosphere.db.models.source import Source, SourceOffer
 
@@ -22,7 +21,6 @@ __all__ = [
     "CollectionRun",
     "Country",
     "RecordChange",
-    "Region",
     "ReviewItem",
     "Source",
     "SourceOffer",

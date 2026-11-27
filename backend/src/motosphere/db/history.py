@@ -38,7 +38,6 @@ __all__ = [
     "make_the_collection_runs",
     "make_the_countries",
     "make_the_record_changes",
-    "make_the_regions",
     "make_the_review_items",
     "make_the_source_offers",
     "make_the_sources",
@@ -715,60 +714,6 @@ def let_a_source_be_a_reference_list(connection: Connection) -> None:
     connection.exec_driver_sql("CREATE INDEX ix_source_country_id ON source (country_id)")
 
 
-def make_the_regions(connection: Connection) -> None:
-    """16: the table of the regions, ``region``, and the index over their source (DAT-013)."""
-    white_space = (
-        "char(9, 10, 11, 12, 13, 28, 29, 30, 31, 32, 133, 160, 5760, 8192, 8193, 8194, 8195, "
-        "8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288)"
-    )
-    connection.exec_driver_sql(
-        f"""
-        CREATE TABLE region (
-            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-            country_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            source_id INTEGER NOT NULL,
-            source_address TEXT NOT NULL,
-            collected_at TEXT NOT NULL,
-            published_on TEXT,
-            last_verified_at TEXT NOT NULL,
-            extraction_method TEXT NOT NULL,
-            confidence TEXT NOT NULL,
-            verification_status TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL,
-            CONSTRAINT uq_region_country_id_name UNIQUE (country_id, name),
-            CONSTRAINT fk_region_country_id_country
-                FOREIGN KEY(country_id) REFERENCES country (id),
-            CONSTRAINT fk_region_source_id_source
-                FOREIGN KEY(source_id) REFERENCES source (id),
-            CONSTRAINT ck_region_name_not_empty CHECK (trim(name, {white_space}) != ''),
-            CONSTRAINT ck_region_source_address_web_address CHECK (
-                ((source_address GLOB '[Hh][Tt][Tt][Pp][Ss]://[^/?#]*')
-                 OR (source_address GLOB '[Hh][Tt][Tt][Pp]://[^/?#]*'))
-                AND NOT (source_address GLOB '*[' || {white_space} || ']*')
-                AND instr(source_address, char(0)) = 0),
-            CONSTRAINT ck_region_published_on_calendar_day CHECK (
-                (published_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]')
-                AND date(published_on) IS published_on AND published_on >= '0001-01-01'),
-            CONSTRAINT ck_region_extraction_method_one_of CHECK (extraction_method IN (
-                'official api', 'structured feed', 'rss feed', 'public dataset',
-                'html extraction', 'structured document', 'json endpoint', 'sitemap discovery',
-                'search engine discovery', 'human submission'
-            )),
-            CONSTRAINT ck_region_confidence_one_of
-                CHECK (confidence IN ('high', 'medium', 'low')),
-            CONSTRAINT ck_region_verification_status_one_of CHECK (verification_status IN (
-                'official', 'independent', 'reconstructed', 'unverified'
-            )),
-            CONSTRAINT ck_region_last_verified_at_not_before_collected_at
-                CHECK (last_verified_at >= collected_at)
-        ) STRICT
-        """
-    )
-    connection.exec_driver_sql("CREATE INDEX ix_region_source_id ON region (source_id)")
-
-
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
@@ -785,5 +730,4 @@ MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_countries,
     let_a_source_say_its_country,
     let_a_source_be_a_reference_list,
-    make_the_regions,
 )

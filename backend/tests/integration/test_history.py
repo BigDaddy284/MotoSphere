@@ -59,7 +59,6 @@ def test_the_history_is_these_migrations_in_this_order() -> None:
         "make_the_countries",
         "let_a_source_say_its_country",
         "let_a_source_be_a_reference_list",
-        "make_the_regions",
     ]
 
 
@@ -1587,88 +1586,3 @@ def test_the_history_names_nothing_of_the_stores_code() -> None:
 
     assert "sqlalchemy" in named
     assert [name for name in named if name.startswith(("motosphere", "."))] == []
-
-
-A_REGION = (
-    "INSERT INTO region (country_id, name, source_id, source_address, collected_at, "
-    "last_verified_at, extraction_method, confidence, verification_status, created_at, "
-    "updated_at) VALUES (1, 'Canterbury', 1, 'https://standards.example/regions.csv', "
-    "'2026-11-27T09:00:00.000000+00:00', '2026-11-27T09:00:00.000000+00:00', 'public dataset', "
-    "'high', 'official', '2026-11-27T09:00:05.000000+00:00', '2026-11-27T09:00:05.000000+00:00')"
-)
-
-
-def test_the_sixteenth_migration_makes_the_table_of_the_regions_and_keeps_what_there_was(
-    store: Engine,
-) -> None:
-    migrate(store, MIGRATIONS[:15])
-    sources_with_a_country_and_what_points_to_them(store)
-    held = held_at_version_14(store)
-    before = (tables(store), indexes(store), triggers(store))
-    written = as_written(store)
-
-    migrate(store, MIGRATIONS[:16])
-
-    assert schema_version(store) == 16
-    assert len(before[0]) == 6
-    assert tables(store) == sorted([*before[0], "region"])
-    assert len(before[1]) == 8
-    assert indexes(store) == sorted([*before[1], ("ix_region_source_id", "region")])
-    assert len(before[2]) == 10
-    assert triggers(store) == before[2]
-    # Every table and index that was there is written as it was, and
-    # holds what it held.
-    now = as_written(store)
-    assert {name: statement for name, statement in now.items() if name in written} == written
-    assert sorted(set(now) - set(written)) == ["ix_region_source_id", "region"]
-    assert held_at_version_14(store) == held
-    with store.begin() as connection:
-        assert connection.exec_driver_sql("SELECT count(*) FROM region").scalar_one() == 0
-        # The new table refers to the countries and the sources that were there.
-        connection.exec_driver_sql(A_REGION)
-    with store.connect() as connection:
-        columns = connection.exec_driver_sql("PRAGMA index_info(ix_region_source_id)").all()
-        rule = connection.exec_driver_sql("PRAGMA index_info(sqlite_autoindex_region_1)").all()
-        assert connection.exec_driver_sql(
-            "SELECT country.alpha_2, region.name, source.name FROM region "
-            "JOIN country ON country.id = region.country_id "
-            "JOIN source ON source.id = region.source_id"
-        ).all() == [("NZ", "Canterbury", "Example Standards Body")]
-    assert [name for _, _, name in columns] == ["source_id"]
-    assert [name for _, _, name in rule] == ["country_id", "name"]
-
-
-def test_the_sixteenth_migration_does_not_pass_over_a_table_of_its_name_that_is_there(
-    store: Engine,
-) -> None:
-    migrate(store, MIGRATIONS[:15])
-    with store.begin() as connection:
-        connection.exec_driver_sql("CREATE TABLE region (note TEXT)")
-        connection.exec_driver_sql("INSERT INTO region (note) VALUES ('kept')")
-
-    with pytest.raises(OperationalError) as refusal:
-        migrate(store, MIGRATIONS[:16])
-
-    assert str(refusal.value.orig) == "table region already exists"
-    assert schema_version(store) == 15
-    with store.connect() as connection:
-        assert connection.exec_driver_sql("SELECT * FROM region").all() == [("kept",)]
-
-
-def test_the_sixteenth_migration_does_not_pass_over_an_index_of_its_name_that_is_there(
-    store: Engine,
-) -> None:
-    # The index is the second thing the migration makes: its table is made
-    # before it, and taken back with the migration.
-    migrate(store, MIGRATIONS[:15])
-    with store.begin() as connection:
-        connection.exec_driver_sql("CREATE INDEX ix_region_source_id ON source (name)")
-    before = (tables(store), indexes(store))
-
-    with pytest.raises(OperationalError) as refusal:
-        migrate(store, MIGRATIONS[:16])
-
-    assert str(refusal.value.orig) == "index ix_region_source_id already exists"
-    assert schema_version(store) == 15
-    assert "region" not in tables(store)
-    assert (tables(store), indexes(store)) == before
