@@ -56,7 +56,6 @@ def test_the_history_is_these_migrations_in_this_order() -> None:
         "keep_the_decision_of_a_review_item",
         "hold_the_key_of_a_review_item_to_1_or_more",
         "keep_a_decided_review_item_from_being_replaced",
-        "make_the_countries",
     ]
 
 
@@ -837,98 +836,6 @@ def test_the_twelfth_migration_does_not_pass_over_a_trigger_of_its_name_that_is_
     assert schema_version(store) == 11
     assert len(before) == 9
     assert triggers(store) == before
-
-
-A_COUNTRY = (
-    "INSERT INTO country (alpha_2, alpha_3, name, source_id, source_address, collected_at, "
-    "last_verified_at, extraction_method, confidence, verification_status, created_at, "
-    "updated_at) VALUES ('NZ', 'NZL', 'New Zealand', 1, "
-    "'https://standards.example/countries.csv', '2026-11-27T09:00:00.000000+00:00', "
-    "'2026-11-27T09:00:00.000000+00:00', 'public dataset', 'high', 'official', "
-    "'2026-11-27T09:00:05.000000+00:00', '2026-11-27T09:00:05.000000+00:00')"
-)
-
-
-def test_the_thirteenth_migration_makes_the_table_of_the_countries_and_keeps_what_there_was(
-    store: Engine,
-) -> None:
-    migrate(store, MIGRATIONS[:12])
-    with store.begin() as connection:
-        connection.exec_driver_sql(
-            "INSERT INTO source (name, website, category, collection_method, switched_on, "
-            "created_at, updated_at) VALUES ('Example Standards Body', "
-            "'https://standards.example', 'governing body', 'public dataset', 0, "
-            "'2026-11-19T08:00:00.000000+00:00', '2026-11-19T08:00:00.000000+00:00')"
-        )
-        connection.exec_driver_sql(
-            "INSERT INTO review_item (kind, record_table, record_id, other_record_id, reason, "
-            "state, created_at, updated_at) VALUES ('possible duplicate', 'track', 7, 8, "
-            "'The two are 40 metres apart.', 'open', '2026-11-26T20:00:00.000000+00:00', "
-            "'2026-11-26T20:00:00.000000+00:00')"
-        )
-    with store.connect() as connection:
-        sources = connection.exec_driver_sql("SELECT * FROM source").all()
-        items = connection.exec_driver_sql("SELECT * FROM review_item").all()
-    before = (tables(store), indexes(store), triggers(store))
-
-    migrate(store, MIGRATIONS[:13])
-
-    assert schema_version(store) == 13
-    assert len(before[0]) == 5
-    assert tables(store) == sorted([*before[0], "country"])
-    assert len(before[1]) == 6
-    assert indexes(store) == sorted([*before[1], ("ix_country_source_id", "country")])
-    assert len(before[2]) == 10
-    assert triggers(store) == before[2]
-    with store.begin() as connection:
-        assert connection.exec_driver_sql("SELECT * FROM source").all() == sources
-        assert connection.exec_driver_sql("SELECT * FROM review_item").all() == items
-        assert connection.exec_driver_sql("SELECT count(*) FROM country").scalar_one() == 0
-        # The new table refers to the sources that were there.
-        connection.exec_driver_sql(A_COUNTRY)
-    assert (len(sources), len(items)) == (1, 1)
-    with store.connect() as connection:
-        columns = connection.exec_driver_sql("PRAGMA index_info(ix_country_source_id)").all()
-        assert connection.exec_driver_sql("SELECT alpha_2, source_id FROM country").all() == [
-            ("NZ", 1)
-        ]
-    assert [name for _, _, name in columns] == ["source_id"]
-
-
-def test_the_thirteenth_migration_does_not_pass_over_a_table_of_its_name_that_is_there(
-    store: Engine,
-) -> None:
-    migrate(store, MIGRATIONS[:12])
-    with store.begin() as connection:
-        connection.exec_driver_sql("CREATE TABLE country (note TEXT)")
-        connection.exec_driver_sql("INSERT INTO country (note) VALUES ('kept')")
-
-    with pytest.raises(OperationalError) as refusal:
-        migrate(store, MIGRATIONS[:13])
-
-    assert str(refusal.value.orig) == "table country already exists"
-    assert schema_version(store) == 12
-    with store.connect() as connection:
-        assert connection.exec_driver_sql("SELECT * FROM country").all() == [("kept",)]
-
-
-def test_the_thirteenth_migration_does_not_pass_over_an_index_of_its_name_that_is_there(
-    store: Engine,
-) -> None:
-    # The index is the second thing the migration makes: its table is made
-    # before it, and taken back with the migration.
-    migrate(store, MIGRATIONS[:12])
-    with store.begin() as connection:
-        connection.exec_driver_sql("CREATE INDEX ix_country_source_id ON source (name)")
-    before = (tables(store), indexes(store))
-
-    with pytest.raises(OperationalError) as refusal:
-        migrate(store, MIGRATIONS[:13])
-
-    assert str(refusal.value.orig) == "index ix_country_source_id already exists"
-    assert schema_version(store) == 12
-    assert "country" not in tables(store)
-    assert (tables(store), indexes(store)) == before
 
 
 def test_a_store_with_the_newest_schema_lacks_no_migration(newest: Engine) -> None:

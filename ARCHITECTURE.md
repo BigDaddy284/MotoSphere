@@ -432,13 +432,6 @@ pipeline's command line. The settings and logging modules stay.
   delete an item that was decided, whoever writes to it (DAT-054). Two
   more hold the key of an item to 1 or more (DAT-056), and two more
   refuse a row that would take the place of a decided item (DAT-055).
-- **The countries are the first table of collected records**, `country`
-  (DAT-011): a country is known by its two codes of ISO 3166-1, which
-  the table holds to capital letters and to one country each, and has
-  its English name. Every row says where it came from, with the eight
-  columns every collected record has. The table knows the form of a
-  code and not the standard's list: the countries themselves are
-  loaded from a source whose licence allows it (DAT-012, DATABASE.md).
 
 The schema is documented in DATABASE.md as tables are added.
 

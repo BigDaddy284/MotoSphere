@@ -836,14 +836,8 @@ items are as they were, neither decided item is replaced from then
 on, by its key or as its doubt, a new item that names no key is
 stored as ever, and it fails, with the store left at its version and
 neither of its triggers kept, where a trigger of either of its names
-is there already (DAT-055); the thirteenth makes the table `country`
-and the index over the source of its rows in a store that has a source
-and a review item, both are as they were, with the six indexes and
-the ten triggers, a country of the source that was there is then
-stored, and it fails, with the store left at its version, where a
-table of its name is there already, and where an index of its name is,
-with the table it had made before that taken back (DAT-011); a store
-with the newest schema lacks no migration; and the module
+is there already (DAT-055); a store with the newest
+schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
 
@@ -1120,9 +1114,8 @@ hand, each in a schema of its own, and two models of the tests' own,
 subclasses of the real `Collected`, hold the rule to what a model of
 collected records really gets.
 
-- **The real schema** breaks no rule. Each of the five tables on the
-  list is named as soon as it is taken off it, in the sentences the
-  rule has
+- **The real schema** breaks no rule. Each of its five tables is named
+  as soon as it is taken off the list, in the sentences the rule has
   for it, so the rule does look at the real tables. Every table on the
   list has a reason, and no two have the same.
 - **What keeps the rule.** The tables of the two models, one of which
@@ -1284,7 +1277,7 @@ triggers, which run in a store with the newest schema.
 (`motosphere.db.changes`, DAT-047) in a store that the migrations
 built, on a real SQLite file. The history is written to the real table
 of the changes. The records are of three tables made for the tests,
-because no real table has a column of every kind: one with a column
+because the real schema has no table of records yet: one with a column
 of every kind the store keeps, one whose keys are the keys of the
 first, and one of collected records. What the store holds afterwards
 is read with plain SQL, past the models.
@@ -1441,8 +1434,7 @@ migrations.
 that the migrations built, on a real SQLite file, so an item is
 written to the real table of the review queue. The records are of
 tables of the tests' own, kept in a schema apart, because the real
-schema had no table of records when they were written. What the store
-holds afterwards
+schema has no table of records yet. What the store holds afterwards
 is read with plain SQL, past the models.
 
 - **One open item**: it names the table and the two keys of its
@@ -1791,68 +1783,6 @@ in the store and no other text of its list; no text is on both lists;
 and a column can be of each list, with a check that names its texts in
 their order, as SQLite is given it. That SQLite refuses a text that is
 not on a list is proven for every list by the tests of "One of a list".
-
-## The countries
-
-`backend/tests/integration/test_country.py` tests the table of the
-countries (DAT-011) in a store that the migrations built, with one
-source in it, on a real SQLite file. What is stored through the model
-is also read as SQLite holds it, and what the table must refuse is
-also written past the model, as plain SQL. Where SQLite refuses a row,
-the test names what SQLite said, word for word, and so which
-constraint refused it; nothing is stored then.
-
-- **What is stored.** A country is read back with everything said of
-  it, its times in UTC and its lists as their values; the row is plain
-  text and whole numbers; a country whose source gives no day has
-  none; a row written past the model is read as a country.
-- **What a country cannot be without**: each of the ten columns but
-  the day it was published, written past the model and through it. The
-  model gives none of them a value.
-- **The form of a code**: 18 texts that are not two capital letters and
-  18 that are not three, each refused by the check of its column:
-  small letters in every place, too few and too many, nothing, a
-  figure, a hyphen, a space or a new line before or after, a letter
-  with a tilde, Greek capitals and wide capitals that look like the
-  letters, and three with a character of the number 0. The model does
-  not put a code into capitals; a number is not a code; bytes are not
-  text. Six pairs of codes are taken, among them the first and the
-  last letter in every place and a code the standard leaves to its
-  users.
-- **One code, one country**: a second country with a code of two
-  letters that is taken is refused, and so is one with a code of three
-  that is taken, through the model and past it; a country cannot be
-  given the code of another afterwards. Two countries with codes of
-  their own are both stored, also where they hold one name.
-- **The name**: empty text of four kinds is refused; six names are
-  stored as they were given, with letters beyond the 26, an
-  apostrophe, brackets, white space around them and small letters.
-- **Where it came from**: a country of a source that is not there is
-  refused; a source that countries came from cannot be deleted; a
-  country can be deleted, its source stays and can then be deleted;
-  the key of a deleted country is not given again. Ten texts that
-  break a rule of the eight columns are refused, each by its check;
-  a country is not last seen before it was collected, to the
-  microsecond; a country can be got in each of the ten ways, be of
-  each of the three levels of confidence and of each of the four
-  statuses. The countries of one source are found through the index,
-  which SQLite says it uses, also when a source is to be deleted.
-- **Its history**: `change` gives a country a new name and a new moment
-  it was last seen, writes one row of history for each of the two and
-  none for a code that stays, and both carry the moment of the change;
-  a change the table refuses leaves the country as it was and no
-  history.
-
-`backend/tests/unit/test_db_models_country.py` reads the model, without
-a store: the table is in the whole schema and the model is named by
-the package; a country is a collected record and its table is not on
-the list of those that hold none; the fourteen columns in their order;
-only the day it was published may be without a value; no column but
-the two times gives itself a value; the two checks of the codes, as
-SQLite is given them; the names of the nine checks, the two rules of
-one code and the reference, and the one index; and the whole schema
-with the countries breaks neither the rules every table keeps nor the
-rule of where records came from.
 
 ## A data store of its own for every test
 
