@@ -25,6 +25,9 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   on GitHub's Windows machine, where seven of eight were not complete
   within 40 seconds. A globe test that runs beside another fails and
   says so (FND-058).
+- The browser tests that are not about the globe run in a browser that
+  gives a page no 3D picture (`--disable-3d-apis`), so that the tests
+  of the globe are the only ones that draw one (FND-059).
 
 ### Added
 
