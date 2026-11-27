@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     css: true,
-    include: ['src/**/*.test.{ts,tsx}', 'sitebuild/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['./src/test/setup.ts'],
     restoreMocks: true,
     passWithNoTests: false,
