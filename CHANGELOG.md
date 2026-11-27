@@ -362,8 +362,3 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the README now say 22.22.2, which is also what the check of the tools
   a computer needs goes by. A repository check holds the number to the
   oldest Node.js that every locked package runs on (FND-046).
-- Browser tests of the narrow screen that could fail by chance. On a
-  narrow screen the top bar is a line taller once the data has arrived,
-  and five tests measured it, or what lies under it, without waiting for
-  the data. Every test of the narrow screen now waits for the data
-  before it measures anything, and a test holds that rule (FND-048).

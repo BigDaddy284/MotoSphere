@@ -101,21 +101,6 @@ test waits for the value itself (`expect.poll`). One test did not
 the page said "Loading data…", which the page says before it asks, and so
 it could fail by chance.
 
-A browser test that measures the page waits first for whatever changes
-what it measures. On a narrow screen the top bar is a line taller once the
-data has arrived than while it loads, and everything under it lies a line
-lower. So the tests of the narrow screen (`e2e/narrow.spec.ts`) load the
-page in two places only: `open`, which waits until the top bar says when
-the data was updated, and `again`, which loads the page again and waits
-for the same. A test of the file holds that there is no third place. Five
-tests did not wait (FND-048). Two measured the top bar first and waited
-afterwards, and failed whenever the data came later than the measurement:
-with the data a second late, every time. Three measured the top bar and
-then what lies under it, and failed when the data came between the two.
-Three tests hold the data back for a second and check that `open` and
-`again` have waited: the data status is there at once, and the top bar
-has the height it has with the data.
-
 The build under test is served under `/MotoSphere/`, the path the site has on
 GitHub Pages (`frontend/site.ts`), and nothing is served at the root of the
 test server. A browser test therefore writes addresses relative to the site
