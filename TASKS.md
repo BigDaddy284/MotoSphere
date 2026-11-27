@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 44 | 44 |
+| 1 | Foundation (FND) | 45 | 44 |
 | 2 | Data store and published data (DAT, PUB) | 62 | 43 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -56,6 +56,15 @@ the project asks for an older one (22.12) than the packages of its own
 unit tests need (22.22.2). That is a defect of the foundation and not of
 the globe, so it is a task of Phase 1, FND-046, and it stands first on
 track B, before GLB-001.
+
+**The licences of what the site ships (PLAN-035):** the same trial read
+the licences of the packages the engine brings, and found that the site
+as it is published today carries no licence text at all: it ships React,
+whose MIT licence asks that its notice go with every copy, and the build
+takes the notices out. That too is a defect of the foundation. It is
+FND-047, and it stands on track B after GLB-001, which changes nothing
+the site publishes, and before GLB-022, the first task that puts files
+of the engine into the site.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -900,6 +909,17 @@ Windows 11. No database and no globe yet.
 - **Verification status:** Verified by the planner on 2026-11-27. All 7 files are identical to the planner's trial. No existing test changed and no package was added, removed or updated: the lock file differs in one line.
 - **Commit:** `763aca2`
 - **Plan:** `docs/plans/FND-046.md`
+
+### FND-047 – The licences of the shipped packages go with the site
+- **Status:** NOT STARTED
+- **Objective:** The published site carries the licence text of every package whose code it ships.
+- **Description:** Added on 2026-11-27 (PLAN-035), found by the planner's trial of GLB-001. The site ships React and `react-dom` with the package they need; their MIT licence asks that the copyright notice and the licence go with every copy, and the build takes the notices out of the code, so the site as published carries none. From GLB-002 on the site also ships the engine of the globe and the packages it needs, under Apache 2.0, MIT, ISC, BSD and two combined licences, with the same duty. The build writes one text file into the site with the name, the version and the licence text of every package it ships, read from the installed packages. A repository check holds the licences of the shipped packages to a list of accepted ones, so that a package under a licence nobody has read is not shipped unnoticed. No new package is used. The trial settles whether the file lists every package of the lock file that is not only for the work or only those whose code is in the build, what happens when a package ships no licence file, and where a visitor finds the file. It stands on track B after GLB-001 and before GLB-022.
+- **Acceptance criteria:** the built site holds one file with the name, the version and the licence text of every package it ships; the build fails when one of them has no licence text; a repository check fails for a shipped package whose licence is not on the accepted list; the check of the published site compares the file like every other and passes after deployment; no package is added.
+- **Tests required:** unit tests of the build step on made-up package folders; repository checks of the accepted licences against the lock file, with planted defects; a browser test that fetches the file from the built site; the full run of all gates on both machines; the deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
 
 ---
 
@@ -2068,15 +2088,25 @@ What holds for every task of the phase:
   GLB-023, after tilt.
 
 ### GLB-001 – The Cesium engine installed
-- **Status:** NOT STARTED
-- **Objective:** The front end has the Cesium engine as a locked dependency.
-- **Description:** The package `@cesium/engine` (Apache 2.0) is added to the front end: the engine without the ready-made widgets of the full `cesium` package, which MotoSphere does not use because its controls are its own. Nothing of the application imports it yet, so the built site is what it was. The engine and its packages say which Node.js they need; since FND-046 a repository check holds the project's least Node.js to that, so this task changes the number only if the check asks for it. The planner's trial settles the exact version and whether any package runs a script at install.
-- **Acceptance criteria:** `npm ci` installs the engine on Linux and on Windows from the lock file; the dependency audit reports no advisory; the type check, the lint and the build pass with the engine installed; a unit test imports the engine and gets from it the position of a point on the Earth that the reference ellipsoid gives; the check of the least Node.js (FND-046) passes with the engine's packages in the lock file; the built site holds the same files as before.
-- **Tests required:** frontend unit tests of the engine's arithmetic through the real package; the repository checks with the new lock file; planted defects; the full run of all gates on both machines.
+- **Status:** IN PROGRESS
+- **Objective:** The front end has the Cesium engine as a locked dependency: the packages `@cesium/engine` and `@cesium/core` are named, locked and installed, unit tests use the engine as it is installed, and a repository check holds which packages the site ships.
+- **Description:** The package `@cesium/engine` 26.5.0 (CesiumJS 1.147, Apache 2.0) is added to the front end: the engine without the ready-made viewer of the full `cesium` package, which MotoSphere does not use because its controls are its own. The planner's trial found that the engine keeps its arithmetic (positions, angles, the shape of the Earth) in a package of its own, `@cesium/core` 0.1.1, and warns when those names are taken from the engine, which it says it will stop handing out; so the project names that package too, and the engine and the application must use one copy of it. The two bring 28 packages, none with a script at install, and need no newer Node.js than the project asks for since FND-046. Nothing of the application imports the engine yet, so the build makes the same files as before. One new file of unit tests uses the engine as installed; one new file of repository checks holds the list of the packages the site ships.
+- **Acceptance criteria:**
+  1. `frontend/package.json` names `@cesium/core` (`^0.1.1`) and `@cesium/engine` (`^26.5.0`) under `dependencies`, beside React and `react-dom`, and `npm ci` installs them from the lock file on Linux and on Windows, with no script run at install.
+  2. The dependency audit reports no advisory. The type check, the lint, the format check and the build pass with the engine installed.
+  3. Unit tests import the engine as installed and get from it the positions the reference ellipsoid WGS84 gives for six places, the order of longitude and latitude, heights in metres and the way back to degrees. A warning from the engine fails a test.
+  4. A unit test holds that the engine's globe stands on the very ellipsoid the application gets from `@cesium/core`.
+  5. The repository checks hold which packages the site ships; that none is named in both groups; that the lock file names the same packages for the project, installs one copy of each shipped package and does not mark it as only for the work; and that `cesium`, `@cesium/widgets` and `resium` are neither named nor installed.
+  6. The check of the least Node.js (FND-046) passes unchanged with the new lock file.
+  7. The build makes the same files as before.
+  8. No existing test changes; all tests pass.
+  9. `python scripts/check.py` reports 19 of 19 gates, with 62 repository checks and 223 frontend unit tests, and 20 tests more in all than `main` gives at the commit the branch starts from (2436 when that is `b141ed0`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 11 new frontend unit tests through the real packages: the reference ellipsoid, six places on the Earth, the order of the degrees, heights, the way back, and the one ellipsoid of the engine and the application. 9 new repository checks in 2 classes, standard library only: the reading of made-up lock files, and six checks of the real package file and lock file. 35 planted defects against the repository checks and 6 against the unit tests. A comparison of the built site with the one `main` gives. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/GLB-001.md`
 
 ### GLB-022 – The engine's own files in the built site
 - **Status:** NOT STARTED
