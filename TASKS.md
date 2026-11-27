@@ -976,15 +976,26 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-048.md`
 
 ### FND-049 – The top bar keeps its height when the data arrives
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** On a narrow screen the top bar is as tall while the data loads as afterwards, so that nothing under it moves when the data arrives.
-- **Description:** Added on 2026-11-27 (PLAN-036). On a phone the top bar puts the data status and the day on one line while it says "Loading data…", and on two lines once it says when the data was updated, because the two pieces wrap by how long their words are. The bar grows by a line (from 78 to 99 pixels at 360 pixels wide), and the globe stage under it moves down, a moment after the page has appeared. The layout should not depend on how long the words happen to be: where the two pieces cannot share a line once the data is there, each has its line from the start. The trial settles from which width the two share a line, whatever the words and the visitor's language, and what a failed or slow load shows. It stands on track B after FND-047.
-- **Acceptance criteria:** at every tested narrow width the top bar has the same height while the data loads, when it has arrived, and when it could not be loaded; the globe stage does not move; the pieces of the top bar are whole and do not lie over each other in each of those states; a wide screen is as it was.
-- **Tests required:** browser tests that hold the data back and measure the top bar and the stage before and after it arrives, at the narrow widths and at a wide one, and with a load that fails; unit tests where the layout's numbers are written twice; planted defects; the full run of all gates on both machines; the deployment and the check of the published site.
+- **Description:** Added on 2026-11-27 (PLAN-036). On a phone the top bar put the data status and the day on one line while it said "Loading data…", and on two lines once it said when the data was updated, because the two pieces wrapped by how long their words were. The bar grew by a line (from 78 to 99 pixels at 360 pixels wide), and the globe stage under it moved down, a moment after the page had appeared. Now the width of the screen alone decides, in the layout's style sheet: below 640 pixels each piece has a line of its own from the start, and from 640 pixels up to the wide screen the two share one line and are never wrapped. A piece too long for its line ends in "…"; on a shared line the data status stays whole and the date gives way. The 640 comes from measuring both pieces in each of the 61 languages the test browser writes dates in, on every day of a year: the widest pair needs 572 pixels with the edges of the bar. A failed load ("Data unavailable", "Reload the page to see the data") shows the same bar. A new file of browser tests, `frontend/e2e/arrival.spec.ts`, holds the data back and measures the page before and after it arrives. No component changes, and a wide screen is as it was.
+- **Acceptance criteria:**
+  1. At 320, 360, 390, 639, 640, 844, 899 and 1366 pixels wide the top bar and the globe stage are where and as large as they were, to the pixel, when the data arrives.
+  2. From 360 pixels on the bar has its number: 99 pixels below 640, 78 from 640 to 899, 48 from 900.
+  3. The bar is as tall when the page says "Data unavailable" or "Reload the page to see the data".
+  4. Every piece of the top bar is whole, on one line, inside the bar and clear of the others, while the data loads, when it has arrived and when it could not be loaded.
+  5. At 639 pixels each piece of information has a line of its own; at 640 the two share one; before and after the data arrives.
+  6. Words too long for their line are cut short and not wrapped, and the bar is as tall as ever: on a shared line the data status stays whole and the date gives way.
+  7. A wide screen is as it was, and no existing browser test changes its result.
+  8. No package is added; all tests pass.
+  9. `python scripts/check.py` reports 19 of 19 gates, with 217 browser tests and 304 frontend unit tests, and 37 tests more in all than `main` gives at the commit the branch starts from (2668 when that is `3e5007d`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  10. Only the seven files under "Scope" of the plan changed.
+- **Tests required:** 37 new browser tests that hold the data back and measure the top bar, the globe stage and every piece of the top bar before and after it arrives, at seven narrow widths and at a wide one, with a load that fails in two ways, one pixel on either side of the 640, and with words made too long for their line; the unit test of the widths the style sheet asks about, changed; planted defects in the style sheet against the browser tests and against the unit test; the full run of all gates on both machines; the deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-049.md`
 
 ### FND-050 – The licences of the shipped packages are ones the project has accepted
 - **Status:** PASSED – VERIFIED
