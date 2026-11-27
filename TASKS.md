@@ -15,7 +15,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 |---|---|---|---|
 | 1 | Foundation (FND) | 52 | 51 |
 | 2 | Data store and published data (DAT, PUB) | 65 | 47 |
-| 3 | Interactive 3D Earth (GLB) | 25 | 3 |
+| 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-057 – A source says its country.
 
-**Current task, track B (globe):** GLB-025 – The engine is told where its files are.
+**Current task, track B (globe):** FND-054 – The browser tests do not run out of network connections on Windows.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -2459,7 +2459,7 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-024.md`
 
 ### GLB-025 – The engine is told where its files are
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Before the engine is first used, the application tells it the address of its own files, built from the one place that names the site's path.
 - **Description:** Added on 2026-11-27 (PLAN-041), cut out of GLB-022; settled in the planner's trial. The engine asks for its files beneath one base address. Left to itself it works that address out from where its own code was loaded, which in a built site is a file of the build with a name of its own, and not the folder of GLB-022. One module of the application, `frontend/src/globe/engineAddress.ts`, builds the address from the site's path and the name of the folder, both in `frontend/site.ts`, and puts it under the name the engine reads (`CESIUM_BASE_URL`); the build and the development server take the folder's name from the same place. The application tells the engine where it starts, in `main.tsx`, before it shows anything and nowhere else: the engine reads the address the first time it needs a file, and keeps it. The address is a path and names no computer, so the engine asks the site the page came from and nobody else. The engine's own function for this (`buildModuleUrl.setBaseUrl`) is not used: it is not in the engine's type declarations, and calling it needs the engine loaded, which GLB-002 does only when the globe is shown. Nothing of the application loads the engine yet. A test of the engine when nobody tells it was tried and dropped: the engine keeps the address, and the test runner gives a test no second engine.
 - **Acceptance criteria:**
@@ -2474,10 +2474,10 @@ What holds for every task of the phase:
   9. `python scripts/check.py` reports 19 of 19 gates, with 387 frontend unit tests and 256 browser tests, and 18 tests more in all than `main` gives at the commit the branch starts from (3179 when that is `4dc58fb`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   10. Only the nine files under "Scope" of the plan changed.
 - **Tests required:** 16 new unit tests: of the address; of the telling; through the real engine as installed, of the addresses it builds; from the text of the application's code, of the page and of the settings of the build, that one module names the address and the engine's word for it and that the application tells in one place, before it shows anything; and by starting the application. 2 new browser tests on the built site: the page has told the address, and the browser gets a file of each kind beneath it. Planted defects against the unit tests and against the browser tests. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #177 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates, "Tests: 3179 passed, 0 failed, 0 skipped.", exit code 0 (frontend unit tests 387: 371 before, 16 new; browser tests 256: 254 before, 2 new). The planner's 47 planted defects, one at a time, on the pull request: 37 against the 16 new unit tests, the tests of `main.tsx` and the unit tests of the step of the build and of the development server, 37 of 37 detected; and 10 against the browser tests of the engine's files and of the site, with the site built anew for each, 10 of 10 detected, four of them written so that the type check passes and the browser tests are the judge. On GitHub, read by the planner from the runs and job logs: run 46001452662 on the pull request, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3179 passed, 0 failed, 0 skipped.", with 387 frontend unit tests and 256 browser tests on both machines, the three jobs after the gates skipped; run 46003159351 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3179 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3179 / 0 tests on both machines on GitHub for `main` (repository 80, script tests 219, backend 2237, frontend unit 387, browser 256); 3179 / 0 locally and on both machines for the pull request; all 19 gates passed; 47 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 9 files are identical to the planner's trial. No existing test changed, no package was added and the lock file is unchanged. The built site has 283 files as before. The planner's trial on GitHub (pull request #174, run 45996124551) failed on the Windows machine at its first attempt in one browser test this task does not touch, which could not open the page (`net::ERR_NO_BUFFER_SPACE`): the fault of FND-054, for the third time. Every other test passed there, the two new browser tests among them, and the job passed when it was run once more. The builder reported the full run with 3179 tests passed in its own checkout and the plan's 13 prove-it steps, each with the plan's result, and no deviation from the plan but Node 22.23.5 where the plan's trial had 22.23.4.
+- **Commit:** `63d2c54`
 - **Plan:** `docs/plans/GLB-025.md`
 
 ### GLB-002 – The globe shows the Earth
