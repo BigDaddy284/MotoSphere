@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 53 | 51 |
+| 1 | Foundation (FND) | 53 | 52 |
 | 2 | Data store and published data (DAT, PUB) | 67 | 49 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-058 – A kind of source for reference lists.
 
-**Current task, track B (globe):** FND-057 – The checks on GitHub's Windows machine do not run out of time.
+**Current task, track B (globe):** FND-054 – The browser tests do not run out of network connections on Windows.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -1223,7 +1223,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Commit:** –
 
 ### FND-057 – The checks on GitHub's Windows machine do not run out of time
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The step that runs every gate on GitHub keeps its temporary files in the runner's own folder for them, which on the Windows machine is on the work disk, so that the Windows job ends well within its 20 minutes again.
 - **Description:** Added on 2026-11-27 (PLAN-045), after the job "All gates (Windows)" was cut off at its limit of 20 minutes four times on that day with no test failed (run 46011384280 for `main` at `3da560f`; run 46013480988, a trial of the planner, in both attempts; run 46016966535 for `main` at `307f1ac`, after DAT-012 was merged). Measured on that machine (trial pull request #181, run 46020195509): the system's folder for temporary files is on the system disk, `C:`, and the checkout and the runner's own folder for temporary files are on the work disk, `D:`. One saved change to a store took 19.40 ms on the system disk and 1.01 ms on the work disk, a store made and given every migration 385.8 ms and 33.5 ms, and the 2420 tests of the pipeline 635.19 s and 81.99 s, both ways in one job. The machine's virus scanner does not watch files as they are written, and the machine has 4 processors as before. The step "Run every gate" is given `TEMP` and `TMP`, the two names Windows has for the folder of temporary files, both set to `runner.temp`. The time limit stays at 20 minutes, no test changes, and a developer's machine is told nothing.
 - **Acceptance criteria:**
@@ -1236,10 +1236,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   7. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, the Windows job ends within its 20 minutes, and the three jobs after the gates are skipped.
   8. Only the four files under "Scope" of the plan changed.
 - **Tests required:** the two new repository checks; five prove-it steps; the planner's planted defects in the workflow; the full run of all gates on both machines, with the time of the tests of the pipeline and of the whole job on Windows read from the log; after the merge, the run for `main` with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #183 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 3364 passed, 0 failed, 0 skipped.", exit code 0 (repository checks 82: 80 before, 2 new). The planner's 15 planted defects, one at a time, in the workflow of the pull request (the three lines taken out; either name left out, under another name or with another value; a third name; the lines given to the whole job, to every job or to the step before; another step told something too; the runner's folder handed to the command): 15 of 15 detected by the repository checks, each by as many checks as in the planner's trial. The plan's five prove-it steps, run by the planner too: each fails as the plan names (1, 1, 2, 1 and 2 checks). On GitHub, read by the planner from the runs and job logs: run 46026854786 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3364 passed, 0 failed, 0 skipped.", the three jobs after the gates skipped. On Windows the step shows `TEMP: D:\a\_temp` and `TMP: D:\a\_temp`, the tests of the pipeline took 62.23 s ("2420 passed in 62.23s") and the whole job 8 minutes 8 seconds; the Linux job took 2 minutes 45 seconds, with the tests of the pipeline at 41.91 s. Run 46028117231 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3364 passed, 0 failed, 0 skipped.", the tests of the pipeline on Windows in 52.16 s and the whole Windows job in 6 minutes 30 seconds, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3364 / 0 tests on both machines on GitHub for `main` (repository 82, script tests 219, backend 2420, frontend unit 387, browser 256) and for the pull request, and locally; all 19 gates passed; 15 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 4 files are the same change as the planner's trial. No existing test changed in what it expects, the time limit is 20 minutes as before, and no package was added. The cause was measured on GitHub's Windows machine before the plan (trial pull request #181, run 46020195509) and the remedy was run there before the plan too (trial pull request #182, run 46024517308: the Windows job in 9 minutes 18 seconds). The builder reported the full run with 3364 tests passed in its own checkout, the plan's five prove-it steps, each with the plan's result, the same times from the pull request's run, and no deviation from the plan but Node 22.23.5 where the plan's trial had 22.23.4.
+- **Commit:** `0bbc7b8`
 - **Plan:** `docs/plans/FND-057.md`
 
 ### DAT-001 – Data store research and decision record
