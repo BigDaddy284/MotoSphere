@@ -28,7 +28,7 @@ jobs:
   gates:
     name: All gates (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 50
     strategy:
       # Each system gives its own result: one failing does not stop the other.
       fail-fast: false
@@ -93,7 +93,19 @@ jobs:
         run: Start-Process -FilePath python -ArgumentList 'trial/sampler.py', "$env:RUNNER_TEMP\connections.txt" -WindowStyle Hidden
 
       - name: Run every gate
+        if: runner.os != 'Windows'
         run: python scripts/check.py
+
+      # TRIAL ONLY (FND-054), Windows: many connections, with the browser as
+      # it is and with one feature off, in turns.
+      - name: TRIAL many connections, feature on and off
+        if: runner.os == 'Windows'
+        working-directory: frontend
+        env:
+          STRESS_ROUNDS: 10
+          STRESS_PER_ROUND: 3000
+          STRESS_PER_SECOND: 50
+        run: node trial/stress.mjs
 
       - name: TRIAL what was written down
         if: always() && runner.os == 'Windows'
@@ -102,6 +114,7 @@ jobs:
           New-Item -ItemType File "$env:RUNNER_TEMP\connections.txt.stop" | Out-Null
           Start-Sleep -Seconds 2
           Get-Content "$env:RUNNER_TEMP\connections.txt"
+          Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Tcpip'} -MaxEvents 30 -ErrorAction SilentlyContinue | Format-List TimeCreated, Id, LevelDisplayName, Message
           netsh int ipv4 show tcpstats
           netsh int ipv6 show tcpstats
           Get-Counter '\Memory\Pool Nonpaged Bytes', '\Memory\Pool Paged Bytes' | Format-List
