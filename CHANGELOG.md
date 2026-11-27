@@ -405,6 +405,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the sport. The fifteenth migration builds the table of the sources
   anew so that it takes the new kind; every source keeps all it had,
   its key and its country too (DAT-058).
+- The source of the countries, as the store is told of it: the project
+  iso-codes with its website, its kind, its licence and what the
+  licence asks. One function gives its row and stores it first when the
+  store does not have it, once, switched off; a source of that name
+  that is described otherwise is refused and left as it is. Nothing
+  calls it yet (DAT-060).
 
 ### Removed
 
