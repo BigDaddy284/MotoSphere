@@ -125,6 +125,24 @@ test server. A browser test therefore writes addresses relative to the site
 of their own (`e2e/site.spec.ts`) check that everything the page loads comes
 from under that path.
 
+An address under that path that names no file is answered with "not found"
+(404), as GitHub Pages answers it, and not with the page (FND-052). Until
+then the server of the build under test answered every such address with
+the page and the status 200, so a test that asked for a file the build had
+left out got an answer, and the file would have been missing on the
+published site only. Thirteen tests of `e2e/site.spec.ts` hold it: nine
+ask for an address that names no file (a name without an ending, with the
+ending of a picture and with that of a page; in a folder that is not
+there, in `data/` and in `assets/`; the two folders themselves; and a path
+that goes on past the file of the page), and each is answered 404, at its
+own address, with something that is not the page; three hold that the page
+is still answered, at the path itself, at `index.html` and at the path
+with a question after it; and one opens such an address in the browser,
+which is told "not found" and shows no top bar. The server of the build
+under test is still not GitHub Pages: it answers a file's address with a
+slash after it with the file, for one. The check of the published site
+(`scripts/live.py`) is what asks GitHub Pages itself.
+
 Before it builds, the browser tests' server exports the published data with
 the real export command, so the tests check the served manifest with the
 frontend's own reader and check that it was exported for this run. The browser
@@ -1825,10 +1843,11 @@ On the built site (`frontend/e2e/licences.spec.ts`, browser tests): the
 file is served as plain text under the path of the site and not at the
 root of the server, it is letter for letter what the step writes for the
 packages installed, it names React with the words of its licence, and
-the source of the page names it. The server of these tests answers a
-path under the site that it does not know with the page itself, so a
-test that the file is there goes by its text and its kind, never by the
-status of the answer alone.
+the source of the page names it. When these tests were written the
+server of the build under test answered a path under the site that it
+does not know with the page itself, so they go by the text and the kind
+of the file and not by the status of the answer alone; since FND-052
+that server answers such a path with "not found".
 
 ## The licences the project has accepted
 
