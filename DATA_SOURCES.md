@@ -171,6 +171,7 @@ the Ubuntu archive, above), the day the release was published
 because the file gives each value in a field made for it, and
 `independent`, because iso-codes is not the body that keeps the
 standard. A loading is not a collection run: nothing is fetched. It
-adds what the store does not have and changes nothing; where the store
-and the file say different things of a country, it names the country
-and a person decides.
+adds what the store does not have and changes no country; where the
+store and the file say different things of a country, it names the
+country and puts what the file says to the review queue, where a person
+decides (DAT-062).

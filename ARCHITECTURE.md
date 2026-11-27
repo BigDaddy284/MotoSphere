@@ -541,8 +541,10 @@ the export step, from the data store.
   terms were read and whether it is switched on, is left to them.
   The list itself is brought into the store by a function beside both
   (`motosphere.reference.countries_load`, DAT-059), which adds what the
-  store does not have and changes nothing. It is not a collection run:
-  nothing is fetched, because the file is part of the project.
+  store does not have and changes no country. It is not a collection
+  run: nothing is fetched, because the file is part of the project.
+  What the file says otherwise of a country that is there goes to the
+  review queue (DAT-062).
 
 ### Scrapling evaluation (preliminary, confirmed in task TRK-007)
 
