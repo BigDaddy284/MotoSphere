@@ -183,6 +183,14 @@ Rules:
   step names the package whose file gives its licence; a person who has
   read both puts that there. The source of the page says in a comment
   where the file is.
+- The licence of every such package is one the project has accepted. The
+  list is in `tests/repo/test_frontend_licences.py`, part of the
+  repository checks: each licence as the lock file writes it, with what
+  it asks of whoever passes the code on and how the project meets that.
+  A package under any other licence, or with none named, fails the
+  checks until its licence has been read and put on the list, in the
+  pull request that brings the package. The packages that only build and
+  test the site are not held to the list: nothing of them is passed on.
 - A name the engine has moved to `@cesium/core` (`Cartesian3`,
   `Ellipsoid`, `Math` and about 150 in all) is imported from there. The
   engine still hands those names out, with a warning, and says it will
