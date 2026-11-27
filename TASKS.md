@@ -1154,15 +1154,27 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/FND-052.md`
 
 ### FND-053 – The check of the published site knows the engine's kinds of file
-- **Status:** NOT STARTED
-- **Objective:** The check of the published site holds a program for the browser's own machine (`.wasm`) and a JPEG picture (`.jpg`) to the type a browser must be told they are.
-- **Description:** Added on 2026-11-27 (PLAN-041). After every deployment `scripts/live.py` fetches each published file, compares it byte for byte with the built one, and for seven kinds of file also holds what the server says the file is, because a script served as plain text is not run. The engine's files (GLB-022) are of two more kinds a browser is particular about: a `.wasm` program is compiled while it arrives only when it is served as `application/wasm`, and the pictures of the Earth are `.jpg`. The task stands after GLB-022, when such files are published and what GitHub Pages says they are can be read from the real site and not assumed. What is said of the other kinds the engine brings without a rule (`.xml`, and the licence, `.md`) is read then too, and each gets a rule or a written reason for none.
-- **Acceptance criteria:** the check has a rule for `.wasm` and one for `.jpg`; a published file of either kind that is served as another type fails the check with a plain sentence that names the file, the type it was served as and the type expected; the published site passes the check with the new rules; every kind of file the built site holds either has a rule or is named with the reason it has none, and a test fails when the site gains a kind that is neither.
-- **Tests required:** script tests of the new rules with stand-in answers; a test that reads the kinds of file of a built site; planted defects; the full run of all gates on both machines; the deployment and the check of the published site, which is where the rules meet GitHub Pages.
+- **Status:** IN PROGRESS
+- **Objective:** The check of the published site has a rule for every kind of file the site is made of, the four the engine of the globe brought among them, and a site that gains a kind of file does not pass the gates without one.
+- **Description:** Added on 2026-11-27 (PLAN-041); settled in the planner's trial. After every deployment `scripts/live.py` fetches each published file, compares it byte for byte with the built one, and for seven kinds of file also holds what the server says the file is, because a script served as plain text is not run. With the engine's files (GLB-022) the site holds three kinds more, and a fourth was there before without a rule: programs for the browser's own machine (`.wasm`), which a browser compiles while they arrive only when they are served as `application/wasm`; JPEG pictures (`.jpg`); one XML file; and the list of the licences, `licences.txt`. What GitHub Pages says each of them is was read from the published site on 2026-11-27, from a machine of GitHub's (trial pull request #166, run 45976844272, closed without merging): `application/wasm`, `image/jpeg`, `application/xml` and `text/plain; charset=utf-8`. Each of the four gets a rule; none is left without one for a written reason, which the task had allowed, and the site holds no `.md` file. A list of the kinds of file the built site holds, `frontend/e2e/siteKinds.json`, joins the two sides: a browser test holds the list to the site as it was built, and script tests hold the check's rules to the list, a rule for every listed kind and none for another. What the check does with a file whose kind has no rule is unchanged (it is judged by its content); no such file reaches the published site without a test failing first. The same trial read that GitHub Pages answers an address that names no file with the status 404, which is what FND-052 made the site under test answer.
+- **Acceptance criteria:**
+  1. The check has a rule for `.wasm` (`application/wasm`), `.jpg` (`image/jpeg`), `.xml` (`application/xml` or `text/xml`) and `.txt` (`text/plain`), whatever the size of the letters of the name's end.
+  2. A published file of one of the four kinds that is served as another type fails the check with a sentence that names the file, the type it was served as and the type expected.
+  3. A file of one of the four kinds must still be the built one, byte for byte.
+  4. `frontend/e2e/siteKinds.json` names the kinds of file of the built site, each once, by the end of a name in small letters, in order.
+  5. The browser test fails when the built site holds a file of a kind that is not listed, and when a listed kind is not in the site.
+  6. The script tests fail when a listed kind has no rule, and when there is a rule for a kind that is not listed.
+  7. No existing test changes, and each passes as before; a file whose kind has no rule is still judged by its content.
+  8. No package is added; all tests pass.
+  9. `python scripts/check.py` reports 19 of 19 gates, with 219 script tests and 254 browser tests, and 14 tests more in all than `main` gives at the commit the branch starts from (2956 when that is `6d27157`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  10. After the merge, the check of the published site passes with the new rules.
+  11. Only the six files under "Scope" of the plan changed.
+- **Tests required:** 13 new script tests of the check with stand-in answers: the four rules, the list, and the whole check run against a stand-in site that holds the four kinds. One new browser test that reads the kinds of file of the built site. Planted defects in the rules, in how a kind is found, in the list and in the build, against the script tests and against the browser tests. The full run of all gates on both machines. The deployment and the check of the published site, which is where the rules meet GitHub Pages.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-053.md`
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
