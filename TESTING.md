@@ -760,7 +760,13 @@ doubt in a store that has an item of each shape, the items are as they
 were and each is found through its own index, and it fails, with the
 store left at its version and neither of its indexes kept, where a
 doubt is there twice, of either shape, and where an index of either of
-its names is there already (DAT-050); a store with the newest
+its names is there already (DAT-050); the tenth makes the two triggers
+of a kept decision in a store that has an open and a decided item,
+the items are as they were, the open one can then be changed and the
+decided one cannot, with the three indexes of the table and the four
+triggers of the history as they were, and it fails, with the store
+left at its version and neither of its triggers kept, where a trigger
+of either of its names is there already (DAT-054); a store with the newest
 schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -1116,8 +1122,8 @@ rows of history in it. After every refusal the table is read back with
 every column and must be as it was. The sentences are written out in
 the tests.
 
-- **The triggers in the file**: the four of the history, by name and
-  table, and no other.
+- **The triggers of the table**: the four of the history, by name and
+  table, and no other on it.
 - **An edit is refused**, in seven ways, with plain SQL: a value of one
   row, of every row, a value set to what it holds already, only
   `updated_at`, the key, the key set to that of another row to take its
@@ -1289,10 +1295,12 @@ no row.
   time is refused, and the first is as it was (DAT-050; its own tests
   are below).
 - **What the table does not hold**: an item about records of a table
-  that is not there is stored; and a decided item can be put back to
-  open, or deleted. The tests are there so that neither is taken for
-  something the table does, and the last is changed by the task that
-  closes it (DAT-054).
+  that is not there is stored. The test is there so that it is not
+  taken for something the table does.
+- **A decision is kept**: a decided item cannot be put back to open
+  nor deleted, each refused with its sentence, and both items are as
+  they were (DAT-054; its own tests are below). Until DAT-054 this
+  test put on record that the table did not refuse it.
 
 `backend/tests/unit/test_db_models_review_item.py` tests the two lists
 without a store: their texts are written out in the test, in their
@@ -1508,9 +1516,63 @@ every column of every item.
   tries to keep that: the function's decision is the one that is
   kept.
 
-The test of DAT-010 that puts a decided item back to open past the
-function is unchanged and passes: that the table refuses it is
-DAT-054.
+### A decision is kept
+
+`backend/tests/integration/test_review_item_decision_kept.py` tests
+that a decided row of `review_item` is neither edited nor deleted
+(DAT-054), in a store that the migrations built, on a real SQLite
+file. Most tests begin with four items, written past the model: an
+open possible duplicate, an accepted one, a rejected doubt about a
+field and an open one. After every refusal the table is read back
+with every column and must be as it was. The two sentences are
+written out in the tests.
+
+- **The triggers of the table**: the two, by name and table, and no
+  other on it.
+- **No column of a decided item is given another value**: each of the
+  sixteen columns of the table, on the accepted item and on the
+  rejected one. A test holds that every column the table has is one
+  of them, so that a column a later task adds must get its case.
+- **A decided item is not edited** in five more ways: put back to
+  open, its note taken away, its state set to what it holds already,
+  its key set to that of an open item to take its place, and an edit
+  told to pass over what is refused.
+- **A statement over many items** that would edit a decided one
+  changes none: SQLite takes back what it had done to the open items
+  before.
+- **A decided item is not deleted**: the accepted one, the rejected
+  one, every decided one, and every item in one statement.
+- **Decided, and kept from then on**: an open item of each shape,
+  decided with plain SQL in each of the two ways, and one decided
+  through `decide`, can afterwards be neither put back nor deleted.
+- **What is as before**: an open item gets a note and another reason
+  and is deleted; a new item is stored open or decided, with plain
+  SQL and through the model; a statement that meets no decided item
+  is not refused; and neither is one in an empty table.
+- **Through the model**: a decided item that was read is put back to
+  open, given a note or deleted, every item is given a note or
+  deleted in one statement, and an item with another reason is
+  merged onto a decided one; each is refused in the same sentences.
+- **A refusal takes back the whole unit of work**, the decision of
+  another item made earlier in it included.
+- **On a connection the store's code did not open**, made with
+  Python's own `sqlite3` and with foreign keys off, five statements
+  are refused in the same sentences, and what the refused statement
+  had done before is taken back. There too a refusal stops the
+  statement and not the work: what was written before it, and what
+  is written after it, is kept.
+- **A store made from the models** has the same two triggers and
+  refuses the same.
+- **What the table does not keep a decided item from yet**: four
+  statements that say `REPLACE` take the accepted item out. The test
+  is there so that this is not taken for something the table does,
+  and is changed by the task that closes it (DAT-055).
+
+That the model and the tenth migration say the same triggers, to the
+letter of each sentence, is proven by the test of the models and the
+migrations, which is unchanged. The tests of `decide` are unchanged
+and pass: the function refuses a decided item before the table is
+asked.
 
 ## How far a collected record can be trusted
 
