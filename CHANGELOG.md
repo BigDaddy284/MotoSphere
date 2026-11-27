@@ -378,3 +378,8 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   out of the code. The build now writes `licences.txt` into the site,
   with the licence of every package the site is built with as the
   package itself brings it, and fails when one brings none (FND-047).
+- Nothing held under which licences the site passes code on: a package
+  under a licence nobody had read could be added unnoticed. A repository
+  check now holds the licence of every package the site is built with to
+  a list of seven that were read, each with what it asks and how the
+  project meets it (FND-050).
