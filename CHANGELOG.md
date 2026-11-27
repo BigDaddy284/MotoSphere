@@ -125,6 +125,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   files with the same bytes, and "not found" for every other address in
   their folder. Tests start the development server itself and ask it
   (GLB-024).
+- The application tells the globe engine where its own files are: the
+  folder of this site that holds them. It does so where it starts,
+  before anything is shown, and the address names no other computer
+  (GLB-025).
 - The data store's first decisions (`DATABASE.md`): what it relies on in
   SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
   gates run on, and where the store is kept between scheduled runs
