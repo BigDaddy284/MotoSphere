@@ -473,3 +473,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   GitHub's Linux machine). Both tests now start the page inside React's
   `act`, which comes back when nothing is waiting, and look at the page
   at once, so a start outside `act` fails every time (FND-055).
+- A browser test that could fail by chance on Windows. Three runs on
+  GitHub's Windows machine failed in one browser test that could not
+  open the page ("net::ERR_NO_BUFFER_SPACE"). The machine had room: the
+  browser asks new versions of Windows for a port picked at random for
+  every connection, and now and then Windows refuses one. Measured
+  there: 8 of about 54,000 connections failed with that feature of the
+  browser on, none of about 54,000 with it off. The browser tests now
+  start their browser with the feature off, and one of them sees on
+  Windows that it is off (FND-054).
