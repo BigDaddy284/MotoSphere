@@ -781,13 +781,7 @@ the items are as they were, the open one can then be changed and the
 decided one cannot, with the three indexes of the table and the four
 triggers of the history as they were, and it fails, with the store
 left at its version and neither of its triggers kept, where a trigger
-of either of its names is there already (DAT-054); the eleventh makes
-the two triggers of the keys in a store that has an item with a key
-below 1 and one above, the items are as they were, no item is given a
-key below 1 from then on, and the item that had one is still given a
-note and a key of 1 or more, and it fails, with the store left at its
-version and neither of its triggers kept, where a trigger of either of
-its names is there already (DAT-056); a store with the newest
+of either of its names is there already (DAT-054); a store with the newest
 schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -1594,47 +1588,6 @@ letter of each sentence, is proven by the test of the models and the
 migrations, which is unchanged. The tests of `decide` are unchanged
 and pass: the function refuses a decided item before the table is
 asked.
-
-### A key is 1 or more
-
-`backend/tests/integration/test_review_item_key.py` tests the two
-triggers by which a key of the review queue is 1 or more (DAT-056), in
-a store that the migrations built, on a real SQLite file, with two
-open items and a decided one written past the model. After every
-refusal every column of every item is read back with plain SQL.
-
-- **The table has these triggers and no other**: the two of a kept
-  decision and the two of the keys. This is the one test that names
-  every trigger of the table; a task that gives it another names it
-  there. (The tests of a kept decision ask for their own two.)
-- **A new item with a key below 1 is refused**: with the keys 0, -1,
-  -7 and the least whole number SQLite holds, each as an open item, a
-  decided one, a doubt about a field, and in a statement that says
-  `OR REPLACE` or `OR IGNORE`; also in a queue without items.
-- **A key of 1 or more that is named is taken** (4, 30, the greatest
-  whole number SQLite holds, and 1 in a queue without items), and **a
-  new item that names no key gets the next one**, with plain SQL, with
-  the key written as NULL, and through the model.
-- **An open item is not given a key below 1**, alone, with another
-  column, and with `OR REPLACE` or `OR IGNORE`; a statement that would
-  give one item of several such a key changes none of them, whether it
-  meets that item first or second, and neither does a unit of work
-  whose second statement is refused.
-- **An open item is given another key of 1 or more as before**, also
-  the key it has, and one counted from its own.
-- **Of a decided item the store says first that it is never edited.**
-- **A statement that gives no item a key below 1 is not refused**: an
-  edit that names no key, a key below 1 for an item that is not there,
-  and a delete.
-- **Through the model** a new item with the key 0 or -1 is refused,
-  and so is the key 0 for an open item, with what the unit of work
-  wrote before taken back.
-- **On a connection the store's code did not open**, with foreign
-  keys off, the same is refused in the same sentence; and there a
-  refusal stops the statement and not the work: what was written
-  before it, and what is written after it, is kept.
-- **A store made from the models** has the same four triggers and
-  refuses the same.
 
 ## How far a collected record can be trusted
 

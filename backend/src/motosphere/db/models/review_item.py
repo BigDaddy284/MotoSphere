@@ -26,10 +26,6 @@ store itself refuses to edit it and to delete it. The refusal stands in
 the file, as triggers, so it holds whoever writes to the file, through
 the models or past them. An open item is not kept so: it is given a note,
 decided, and can be deleted.
-
-A key is 1 or more. The store gives keys from 1 up, and it refuses a key
-below 1 that is written by hand, for a new item and for one that is
-there. That too stands in the file, as triggers.
 """
 
 from datetime import datetime
@@ -78,8 +74,8 @@ class ReviewItem(Base):
     The table itself refuses an item that does not name what goes with
     its kind, or names what does not; a record that is said to be its own
     duplicate; a decision without who made it and when; who or when
-    without a decision; the same doubt a second time; any change to an
-    item that was decided; and a key below 1.
+    without a decision; the same doubt a second time; and any change to
+    an item that was decided.
     """
 
     __tablename__ = "review_item"
@@ -187,28 +183,11 @@ _A_DECISION_IS_KEPT = (
 )
 
 
-# The two triggers by which a key is 1 or more: the first for a new item,
-# the second for an item whose key is changed. Each fires after the row
-# is written, when SQLite has given a new item that names no key its key,
-# and SQLite takes the row back with the statement. Before the row is
-# written a new item that names no key has none, and SQLite shows -1.
-_A_KEY_IS_1_OR_MORE = (
-    "CREATE TRIGGER tr_review_item_key_positive AFTER INSERT ON review_item "
-    "WHEN NEW.id < 1 "
-    "BEGIN SELECT RAISE(ABORT, "
-    "'A key of the review queue (review_item) is 1 or more.'); END",
-    "CREATE TRIGGER tr_review_item_key_stays_positive AFTER UPDATE OF id ON review_item "
-    "WHEN NEW.id < 1 "
-    "BEGIN SELECT RAISE(ABORT, "
-    "'A key of the review queue (review_item) is 1 or more.'); END",
-)
-
-
-def _make_its_triggers(table: object, connection: Connection, **said: object) -> None:
-    """Make the four triggers, with the connection that has just made the table."""
-    for trigger in (*_A_DECISION_IS_KEPT, *_A_KEY_IS_1_OR_MORE):
+def _keep_a_decision(table: object, connection: Connection, **said: object) -> None:
+    """Make the two triggers, with the connection that has just made the table."""
+    for trigger in _A_DECISION_IS_KEPT:
         connection.exec_driver_sql(trigger)
 
 
 # Wherever the table is made from the model, its triggers are made with it.
-event.listen(ReviewItem.__table__, "after_create", _make_its_triggers)
+event.listen(ReviewItem.__table__, "after_create", _keep_a_decision)

@@ -27,7 +27,6 @@ from sqlalchemy import Connection
 __all__ = [
     "MIGRATIONS",
     "hold_one_doubt_to_one_review_item",
-    "hold_the_key_of_a_review_item_to_1_or_more",
     "index_the_record_changes",
     "index_the_runs_of_a_source",
     "keep_the_decision_of_a_review_item",
@@ -376,28 +375,6 @@ def keep_the_decision_of_a_review_item(connection: Connection) -> None:
     )
 
 
-def hold_the_key_of_a_review_item_to_1_or_more(connection: Connection) -> None:
-    """11: the triggers by which a key of the review queue is 1 or more (DAT-056)."""
-    connection.exec_driver_sql(
-        """
-        CREATE TRIGGER tr_review_item_key_positive AFTER INSERT ON review_item
-        WHEN NEW.id < 1
-        BEGIN
-            SELECT RAISE(ABORT, 'A key of the review queue (review_item) is 1 or more.');
-        END
-        """
-    )
-    connection.exec_driver_sql(
-        """
-        CREATE TRIGGER tr_review_item_key_stays_positive AFTER UPDATE OF id ON review_item
-        WHEN NEW.id < 1
-        BEGIN
-            SELECT RAISE(ABORT, 'A key of the review queue (review_item) is 1 or more.');
-        END
-        """
-    )
-
-
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
@@ -409,5 +386,4 @@ MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_review_items,
     hold_one_doubt_to_one_review_item,
     keep_the_decision_of_a_review_item,
-    hold_the_key_of_a_review_item_to_1_or_more,
 )
