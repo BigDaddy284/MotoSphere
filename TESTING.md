@@ -2049,48 +2049,6 @@ real SQLite file that the migrations built:
   neither is kept; when the function refuses, what the unit of work
   did before goes with it.
 
-## The loading of the countries
-
-Two files test how the countries of the reference file are brought into
-the store (`motosphere.reference.countries_load`, DAT-059).
-
-`backend/tests/unit/test_reference_countries_load.py`, 8 tests without a
-store: the release, its day and its address, each written out a second
-time; that the address is the file of the release in the folder it was
-fetched from; that the note beside the file names the same release, day,
-file and folder; and that what a loading gives back is four lists in one
-order and cannot be changed afterwards.
-
-`backend/tests/integration/test_countries_load.py`, 32 tests against a
-real SQLite file that the migrations built. Every row is read back as
-SQLite holds it:
-
-- **What is stored.** The 249 countries of the project's file in an
-  empty store, in the order of the file, with their names as the file
-  writes them; every column of a new row, with the clock set; one
-  moment for all rows of a loading; the source with its offer, switched
-  off, and a source of the countries that is there already; no
-  collection run, no history and no item of the review queue.
-- **Loaded again.** A second loading sends SQLite no statement that
-  writes, which the test hears by listening to the statements, and
-  another test holds that the listening hears a loading that does
-  write. A later loading adds only what the store does not have. A
-  country that is there from another source stays as it is.
-- **What the store says otherwise of.** Another name, also one that
-  differs by a capital, by a letter written as two or by a space;
-  another code of three; a code of three under another code of two.
-  Each is left as it is and named, and the other countries are added.
-  A country the file does not have is left and named, in the order of
-  the codes. What was found is named in the order of the file. With
-  all of it at once, no statement changes or deletes a country.
-- **What is handed over.** A list that is given one country at a time;
-  no countries; a list that has one code twice, of two letters, of
-  three, or a whole country, which the store refuses.
-- **The unit of work.** A source that is described otherwise refuses
-  the loading and nothing is stored. The rows are written when the
-  function returns. Nothing is kept when the unit of work fails
-  afterwards, and what it did before goes with a refused loading.
-
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`

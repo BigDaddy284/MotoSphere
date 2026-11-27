@@ -44,11 +44,5 @@ that same SHA-256 for it.
 Replace both files with those of the newer release, unchanged; write the
 release, its date and the new SHA-256 values here; and change the two
 values in `backend/tests/unit/test_reference_countries.py`, where the
-number of the countries is held too. Write the release, its day and its
-address in `backend/src/motosphere/reference/countries_load.py` as well:
-they are what the rows of the store say of where they came from. Nothing
-in this folder is edited by hand.
-
-A store that was loaded from the older file keeps its rows. The loading
-adds the countries that are new, and names those the newer file says
-something else of; nothing is changed without a person's decision.
+number of the countries is held too. Nothing in this folder is edited by
+hand.

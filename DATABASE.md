@@ -27,8 +27,7 @@ no row takes its place (DAT-055; see "A decided item is never
 replaced"). A key of the queue is 1 or more (DAT-056; see "A key is 1
 or more"). The sixth is `country`, the countries by their two codes of
 ISO 3166-1, and the first table of collected records (DAT-011; see
-"The countries"); it has no rows yet, and one function loads them
-(DAT-059; see "The loading of the countries"). One function
+"The countries"); it has no rows yet. One function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"), one puts two records that may
 be the same thing to the review queue (DAT-051; see "Opening a possible
@@ -2668,9 +2667,8 @@ The countries come from the project iso-codes (`DATA_SOURCES.md`). The
 module `motosphere.reference.countries_source` says what the row of that
 source in the table `source` holds, and its function
 `source_of_the_countries(work)` gives that row, storing it first when
-the store does not have it (DAT-060). The loading of the countries
-calls it (DAT-059; see "The loading of the countries"). No command does
-the loading yet (DAT-061), so no store has the row until then.
+the store does not have it (DAT-060). Nothing calls it yet: the loading
+of the countries will (DAT-059), so no store has the row until then.
 
 | Column | What the pipeline says |
 |---|---|
@@ -2717,77 +2715,6 @@ It offers one kind of information, `reference data`: one row of
   countries under a description that is not its own. What else the
   source offers is not looked at.
 - **It is part of its unit of work.** The row and its offer are kept or
-  taken back with whatever else the unit of work does.
-
-## The loading of the countries
-
-The countries of the reference file are brought into the table
-`country` by one function, `load_countries(work, countries)`, in
-`motosphere.reference.countries_load` (DAT-059). It is handed what the
-file says, as `countries_of_the_project()` gives it, and adds every
-country the store does not have. No command calls it yet (DAT-061), so
-no store has the countries until then.
-
-**The loading adds, and it does nothing else.** A country is known by
-its code of two letters.
-
-| What the store has of a country of the file | What the loading does |
-|---|---|
-| Nothing: neither its code of two letters nor its code of three | Adds it |
-| The code of two letters, with the same code of three and the same name | Leaves it as it is |
-| The code of two letters, with another code of three or another name | Leaves it as it is, and names it |
-| The code of three letters, under another code of two | Adds nothing, and names it |
-
-A country of the store whose code of two letters the file does not have
-is left as it is and named too. Nothing is ever changed and nothing is
-ever deleted. A name is compared letter for letter: a capital, a space
-or a letter written in another way makes it another name.
-
-**What a new row says of where it came from.**
-
-| Column | What the loading writes |
-|---|---|
-| `source_id` | The source of the countries (above), which is stored first when the store does not have it |
-| `source_address` | `https://archive.ubuntu.com/ubuntu/pool/main/i/iso-codes/iso-codes_4.20.1.orig.tar.xz`: the file of the release, where it was fetched |
-| `collected_at` | The moment of the loading: when the store took the row from the file. One moment for all rows of one loading |
-| `published_on` | `2026-01-01`, the day release 4.20.1 was published |
-| `last_verified_at` | The same moment as `collected_at` |
-| `extraction_method` | `public dataset` |
-| `confidence` | `high`: the file gives each value in a field made for it |
-| `verification_status` | `independent`: iso-codes is not the body that keeps the standard |
-
-The release, its day and its address are said in the module (`RELEASE`,
-`PUBLISHED_ON`, `ADDRESS`), and tests hold them to the note beside the
-file. When the file itself was fetched is in that note; the store says
-when it took the row.
-
-- **What it gives back.** `CountriesLoaded`, four lists of codes of two
-  letters: `added`, `as_they_were` and `said_otherwise` in the order of
-  the file, and `not_in_the_file` in the order of the codes.
-- **Loaded again, it writes nothing.** A second loading of the same
-  file finds every country as it was. No row is touched, not even to
-  say that it was seen again: the file is the same file, and the source
-  itself was not looked at.
-- **It is not a collection run.** Nothing is fetched: the file was
-  fetched once, by hand, and is part of the project. So a loading
-  stores no run, and the source need not be switched on for it. It
-  leaves no history and opens no item of the review queue either.
-- **Why it does not change a country.** A record is changed with its
-  history, and a change names what caused it: a collection run, or the
-  person who decided it (see "Changing a record"). A loading is neither.
-  The store and the file can only come to say different things of a
-  country when a person changed the store by hand, or when a newer
-  release is taken into the repository; then a person decides which is
-  right, and the loading names the countries for them.
-- **A country that is there is left whatever source it names.** Only
-  the two codes and the name are compared. A country that a person put
-  in from another source, and that is as the file has it, stays that
-  source's.
-- **A list that has one code twice is refused by the store**, as the
-  reader refuses a file that has one: SQLite's own refusal reaches the
-  caller, and nothing is kept.
-- **It is part of its unit of work.** The source, its offer and the
-  countries are written when the function returns, and are kept or
   taken back with whatever else the unit of work does.
 
 ## What the store relies on in SQLite
