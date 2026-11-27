@@ -6,10 +6,10 @@ references are copied from real output, never estimated.
 
 ## Current state
 
-- **Phases:** 2 – Data store and published data (track A) and 3 – Interactive 3D Earth (track B), side by side since 2026-11-27 (PLAN-033); Phase 1 – Foundation has one task that was added to it later and is open, FND-054, which stands on track B after GLB-025
-- **Current task, track A (data store):** DAT-012 – The countries reference file (`IN PROGRESS`, with a builder)
-- **Current task, track B (globe):** FND-054 – The browser tests do not run out of network connections on Windows (`NOT STARTED`, the planner is trialling it and writing its plan)
-- **Tasks verified:** 103 of 287
+- **Phases:** 2 – Data store and published data (track A) and 3 – Interactive 3D Earth (track B), side by side since 2026-11-27 (PLAN-033); Phase 1 – Foundation has two tasks that were added to it later and are open, FND-057 and FND-054, which stand on track B in that order, before GLB-002
+- **Current task, track A (data store):** DAT-012 – The countries reference file (`IN PROGRESS`: merged as `307f1ac`, not yet verified, because the Windows job of its run for `main` was cut off at its time limit; see PLAN-045)
+- **Current task, track B (globe):** FND-057 – The checks on GitHub's Windows machine do not run out of time (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 103 of 288
 - **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar has the data status and the date under its first line, on two lines below 640 pixels and on one from there on, so that it is as tall while the data loads as afterwards, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (3219 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store has its first four tables, and no rows yet: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (there are fourteen so far, which make the tables of the information sources, of what they offer, of the collection runs and of the changes to records, an index that takes SQLite straight to the runs of one source, the triggers by which the history of the records is only added to, two indexes that take SQLite straight to the changes of one record and to the changes one run caused, the table of the review queue, where what is in doubt waits for a person's decision, the two indexes by which the store refuses the same doubt a second time, the two triggers by which the store itself refuses to edit or delete an item of that queue once it is decided, the two triggers by which it refuses a key below 1 for an item of that queue, the two by which it refuses a row that would take the place of a decided item, and the table of the countries, the first table of collected records, with the index that takes SQLite straight to the countries of one source, and the column by which a source says which country it is of, with its index; one function puts two records that may be the same thing to that queue, another what a source says of a field of a record, and a third puts down a person's decision on an item, and nothing calls them yet); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, and only `migrate` writes to it; there is a base for all models, which makes every table strict and names its constraints and indexes by one rule, and a test that holds every table to that; a time is stored as text in one form, in UTC with its offset written out, a time without an offset is refused, and a model's `datetime` column gets that type from the base; every model gets its key from the base, a whole number `id` that SQLite never gives twice, and the two times `created_at` and `updated_at`, which the store's code sets from the store's one clock; the test that holds every table to the rules names a table without that key or without those two times, and a name that more than one constraint or index of a table has; a model can say of a column that its text must not be empty, and SQLite itself then refuses empty text in it, also text of nothing but white space, and the test that holds every table to the rules names such a column whose table is without the check for it; any column type can bring the check for its column in that way; a model can say of a column that it is yes or no, and SQLite itself then refuses every number but 1 and 0 in it; a model can say that a column's value is one of a list the code knows, and SQLite itself then refuses any text that is not on that list; a model can say that a column is a web address, and SQLite itself then refuses text that does not begin as one or has white space in it; the store has its first table, that of the information sources, each described by one of twelve kinds of source and one of ten ways of collecting, and switched off until a person has read its terms; a second table says which of nine kinds of information each source offers, and a source that has offers cannot be deleted; a third table records every collection run, with its source, its start and end, how it ended and what it counted, and one function, `mark_interrupted`, marks the runs a dead job left running as interrupted; another, `standing_of`, says how a source is doing (its last attempt, its last success, its last error and its health) by reading its runs, and stores none of it; the code has the two lists that say how far a collected record can be trusted, three levels of confidence and four verification statuses from official to unverified, and no table has a column of them yet; a model can say that a column is a calendar day, which is kept as text such as `2026-11-24` with no time made up for it and which the store refuses when no calendar has it, and no table has such a column yet either; the columns by which every collected record says where it came from are one set in the code, which a model of collected records takes whole, and with them an index that takes SQLite straight to the records of one source, and no table has them yet; a rule names every table that neither has those columns nor is on the list of the tables that hold no collected records, where each stands with its reason, and a test holds the real schema to it; one table is there to keep, for one field of one record, what it held before it was changed and what it holds now, with the collection run or the person that caused the change, and one function changes a stored record and writes that history in the same unit of work, so that neither is kept without the other, which nothing calls yet because no table holds records; that history is only added to, because the store itself refuses to edit, delete or replace a row of it, whoever writes to the file; the migrations are written in a module of their own, as plain SQL that names nothing of the code; one test holds the models and the migrations together, and fails with a sentence for each table or index that is not the same in both (`DATABASE.md`). No globe yet: its engine, `@cesium/engine` with `@cesium/core`, is installed and tested as installed, and nothing of the application uses it so far. The published site carries the licences of the packages it is built with, in one file, `licences.txt`, which the build writes from the packages as they are installed, with every licence file a package brings, at any depth of its folder. A repository check holds the licence of each of those packages to a list of the licences the project has read and accepted.
 
 ## Reports
@@ -9947,3 +9947,90 @@ Order on track A from here: DAT-012, DAT-058, DAT-059, then
 DAT-013 – Regions table.
 
 Next task on track A: DAT-012 – The countries reference file.
+
+### PLAN-045 – A machine that ran out of time (2026-11-27)
+
+Not a development task: no application code changed.
+
+What happened. On 2026-11-27 the job "All gates (Windows)" was cut off at
+its limit of 20 minutes four times, with no test failed: in the run for
+`main` at `3da560f`, the commit with DAT-012's plan (run 46011384280); in
+both attempts of a trial of the planner for FND-055 (run 46013480988; the
+one second attempt this project allows was used, and was cut off as the
+first was); and in the run for `main` at `307f1ac`, after DAT-012 was merged
+(run 46016966535). Each time the Linux job of the same run passed every
+gate, and the Windows job was in the middle of the tests of the pipeline
+when it was cut off. The Windows jobs of two runs before them had ended 4
+and 9 seconds short of the limit (19 minutes 56 seconds for `169bd8b`, 19
+minutes 51 seconds for DAT-012's pull request). Because the Windows job of
+run 46016966535 did not end, the three jobs after the gates did not run: the
+site was not published again after DAT-012, and DAT-012 is not recorded as
+verified. It changes nothing a visitor sees.
+
+What was measured. The time of the tests of the pipeline on that machine, in
+runs for `main` of that day: 1861 tests in 228.51 s and in 350.22 s; 1932
+tests in 384.34 s, 536.86 s and 402.04 s; 2083 tests in 574.37 s and 415.88
+s; 2237 tests in 814.33 s; 2277 tests in 422.80 s. On GitHub's Linux machine
+the tests of the pipeline took between 28 s and 136 s in six runs of that
+day. Then, in a trial on that machine (pull request #181, closed and not
+merged, run 46020195509): the system's folder for temporary files is
+`C:\Users\RUNNER~1\AppData\Local\Temp`, on the system disk; the checkout and
+the runner's own folder for temporary files (`D:\a\_temp`) are on the work
+disk. Both ways in one job: a file written and removed, 0.39 ms on the
+system disk and 0.16 ms on the work disk; one saved change to a store, 19.40
+ms and 1.01 ms; a store made and given every migration, 385.8 ms and 33.5
+ms; the 2420 tests of the pipeline, 635.19 s and 81.99 s. A second job of
+the same run: 23.34 ms and 0.82 ms for a saved change, 425.5 ms and 27.8 ms
+for a store, 99.18 s and 8.15 s for 360 tests of the pipeline. On the system
+disk single tests waited 70.84 s, 24.71 s and 20.32 s for their store. The
+machine's virus scanner does not watch files as they are written
+(`RealTimeProtectionEnabled : False`; both disks are on its list of
+exceptions), and the machine has 4 processors.
+
+The cause. Not the tests and not the application: where that machine keeps
+temporary files. Each test of the pipeline that needs a store makes a real
+one in a file and gives it every migration, as this project wants its tests
+of the store. On the system disk of GitHub's Windows machine that costs
+about a third of a second for each such test, and much more now and then.
+The tests of the pipeline grew from 1861 to 2420 in a day, and the job came
+to its limit.
+
+The remedy. FND-057 – The checks on GitHub's Windows machine do not run out
+of time: the step that runs the gates is given `TEMP` and `TMP`, both set to
+the runner's own folder for temporary files, which is on the work disk. Two
+repository checks hold the workflow to it. The time limit stays at 20
+minutes: a limit that grows with a fault hides the next one. No test
+changes, none is skipped, and a store in a test is a real file as before.
+Its plan is `docs/plans/FND-057.md`.
+
+What the trial of the remedy gave on GitHub. Exactly the diff below, as a
+draft pull request that was closed and not merged (#182, run 46024517308):
+both gates jobs green at the first attempt, each log ending `19 of 19 gates
+passed.` and `Tests: 3364 passed, 0 failed, 0 skipped.`, with 82 repository
+checks on both machines. On Windows the log of the step shows `TEMP:
+D:\a\_temp` and `TMP: D:\a\_temp`; the tests of the pipeline took 91.83 s
+there (`2420 passed in 91.83s`; the gate `Backend tests` 95.9 s), the step
+"Run every gate" 3 minutes 35 seconds, and the whole job 9 minutes 18
+seconds, of which 4 minutes 53 seconds were the step that installs the
+browser. The Linux job took 2 minutes 46 seconds, with the tests of the
+pipeline at 44.2 s. The three jobs after the gates were skipped, as on every
+pull request.
+
+What it means for the order of work. FND-057 stands first on track B, before
+FND-054: without it no pull request can be verified on Windows, on either
+track. DAT-012 stays `IN PROGRESS`: its pull request passed on both machines
+and it is merged (`307f1ac`), and it is recorded as verified when a run for
+`main` that holds it has passed on both machines, with the site published
+and checked. Run 46016966535 is not run again for that: a second attempt
+would use the workflow as it was, and would publish an older site over a
+newer one if a later run had ended first. No builder is given a task of
+track A until then. The planner found, on the same day, a fault in two unit
+tests that can fail a run by chance (run 46006701452); its remedy is
+trialled and becomes a task of its own, with its own record, after this one.
+
+Phase 1 now has 53 tasks; the plan has one more than before, 288.
+
+Order on track B from here: FND-057, FND-054, then
+GLB-002 – The globe shows the Earth.
+
+Next task on track B: FND-057 – The checks on GitHub's Windows machine do not run out of time.
