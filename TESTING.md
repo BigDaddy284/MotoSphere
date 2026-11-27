@@ -1596,38 +1596,6 @@ How they read a range, a lock file and a text is tested on ranges, lock
 files and texts made up for the purpose, so that the checks of the real
 files cannot pass by reading wrongly.
 
-## The packages the site ships
-
-The packages a visitor's browser gets are named under `dependencies` in
-`frontend/package.json`: React with `react-dom`, and since GLB-001 the
-engine of the globe, `@cesium/engine`, with `@cesium/core`, where the
-engine keeps its arithmetic. `tests/repo/test_frontend_packages.py`, part
-of the repository checks, holds that list. A package added to it, taken
-from it, or named both there and among the packages that only build and
-test the site, fails the check until the list in the test says the same,
-so that whose code every visitor runs is decided and not come by. The
-lock file must name the same packages for the project, must not mark a
-shipped one as only for the work, and must install one copy of each, at
-the top and nowhere beneath another package. The checks also hold that
-the engine is the engine by itself: neither the full `cesium` package,
-nor its ready-made viewer `@cesium/widgets`, nor the wrapper `resium` is
-named or installed, at any depth of the lock file. How the checks read a
-lock file is tested on lock files made up for the purpose.
-
-The engine is tested as it is installed
-(`frontend/src/globe/engine.test.ts`, unit tests): nothing stands in its
-place. The tests ask it where six places on the Earth are that the
-reference ellipsoid WGS84 gives exactly (four on the equator and the two
-poles), and hold that longitude comes first, that a height is counted in
-metres, and that it gives back the degrees and the height a place was
-made from. One test makes the engine's globe and holds that its
-ellipsoid is the very object the application gets from `@cesium/core`,
-which two copies of that package would not give. The engine writes a
-warning the first time a name is used that it wants imported from
-elsewhere; in these tests a warning is an error, so a name taken from
-the wrong package fails the test that uses it. Nothing of the
-application uses the engine yet, so the built site is what it was.
-
 ## Latest results
 
 Results are recorded per task in [PROGRESS.md](PROGRESS.md).

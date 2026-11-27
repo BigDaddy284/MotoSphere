@@ -102,7 +102,7 @@ it is everything that runs behind the published site.
 |---|---|---|
 | Framework | React + TypeScript (strict) | As proposed. Mature, typed, well supported by tooling. |
 | Build tool | Vite | Fast, simple, first-class TypeScript, easy static asset handling for Cesium. |
-| Globe | The Cesium engine (`@cesium/engine`) used directly behind a thin `Globe` component | Cesium is the right engine for a true 3D Earth with terrain and continuous zoom. The engine by itself and not the full `cesium` package, which adds a ready-made viewer (`@cesium/widgets`) whose controls MotoSphere does not use. The engine keeps its arithmetic (positions, angles, the shape of the Earth) in `@cesium/core` and asks that it be imported from there, so the project names that package too. No Resium wrapper: one less dependency that must track Cesium releases, and imperative camera control is simpler to test. |
+| Globe | CesiumJS used directly behind a thin `Globe` component | Cesium is the right engine for a true 3D Earth with terrain and continuous zoom. No Resium wrapper: one less dependency that must track Cesium releases, and imperative camera control is simpler to test. |
 | Data loading | TanStack Query over `fetch` of published files | Caching, cancellation and loading/error states for viewport-driven loading. Introduced by the first task that needs more than one file. |
 | Styling | Plain CSS with design tokens (CSS custom properties) and CSS modules | No heavy UI kit. The owner's Graphite theme (see below) is kept consistent through our own tokens. |
 | Unit tests | Vitest + Testing Library | Native to Vite. |
@@ -164,18 +164,6 @@ Rules:
   list: Chrome and Edge 111, Firefox 114, Safari 16.4) knows `dvh`, and
   the build removes such a line anyway. A unit test rejects `vh` in any
   style sheet under `frontend/src`.
-- The packages the site ships to the browser are the ones under
-  `dependencies` in `frontend/package.json`: React with `react-dom`, and
-  the engine of the globe with `@cesium/core`. A repository check holds
-  the list (`tests/repo/test_frontend_packages.py`), because adding a
-  package there is a decision about whose code every visitor runs. The
-  lock file must hold one copy of each: with two copies of `@cesium/core`,
-  a position the application makes would not be one the engine knows as
-  its own.
-- A name the engine has moved to `@cesium/core` (`Cartesian3`,
-  `Ellipsoid`, `Math` and about 150 in all) is imported from there. The
-  engine still hands those names out, with a warning, and says it will
-  stop doing so.
 
 ## 4. Data pipeline (Decided)
 
