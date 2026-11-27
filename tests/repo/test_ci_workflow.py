@@ -1,6 +1,4 @@
-"""Checks on the workflows: the gates and the deployment.
-
-FND-018, FND-032, FND-034, FND-037 and FND-057.
+"""Checks on the workflows: the gates and the deployment (FND-018, FND-032, FND-034, FND-037).
 
 The workflows are read as text: the repository checks use the standard
 library only, and it has no YAML reader. The files are kept plain enough for
@@ -12,11 +10,7 @@ Run from the repository root:
 """
 
 import json
-import os
 import re
-import subprocess
-import sys
-import tempfile
 import tomllib
 import unittest
 from pathlib import Path
@@ -44,23 +38,6 @@ KNOWN_EXPRESSIONS = (
     "github.ref",
     "matrix.name",
     "matrix.os",
-    "runner.temp",
-)
-
-# The names under which a program is told where its temporary files go.
-# Windows has these two, and a program may read either. Linux has a third,
-# which Python reads first, and the gates are not given it.
-TEMPORARY_FOLDER = ("TEMP", "TMP")
-FIRST_ON_LINUX = "TMPDIR"
-
-# The step that runs every gate, whole: the gates keep their temporary files
-# in the runner's own folder for them, which is on the machine's work disk.
-RUN_EVERY_GATE = (
-    "      - name: Run every gate\n"
-    "        env:\n"
-    "          TEMP: ${{ runner.temp }}\n"
-    "          TMP: ${{ runner.temp }}\n"
-    "        run: python scripts/check.py\n"
 )
 
 # The machines the gates run on, each a named image and not "the latest".
@@ -212,34 +189,6 @@ class ChecksWorkflowTest(unittest.TestCase):
                 "python scripts/check.py",
             ],
         )
-
-    def test_the_gates_keep_their_temporary_files_in_the_runners_own_folder(self) -> None:
-        told = re.findall(r"^ +(\w+): \$\{\{ runner\.temp \}\}$", self.text, re.MULTILINE)
-
-        self.assertIn(RUN_EVERY_GATE, self.gates)
-        self.assertEqual(tuple(told), TEMPORARY_FOLDER)
-        # No other step is told anything this way, and no job as a whole.
-        self.assertEqual(len(re.findall(r"^ *env:", self.text, re.MULTILINE)), 1)
-        self.assertEqual(self.text.count("runner.temp"), len(TEMPORARY_FOLDER))
-
-    def test_python_keeps_its_temporary_files_where_each_of_those_names_says(self) -> None:
-        # The tests of the pipeline make their stores in the folder Python
-        # gives for temporary files. Asked here of a Python started anew, on
-        # the machine the checks run on, with one of the names at a time.
-        others = (*TEMPORARY_FOLDER, FIRST_ON_LINUX)
-        for name in TEMPORARY_FOLDER:
-            with self.subTest(name=name), tempfile.TemporaryDirectory() as folder:
-                told = {key: value for key, value in os.environ.items() if key not in others}
-                told[name] = folder
-                asked = subprocess.run(
-                    [sys.executable, "-c", "import tempfile; print(tempfile.gettempdir())"],
-                    env=told,
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
-
-                self.assertEqual(Path(asked.stdout.strip()), Path(folder))
 
     def test_nothing_lets_a_failing_step_pass(self) -> None:
         self.assertNotIn("continue-on-error", self.text)

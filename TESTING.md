@@ -245,33 +245,6 @@ gates (Windows)": one failing does not stop the other.
 The jobs use Python 3.12, the oldest version the pipeline supports, so that
 nothing newer slips into the code unnoticed.
 
-The step that runs the gates is told where temporary files go: `TEMP` and
-`TMP`, the two names Windows has for that folder, are set to the runner's
-own folder for temporary files (`runner.temp`). Tests make their files in
-the system's folder for temporary files, and the tests of the pipeline make
-a real store there for each test that needs one. On GitHub's Windows machine
-that folder is on the system disk (`C:`); the checkout and the runner's
-folder are on the work disk (`D:`). Measured on that machine on 2026-11-27,
-both ways in one job (run 46020195509):
-
-| | System disk | Work disk |
-|---|---|---|
-| One saved change to a store | 19.40 ms | 1.01 ms |
-| A store made and given every migration | 385.8 ms | 33.5 ms |
-| The 2420 tests of the pipeline | 635.19 s | 81.99 s |
-
-On the system disk single tests waited 20 to 70 seconds for their store, and
-the time differed much from run to run: 2237 tests took 814 s in one run for
-`main` and 2277 tests 423 s in a later one. As the tests of the pipeline
-grew in number, the Windows job came to its limit of 20 minutes and was cut
-off there, four times on that day, with no test failed. The limit is left as
-it is.
-
-On Linux, Python and Node.js look at `TMPDIR` first and at these two names
-when it is not set, and it makes no difference there which folder it is. A
-developer's machine is told nothing: there the tests keep their files where
-the system says.
-
 The workflow is given as little as possible, and the repository checks hold
 it to that:
 
@@ -288,8 +261,6 @@ it to that:
   command: on Windows, a step with several commands only fails on its last
   one. The only condition in the workflow is the one that keeps the three
   jobs that publish the site and check it to changes to `main`.
-- Only the step that runs the gates is told anything through its
-  environment, and only where its temporary files go.
 
 ## Deployment
 
