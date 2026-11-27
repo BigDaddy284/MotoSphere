@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 49 | 47 |
+| 1 | Foundation (FND) | 49 | 48 |
 | 2 | Data store and published data (DAT, PUB) | 63 | 44 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-055 – A decided review item is not replaced.
 
-**Current task, track B (globe):** FND-051 – A licence file beneath the top folder of a package goes with the site.
+**Current task, track B (globe):** FND-049 – The top bar keeps its height when the data arrives.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -1009,7 +1009,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-050.md`
 
 ### FND-051 – A licence file beneath the top folder of a package goes with the site
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The site's file of licences holds every licence file a shipped package brings, at any depth of its folder.
 - **Description:** Added on 2026-11-27 (PLAN-039), found by the planner while reading the licences for FND-050. The step of FND-047 read the licence files in the top folder of an installed package. A package may bring code of others in a folder of its own, with their licence beside it: `protobufjs` brings `google/LICENSE`, Google's licence for the files of its folder `google`, and its own licence says that such a file holds for the folder it is in. A new private function of the step, `licenceFilesOf`, lists the licence files of a package at any depth: it looks into every folder, but not into a folder `node_modules`, where other packages are put and are held by themselves, and it does not follow a link to a folder, so a folder that leads back to itself ends. Each text is given by the path of its file from the package's folder, with `/` between the parts on every computer; the files of a folder come before those of the folders in it, each by name. The built file gains one text, the second of `protobufjs`. The trial also found that the unit test of the order of the files proved nothing on Linux, where Node.js gives the entries of a folder by name already: in the unit tests the one call that lists a folder now has a stand-in that gives the entries with the first one last, so that the order in the file is the step's own work on every computer. No package is added and the browser tests are unchanged.
 - **Acceptance criteria:**
@@ -1024,10 +1024,10 @@ Windows 11. No database and no globe yet.
   9. `python scripts/check.py` reports 19 of 19 gates, with 304 frontend unit tests and 180 browser tests, and 11 tests more in all than `main` gives at the commit the branch starts from (2631 when that is `808e6b7`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   10. Only the five files under "Scope" of the plan changed.
 - **Tests required:** 11 new unit tests, on made-up package folders (with a link to a folder, a junction on Windows) and on the project as installed, with every licence file of every shipped package found another way than the step finds it; planted defects in the new function, with those of FND-047 in the step and against the browser tests again; the full run of all gates on both machines; the deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #155 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run once, 19 of 19 gates, "Tests: 2631 passed, 0 failed, 0 skipped." (frontend unit tests 304: 293 before, 11 new; browser tests 180, unchanged). The built `licences.txt` has 172646 bytes (170982 before) and gives both licence files of `protobufjs`, `LICENSE` and then `google/LICENSE`; Google's licence is in it once. The planner's 25 planted defects in the new function, each against the unit tests of the step: 25 of 25 detected. The 78 planted defects of FND-047 in the step that still apply: 78 of 78 detected. The 9 planted defects of FND-047 against the browser tests, each against the built site: 9 of 9 detected. Each with the same result as in the trial. On GitHub, run 45950159464 for the pull request and run 45952129928 for `main` after the merge, read from the job logs: both gates jobs green on Linux and on Windows with the same two closing lines, 304 frontend unit tests and 180 browser tests; on `main` the site was republished and "Check the published site" ended "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 8 of 8 files."
+- **Passed / Failed:** 2631 / 0 tests locally and on both machines on GitHub (repository 80, script tests 206, backend 1861, frontend unit 304, browser 180); all 19 gates passed; 112 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 5 files are identical to the planner's trial. No existing test was rewritten, no package was added and the lock file is unchanged. The test of the link, which makes a junction on Windows, passed on Windows on GitHub. The builder's report gives 2631 tests in the full local run, the ten prove-it steps each with the plan's result, and no deviation from the plan.
+- **Commit:** `7add688`
 - **Plan:** `docs/plans/FND-051.md`
 
 ---
