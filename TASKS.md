@@ -2335,15 +2335,27 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-001.md`
 
 ### GLB-022 – The engine's own files in the built site
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The files the engine fetches while it runs are part of the built site, under one folder of the site's path.
-- **Description:** Added on 2026-11-27 (PLAN-033), cut out of the old GLB-001; cut to the built site by PLAN-041. The engine does part of its work in background scripts and reads programs, tables and pictures from files of its own, which come with the package in its folder `Build` (277 files, 8.4 MB, with `@cesium/engine` 26.5.0) and are not code the build takes in. A step of the build puts them into the site as they are, under the folder `cesium/`, with the engine's licence beside them. Two of the files are left out, each with its reason written beside its name: the logos of Bing Maps and of Google Earth, which the engine shows only with imagery of those companies; the globe uses none, and a provider of imagery is taken on with its terms read (GLB-012). The development server (GLB-024) and telling the engine the address (GLB-025) are tasks of their own.
-- **Acceptance criteria:** the built site holds every file the engine brings in its folder `Build`, but for those listed as left out, byte for byte, under one folder of the site's path, and the engine's licence beside them; no file of the engine is anywhere else in the site; the list of what is left out names each file with its reason, and the build stops when a listed file is not there, when the engine is not installed, and when a link is among its files; a file that is left out, a file the engine does not bring, and the rest of the engine's package are answered "not found" by the site under test; one file of each kind is answered there with the type a browser needs; the published site is the site that was built, with the engine's files among those the check compares.
-- **Tests required:** unit tests of the build step on a temporary folder, with the entries of a folder given in an order that is not that of their names, and on the engine as it is installed; browser tests that compare the built folder with the installed engine and fetch every file through the site under test; planted defects; the full run of all gates on both machines; the deployment and the check of the published site.
+- **Description:** Added on 2026-11-27 (PLAN-033), cut out of the old GLB-001; cut to the built site by PLAN-041. The engine does part of its work in background scripts and reads programs, tables and pictures from files of its own, which come with the package in its folder `Build` (277 files with `@cesium/engine` 26.5.0) and are not code the build takes in. A step of the build, `frontend/sitebuild/engineFiles.ts`, puts every file beneath that folder into the site as it is, under the folder `cesium/`, in a set order; none is picked by hand, so that another version of the engine brings what it needs. Two files are left out, each named in the step with its reason: the logos of Bing Maps and of Google Earth, which the engine shows only with imagery of those companies; the build stops when a listed file is not there any more. The site so gets 275 files, 8.3 MB, and has 283 in all. The engine's licence is in the site's `licences.txt` already (FND-047). Nothing of the application asks for a file of the folder yet, so a visitor's browser fetches none. The development server (GLB-024), telling the engine the address (GLB-025) and what GitHub Pages says a `.wasm` and a `.jpg` file are (FND-053) are tasks of their own.
+- **Acceptance criteria:**
+  1. The built site holds, under `cesium/`, every file the installed engine brings beneath its folder `Build` but the two listed as left out, each byte for byte, and no other file there.
+  2. No picture, program or folder of the engine is anywhere else in the built site.
+  3. The site under test answers one file of each of the eight kinds at its address under the site's path with the status 200, the type a browser needs and the bytes of the engine; and every one of the files with its bytes.
+  4. The two logos, which the installed engine brings, are answered "not found". So are a file the engine does not bring, the rest of the engine's package, its own code, a file of the engine outside the folder, the folder `Build`, the folder of the installed packages, and the folder at the root of the server.
+  5. The engine's licence is in the site's `licences.txt`.
+  6. The step gives the files in a set order on every computer, leaves out a listed file and no other of the same name, and refuses, each in a plain sentence: a listed file that is not there, a listed folder, an engine that is not installed, a folder without files, and a link among the files.
+  7. The list of what is left out has exactly the two logos, each with its reason.
+  8. The step runs when the site is built and not in the development server.
+  9. No existing test changes; all tests pass; no package is added.
+  10. `python scripts/check.py` reports 19 of 19 gates, with 320 frontend unit tests and 253 browser tests, and 39 tests more in all than `main` gives at the commit the branch starts from (2791 when that is `26a396c`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  11. Only the seven files under "Scope" of the plan changed.
+- **Tests required:** 16 new unit tests of the step: on folders made up for the test, with the entries of a folder given in an order that is not that of their names, and on the engine as it is installed. 23 new browser tests that compare the built folder with the installed engine on the disk and fetch every file through the site under test, with the two logos named in the tests themselves. Planted defects in the step against the unit tests and against the browser tests. The full run of all gates on both machines. The deployment and the check of the published site, which then compares 283 files.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/GLB-022.md`
 
 ### GLB-024 – The engine's own files in development
 - **Status:** NOT STARTED
