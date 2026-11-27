@@ -118,8 +118,8 @@
     grid-template-rows: auto minmax(0, 1fr);
   }
 
-  /* The top bar takes the lines it needs: the name between the two buttons,
-     then the information, each piece whole. The tagline gives way. */
+  /* The top bar has the name between the two buttons on its first line, and
+     the information under it. The tagline gives way. */
   .topBar {
     flex-wrap: wrap;
     gap: 0 var(--space-2);
@@ -129,14 +129,26 @@
     display: none;
   }
 
+  /* Each piece of information has a line of its own. How many lines there
+     are does not depend on how long the words happen to be: the bar is as
+     tall while the data loads as afterwards, and nothing under it moves
+     when the data arrives. */
   .info {
     order: 1;
     flex-basis: 100%;
+    min-width: 0;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     column-gap: var(--space-4);
     padding-bottom: var(--space-2);
     line-height: var(--line-height-normal);
+  }
+
+  /* A piece too long for its line ends in "…". It is never wrapped. */
+  .info > * {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .info > * + * {
@@ -156,6 +168,22 @@
 
   .details {
     justify-self: end;
+  }
+}
+
+/*
+ * A narrow screen that has room for both pieces of information on one line,
+ * in every language tried: they share the line, always. If the words are
+ * longer than the line all the same, the data status stays whole and the date
+ * gives way.
+ */
+@media (min-width: 640px) and (max-width: 899px) {
+  .info {
+    flex-direction: row;
+  }
+
+  .info > :first-child {
+    flex: none;
   }
 }
 
