@@ -987,15 +987,26 @@ Windows 11. No database and no globe yet.
 - **Commit:** –
 
 ### FND-050 – The licences of the shipped packages are ones the project has accepted
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** A package whose licence nobody has read and accepted for the project is not shipped unnoticed.
-- **Description:** Added on 2026-11-27 (PLAN-038), cut out of FND-047. The lock file names the licence of every package. A repository check holds the licences of the packages the site is built with (those the lock file does not mark as only for the work) to a list of licences the project has accepted, written in the check with one line on why each is acceptable for a site that is published to everyone: today MIT, Apache-2.0, ISC, BSD-3-Clause, 0BSD and the two combined ones the engine's packages bring, `(MPL-2.0 OR Apache-2.0)` and `(MIT AND Zlib)`. A package under another licence, or with none named, fails the check until a person has read the licence and put it on the list in the same pull request, where a reviewer sees it. The trial settles how a combined licence is read (as written, or by its parts) and whether the packages that are only for the work are held to a list too. It stands on track B after FND-047 and before FND-049.
-- **Acceptance criteria:** the repository checks fail for a shipped package whose licence is not on the list, for one with no licence named, and for a licence on the list that no shipped package has; the list says why each licence is accepted; how the check reads a lock file is tested on made-up lock files; no package is added.
-- **Tests required:** repository checks on made-up lock files and on the real one; planted defects in the lock file, in the list and in the check's own reading; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-27 (PLAN-038), cut out of FND-047. The lock file names the licence of every package. A new file of repository checks, `tests/repo/test_frontend_licences.py`, holds the licences of the packages the site is built with (those the lock file does not mark as only for the work, 32 today, the same ones whose licences the build writes into `licences.txt`) to a list of the licences the project has accepted. The list names each licence as the lock file writes it, with what it asks of whoever passes the code on and how the project meets that: `MIT`, `Apache-2.0`, `ISC`, `BSD-3-Clause`, `0BSD`, `(MPL-2.0 OR Apache-2.0)` and `(MIT AND Zlib)`. A package under another licence, or with none named, fails the checks until its licence has been read and put on the list in the same pull request, where a reviewer sees it. A licence is taken as it is written: two licences on the list do not make their combination one, because what a combination asks is for a person to read. A licence on the list that no package is under any more fails the checks too. The packages that only build and test the site are not held to the list: nothing of them is passed on. The list is the project's own record, written by the planner, who read each of the seven in the texts the packages bring; it is not a lawyer's opinion, and the documents say so. Nothing under `frontend/` changes.
+- **Acceptance criteria:**
+  1. The repository checks fail for a package the site may ship whose licence is not on the list, and name the package and the licence.
+  2. They fail for such a package when the lock file gives no licence for it, an empty one, or something that is not a text.
+  3. They fail for a licence on the list that no such package is under, and for an entry of the list with no sentence to it.
+  4. A licence is taken as it is written; two licences on the list do not make their combination one.
+  5. A lock file the checks cannot read fails them, and one check holds that the reading finds the four packages the project names as shipped.
+  6. The packages that are only for the work are not held to the list.
+  7. No package is added, the lock file is unchanged, and no existing test changes; all tests pass.
+  8. `python scripts/check.py` reports 19 of 19 gates, with 80 repository checks, and 18 tests more in all than `main` gives at the commit the branch starts from (2620 when that is `e2bcff4`).
+  9. On the pull request both gates jobs are green with those numbers.
+  10. Only the four files under "Scope" of the plan changed.
+- **Tests required:** 18 new repository checks, on made-up lock files and lists and on the real lock file against the real list; planted defects in the lock file, in the list, in the reading of a lock file and in how packages are held to a list; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-050.md`
 
 ### FND-051 – A licence file beneath the top folder of a package goes with the site
 - **Status:** NOT STARTED

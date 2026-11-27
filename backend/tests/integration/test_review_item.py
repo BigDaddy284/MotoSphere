@@ -734,21 +734,29 @@ def test_the_table_holds_one_doubt_to_one_item(newest: Engine) -> None:
     assert held(newest) == [tuple(a_duplicate().values())]
 
 
-def test_the_table_does_not_yet_keep_a_decision(newest: Engine) -> None:
-    # A decided item can be put back to open here, and deleted. That a
-    # decision is kept is a task of its own, and this test is then
-    # changed with it.
-    write(newest, a_duplicate(state="accepted", decided_by="Jo Example", decided_at=MOMENT))
-    write(
-        newest,
-        a_duplicate(record_id=8, state="rejected", decided_by="Jo Example", decided_at=MOMENT),
+def test_the_table_keeps_a_decision(newest: Engine) -> None:
+    # A decided item is neither put back to open nor deleted: the store
+    # itself refuses it. The tests of that are in
+    # test_review_item_decision_kept.py.
+    accepted = a_duplicate(state="accepted", decided_by="Jo Example", decided_at=MOMENT)
+    rejected = a_duplicate(
+        record_id=8, state="rejected", decided_by="Jo Example", decided_at=MOMENT
     )
+    write(newest, accepted)
+    write(newest, rejected)
 
-    with newest.begin() as connection:
+    with (
+        refused("A decided review item (review_item) is never edited."),
+        newest.begin() as connection,
+    ):
         connection.exec_driver_sql(
             "UPDATE review_item SET state = 'open', decided_by = NULL, decided_at = NULL "
             "WHERE id = 1"
         )
+    with (
+        refused("A decided review item (review_item) is never deleted."),
+        newest.begin() as connection,
+    ):
         connection.exec_driver_sql("DELETE FROM review_item WHERE id = 2")
 
-    assert held(newest) == [tuple(a_duplicate().values())]
+    assert held(newest) == [tuple(accepted.values()), tuple(rejected.values())]
