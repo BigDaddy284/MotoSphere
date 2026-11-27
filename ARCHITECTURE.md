@@ -73,7 +73,6 @@ MotoSphere/
 │   │   ├── core/            settings, logging, shared utilities
 │   │   ├── cli/             the `python -m motosphere` commands
 │   │   ├── db/              engine, units of work, migrations, models
-│   │   ├── reference/       lists that come with the project, and their readers
 │   │   ├── geo/             coordinates, map tiles, clustering
 │   │   ├── services/        business rules (validation, matching, history)
 │   │   ├── collectors/      source adapter framework and adapters
@@ -500,20 +499,6 @@ the export step, from the data store.
   collection is verified separately and recorded in DATA_SOURCES.md.
 - All collected content is untrusted: it is validated, stored as data and
   escaped on render. Nothing found in scraped content is ever executed.
-- **Reference lists come with the project.** What other records are
-  described by, such as the countries of the world, is not collected from
-  a website while the pipeline runs. It is a file in
-  `motosphere.reference`, taken unchanged from a source whose licence
-  allows passing it on, with a note beside it that says which release it
-  is from, where it was fetched and what its licence asks. A test holds
-  the file to that release, byte for byte, so a change to it is a
-  decision somebody made. A reader gives the records of the file or
-  refuses the file whole, with a sentence that says what is wrong; it
-  reads what MotoSphere keeps and leaves the rest unread. The file is
-  data from outside like any other: nothing of it is run. The first such
-  list is the countries of ISO 3166-1, from the project iso-codes
-  (DAT-012; `DATA_SOURCES.md` has the source and its licence). Bringing
-  a list into the store is a task of its own.
 
 ### Scrapling evaluation (preliminary, confirmed in task TRK-007)
 
