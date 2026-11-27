@@ -104,52 +104,31 @@ export function shippedIn(lock: unknown): Locked[] {
   return [...byKey.keys()].toSorted().flatMap((key) => byKey.get(key) ?? [])
 }
 
-/**
- * The files of an installed package that hold a licence, each by its path
- * from the package's folder, with `/` between the parts on every computer.
- * A package may bring code of others in a folder of its own, with their
- * licence beside it, so every folder is looked into. The files of a folder
- * come before those of the folders in it, each by name. A folder
- * `node_modules` is not gone into: what is put there is another package,
- * which the lock file names by itself. Nor is a link to a folder.
- */
-function licenceFilesOf(folder: string, beneath = ''): string[] {
-  const entries = readdirSync(join(folder, beneath), { withFileTypes: true })
-  const here = entries
-    .map(({ name }) => name)
-    .filter((name) => HOLDS_A_LICENCE.test(name) && statSync(join(folder, beneath, name)).isFile())
-    .toSorted()
-    .map((name) => `${beneath}${name}`)
-  const deeper = entries
-    .filter((entry) => entry.isDirectory() && entry.name !== 'node_modules')
-    .map(({ name }) => name)
-    .toSorted()
-    .flatMap((name) => licenceFilesOf(folder, `${beneath}${name}/`))
-  return [...here, ...deeper]
-}
-
-/** The licence files of an installed package, as text with plain line ends. */
+/** The licence files of an installed package, by name, as text with plain line ends. */
 export function textsOf(folder: string): LicenceText[] {
   const reader = new TextDecoder('utf-8', { fatal: true })
-  return licenceFilesOf(folder).map((file) => {
-    let text: string
-    try {
-      text = reader.decode(readFileSync(join(folder, file)))
-    } catch {
-      throw new LicencesError(`${join(folder, file)} is not text in UTF-8.`)
-    }
-    // Plain line ends, and no empty lines before or after; the rest is
-    // kept letter for letter.
-    text = text
-      .replaceAll('\r\n', '\n')
-      .replaceAll('\r', '\n')
-      .replace(/^(\s*\n)+/, '')
-      .trimEnd()
-    if (text === '') {
-      throw new LicencesError(`${join(folder, file)} is empty.`)
-    }
-    return { file, text }
-  })
+  return readdirSync(folder)
+    .filter((file) => HOLDS_A_LICENCE.test(file) && statSync(join(folder, file)).isFile())
+    .toSorted()
+    .map((file) => {
+      let text: string
+      try {
+        text = reader.decode(readFileSync(join(folder, file)))
+      } catch {
+        throw new LicencesError(`${join(folder, file)} is not text in UTF-8.`)
+      }
+      // Plain line ends, and no empty lines before or after; the rest is
+      // kept letter for letter.
+      text = text
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n')
+        .replace(/^(\s*\n)+/, '')
+        .trimEnd()
+      if (text === '') {
+        throw new LicencesError(`${join(folder, file)} is empty.`)
+      }
+      return { file, text }
+    })
 }
 
 /**

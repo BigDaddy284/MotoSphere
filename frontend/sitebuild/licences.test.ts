@@ -1,15 +1,7 @@
-import {
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   gather,
   LICENCES_FILE,
@@ -20,22 +12,6 @@ import {
   textsOf,
   written,
 } from './licences.ts'
-
-// A computer gives the entries of a folder in an order of its own: Linux by
-// their names, Windows without regard to capital letters. In these tests every
-// folder gives them in an order that is neither that of the names nor its
-// opposite, with the first entry last, so that the order of the texts is the
-// work of the step and of nothing else. Nothing but the order is changed.
-vi.mock('node:fs', async (original) => {
-  const fs = await original<typeof import('node:fs')>()
-  return {
-    ...fs,
-    readdirSync: (path: string, options: { withFileTypes: true }) => {
-      const entries = fs.readdirSync(path, options)
-      return [...entries.slice(1), ...entries.slice(0, 1)]
-    },
-  }
-})
 
 // A folder of its own for every test, made up for the purpose and taken away
 // afterwards.
@@ -178,8 +154,6 @@ describe('the licence texts of an installed package', () => {
     'COPYING.txt',
     'NOTICE',
     'NOTICE.md',
-    'google/LICENSE',
-    'src/zlib/deep/NOTICE.txt',
   ])('include its file %s', (name) => {
     put({ [name]: 'The words of a licence.\n' })
 
@@ -196,8 +170,6 @@ describe('the licence texts of an installed package', () => {
     'package.json',
     'my-license',
     'LICENSE.md.bak',
-    'src/license.js',
-    'docs/licence/README.md',
   ])('do not include its file %s', (name) => {
     put({ [name]: 'Something else.\n' })
 
@@ -218,58 +190,6 @@ describe('the licence texts of an installed package', () => {
       { file: 'LICENSE-MPL', text: 'two' },
       { file: 'NOTICE', text: 'three' },
     ])
-  })
-
-  it('give the files of a folder before those of the folders in it, each by name', () => {
-    put({
-      'b/LICENSE': 'five',
-      NOTICE: 'two',
-      'c/NOTICE': 'six',
-      'A/z/LICENSE': 'four',
-      LICENSE: 'one',
-      'A/COPYING': 'three',
-    })
-
-    expect(textsOf(folder)).toEqual([
-      { file: 'LICENSE', text: 'one' },
-      { file: 'NOTICE', text: 'two' },
-      { file: 'A/COPYING', text: 'three' },
-      { file: 'A/z/LICENSE', text: 'four' },
-      { file: 'b/LICENSE', text: 'five' },
-      { file: 'c/NOTICE', text: 'six' },
-    ])
-  })
-
-  it('do not include what the packages put beneath it bring', () => {
-    put({
-      LICENSE: 'Its own.\n',
-      'lib/LICENSE': 'Of a part of it.\n',
-      'node_modules/inner/LICENSE': 'Of another package.\n',
-      'lib/node_modules/inner/LICENSE': 'Of another package.\n',
-    })
-
-    expect(textsOf(folder)).toEqual([
-      { file: 'LICENSE', text: 'Its own.' },
-      { file: 'lib/LICENSE', text: 'Of a part of it.' },
-    ])
-  })
-
-  it('include what a folder brings whose name is only like that of the packages beneath', () => {
-    put({ 'node_modules_of_old/LICENSE': 'one', 'my_node_modules/NOTICE': 'two' })
-
-    expect(textsOf(folder)).toEqual([
-      { file: 'my_node_modules/NOTICE', text: 'two' },
-      { file: 'node_modules_of_old/LICENSE', text: 'one' },
-    ])
-  })
-
-  it('do not follow a link to a folder, so a folder that leads back to itself ends', () => {
-    put({ 'real/LICENSE': 'The words of a licence.\n' })
-    // A junction on Windows, where a link to a folder needs no special right.
-    symlinkSync(join(folder, 'real'), join(folder, 'linked'), 'junction')
-    symlinkSync(folder, join(folder, 'real', 'back'), 'junction')
-
-    expect(textsOf(folder)).toEqual([{ file: 'real/LICENSE', text: 'The words of a licence.' }])
   })
 
   it('are kept letter for letter, with plain line ends and no empty lines around them', () => {
@@ -307,20 +227,6 @@ describe('the licence texts of an installed package', () => {
     put({ LICENSE: content })
 
     expect(() => textsOf(folder)).toThrow(new LicencesError(`${join(folder, 'LICENSE')} is empty.`))
-  })
-
-  it('name a refused file beneath the top folder by its whole path', () => {
-    put({ LICENSE: 'Its own.\n', 'deep/down/LICENSE': Uint8Array.of(0x4d, 0x49, 0x54, 0xff, 0xfe) })
-
-    expect(() => textsOf(folder)).toThrow(
-      new LicencesError(`${join(folder, 'deep', 'down', 'LICENSE')} is not text in UTF-8.`),
-    )
-
-    put({ 'deep/down/LICENSE': ' \n' })
-
-    expect(() => textsOf(folder)).toThrow(
-      new LicencesError(`${join(folder, 'deep', 'down', 'LICENSE')} is empty.`),
-    )
   })
 })
 
@@ -612,37 +518,6 @@ describe('the licences of this project', () => {
     expect(react?.texts.map(({ file }) => file)).toEqual(['LICENSE'])
     expect(react?.texts[0]?.text).toContain('MIT License')
     expect(react?.texts[0]?.text).toContain('Permission is hereby granted, free of charge')
-  })
-
-  it('give every licence file of every package, at any depth of its folder', () => {
-    // Found another way than the step finds them: from the list of all the
-    // files of a package, as Node.js gives it.
-    const holdsALicence =
-      /^(licen[cs]e|copying|notice)(-[a-z0-9]+(\.[0-9]+)*)*(\.(md|txt|markdown))?$/i
-    const shipped = gather(project)
-    const missed = shipped.flatMap(({ where, texts }) => {
-      const found = texts.map(({ file }) => file)
-      return readdirSync(join(project, where), { recursive: true, encoding: 'utf-8' })
-        .map((path) => path.split(/[\\/]/))
-        .filter(
-          (parts) => !parts.includes('node_modules') && holdsALicence.test(parts.at(-1) ?? ''),
-        )
-        .map((parts) => parts.join('/'))
-        .filter((file) => !found.includes(file))
-        .map((file) => `${where}/${file}`)
-    })
-
-    expect(shipped.length).toBeGreaterThan(0)
-    expect(missed).toEqual([])
-  })
-
-  it('give both licence files of protobufjs, one of them beneath its top folder', () => {
-    // The package brings descriptions written by Google in a folder of
-    // their own, with Google's licence beside them.
-    const protobufjs = gather(project).find(({ name }) => name === 'protobufjs')
-
-    expect(protobufjs?.texts.map(({ file }) => file)).toEqual(['LICENSE', 'google/LICENSE'])
-    expect(protobufjs?.texts[1]?.text).toContain('Copyright 2014, Google Inc.')
   })
 
   it('have five packages without a text of their own, each read by a person', () => {

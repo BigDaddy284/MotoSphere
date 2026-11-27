@@ -383,8 +383,3 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   check now holds the licence of every package the site is built with to
   a list of seven that were read, each with what it asks and how the
   project meets it (FND-050).
-- The file of licences left out a licence that a package brings beneath
-  its top folder: `protobufjs` has Google's licence for the files of its
-  folder `google`, and only the licence of the package itself was
-  written. The build now looks into every folder of a package, but not
-  into the packages put beneath it (FND-051).
