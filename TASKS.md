@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 58 | 57 |
-| 2 | Data store and published data (DAT, PUB) | 71 | 55 |
+| 2 | Data store and published data (DAT, PUB) | 73 | 55 |
 | 3 | Interactive 3D Earth (GLB) | 28 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -294,6 +294,15 @@ was four objectives: what the stage does where the browser cannot draw
 (GLB-002 from here on) and the size of the surface (GLB-028). Six tasks are
 new, and the plan has 300. Order on track B: FND-058, FND-059, FND-060,
 GLB-026, GLB-027, GLB-002, GLB-028, then GLB-003.
+
+**The regions, in three steps (PLAN-054):** DAT-013 was three objectives:
+the table of the regions, each of one country and by its name; the code the
+standard ISO 3166-2 gives a region, which has a form to hold and must agree
+with the country; and a region inside a region, which makes the table refer
+to itself and changes what one name means. DAT-013 is now the table. The
+code is DAT-064 and the region inside a region is DAT-065, and they follow
+it. Two tasks are new, and the plan has 302. Order on track A: DAT-013,
+DAT-064, DAT-065, then DAT-014.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -2659,11 +2668,47 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-061.md`
 
 ### DAT-013 – Regions table
+- **Status:** IN PROGRESS
+- **Objective:** The store holds the regions of a country (a state, a county, a province), each of one country and by its name, so that a track can say where in its country it is.
+- **Description:** Narrowed on 2026-11-27 (PLAN-054): the code of ISO 3166-2 is DAT-064, and a region inside a region is DAT-065. The table `region`, its model `Region` in `motosphere.db.models.region`, and the sixteenth migration, `make_the_regions`. Settled in the planner's trial. The columns: `country_id`, the country the region is a part of, which cannot be without a value and refers to `country`; and `name`, text that is not empty, stored as its source writes it. A region is a collected record (`Collected`), the second real table of them, so the eight columns that say where a row came from, their checks, the reference to `source`, the index `ix_region_source_id` and the check of the two times come with that, and `NOT_COLLECTED` is unchanged. No two regions of one country have one name (`uq_region_country_id_name`, over the country and then the name); two countries can each have a region of a name; two names are one name only if they are the same text, and the table does not judge whether two names mean one region. A country that has regions cannot be deleted: the reference says nothing of deleting, and SQLite deletes nothing by itself. SQLite keeps an index for the rule of the names, with the country first, and uses it to find the regions of one country, also when a country is to be deleted, so the table has no index of its own over the country; a test holds what SQLite says it uses. The table has no rows and no reference rows: a region comes with the record that needs it.
+- **Acceptance criteria:**
+  1. The schema is at version 16. The sixteenth migration makes the table `region` and the index `ix_region_source_id` and nothing else; a store that holds sources, countries and what points to them keeps them as they were. Where a table or an index of its name is there already the migration fails, and the store stays at version 15 with nothing of the migration kept.
+  2. A region is stored and read back with its country, its name and the eight things that say where it came from. A row cannot be without any of them but the day it was published, and neither the model nor the table gives one a value.
+  3. A region is a part of a country that is there, when it is stored and when it is moved. A country that has regions cannot be deleted; one without regions can, and so can a country whose regions were taken away first.
+  4. Two regions of one country cannot have one name, when a region is stored, when it is given another name and when it is moved. Two countries can each have a region of a name. Two names are one name only if they are the same text.
+  5. A name is text that is not empty and is stored as it was given.
+  6. A region comes from a source that is there; a source that regions came from cannot be deleted; a region can be deleted, and its key is not given again.
+  7. The eight columns keep their rules in the real table: a web address, a calendar day, the three lists, and the two times held together.
+  8. The regions of one source are found through `ix_region_source_id`, and the regions of one country through the index of the rule of the names; SQLite reads no table whole when a country or a source is to be deleted.
+  9. `change` changes a region and writes its history; a change the table refuses leaves the region and no history.
+  10. The model and the migration agree: the test of the models and the migrations passes unchanged. The whole schema with the regions breaks neither the rules every table keeps nor the rule of where records came from, whose list is unchanged.
+  11. One existing test changes, the list of the migrations' names; no other existing test changes, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  12. `python scripts/check.py` reports 19 of 19 gates, with 2705 backend tests, and 117 tests more in all than `main` gives at the commit the branch starts from (3685 when that is `a8b30bb`); on the pull request both gates jobs are green (Linux and Windows) at the first attempt and the three jobs after the gates are skipped.
+  13. Only the eleven files under "Scope" of the plan changed.
+- **Tests required:** 104 new integration tests in 32 functions, in a store the migrations built, with one source and two countries in it, on a real SQLite file, through the model and past it as plain SQL, each refusal with what SQLite said: what is stored; what a region cannot be without; the country that must be there, when a region is stored and when it is moved; a country with regions, without them and after they were taken away; one name in one country and in two, when a region is stored, renamed and moved; names that differ in a capital, a space or an accent; names that are empty; the source; the key of a deleted region; the rules of the eight columns; the two indexes, as SQLite says it uses them; the history. 9 new unit tests of the model. 3 new integration tests of the sixteenth migration, on a store that holds sources, countries and what points to them, and one case more of the test that tries every migration alone. Planted defects in the model and in the migration. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-013.md`
+
+### DAT-064 – A region says its code of ISO 3166-2
 - **Status:** NOT STARTED
-- **Objective:** A country can be divided into regions (a state, a county, a province), so that a track can say where in the country it is.
-- **Description:** Table, model and migration for regions: the country, the name, the ISO 3166-2 code where one exists, an optional parent region, and provenance. No reference rows: regions arrive with the records that need them.
-- **Acceptance criteria:** a region belongs to exactly one country; two regions of one country cannot share a code or, under the same parent, a name; a region's parent is in the same country; a country with regions cannot be deleted.
-- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
+- **Objective:** A region can say the code the standard ISO 3166-2 gives it, such as `NZ-CAN`, so that a region is known across sources that write its name differently.
+- **Description:** Added on 2026-11-27 (PLAN-054), cut out of DAT-013. One column of `region`, which may be without a value: not every region a source names has a code, and a region is not kept out of the store for lacking one. The migration changes a table that is there. The planner's trial settles the form a code is held to (the standard writes the two letters of the country, a hyphen, and up to three letters or digits), how the table holds that the code of a region begins with the code of its country, which is a column of another table, and whether that is a rule of the table or of the code that writes a region. No codes are loaded: which codes there are is what a source says.
+- **Acceptance criteria:** a region may be without a code, and any number of regions may be; a code is stored in the standard's form and refused in any other; no two regions have one code; the code of a region agrees with the country it is a part of; the regions that were there keep everything they had and have no code; the model and the migration agree.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it that holds countries and regions; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-065 – A region inside a region
+- **Status:** NOT STARTED
+- **Objective:** A region can be a part of another region of its country, as a county is of a state, so that a track can be placed as closely as its source places it.
+- **Description:** Added on 2026-11-27 (PLAN-054), cut out of DAT-013. One column of `region` that refers to the table itself and may be without a value: a region without a parent is a part of its country only. The migration changes a table that is there. With a parent, the rule of the names changes: two regions of one country may have one name when they are parts of different regions (there are counties of one name in many states), so the rule of DAT-013, one name in a country, becomes one name under the same parent, and one name among the regions of a country that have no parent. The planner's trial settles how SQLite is given that rule where the parent may be without a value, how the table holds that a parent is of the same country, and what is done about a region that would be a part of itself, directly or through others.
+- **Acceptance criteria:** a region may be without a parent; a parent is a region that is there, of the same country; a region is not its own parent; two regions under one parent cannot have one name, nor two regions of one country that have no parent, and two under different parents can; a region that other regions are parts of cannot be deleted; the regions that were there keep everything they had and have no parent; the model and the migration agree.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it that holds countries and regions; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
