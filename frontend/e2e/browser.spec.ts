@@ -82,7 +82,7 @@ test.describe('the browser of the tests', () => {
     expect(TEST_BROWSER_SWITCH).toBe(
       `${FEATURES_OFF}${[...PLAYWRIGHTS_OWN_FEATURES_OFF, RANDOM_PORTS_FEATURE].join(',')}`,
     )
-    expect(RANDOM_PORTS_FEATURE).toBe('TcpPortRandomizationWin')
+    expect(RANDOM_PORTS_FEATURE).toBe('TcpPortRandomization')
     expect(new Set(PLAYWRIGHTS_OWN_FEATURES_OFF).size).toBe(PLAYWRIGHTS_OWN_FEATURES_OFF.length)
     expect(PLAYWRIGHTS_OWN_FEATURES_OFF).not.toContain(RANDOM_PORTS_FEATURE)
   })

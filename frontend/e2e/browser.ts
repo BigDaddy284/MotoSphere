@@ -37,7 +37,7 @@ export const PLAYWRIGHTS_OWN_FEATURES_OFF = [
 ] as const
 
 /** The feature the tests run without. It exists on Windows only. */
-export const RANDOM_PORTS_FEATURE = 'TcpPortRandomizationWin'
+export const RANDOM_PORTS_FEATURE = 'TcpPortRandomization'
 
 /** The word a browser is told its list of features to turn off with. */
 export const FEATURES_OFF = '--disable-features='
