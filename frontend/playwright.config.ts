@@ -1,5 +1,4 @@
 import { defineConfig, devices } from '@playwright/test'
-import { TEST_BROWSER } from './e2e/browser.ts'
 import { SITE_PATH } from './site.ts'
 
 const HOST = '127.0.0.1'
@@ -23,8 +22,6 @@ export default defineConfig({
   use: {
     baseURL: BASE_URL,
     trace: 'off',
-    // Every test runs in a browser started this way (e2e/browser.ts).
-    launchOptions: TEST_BROWSER,
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
