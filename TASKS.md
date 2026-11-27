@@ -13,9 +13,9 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 55 | 55 |
+| 1 | Foundation (FND) | 58 | 55 |
 | 2 | Data store and published data (DAT, PUB) | 71 | 54 |
-| 3 | Interactive 3D Earth (GLB) | 25 | 4 |
+| 3 | Interactive 3D Earth (GLB) | 28 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-061 – A command loads the countries.
 
-**Current task, track B (globe):** GLB-002 – The globe shows the Earth.
+**Current task, track B (globe):** FND-058 – The globe tests have a browser that draws 3D pictures, one test at a time.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -269,6 +269,31 @@ showed this as a task of its own, DAT-063, with 17 tests, and it stands
 before DAT-061: the command then has only its own work to test. The plan has
 one task more than before, 294. Order on track A: DAT-063, DAT-061, then
 DAT-013.
+
+**The globe in smaller steps, and a browser of their own for its tests
+(PLAN-053):** the planner's trial of GLB-002 put the globe into the stage
+and measured how the browser of the tests draws it. Started as the tests
+start it today, the browser logs four warnings of its own on the console of
+every page that shows a 3D picture ("GPU stall due to ReadPixels"), and
+every browser test fails on a warning on the console. Told one word more,
+`--use-angle=swiftshader`, it says nothing, on a developer's Linux machine
+and on both of GitHub's machines. On GitHub's Windows machine two globes
+drawn at once starve each other: of eight that were started two at a time,
+seven were not complete within 40 seconds, where one alone was complete in
+2.1 to 4.8 seconds. With the tests of the globe held to one at a time, 16 of
+16 were complete there in 1.5 to 7.6 seconds, and 16 of 16 on the Linux
+machine in 0.6 to 0.8 seconds. So the tests of the globe get a project of
+their own first, with that word and one test at a time (FND-058). A globe
+test must then be the only test that draws a 3D picture, so the other tests
+get a browser that gives none (FND-059), and the page has to say something
+sensible there before the globe is put into it (GLB-026). A page that reads
+its own 3D picture brings a warning of the browser too, so the tests that
+check the picture read it from what the page shows (FND-060). GLB-002 itself
+was four objectives: what the stage does where the browser cannot draw
+(GLB-026), the life of the component (GLB-027), the real engine in the page
+(GLB-002 from here on) and the size of the surface (GLB-028). Six tasks are
+new, and the plan has 300. Order on track B: FND-058, FND-059, FND-060,
+GLB-026, GLB-027, GLB-002, GLB-028, then GLB-003.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1417,6 +1442,52 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Verification status:** Verified by the planner on 2026-11-27. All 4 files are the same change as the planner's trial. No existing test changed in what it expects, the time limit is 20 minutes as before, and no package was added. The cause was measured on GitHub's Windows machine before the plan (trial pull request #181, run 46020195509) and the remedy was run there before the plan too (trial pull request #182, run 46024517308: the Windows job in 9 minutes 18 seconds). The builder reported the full run with 3364 tests passed in its own checkout, the plan's five prove-it steps, each with the plan's result, the same times from the pull request's run, and no deviation from the plan but Node 22.23.5 where the plan's trial had 22.23.4.
 - **Commit:** `0bbc7b8`
 - **Plan:** `docs/plans/FND-057.md`
+
+### FND-058 – The globe tests have a browser that draws 3D pictures, one test at a time
+- **Status:** IN PROGRESS
+- **Objective:** The browser tests of the globe get a project of their own: its browser is told how to draw 3D pictures, so that it says nothing of its own on the console, and its tests run one at a time. A globe test that runs beside another fails and says so.
+- **Description:** Added on 2026-11-27 (PLAN-053), from the planner's trial of GLB-002. Started as the tests start it today, the browser logs four warnings of its own on the console of every page that shows a 3D picture ("GPU stall due to ReadPixels"), and every browser test fails on a warning on the console. Told one word more, `--use-angle=swiftshader`, it says nothing, on a developer's Linux machine and on both of GitHub's machines. On GitHub's Windows machine two globes drawn at once starve each other: of eight that were started two at a time, seven were not complete within 40 seconds, where one alone was complete in 2.1 to 4.8 seconds. With the tests of the globe held to one at a time, 16 of 16 were complete there in 1.5 to 7.6 seconds, and 16 of 16 on the Linux machine in 0.6 to 0.8 seconds. `frontend/playwright.config.ts` gets a second project, `globe`, for the files in a new folder, `frontend/e2e/globe`, with `workers: 1`; the project of the other tests, `chromium`, leaves that folder out. `frontend/e2e/browser.ts` gets the word (`SOFTWARE_3D_SWITCH`) and how the browser of the globe tests is started (`GLOBE_BROWSER`: as the browser of every test, with the word). The limit is held by the tests themselves too: every globe test uses the `test` of `frontend/e2e/globe/fixtures.ts`, which holds a turn for as long as the test runs, a file in the folder of the run's results that only one can make, and a globe test that finds it there fails with "Two globe tests ran at once. They must run one at a time: see the project "globe" in playwright.config.ts." The task has no globe in it, only a plain 3D picture of the test's own; nothing under `frontend/src` changes. A globe drawn while other browser tests run beside it was not measured: Playwright starts the tests of the first project first, and the globes were drawn at the end of the run.
+- **Acceptance criteria:**
+  1. `frontend/playwright.config.ts` has two projects, `chromium` and `globe`, in that order. The files in `frontend/e2e/globe` run in `globe` and in no other project, and no other file runs in it.
+  2. The browser of the project `globe` is started with the list of features to turn off that every test's browser has, and with `--use-angle=swiftshader`. The browser of the other tests is started as before.
+  3. In the project `globe`, a page that shows 3D pictures one after another reports no problem: nothing on the console, no failed request.
+  4. The project `globe` has one worker, whatever the number of workers of the run.
+  5. Every globe test holds the turn while it runs. A globe test that starts while another holds it fails with the sentence above.
+  6. With the limit of one worker taken out of the settings, a run of the project with two workers fails.
+  7. The 261 browser tests that were there pass in the project `chromium`; of them, only `is set for the one project there is` changed, into `is set for every project, and for the project of the globe with one word more`.
+  8. Nothing under `frontend/src` changed, no package was added, and `scripts/check.py` and the workflow are as they were.
+  9. `TESTING.md` says what was measured and how the limit is held.
+  10. `python scripts/check.py` reports 19 of 19 gates, with 270 browser tests, and 9 tests more in all than `main` gives at the commit the branch starts from (3529 when that is `ead1ec1`).
+  11. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
+  12. Only the eight files under "Scope" of the plan changed.
+- **Tests required:** 9 new browser tests in the project `globe`: how its browser is started; a page that shows thirty 3D pictures, drawn in software, with nothing on the console; the project and its options; the turn held while a test runs, and refused to a second; the turn taken in a folder that is not there yet, refused with what the system said, handed back and taken again; four tests that take a third of a second each, which collide when the project has more than one worker. One existing test says that there are two projects. Planted defects in the browser, the settings and the turn. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/FND-058.md`
+
+### FND-059 – The other browser tests run in a browser without 3D pictures
+- **Status:** NOT STARTED
+- **Objective:** The browser of every test that is not a globe test is started so that a page gets no 3D picture, so that no test outside the project of the globe can draw one.
+- **Description:** Added on 2026-11-27 (PLAN-053). FND-058 holds the globe tests to one at a time, because two pictures drawn in software at once starve each other on GitHub's Windows machine. That holds only as long as no other test draws one, and once the globe is in the page (GLB-002) every browser test that opens the page would. A browser started with `--disable-3d-apis` gives a page no 3D picture (`getContext('webgl2')` and `getContext('webgl')` give nothing), still draws 2D pictures and says nothing on the console; `--disable-gpu` does not take the 3D pictures away. The 261 browser tests there were passed in such a browser on both of GitHub's machines, but for the one that says how the browser is started (trial pull request #202, run 46063407570). The word goes to the browser of the tests (`TEST_BROWSER` in `frontend/e2e/browser.ts`); the browser of the globe tests (`GLOBE_BROWSER`) names its words itself and must not get this one. What the page shows in such a browser is GLB-026; until the globe is in the page, nothing changes for a test.
+- **Acceptance criteria:** in the project `chromium` a page gets neither a `webgl2` nor a `webgl` picture, does get a 2D one, and nothing is on the console; in the project `globe` a page gets a 3D picture as before; the browser of the project `chromium` is started with the word exactly once and the browser of the project `globe` without it; every other browser test passes unchanged; `TESTING.md` says why.
+- **Tests required:** browser tests in both projects of what a page gets and of how each browser was started; planted defects in the browser and in the settings; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-060 – A browser test can read a pixel of what the page shows
+- **Status:** NOT STARTED
+- **Objective:** A helper of the browser tests gives the colour of a point of the page as a person sees it, without the page reading its own 3D picture.
+- **Description:** Added on 2026-11-27 (PLAN-053), for GLB-003, which proves from the pixels that the Earth is drawn. In the planner's trial a page that read its own 3D picture (`gl.readPixels`) made the browser log a warning, and a browser test fails on a warning. So the tests read the picture from outside: Playwright takes a picture of one pixel of the page, and the helper reads its colour from the PNG with what Node.js brings (`node:zlib`); the trial read a picture of one pixel that way. No package is added. The task has no globe in it: the helper is tested with a page of colours the test itself puts there, drawn in 2D in the project of the other tests and in 3D in the project of the globe.
+- **Acceptance criteria:** for a page of known colours the helper gives each colour exactly, at the corners and edges of the page too; a 3D picture of a known colour is read in the project `globe` with nothing on the console; a point outside the page is refused with a sentence; a PNG of a kind the helper does not read is refused with a sentence and not misread; no package is added.
+- **Tests required:** browser tests of the helper in both projects; tests of the reading of a PNG with pictures made in the test; planted defects in the helper; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -2851,12 +2922,45 @@ What holds for every task of the phase:
 - **Commit:** `63d2c54`
 - **Plan:** `docs/plans/GLB-025.md`
 
+### GLB-026 – The stage says when the browser cannot show the globe
+- **Status:** NOT STARTED
+- **Objective:** In a browser that gives no 3D picture the stage says so in a plain sentence, and the engine is not loaded.
+- **Description:** Added on 2026-11-27 (PLAN-053), cut out of GLB-002 and GLB-004. Started in a browser that gives no 3D picture, the engine puts up a panel of its own and logs an error on the console. With FND-059 that is the browser of every test outside the project of the globe, so the page must know what to do there before the globe is put into it. The stage asks the browser whether it gives a 3D picture, on a drawing surface of its own that it gives back at once, and where it gives none it shows a friendly sentence in the place of the globe; the rest of the application works as before. The sentence is read to screen readers. Where the browser can draw, the stage is as it was: the globe itself comes with GLB-002. The unit tests run where there is no drawing surface at all, so the question is asked through something a test can stand in for. Which kind of 3D picture the engine needs at the least is settled in the trial and recorded.
+- **Acceptance criteria:** in the project `chromium` (a browser without 3D pictures, FND-059) the stage shows the sentence, no file of the engine is asked for, and nothing is on the console; in the project `globe` the sentence is not shown; the surface the question was asked on is given back; the top bar and both panels work in both; the main landmark is still named "Globe" and the existing layout tests pass unchanged.
+- **Tests required:** frontend unit tests of the question over stand-ins for the browser and of the stage in both states; browser tests in both projects; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-027 – The life of the globe over a stand-in engine
+- **Status:** NOT STARTED
+- **Objective:** A `Globe` component starts one engine in its drawing surface when it is shown and stops it when it goes, proven by unit tests with a stand-in for the engine.
+- **Description:** Added on 2026-11-27 (PLAN-053), cut out of GLB-002. The component owns one element for the drawing surface and is handed how the engine is loaded and started, so that the unit tests can stand in for it: the loading gives a way to start an engine in an element, and starting gives the way to stop it. The engine is loaded when the component is shown and not before. React shows a component twice in development (`StrictMode`), and a component can go before the loading is over: in neither case may an engine be left running or be started in an element that is gone. A loading that fails is handed to whoever shows the component; what a person is told then is GLB-004. The component is not put into the page yet, so nothing a user sees changes. Its tests end with no work of React's waiting (FND-056), which a component that loads something a moment after it is shown has to hold in its own tests.
+- **Acceptance criteria:** shown once, the component loads the engine once and starts it once, in its own element; when it goes, the engine is stopped once; an engine is never started after the component has gone, and one whose loading ends afterwards is not started; under `StrictMode` exactly one engine is running once the component is shown; a loading that fails is reported once and nothing is started; no engine module is loaded by the unit tests.
+- **Tests required:** frontend unit tests of the life of the component with a stand-in engine, in and out of `StrictMode`, with a loading that is slow, that fails, and that ends after the component has gone; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
 ### GLB-002 – The globe shows the Earth
 - **Status:** NOT STARTED
 - **Objective:** The stage shows a 3D Earth with the imagery that comes with the engine, loaded only from the site itself.
-- **Description:** A `Globe` component owns one drawing surface in the stage and one engine widget. The engine is loaded when the stage is shown and not with the first paint of the page, so the top bar and the panels appear at once. The imagery is the Natural Earth II picture set that comes with the engine (ARCHITECTURE.md §8): no key, no account and no request to another computer. The engine's services that need an account are not used. The surface follows the size of the stage when a panel opens or closes and when the window changes. Leaving the page's globe (the component unmounting) frees the engine. The camera cannot be moved by the user yet in any way this task promises; that is GLB-005 onwards.
-- **Acceptance criteria:** the stage holds one drawing surface that fills it at every screen size the layout knows; the Earth is drawn; no request leaves the site; the page's first paint does not wait for the engine; the surface keeps the size of the stage through opening and closing panels and resizing; unmounting frees the engine and mounting again works; the main landmark is still named "Globe" and the existing layout tests pass unchanged.
-- **Tests required:** frontend unit tests of the component's life (made once, sized, freed) with a stand-in engine; browser tests on the built site: the surface is there and sized, the engine reports its first complete picture, no request leaves the site; planted defects; the full run of all gates on both machines.
+- **Description:** Narrowed on 2026-11-27 (PLAN-053): what the stage does where the browser cannot draw is GLB-026, the life of the component is GLB-027, and that the surface follows the size of the stage is GLB-028. This task is the real engine in the page. The way to start it that the `Globe` component of GLB-027 is handed makes one engine widget in the component's element, with the Natural Earth II picture set that comes with the engine (ARCHITECTURE.md §8): no key, no account and no request to another computer. The engine's services that need an account are not used. The engine draws when something has changed and not all the time. Stopping takes the widget away and gives the browser its 3D picture back, which the engine's own way of ending did not do in the planner's trial. The rules of the engine's style sheet that the surface needs for its size come with it. The stage shows the component where the browser can draw (GLB-026), and the engine is loaded when the stage is shown and not with the first paint of the page, so the top bar and the panels appear at once. The browser tests of the globe run in the project `globe` (FND-058). The camera cannot be moved by the user yet in any way this task promises; that is GLB-005 onwards. What the engine says of its imagery on the globe is GLB-015.
+- **Acceptance criteria:** in the project `globe` the stage holds one drawing surface that fills it; the Earth is drawn, and the engine reports its first complete picture; no request leaves the site and nothing is on the console; the page's first paint does not wait for the engine; leaving and showing the globe again works, and the browser has its 3D picture back in between; in the project `chromium` the stage still shows the sentence of GLB-026 and no file of the engine is asked for; the main landmark is still named "Globe" and the existing layout tests pass unchanged.
+- **Tests required:** frontend unit tests of what the stage shows, with a stand-in engine; browser tests on the built site in the project `globe`: the surface is there, the engine reports its first complete picture, no request leaves the site, the globe can go and come back; browser tests in the project `chromium` that the engine is not loaded; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-028 – The globe follows the size of the stage
+- **Status:** NOT STARTED
+- **Objective:** The drawing surface keeps the size of the stage when a panel opens or closes and when the window changes, and the Earth is drawn anew at that size.
+- **Description:** Added on 2026-11-27 (PLAN-053), cut out of GLB-002. The stage changes its size when a side panel opens or closes, when the window changes and when a phone is turned. The surface follows, at the sharpness of the screen, and because the engine draws only when something has changed, a new picture is asked for then. The camera keeps what it looks at.
+- **Acceptance criteria:** at every screen size the layout knows, the surface fills the stage after a panel opens, after it closes and after the window changes; the picture has as many pixels as the surface asks for and is not stretched; a new complete picture is drawn after each change; nothing is on the console.
+- **Tests required:** browser tests in the project `globe` at the screen sizes the layout knows, with the panels opened and closed and the window changed; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -2876,9 +2980,9 @@ What holds for every task of the phase:
 ### GLB-004 – Loading and failure of the globe
 - **Status:** NOT STARTED
 - **Objective:** A person always sees whether the globe is loading, shown or could not be shown, in plain words.
-- **Description:** While the engine and the first imagery load, the stage says so. When the browser cannot draw 3D graphics, when the engine's files cannot be fetched, or when the engine stops with an error while drawing, the stage says what happened in a friendly sentence and what the person can do, and the rest of the application keeps working. The messages are read to screen readers.
-- **Acceptance criteria:** a loading message is shown until the first complete picture and not after; a browser without WebGL gets the message for that and no error in the page; engine files that fail to load give the message for that, with a way to try again that works once they load; an error while drawing gives a message and frees the engine; in each case the top bar and both panels still work.
-- **Tests required:** frontend unit tests of the three states and of the way from one to another; browser tests with WebGL switched off, with the engine's files refused, and with a slow network; planted defects; the full run of all gates on both machines.
+- **Description:** While the engine and the first imagery load, the stage says so. That the browser cannot draw 3D graphics is said since GLB-026 (PLAN-053). When the engine's files cannot be fetched, or when the engine stops with an error while drawing, the stage says what happened in a friendly sentence and what the person can do, and the rest of the application keeps working. The messages are read to screen readers.
+- **Acceptance criteria:** a loading message is shown until the first complete picture and not after; a browser without 3D pictures still gets the sentence of GLB-026 and no loading message; engine files that fail to load give the message for that, with a way to try again that works once they load; an error while drawing gives a message and frees the engine; in each case the top bar and both panels still work.
+- **Tests required:** frontend unit tests of the three states and of the way from one to another; browser tests with the engine's files refused and with a slow network, and in a browser without 3D pictures; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified

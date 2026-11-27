@@ -8,8 +8,8 @@ references are copied from real output, never estimated.
 
 - **Phases:** 2 – Data store and published data (track A) and 3 – Interactive 3D Earth (track B), side by side since 2026-11-27 (PLAN-033); Phase 1 – Foundation is complete again, with the tasks that were added to it later (FND-056 was the last of them)
 - **Current task, track A (data store):** DAT-061 – A command loads the countries (`NOT STARTED`, the planner is trialling it and writing its plan)
-- **Current task, track B (globe):** GLB-002 – The globe shows the Earth (`NOT STARTED`, the planner is trialling it and writing its plan)
-- **Tasks verified:** 113 of 294
+- **Current task, track B (globe):** FND-058 – The globe tests have a browser that draws 3D pictures, one test at a time (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 113 of 300
 - **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar has the data status and the date under its first line, on two lines below 640 pixels and on one from there on, so that it is as tall while the data loads as afterwards, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (3520 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store has its first four tables, and no rows yet: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (there are fifteen so far, which make the tables of the information sources, of what they offer, of the collection runs and of the changes to records, an index that takes SQLite straight to the runs of one source, the triggers by which the history of the records is only added to, two indexes that take SQLite straight to the changes of one record and to the changes one run caused, the table of the review queue, where what is in doubt waits for a person's decision, the two indexes by which the store refuses the same doubt a second time, the two triggers by which the store itself refuses to edit or delete an item of that queue once it is decided, the two triggers by which it refuses a key below 1 for an item of that queue, the two by which it refuses a row that would take the place of a decided item, and the table of the countries, the first table of collected records, with the index that takes SQLite straight to the countries of one source, the column by which a source says which country it is of, with its index, and a thirteenth kind of source, the keeper of a reference list; one function puts two records that may be the same thing to that queue, another what a source says of a field of a record, and a third puts down a person's decision on an item, and nothing calls them yet; one function gives the row of the source of the countries, the project iso-codes, and stores it first when the store does not have it, switched off and with its terms read by no person yet; another adds to the store every country of the reference file that the store does not have, each naming that source, the release it is from and the moment it was loaded, changes no country, names what the store says otherwise of and puts what the file says of it to the review queue, where it waits for a person, and no command calls it yet); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, and only `migrate` writes to it; one function, `store_to_work_on`, gives a command the store only when it is there and at the newest schema, makes no file and gives the store no migration, and says in one sentence what is wrong, and no command calls it yet; there is a base for all models, which makes every table strict and names its constraints and indexes by one rule, and a test that holds every table to that; a time is stored as text in one form, in UTC with its offset written out, a time without an offset is refused, and a model's `datetime` column gets that type from the base; every model gets its key from the base, a whole number `id` that SQLite never gives twice, and the two times `created_at` and `updated_at`, which the store's code sets from the store's one clock; the test that holds every table to the rules names a table without that key or without those two times, and a name that more than one constraint or index of a table has; a model can say of a column that its text must not be empty, and SQLite itself then refuses empty text in it, also text of nothing but white space, and the test that holds every table to the rules names such a column whose table is without the check for it; any column type can bring the check for its column in that way; a model can say of a column that it is yes or no, and SQLite itself then refuses every number but 1 and 0 in it; a model can say that a column's value is one of a list the code knows, and SQLite itself then refuses any text that is not on that list; a model can say that a column is a web address, and SQLite itself then refuses text that does not begin as one or has white space in it; the store has its first table, that of the information sources, each described by one of twelve kinds of source and one of ten ways of collecting, and switched off until a person has read its terms; a second table says which of nine kinds of information each source offers, and a source that has offers cannot be deleted; a third table records every collection run, with its source, its start and end, how it ended and what it counted, and one function, `mark_interrupted`, marks the runs a dead job left running as interrupted; another, `standing_of`, says how a source is doing (its last attempt, its last success, its last error and its health) by reading its runs, and stores none of it; the code has the two lists that say how far a collected record can be trusted, three levels of confidence and four verification statuses from official to unverified, and no table has a column of them yet; a model can say that a column is a calendar day, which is kept as text such as `2026-11-24` with no time made up for it and which the store refuses when no calendar has it, and no table has such a column yet either; the columns by which every collected record says where it came from are one set in the code, which a model of collected records takes whole, and with them an index that takes SQLite straight to the records of one source, and no table has them yet; a rule names every table that neither has those columns nor is on the list of the tables that hold no collected records, where each stands with its reason, and a test holds the real schema to it; one table is there to keep, for one field of one record, what it held before it was changed and what it holds now, with the collection run or the person that caused the change, and one function changes a stored record and writes that history in the same unit of work, so that neither is kept without the other, which nothing calls yet because no table holds records; that history is only added to, because the store itself refuses to edit, delete or replace a row of it, whoever writes to the file; the migrations are written in a module of their own, as plain SQL that names nothing of the code; one test holds the models and the migrations together, and fails with a sentence for each table or index that is not the same in both (`DATABASE.md`). The countries of the world come with the pipeline as a file: the list of ISO 3166-1 from the project iso-codes, unchanged and with its licence beside it, and a reader that gives its 249 countries or refuses a damaged file whole; none of them is in a store yet, because no command loads them (`DATA_SOURCES.md`). No globe yet: its engine, `@cesium/engine` with `@cesium/core`, is installed and tested as installed, and nothing of the application uses it so far. The published site carries the licences of the packages it is built with, in one file, `licences.txt`, which the build writes from the packages as they are installed, with every licence file a package brings, at any depth of its folder. A repository check holds the licence of each of those packages to a list of the licences the project has read and accepted.
 
 ## Reports
@@ -11383,3 +11383,96 @@ planner's 22.23.4.
 Commit: `ead1ec1` (squash merge of pull request #204).
 
 Next task on track A: DAT-061 – A command loads the countries.
+
+### PLAN-053 – The globe in smaller steps, and a browser of their own for its tests (2026-11-27)
+
+Not a development task: no application code changed.
+
+Found in the planner's trial of GLB-002, the task that puts the globe into
+the page. The trial put the engine into the stage, drawing the Earth from
+the pictures that come with it, and measured in a page of the built site how
+the browser of the tests draws it: on a developer's Linux machine and, in
+trial pull requests that were closed without merging, on both of GitHub's
+machines (the last two are #200, run 46061328065, and #202, run
+46063407570). None of the three machines has a graphics card for the
+browser; on all three it draws in software.
+
+What was found:
+
+1. Started as the tests start it today, the browser logs four warnings of
+its own on the console of every page that shows a 3D picture ("GPU stall due
+to ReadPixels"), and every browser test fails on a warning on the console.
+Told one word more, `--use-angle=swiftshader`, it says nothing, on a
+developer's Linux machine and on both of GitHub's machines. Nine other words
+a browser can be started with were tried, and none of them helps on all
+three machines. On GitHub's Linux machine one globe alone was complete in
+4.8 to 5.4 seconds without the word and in 0.9 seconds with it (once 2.2).
+
+2. On GitHub's Windows machine two globes drawn at once starve each other:
+of eight that were started two at a time, seven were not complete within 40
+seconds, where one alone was complete in 2.1 to 4.8 seconds. With the tests
+of the globe held to one at a time, 16 of 16 were complete there in 1.5 to
+7.6 seconds, and 16 of 16 on the Linux machine in 0.6 to 0.8 seconds. While
+two were drawn at once the browsers went on drawing, up to 40 pictures a
+second, and files of the site took 20 to 37 seconds to arrive from the test
+server on the same machine; no request failed and nothing was reported. This
+is what a run on that machine would have looked like with the globe in the
+page and two tests at a time: slow, then out of time, with no test to blame.
+Playwright starts the tests of the first project first, so the 16 globes
+were drawn at the end of the run; a globe drawn while other browser tests
+run beside it was not measured.
+
+3. A browser started with `--disable-3d-apis` gives a page no 3D picture
+(`getContext('webgl2')` and `getContext('webgl')` give nothing), still draws
+2D pictures and says nothing on the console; `--disable-gpu` does not take
+the 3D pictures away. The 261 browser tests there were passed in such a
+browser on both of GitHub's machines, but for the one that says how the
+browser is started (trial pull request #202, run 46063407570).
+
+4. Started in a browser that gives no 3D picture, the engine puts up a panel
+of its own and logs an error on the console. The page must ask the browser
+before it starts the engine.
+
+5. When the engine's widget is ended, the browser does not get its 3D
+picture back by that; a page that shows and removes globes has to give it
+back itself. A page that reads its own 3D picture makes the browser log a
+warning, so a test that checks the picture reads it from a picture of the
+page. The engine draws all the time unless it is told to draw on request.
+The surface needs rules of the engine's own style sheet for its size.
+
+What follows for the plan. GLB-002 as it was written is four objectives with
+four kinds of test, and the tests of the globe need three things of the
+foundation first. Six tasks are new:
+
+- FND-058 – The globe tests have a browser that draws 3D pictures, one test at a time (Phase 1, new): the project `globe`, its browser with
+  the word, one test at a time, and the turn by which the tests
+  themselves hold that.
+- FND-059 – The other browser tests run in a browser without 3D pictures (Phase 1,
+  new): so that a globe test is the only test that draws a 3D picture.
+- FND-060 – A browser test can read a pixel of what the page shows (Phase 1, new):
+  for the tests of GLB-003.
+- GLB-026 – The stage says when the browser cannot show the globe (new, cut out of
+  GLB-002 and GLB-004).
+- GLB-027 – The life of the globe over a stand-in engine (new, cut out of
+  GLB-002): the component, with unit tests.
+- GLB-002 – The globe shows the Earth, narrowed: the real engine in the page.
+- GLB-028 – The globe follows the size of the stage (new, cut out of
+  GLB-002).
+
+The entry of GLB-004 now says that the sentence for a browser without 3D
+pictures is GLB-026's. Phase 1 has 58 tasks, Phase 3 has 28, and the plan
+300.
+
+Why the browser first and the globe after. Every task from GLB-026 on is
+tested in a real browser on both machines. Had the globe gone into the page
+as GLB-002 was written, every one of the 261 browser tests would have
+started a globe, two at a time on GitHub, with four warnings each. The three
+tasks of the foundation are small, have no globe in them and are each proven
+by tests of their own.
+
+The plan of the first of them is `docs/plans/FND-058.md`.
+
+Order on track B from here: FND-058, FND-059, FND-060, GLB-026, GLB-027,
+GLB-002, GLB-028, then GLB-003 – The picture of the Earth is checked.
+
+Next task on track B: FND-058 – The globe tests have a browser that draws 3D pictures, one test at a time.
