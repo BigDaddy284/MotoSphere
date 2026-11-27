@@ -457,24 +457,6 @@ without a file look for the file and its folder afterwards. Each store
 `migrate` refuses is given to both commands, and what `schema` says must
 be what `migrate` says, word for word.
 
-The store a command works on (`store_to_work_on`, DAT-063) is tested in
-`tests/integration/test_store_to_work_on.py`, 16 tests against a real
-SQLite file that the real `migrate` command or SQLite alone made, most
-of them with a list of migrations of the test's own in the place of the
-pipeline's, so that a store can lack some. A store at the newest schema
-is given, opened as every store is opened, and a unit of work on it is
-kept; so is one at the newest schema of the pipeline's own list. Where
-there is no file, none is given and none is made, nor its folder. A
-store that lacks one, two or three migrations is not given and is not
-given them. Each store `migrate` refuses is refused in the words
-`migrate` then says, a file that is no database and a folder in the
-store's place in one line each. A relative path is taken from the
-current folder. Every test of a refusal compares the file byte for byte
-afterwards. Two tests remove the file after the function was asked,
-once refused and once given: Windows removes no file that a connection
-still holds. `tests/unit/test_cli_store.py` holds the advice to the
-command line's own name.
-
 ## The rules every table keeps
 
 `backend/tests/integration/test_base.py` has two models of its own,

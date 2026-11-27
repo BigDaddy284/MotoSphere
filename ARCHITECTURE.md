@@ -321,11 +321,7 @@ pipeline's command line. The settings and logging modules stay.
   (DAT-023). The command `python -m motosphere migrate` runs it on the
   store the settings name, and is the first command that uses the store
   (DAT-024). The command `python -m motosphere schema` says which schema
-  that store has and writes nothing (DAT-025, DATABASE.md). Every other
-  command that works on the store gets it from one function,
-  `store_to_work_on` in `motosphere.cli.store` (DAT-063), which gives the
-  store only when it is there and at the newest schema, and makes and
-  migrates nothing: that stays with `migrate`. The
+  that store has and writes nothing (DAT-025, DATABASE.md). The
   migrations themselves are written in one module, `motosphere.db.history`,
   as plain SQL that names nothing of the store's code, so that a migration
   builds tomorrow what it builds today (DAT-006).

@@ -203,27 +203,6 @@ error, and the same exit code 1: the two commands ask the same function,
 so they cannot come to disagree about a store. The file is byte for byte
 the same afterwards, and nothing is made beside it.
 
-**The store a command works on.** `migrate` makes the store and brings it
-to the newest schema, and `schema` looks. Every other command that reads
-or writes the store works on it as it is, and gets it from one function,
-`store_to_work_on` in `motosphere.cli.store` (DAT-063). It gives the store
-the settings name, opened with `open_store`, and only when the file is
-there and lacks no migration. It puts nothing right: where there is no
-file it makes none, and a store that lacks migrations is not given them,
-so that a command that was asked for one thing does not do another as
-well. What is wrong is said in one sentence (`StoreNotReadyError`), and
-where `migrate` puts it right the sentence says so:
-
-| The store | What is said |
-|---|---|
-| There is no file | "There is no data store: … does not exist. Run `python -m motosphere migrate` first." |
-| It lacks migrations | "The data store lacks 2 migrations: … is at schema version 13, and the newest is version 15. Run `python -m motosphere migrate` first." |
-| `migrate` would refuse it, or it cannot be opened | What `migrate` says of it, word for word |
-
-The file is byte for byte the same afterwards, nothing is made beside it,
-and no connection to it is left open. No command uses the function yet;
-the first is the command that loads the countries (DAT-061).
-
 **The history.** `motosphere.db.history` has every migration, and the
 list of them, and nothing else (DAT-006):
 
