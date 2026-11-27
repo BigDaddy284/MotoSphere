@@ -430,7 +430,8 @@ pipeline's command line. The settings and logging modules stay.
   refuses an item that was decided already (DAT-052). The table keeps
   a decision itself: two triggers in the store refuse to edit or to
   delete an item that was decided, whoever writes to it (DAT-054). Two
-  more hold the key of an item to 1 or more (DAT-056).
+  more hold the key of an item to 1 or more (DAT-056), and two more
+  refuse a row that would take the place of a decided item (DAT-055).
 
 The schema is documented in DATABASE.md as tables are added.
 

@@ -829,7 +829,14 @@ below 1 and one above, the items are as they were, no item is given a
 key below 1 from then on, and the item that had one is still given a
 note and a key of 1 or more, and it fails, with the store left at its
 version and neither of its triggers kept, where a trigger of either of
-its names is there already (DAT-056); a store with the newest
+its names is there already (DAT-056); the twelfth makes the two
+triggers against replacing in a store that was at version 10 and has
+an open item and two decided ones, one of them with the key -1, the
+items are as they were, neither decided item is replaced from then
+on, by its key or as its doubt, a new item that names no key is
+stored as ever, and it fails, with the store left at its version and
+neither of its triggers kept, where a trigger of either of its names
+is there already (DAT-055); a store with the newest
 schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -1394,7 +1401,10 @@ SQLite, and through the model as well.
   accepted or rejected, and with another reason and a note the second
   time; a doubt about a field, in the same three states, whichever of
   the two kinds the first is and whichever the second, at another
-  address and for another reason.
+  address and for another reason. Where the first is open SQLite
+  names the index; where it was decided, the store says that a
+  decided item is never replaced (changed by DAT-055: the trigger of
+  that rule asks before the index is looked into).
 - **Through the model** the same doubt is refused too, of either
   shape, and another doubt stored in the same unit of work before it
   goes with it.
@@ -1590,8 +1600,9 @@ field and an open one. After every refusal the table is read back
 with every column and must be as it was. The two sentences are
 written out in the tests.
 
-- **The triggers of the table**: the two, by name and table, and no
-  other on it.
+- **The triggers of a decided item on the table**: the four, by name
+  and table: the two of this rule and the two against replacing
+  (DAT-055).
 - **No column of a decided item is given another value**: each of the
   sixteen columns of the table, on the accepted item and on the
   rejected one. A test holds that every column the table has is one
@@ -1624,12 +1635,14 @@ written out in the tests.
   had done before is taken back. There too a refusal stops the
   statement and not the work: what was written before it, and what
   is written after it, is kept.
-- **A store made from the models** has the same two triggers and
+- **A store made from the models** has the same four triggers and
   refuses the same.
-- **What the table does not keep a decided item from yet**: four
-  statements that say `REPLACE` take the accepted item out. The test
-  is there so that this is not taken for something the table does,
-  and is changed by the task that closes it (DAT-055).
+- **A decided item is not replaced**: four statements that say
+  `REPLACE` and would take the accepted item out, by its key and as
+  its doubt, are each refused, and every item is as it was. Until
+  DAT-055 this test put on record that the four took the item out;
+  that task turned it round. Its own tests are under "A decided item
+  is never replaced".
 
 That the model and the tenth migration say the same triggers, to the
 letter of each sentence, is proven by the test of the models and the
@@ -1646,9 +1659,10 @@ open items and a decided one written past the model. After every
 refusal every column of every item is read back with plain SQL.
 
 - **The table has these triggers and no other**: the two of a kept
-  decision and the two of the keys. This is the one test that names
-  every trigger of the table; a task that gives it another names it
-  there. (The tests of a kept decision ask for their own two.)
+  decision, the two against replacing and the two of the keys. This
+  is the one test that names every trigger of the table; a task that
+  gives it another names it there. (The tests of a kept decision and
+  those against replacing ask for their own.)
 - **A new item with a key below 1 is refused**: with the keys 0, -1,
   -7 and the least whole number SQLite holds, each as an open item, a
   decided one, a doubt about a field, and in a statement that says
@@ -1675,8 +1689,86 @@ refusal every column of every item is read back with plain SQL.
   keys off, the same is refused in the same sentence; and there a
   refusal stops the statement and not the work: what was written
   before it, and what is written after it, is kept.
-- **A store made from the models** has the same four triggers and
+- **A store made from the models** has the same six triggers and
   refuses the same.
+
+### A decided item is never replaced
+
+`backend/tests/integration/test_review_item_never_replaced.py` tests
+the two triggers by which no row takes the place of a decided item
+(DAT-055), in a store that the migrations built, on a real SQLite
+file. Most tests begin with two sources and four items written past
+the model: an open possible duplicate, an accepted one, a rejected
+doubt about a field and an open one. After every refusal every column
+of every item is read back with plain SQL.
+
+- **The two triggers**, by name and table, and **the ways a row can
+  clash**: the table has the two indexes of one doubt as its only
+  indexes that hold a row to be the only one of its kind, and one key.
+  An index that is added fails this test, so that the triggers are
+  given its question too.
+- **A new item in the place of a decided one is refused**, in eleven
+  ways (with the key of the accepted item or of the rejected one, as
+  a possible duplicate, a doubt about a field or a decided item; as
+  the two records of the accepted item, open, decided, with a free
+  key and with the key of an open item; as what the rejected item
+  says of a field, also of the other kind at another address, and
+  with a key), each with `INSERT`, `INSERT OR REPLACE`, `REPLACE` and
+  `INSERT OR IGNORE`; and with `ON CONFLICT DO NOTHING` and `ON
+  CONFLICT … DO UPDATE`.
+- **A value written another way** is the value the table would hold:
+  the key as text and as a number with a point, the records and the
+  source as text, what is said as a number.
+- **An open item is not put in the place of a decided one**, in six
+  ways (its key, its two records, also decided in the same statement,
+  what it says of a field, also of the other kind), each with
+  `UPDATE`, `UPDATE OR REPLACE` and `UPDATE OR IGNORE`.
+- **A statement over several rows** that would replace a decided item
+  on its way changes none: two new items of which the second clashes;
+  a new decided item and then the same doubt again; a copy of an open
+  item with the key of a decided one; the open items each given the
+  next key; and the open items decided and made one doubt, where the
+  first becomes the decided item the second would replace. A unit of
+  work whose second statement is refused keeps nothing.
+- **Another doubt by one column is stored**: for a new item, each of
+  the three columns of the first index and the five of the second
+  alone, a pair that shares its first record with the accepted item
+  or with the rejected one, and a doubt about another field of a
+  record of the accepted item, each with `INSERT` and with `REPLACE`;
+  and an open item is made each of the first eight with `UPDATE OR
+  REPLACE`. Both decided items are as they were.
+- **An open item is replaced, and changed, as before**: by a new item
+  with its key, by the same doubt again of either shape, by another
+  open item given its key or made its doubt; and it is decided, given
+  another key and a note, and deleted.
+- **A new item that names no key is stored**, open or decided, with
+  plain SQL and with the key written as NULL.
+- **A decided item with the key 1** is not replaced, by a new item or
+  by an open one: 1 is the least key the first trigger asks about.
+- **Of a decided item the store says that it is never edited**, also
+  where the edit would put it in the place of the other decided item.
+- **In a queue without items** nothing is refused.
+- **Through the model**: a new item with the key of a decided one, a
+  new item that is its doubt, an insert told to take its place, an
+  open item that was read and given its two records, and an update
+  told to take its key; each is refused in the same sentence, and
+  what the unit of work wrote before is taken back.
+- **On a connection the store's code did not open**, with foreign
+  keys off, six statements are refused in the same sentence, each
+  with SQLite's recursive triggers off and on; and there a refusal
+  stops the statement and not the work, for a new item and for an
+  open one. There too, where nothing takes the work back, each of the
+  five statements over several rows leaves nothing of itself behind
+  when the refusal is caught: what it had stored or changed before it
+  came to the decided item is taken back by SQLite.
+- **A store made from the models** has the same two triggers and
+  refuses the same, and replaces an open item as before.
+
+That the model and the twelfth migration say the same triggers, to the
+letter of each sentence, is proven by the test of the models and the
+migrations, which is unchanged. The tests of `open_possible_duplicate`,
+`open_field_doubt` and `decide` are unchanged and pass: the functions
+look for the doubt before they write.
 
 ## How far a collected record can be trusted
 
