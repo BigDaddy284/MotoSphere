@@ -933,15 +933,23 @@ Windows 11. No database and no globe yet.
 - **Commit:** –
 
 ### FND-048 – The narrow-screen tests measure the top bar after the data has arrived
-- **Status:** NOT STARTED
-- **Objective:** No browser test of the narrow screen measures the top bar before the data has arrived, so that none can fail by chance.
-- **Description:** Added on 2026-11-27 (PLAN-036), found in the planner's run of the pull request of GLB-001. On a narrow screen the top bar is a line taller once the data has arrived than while it loads, because the words "Data updated" and the day take a line each where "Loading data…" and the day share one. Four places in `frontend/e2e/narrow.spec.ts` measure the bar first and wait for the data afterwards, so the two measurements are of two layouts when the data arrives between them. On a computer that is busy it does: one test failed once ("Expected: 9, Received: -12"), and with the data a second late five tests fail every time (everything in the top bar is whole and inside it, at 320, 360 and 390 pixels; the data status and the date each have a line, at 360 and 390). The task makes every such test wait for the data before it measures anything, and proves it by running the whole suite with the data arriving late. Only tests change. That the bar changes its height at all is FND-049.
-- **Acceptance criteria:** every browser test that measures the top bar or what lies under it does so after the data status has arrived; with the data a second late, all browser tests pass, where five failed before; no test is skipped, weakened or given a longer time to pass; no file of the application changes.
-- **Tests required:** the whole browser suite as it is and once more with the data a second late, before and after the change; planted defects that put each measurement back before the wait; the full run of all gates on both machines.
+- **Status:** IN PROGRESS
+- **Objective:** No browser test of the narrow screen measures the top bar, or what lies under it, before the data has arrived, so that none can fail by chance.
+- **Description:** Added on 2026-11-27 (PLAN-036), found in the planner's run of the pull request of GLB-001. On a narrow screen the top bar is a line taller once the data has arrived than while it loads (99 pixels and 78 at a width of 360), because "Data updated" and the day take a line each where "Loading data…" and the day share one, and everything under the bar then lies a line lower. Five of the 19 tests of `frontend/e2e/narrow.spec.ts` measured without waiting for the data, at 14 of the file's 71 places. Two measured the bar first and waited afterwards (everything in the top bar is whole and inside it; the data status and the date each have a line): with the data a second late they fail every time, at five places, and one of them failed once in the planner's run ("Expected: 9, Received: -12"). Three measured the bar and then the globe stage or a panel with no wait at all: they fail when the data arrives between the two measurements, which the planner's trial brought about on purpose. The task gives the file two helpers, `open` and `again`, that load the page and wait for the data; every test loads the page through them, and a test of the file holds that no test loads it by itself. Three tests hold the data back for a second and check that the helpers have waited. Only tests change. That the bar changes its height at all is FND-049.
+- **Acceptance criteria:**
+  1. Every test of `frontend/e2e/narrow.spec.ts` loads the page through `open` or `again`, which wait until the top bar says when the data was updated. `page.goto(` and `page.reload(` stand once each in the file, and a test of the file fails when there is another.
+  2. Three tests hold the data back for a second and fail when `open` or `again` does not wait.
+  3. With the data a second late in every test, all 175 browser tests pass, where 5 of 171 failed before.
+  4. No expectation of an existing test changes; no test is skipped, taken out or given more time; no file of the application changes.
+  5. `python scripts/check.py` reports 19 of 19 gates, with 175 browser tests, and 4 tests more in all than `main` gives at the commit the branch starts from (2440 when that is `7e3645f`).
+  6. On the pull request both gates jobs are green with those numbers.
+  7. Only the three files under "Scope" of the plan changed.
+- **Tests required:** 4 new browser tests (three with the data a second late, one that reads the file itself); the whole browser suite with the data a second late in every test before the change, and late by 0.12, 0.3 and 1 second after it; the old tests with the data arriving right after each test's first measurement; planted defects in the helpers and at every place that loads the page; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-048.md`
 
 ### FND-049 – The top bar keeps its height when the data arrives
 - **Status:** NOT STARTED
