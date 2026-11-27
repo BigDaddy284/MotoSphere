@@ -2067,6 +2067,83 @@ end, one piece for each style sheet `main.tsx` brings in. That is not
 React's: the document drops what it has waiting when it is taken away
 (`_queueATask` of jsdom says so), and it is left as it is.
 
+## The browser of the browser tests
+
+The browser tests start their browser with one feature of the browser
+turned off, `TcpPortRandomizationWin` (`frontend/e2e/browser.ts`, set in
+`frontend/playwright.config.ts`). The feature exists on Windows only.
+
+**Why.** Three times a run on GitHub's Windows machine failed in one
+browser test that could not open the page: "page.goto:
+net::ERR_NO_BUFFER_SPACE at http://127.0.0.1:4173/MotoSphere/" (runs
+44429659797, 45984920265 and 45996124551). Each time it was another
+test, every other test passed, and the job passed when it was run once
+more. The message is Windows's for "no room for one more connection".
+
+**What was measured, on GitHub's Windows machine (2026-11-27).**
+
+- The machine has room. It gives out 16,384 ports for connections
+  (49152 to 65535). In a whole run of all gates the most connections
+  held at one moment were 774, of which 716 were closed ones that
+  Windows keeps for two minutes; about 430 were the browser's to the
+  test server.
+- The browser picks its ports at random there. The source of the
+  browser the tests use (Chromium 153.0.8010.12, `net/base/features.cc`
+  and `net/socket/tcp_socket_win.cc`) has the feature
+  `TcpPortRandomizationWin` on by default for Windows 11 22H2 and later:
+  before every connection it asks Windows for a port picked at random
+  (`SO_RANDOMIZE_PORT`). Windows Server 2025, GitHub's machine, is such
+  a Windows. Measured: with the feature on, of 2,999 connections one
+  after another, 0 to 2 had the port next to the one before; with it
+  off, 2,994 to 2,997.
+- With the feature on, a connection fails now and then. Two trials, each
+  in turns of a minute with the feature on and off, in one job:
+  30,000 requests each way, every one on a connection of its own; and
+  6,000 browser contexts each way, opened and closed as the tests do
+  it, with a page of five files (about 24,000 connections each way).
+  With the feature on, 8 of 53,978 connections failed: 2 with
+  `net::ERR_NO_BUFFER_SPACE` and 6 with `net::ERR_ADDRESS_IN_USE`, and
+  one page could not be opened. With it off, none of 53,993 failed. The
+  machine held about 5,000 connections throughout, the same either way.
+
+So the fault is in how the browser asks Windows for a port, not in the
+application, the test server or the number of connections. Why Windows
+refuses a port it was asked to pick at random was not looked into: that
+is between the browser and Windows.
+
+**How it is turned off.** A browser takes one list of features to turn
+off, and Playwright already gives it one. What a browser does with a
+second list beside the first was not relied on: Playwright's own list is
+taken out (`ignoreDefaultArgs`) and given again with the one feature
+added, so the browser is given one list. The
+list is written out in `frontend/e2e/browser.ts` as Playwright 1.63.0
+has it. Five browser tests (`frontend/e2e/browser.spec.ts`) hold it:
+
+- a browser started as the tests start theirs has exactly one such
+  list, and it is the list of `browser.ts`;
+- that list is Playwright's own and, after it, the one feature;
+- a browser started with none of the project's options has exactly the
+  list `browser.ts` calls Playwright's own. **This is the test that
+  fails after an upgrade of Playwright that changes its list:** the
+  list in `browser.ts` then has to follow;
+- the one project of the settings is given these options;
+- the browser is seen to take its ports in order. The test starts a
+  server of its own, which closes every connection after one answer,
+  has the page open 40 connections to it one after another, and reads
+  the port the browser came from each time. On Windows at least half of
+  them must come from a port that is one to four after the one before.
+  Measured on GitHub's Windows machine in the two trials above, more
+  than 99 in 100 do with the feature off, and fewer than 1 in 200 with
+  it on. **This is the test that fails, on a Windows machine, when a
+  later browser knows the feature under another name or not at all:**
+  the words the browser is started with would then be as before and
+  turn nothing off. On other systems there is no such feature and the
+  system gives out ports its own way: there the test has the 40
+  connections arrive and holds nothing about their order.
+
+The browser tests are still not given a second try (`retries: 0`), and
+no test is skipped: a failure of `page.goto` is seen as before.
+
 ## The tools a computer needs
 
 `python scripts/tools.py` says whether a computer has the five tools the
