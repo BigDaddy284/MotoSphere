@@ -2661,6 +2661,62 @@ in every table.
   country, which are a table of their own (DAT-013). The country of a
   source is a column of `source` (DAT-057).
 
+## The source of the countries
+
+The countries come from the project iso-codes (`DATA_SOURCES.md`). The
+module `motosphere.reference.countries_source` says what the row of that
+source in the table `source` holds, and its function
+`source_of_the_countries(work)` gives that row, storing it first when
+the store does not have it (DAT-060). Nothing calls it yet: the loading
+of the countries will (DAT-059), so no store has the row until then.
+
+| Column | What the pipeline says |
+|---|---|
+| `name` | `iso-codes`, as its makers call it. It is what the source is known by |
+| `website` | `https://salsa.debian.org/iso-codes-team/iso-codes` |
+| `category` | `reference list` |
+| `collection_method` | `public dataset` |
+| `terms_address` | No value: the source has no page of terms. Its terms are its licence, whose text is in the repository beside the file |
+| `licence` | `LGPL-2.1-or-later`, as its release names it |
+| `usage_restrictions` | "Every copy keeps the notice of copyright and comes with the licence. A changed copy says that it was changed, and when. A work that takes over the list, or part of it, is passed on under the same licence, free of charge." |
+
+It offers one kind of information, `reference data`: one row of
+`source_offer`.
+
+- **The pipeline describes the source, and people say the rest.** The
+  seven columns above are what the code knows of the source. Four are
+  not the code's to say: whether a person has read its terms
+  (`terms_read_at`), whether it is switched on (`switched_on`), how
+  often it is looked at (`scan_every_hours`) and which country it is of
+  (`country_id`). The function sets none of the four and looks at none
+  of them. A test holds that every column of a source is one of the
+  seven, one of the four or one of the store's own three, so a column
+  that is added later has to be put on one side.
+- **A new row is switched off, and says that nobody has read its
+  terms.** The planner read the licence, and `DATA_SOURCES.md` says
+  what it found. The column says when a person last read a source's
+  terms, and no person has yet: the store is not told otherwise. The
+  source need not be switched on for its countries to be loaded,
+  because nothing is fetched from it: its file is in the repository.
+  The owner switches it on, or leaves it, after reading the licence.
+- **The source is stored once.** It is known by its name, letter for
+  letter. When the store has a source of that name, the function gives
+  it as it is and writes nothing: not when it is called twice in one
+  unit of work, and not in a later one.
+- **A source of that name that is described otherwise is refused.**
+  When one of the six described columns holds something else, or the
+  source does not offer `reference data`, the function raises a
+  `CountriesSourceError` and changes nothing. Its sentence names what
+  differs, in the order of the table: "The store has a source called
+  "iso-codes" that is not the source of the countries as the pipeline
+  describes it. It differs in its website and licence. Nothing was
+  changed." Which of the two is right is for a person to decide: the
+  code does not write over what the store holds, and it does not load
+  countries under a description that is not its own. What else the
+  source offers is not looked at.
+- **It is part of its unit of work.** The row and its offer are kept or
+  taken back with whatever else the unit of work does.
+
 ## What the store relies on in SQLite
 
 SQLite is not one program. Every Python carries its own, built with its own

@@ -405,6 +405,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of the sport. The fifteenth migration builds the table of the sources
   anew so that it takes the new kind; every source keeps all it had,
   its key and its country too (DAT-058).
+- The source of the countries, as the store is told of it: the project
+  iso-codes with its website, its kind, its licence and what the
+  licence asks. One function gives its row and stores it first when the
+  store does not have it, once, switched off; a source of that name
+  that is described otherwise is refused and left as it is. Nothing
+  calls it yet (DAT-060).
 
 ### Removed
 
@@ -488,3 +494,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   browser on, none of about 54,000 with it off. The browser tests now
   start their browser with the feature off, and one of them sees on
   Windows that it is off (FND-054).
+- A unit test can no longer leave work of the page waiting when it
+  ends. A test that ends a moment before React has done the last of its
+  work could fail a run with "window is not defined" although every
+  test passed, and a test that does nothing wrong ends so now and then.
+  The set-up of the unit tests now watches what React asks the system
+  for and, after each test, lets it run until nothing is waiting
+  (FND-056).
