@@ -1885,57 +1885,6 @@ record of what it relies on, not a lawyer's opinion. How the checks read
 a lock file and hold packages to a list is tested on lock files and
 lists made up for the purpose.
 
-## The engine's own files in the site
-
-The engine of the globe fetches files of its own while it runs, and the
-build puts them into the site under `cesium/` (ARCHITECTURE.md §3). The
-step that does it (`frontend/sitebuild/engineFiles.ts`) is tested in two
-ways.
-
-On folders made up for the test (`frontend/sitebuild/engineFiles.test.ts`,
-unit tests, each folder made for one test and taken away after it): the
-step finds every file beneath the folder the engine fetches from, at any
-depth, each by its path with `/` on every computer; the files of a folder
-come before those of the folders in it, each by name, and the one call
-that lists a folder has a stand-in that gives the entries with the first
-one last, so that the order is the step's own work on every computer; no
-file is left out for what it is called (one that begins with a dot, one
-without an ending, a folder named `node_modules`); the rest of the
-package and other packages are not read; a file listed as left out is
-left out, and no other of the same name; and the step refuses, each in a
-plain sentence, a listed file that is not there, a listed folder, an
-engine that is not installed, a folder without files, and a link among
-the files, which it names. On the engine as it is installed: the step
-gives every file the package brings but those left out, found another
-way than the step finds them; among them one of each thing the engine
-asks for by name (a background script and a piece of one, a program, a
-table, the picture of the Earth with the file that describes it, the
-stars, a marker, the engine's own logo, a style sheet); the files are of
-eight kinds, so that a kind the engine did not bring before is noticed;
-exactly the two logos are left out, each with its reason; and the step
-is for the build and not for the development server.
-
-On the built site (`frontend/e2e/engine.spec.ts`, browser tests): the
-folder `cesium/` of the build holds the files the step gives and no
-other, each byte for byte the file of the installed engine, and no
-picture, program or folder of the engine is anywhere else in the site.
-Through the server of the build, one file of each of the eight kinds is
-answered at its address under the site's path with the type a browser
-needs and the bytes of the engine, and then every one of the 275 files
-with its bytes. The engine's licence is in the site's file of licences.
-The two logos are named in the tests themselves, not read from the list
-of the step: each is in the installed engine and is answered "not found"
-by the site. So are a file the engine does not bring, the rest of its
-package, its own code, a file of the engine outside its folder, the
-folder the engine keeps the files in and the folder of the installed
-packages; and nothing of it is at the root of the server. These tests
-can tell a file that is not there since FND-052.
-
-After a deployment the check of the published site fetches each of these
-files with the rest and compares it byte for byte with the built one.
-What GitHub Pages says a program (`.wasm`) and a JPEG picture are is not
-held yet: that is FND-053.
-
 ## Latest results
 
 Results are recorded per task in [PROGRESS.md](PROGRESS.md).

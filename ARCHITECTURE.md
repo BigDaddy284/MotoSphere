@@ -215,24 +215,6 @@ Rules:
   checks until its licence has been read and put on the list, in the
   pull request that brings the package. The packages that only build and
   test the site are not held to the list: nothing of them is passed on.
-- The engine fetches files of its own while it runs: background scripts,
-  programs for the browser's own machine, tables and pictures. They come
-  with the package, in its folder `Build`, and are not code the build
-  takes in. A step of the build (`frontend/sitebuild/engineFiles.ts`)
-  puts them into the site as they are, under the folder `cesium/` of the
-  site's path: 275 files, 8.3 MB, with `@cesium/engine` 26.5.0. None is
-  picked by hand, so that another version of the engine brings what it
-  needs: the step takes every file beneath that folder, at any depth,
-  and stops the build for a link among them. Two files are left out,
-  each named in the step with its reason: the logos of Bing Maps and of
-  Google Earth, which the engine shows only with imagery of those
-  companies. The globe uses neither, and a provider of imagery is taken
-  on with its terms read, its pictures with it (§8). The files are
-  passed on unchanged, as the package brings them under the engine's
-  licence, whose text is in `licences.txt`. The development server does
-  not answer the folder yet (GLB-024), the engine is not yet told its
-  address (GLB-025), and nothing of the application asks for a file of
-  it, so a visitor's browser fetches none.
 - A name the engine has moved to `@cesium/core` (`Cartesian3`,
   `Ellipsoid`, `Math` and about 150 in all) is imported from there. The
   engine still hands those names out, with a warning, and says it will
