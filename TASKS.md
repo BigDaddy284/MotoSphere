@@ -13,9 +13,9 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 45 | 44 |
+| 1 | Foundation (FND) | 47 | 44 |
 | 2 | Data store and published data (DAT, PUB) | 62 | 43 |
-| 3 | Interactive 3D Earth (GLB) | 23 | 0 |
+| 3 | Interactive 3D Earth (GLB) | 23 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-054 – A decided review item keeps its decision.
 
-**Current task, track B (globe):** GLB-001 – The Cesium engine installed.
+**Current task, track B (globe):** FND-048 – The narrow-screen tests measure the top bar after the data has arrived.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -65,6 +65,17 @@ takes the notices out. That too is a defect of the foundation. It is
 FND-047, and it stands on track B after GLB-001, which changes nothing
 the site publishes, and before GLB-022, the first task that puts files
 of the engine into the site.
+
+**A browser test that could fail by chance (PLAN-036):** in the planner's
+run of the pull request of GLB-001 one browser test of the narrow screen
+failed once: it measured the top bar before the data had arrived, and on
+a phone the bar is a line taller afterwards. Five tests fail every time
+when the data is a second late. Two defects, two tasks of the
+foundation: FND-048 makes those tests measure after the data has
+arrived, and stands first on track B because every later task goes
+through these gates; FND-049 is the bar itself, which on a phone moves
+everything under it down by a line when the data arrives, and stands
+after FND-047.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -916,6 +927,28 @@ Windows 11. No database and no globe yet.
 - **Description:** Added on 2026-11-27 (PLAN-035), found by the planner's trial of GLB-001. The site ships React and `react-dom` with the package they need; their MIT licence asks that the copyright notice and the licence go with every copy, and the build takes the notices out of the code, so the site as published carries none. From GLB-002 on the site also ships the engine of the globe and the packages it needs, under Apache 2.0, MIT, ISC, BSD and two combined licences, with the same duty. The build writes one text file into the site with the name, the version and the licence text of every package it ships, read from the installed packages. A repository check holds the licences of the shipped packages to a list of accepted ones, so that a package under a licence nobody has read is not shipped unnoticed. No new package is used. The trial settles whether the file lists every package of the lock file that is not only for the work or only those whose code is in the build, what happens when a package ships no licence file, and where a visitor finds the file. It stands on track B after GLB-001 and before GLB-022.
 - **Acceptance criteria:** the built site holds one file with the name, the version and the licence text of every package it ships; the build fails when one of them has no licence text; a repository check fails for a shipped package whose licence is not on the accepted list; the check of the published site compares the file like every other and passes after deployment; no package is added.
 - **Tests required:** unit tests of the build step on made-up package folders; repository checks of the accepted licences against the lock file, with planted defects; a browser test that fetches the file from the built site; the full run of all gates on both machines; the deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-048 – The narrow-screen tests measure the top bar after the data has arrived
+- **Status:** NOT STARTED
+- **Objective:** No browser test of the narrow screen measures the top bar before the data has arrived, so that none can fail by chance.
+- **Description:** Added on 2026-11-27 (PLAN-036), found in the planner's run of the pull request of GLB-001. On a narrow screen the top bar is a line taller once the data has arrived than while it loads, because the words "Data updated" and the day take a line each where "Loading data…" and the day share one. Four places in `frontend/e2e/narrow.spec.ts` measure the bar first and wait for the data afterwards, so the two measurements are of two layouts when the data arrives between them. On a computer that is busy it does: one test failed once ("Expected: 9, Received: -12"), and with the data a second late five tests fail every time (everything in the top bar is whole and inside it, at 320, 360 and 390 pixels; the data status and the date each have a line, at 360 and 390). The task makes every such test wait for the data before it measures anything, and proves it by running the whole suite with the data arriving late. Only tests change. That the bar changes its height at all is FND-049.
+- **Acceptance criteria:** every browser test that measures the top bar or what lies under it does so after the data status has arrived; with the data a second late, all browser tests pass, where five failed before; no test is skipped, weakened or given a longer time to pass; no file of the application changes.
+- **Tests required:** the whole browser suite as it is and once more with the data a second late, before and after the change; planted defects that put each measurement back before the wait; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-049 – The top bar keeps its height when the data arrives
+- **Status:** NOT STARTED
+- **Objective:** On a narrow screen the top bar is as tall while the data loads as afterwards, so that nothing under it moves when the data arrives.
+- **Description:** Added on 2026-11-27 (PLAN-036). On a phone the top bar puts the data status and the day on one line while it says "Loading data…", and on two lines once it says when the data was updated, because the two pieces wrap by how long their words are. The bar grows by a line (from 78 to 99 pixels at 360 pixels wide), and the globe stage under it moves down, a moment after the page has appeared. The layout should not depend on how long the words happen to be: where the two pieces cannot share a line once the data is there, each has its line from the start. The trial settles from which width the two share a line, whatever the words and the visitor's language, and what a failed or slow load shows. It stands on track B after FND-047.
+- **Acceptance criteria:** at every tested narrow width the top bar has the same height while the data loads, when it has arrived, and when it could not be loaded; the globe stage does not move; the pieces of the top bar are whole and do not lie over each other in each of those states; a wide screen is as it was.
+- **Tests required:** browser tests that hold the data back and measure the top bar and the stage before and after it arrives, at the narrow widths and at a wide one, and with a load that fails; unit tests where the layout's numbers are written twice; planted defects; the full run of all gates on both machines; the deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -2088,7 +2121,7 @@ What holds for every task of the phase:
   GLB-023, after tilt.
 
 ### GLB-001 – The Cesium engine installed
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The front end has the Cesium engine as a locked dependency: the packages `@cesium/engine` and `@cesium/core` are named, locked and installed, unit tests use the engine as it is installed, and a repository check holds which packages the site ships.
 - **Description:** The package `@cesium/engine` 26.5.0 (CesiumJS 1.147, Apache 2.0) is added to the front end: the engine without the ready-made viewer of the full `cesium` package, which MotoSphere does not use because its controls are its own. The planner's trial found that the engine keeps its arithmetic (positions, angles, the shape of the Earth) in a package of its own, `@cesium/core` 0.1.1, and warns when those names are taken from the engine, which it says it will stop handing out; so the project names that package too, and the engine and the application must use one copy of it. The two bring 28 packages, none with a script at install, and need no newer Node.js than the project asks for since FND-046. Nothing of the application imports the engine yet, so the build makes the same files as before. One new file of unit tests uses the engine as installed; one new file of repository checks holds the list of the packages the site ships.
 - **Acceptance criteria:**
@@ -2102,10 +2135,10 @@ What holds for every task of the phase:
   8. No existing test changes; all tests pass.
   9. `python scripts/check.py` reports 19 of 19 gates, with 62 repository checks and 223 frontend unit tests, and 20 tests more in all than `main` gives at the commit the branch starts from (2436 when that is `b141ed0`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 11 new frontend unit tests through the real packages: the reference ellipsoid, six places on the Earth, the order of the degrees, heights, the way back, and the one ellipsoid of the engine and the application. 9 new repository checks in 2 classes, standard library only: the reading of made-up lock files, and six checks of the real package file and lock file. 35 planted defects against the repository checks and 6 against the unit tests. A comparison of the built site with the one `main` gives. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #145 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run twice. The first run: 18 of 19 gates, "Tests: 2435 passed, 1 failed, 0 skipped.": one browser test this task did not touch, `narrow.spec.ts`, "narrow screen, 360×740 › the data status and the date each have a line", failed with "Expected: 9, Received: -12". The planner found the cause before running anything again: the test measures the top bar before the data has arrived, and the computer was running planted defects of the other track at the time; with the data a second late the same measurement gives -12 every time, on `main` as on the pull request (PLAN-036, FND-048). The second run: 19 of 19 gates passed, "Tests: 2436 passed, 0 failed, 0 skipped.", exit code 0 (repository checks 62: 53 before, 9 new; frontend unit tests 223: 212 before, 11 new). 35 planted defects against the repository checks, 35 of 35 detected with the results of the trial, the plan's prove-it steps 1 to 6 among them; prove-it steps 7 to 12 against the unit tests, each with the plan's result. The six files the build makes are the same as on `main`, byte for byte. On GitHub, read by the planner from the runs and job logs: run 45925021461 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 2436 passed, 0 failed, 0 skipped.", with 62 repository checks and 223 frontend unit tests on both machines (Node.js 22.23.5; `npm ci` added 136 packages on Linux and 133 on Windows), the three jobs after the gates skipped; run 45926591250 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 2436 / 0 tests in the second local run and on both machines on GitHub (repository 62, script tests 206, backend 1774, frontend unit 223, browser 171); 2435 / 1 in the first local run, the one failure being the test of FND-048; all 19 gates passed on both machines on GitHub; 35 / 0 planted defects detected and 6 / 0 prove-it steps against the unit tests; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-27. All 7 files are identical to the planner's trial. No existing test changed. The failure of the first local run is not this task's: the task changes no file of the application and no browser test, and the cause is in a test that is on `main`; it is FND-048, the next task on track B.
+- **Commit:** `6554b04`
 - **Plan:** `docs/plans/GLB-001.md`
 
 ### GLB-022 – The engine's own files in the built site
