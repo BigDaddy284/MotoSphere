@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 51 | 50 |
-| 2 | Data store and published data (DAT, PUB) | 64 | 46 |
+| 2 | Data store and published data (DAT, PUB) | 65 | 46 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 2 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -102,6 +102,12 @@ GLB-024 and GLB-025. The check of the published site learns the two
 kinds of file the engine brings that a browser is particular about in
 FND-053, after GLB-022, when such files are published. Order on track B:
 FND-052, GLB-022, FND-053, GLB-024, GLB-025, then GLB-002.
+
+**The countries, in two steps (PLAN-042):** DAT-011 was two objectives:
+the table of the countries, and the country of a source, which is a
+column of a table that is there and holds rows, with a migration of
+another kind. DAT-011 is now the table; the column is DAT-057, which
+follows it. Order on track A: DAT-011, DAT-057, then DAT-012.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -2082,11 +2088,36 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-055.md`
 
 ### DAT-011 – Countries table
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The store holds countries, so that everything else can say where it is.
-- **Description:** Table, model and migration for countries: the ISO 3166-1 two-letter and three-letter codes, the English short name, and provenance. Sources gain their country here (the column DAT-006 left out). No rows yet: they come with DAT-012.
-- **Acceptance criteria:** codes are stored in capitals and refused in any other form or length; two countries cannot share a code; a source's country must exist.
-- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
+- **Description:** Narrowed on 2026-11-27 (PLAN-042): the country of a source is DAT-057. The table `country`, its model `Country` in `motosphere.db.models.country`, and the thirteenth migration, `make_the_countries`. Settled in the planner's trial. The columns: `alpha_2` and `alpha_3`, the two codes of ISO 3166-1, and `name`, the English short name as its source writes it; then the eight columns of a collected record (DAT-008). The countries are the first real table of collected records, with the index `ix_country_source_id` (DAT-045) and under the rule of DAT-046, whose list is unchanged. A code is held to its form by a check (`ck_country_alpha_2_two_capitals`, `ck_country_alpha_3_three_capitals`): SQLite's `GLOB` with one class of the 26 capital letters for each letter, and a second question for a character with the number 0, which `GLOB` does not read past. Neither the model nor the table puts a code into capitals: what a source writes is stored or refused. Each code is unique by itself. The name is text that is not empty, and two rows can hold one name. The table knows the form of a code and not the standard's list, and it has no rows: they come with DAT-012. Not in the table: the number the standard gives a country, and regions (DAT-013). A defect of the documents is put right on the way: the list in `DATABASE.md` of the tables that hold no collected records lacked `review_item`. The schema goes to version 13. The planner's trial has 154 new tests and detects 55 of 55 planted defects.
+- **Acceptance criteria:**
+  1. The schema is at version 13. The thirteenth migration makes the table `country` and the index `ix_country_source_id` and nothing else; a store that holds sources and review items keeps them as they were. Where a table or an index of its name is there already the migration fails, and the store stays at version 12 with nothing of the migration kept.
+  2. A country is stored and read back with its two codes, its name and the eight things that say where it came from. A row cannot be without any of them but the day it was published, and neither the model nor the table gives one a value.
+  3. A code is stored in capitals and refused in any other form or length: each of the eighteen texts of the tests for each code is refused by the check of its column, a text with a character of the number 0 among them. The model does not put a code into capitals.
+  4. Two countries cannot share a code of two letters, nor one of three, when a country is stored and when one is changed. Two countries can hold one name.
+  5. A name is text that is not empty and is stored as it was given.
+  6. A country comes from a source that is there; a source that countries came from cannot be deleted; a country can be deleted, and its key is not given again.
+  7. The eight columns keep their rules in the real table: a web address, a calendar day, the three lists, and the two times held together.
+  8. The countries of one source are found through the index.
+  9. `change` changes a country and writes its history; a change the table refuses leaves the country and no history.
+  10. The model and the migration agree: the test of the models and the migrations passes unchanged. The whole schema with the countries breaks neither the rules every table keeps nor the rule of where records came from, whose list is unchanged.
+  11. One existing test changes, the list of the migrations' names; no other existing test changes, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  12. `python scripts/check.py` reports 19 of 19 gates, with 2237 backend tests, and 154 tests more in all than `main` gives at the commit the branch starts from (3096 when that is `3c3b81f`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  13. Only the eleven files under "Scope" of the plan changed.
+- **Tests required:** 142 new integration tests in 30 functions, in a store the migrations built, with one source in it, on a real SQLite file, through the model and past it as plain SQL, each refusal with what SQLite said: what is stored; what a country cannot be without; eighteen texts that are not a code, for each code; one code, one country; the name; the source; the rules of the eight columns; the index; a country changed with its history. 8 new unit tests of the model. 3 new tests of the thirteenth migration, and one case more of the test that tries every migration alone. Planted defects in the model and the migration. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-011.md`
+
+### DAT-057 – A source says its country
+- **Status:** NOT STARTED
+- **Objective:** A source can say which country it is of, so that sources can be found by country.
+- **Description:** Added on 2026-11-27 (PLAN-042), cut out of DAT-011. One column of `source`: the key of a row of `country`. It may be without a value, because a body for the whole world is of no country. The migration changes a table that is there and holds rows, which no migration has done so far. The planner's trial settles how (a column added, or the table built anew, which the runner of the migrations allows since DAT-004), whether the column has an index, and that a country sources are of cannot be deleted.
+- **Acceptance criteria:** a source's country must exist; a source may be without one; the sources that were there keep everything they had and have no country; a country that a source is of cannot be deleted; the model and the migration agree.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it that holds sources, offers, runs and countries; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
