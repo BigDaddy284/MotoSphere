@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 47 | 45 |
-| 2 | Data store and published data (DAT, PUB) | 62 | 43 |
+| 2 | Data store and published data (DAT, PUB) | 63 | 43 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -1028,6 +1028,10 @@ The trial of the function that decides an item, DAT-052, left the rule
 that the store itself keeps a decision to a task of its own (PLAN-031):
 DAT-054, which stands after DAT-052.
 
+The trial of DAT-054 kept a decided item from being edited and from
+being deleted, and left the rule that it is not replaced to a task of
+its own (PLAN-037): DAT-055, which stands after DAT-054.
+
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
 - **Objective:** Decide, with evidence, what the data store may rely on: which SQLite features every machine that runs the pipeline has, where the store is kept between scheduled runs, and which size limits bound it.
@@ -1886,11 +1890,32 @@ DAT-054, which stands after DAT-052.
 - **Plan:** `docs/plans/DAT-052.md`
 
 ### DAT-054 – A decided review item keeps its decision
+- **Status:** IN PROGRESS
+- **Objective:** The store itself keeps a decision on a review item: an item that was decided is neither edited nor deleted, whoever writes to the table.
+- **Description:** Added on 2026-11-26 (PLAN-031), cut out of DAT-052. DAT-010 asked that "a decided item keeps its decision and cannot be reopened silently". Since DAT-052 the function `decide` refuses an item that was decided, but a statement written past it could still change or delete the item. Cut down in the planner's trial on 2026-11-27 (PLAN-037) to what two triggers hold: a row of `review_item` whose state was not open is not changed, in any column, and not deleted. They are made by a tenth migration, `keep_the_decision_of_a_review_item`, and by the model alike, as the triggers of the history are (DAT-048). They ask what the item was before the statement, so an open item is changed, decided and deleted as before, and `decide` is unchanged. The note of a decided item is kept with the rest. A store that holds decided items already is given the triggers and nothing else. That a decided item is not replaced (`INSERT OR REPLACE`) is DAT-055. The schema goes to version 10. No column, check or index changes.
+- **Acceptance criteria:**
+  1. The schema is at version 10. The tenth migration makes the two triggers `tr_review_item_decided_never_edited` and `tr_review_item_decided_never_deleted` on `review_item` and nothing else; a store at version 9 that holds an open and a decided item keeps both as they were, and the decided one is held from then on. Where a trigger of either name is there already the migration fails, and the store stays at version 9 with neither kept.
+  2. No column of a decided item, accepted or rejected, is given another value: each of the sixteen columns is tried on both, and the store says "A decided review item (review_item) is never edited." A change that changes nothing, a change told to pass over what is refused, and a statement over many items that meets a decided one are refused the same, and no item is another afterwards.
+  3. A decided item is not deleted, alone or with others: "A decided review item (review_item) is never deleted."
+  4. An open item is changed and deleted as before. It is decided with plain SQL and through `decide` as before, and from then on it is kept. A new item is stored open or decided as before.
+  5. The refusal stops the statement and no more: on a plain connection what the refused statement had done is taken back, and what was written before it and after it is kept. In a unit of work the unit fails as a whole.
+  6. The refusal holds through the models, and on a connection the store's code did not open, with foreign keys off. A store made from the models has the same two triggers and refuses the same; the test of the models and the migrations passes unchanged.
+  7. A statement that says `REPLACE` still takes a decided item out, in four ways, and a test puts that on record for DAT-055.
+  8. Three existing tests change: the list of the migrations gets its tenth name; the test of the triggers of the history asks for those of its table; and the test of DAT-010 that put on record that the table did not keep a decision is turned round. No other existing test changes, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  9. `python scripts/check.py` reports 19 of 19 gates, with 1861 backend tests, and 87 tests more in all than `main` gives at the commit the branch starts from (2527 when that is `5214df7`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+- **Tests required:** 83 new integration tests in 18 functions, in a store the migrations built, on a real SQLite file, with four items written past the model and every column of every item read back with plain SQL after each refusal: every column of the table on an accepted and on a rejected item, statements over many items, items decided with plain SQL and through `decide`, the models, a connection made with Python's own `sqlite3`, a store made from the models, and what a statement that says `REPLACE` still does. 3 new tests of the tenth migration, from a store at version 9 that holds an open and a decided item, and one case more of the test that tries every migration alone. Planted defects in the triggers, the model and the migration, and those of every earlier task whose code or tests this task changes, again. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-054.md`
+
+### DAT-055 – A decided review item is not replaced
 - **Status:** NOT STARTED
-- **Objective:** The store itself keeps a decision on a review item: a decided item is not put back to open, given another decision, deleted or replaced, whoever writes to the table.
-- **Description:** Added on 2026-11-26 (PLAN-031), cut out of DAT-052. DAT-010 asked that "a decided item keeps its decision and cannot be reopened silently". Since DAT-052 the function `decide` refuses an item that was decided; a statement written past it can still put a decided item back to open, give it the other decision, another person or another moment, or delete it, and a test of DAT-010 puts that on record. This task has the table refuse it, by triggers in a new migration, as the history is only added to (DAT-048). The planner's trial settles: which changes of a decided item are refused, and whether its note can still be changed; whether an open item can be deleted; that a statement that says `INSERT OR REPLACE` does not put a new row in the place of a decided item, which SQLite does not refuse where a new item clashes with one that is there (found in the trial of DAT-050), and whether the same is refused for an open item; whether an item can be stored as decided in one statement, as the tests of the opening functions do, or only be decided afterwards; whether the moment of a decision is held to the moment the item was stored; what a store that holds items already is given by the migration; and what `decide` and the two opening functions meet of the triggers. The test of DAT-010 that holds that the table does not yet keep a decision is changed to hold that it does.
-- **Acceptance criteria:** a decided item cannot be put back to open, cannot be given the other decision, another person or another moment, and cannot be deleted, each refused by the store in one plain sentence, also for a statement written past the models; an open item is decided as before, through `decide` and with plain SQL; `INSERT OR REPLACE` does not replace a decided item; the migration is applied to a store at the version before it, with and without items; the model and the migrations agree; the test of DAT-010 that puts a decided item back to open is changed to hold the refusal, and no other existing test changes unless the trial shows why it must.
-- **Tests required:** integration tests against a real SQLite file, with plain SQL and through the models; the migration applied to a store at the version before it; planted defects, those of DAT-010, DAT-050 and DAT-052 among them where their files change; the full run of all gates on both machines.
+- **Objective:** The store itself refuses a statement that would put another row in the place of a decided review item.
+- **Description:** Added on 2026-11-27 (PLAN-037), cut out of DAT-054. Since DAT-054 a decided item is neither edited nor deleted. But `INSERT OR REPLACE`, `REPLACE` and `UPDATE OR REPLACE` take out the row their new row clashes with, by its key or as the same doubt (the two indexes of DAT-050), and SQLite fires no trigger for a row it takes out in that way; a test of DAT-054 puts that on record with four statements. Nothing in the store's code says `REPLACE`. The planner's trial settles how the store asks, before every new and every changed row, whether it would take the place of a decided item (by the key, by the pair of records, by what a source says); what the refusals of DAT-050 say where the item that is there was decided; whether a key below 1 is refused, as in the history; and whether an open item may still be replaced.
+- **Acceptance criteria:** each of the four statements of DAT-054's test is refused by the store in one plain sentence and the decided item is as it was, also through the models and on a connection the store's code did not open; a new item that clashes with no decided item is stored as before; `open_possible_duplicate`, `open_field_doubt` and `decide` do and say what they did; a store at the version before is given the migration with its items as they were; the test of DAT-054 that puts the gap on record is turned round.
+- **Tests required:** integration tests against a real SQLite file, with plain SQL and through the models; the migration applied to a store at the version before it; planted defects, those of the earlier tasks of the table again; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
