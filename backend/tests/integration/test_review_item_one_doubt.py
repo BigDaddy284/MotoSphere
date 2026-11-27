@@ -32,6 +32,9 @@ WHAT_THE_SOURCE_SAYS_IS_THERE = (
     "UNIQUE constraint failed: review_item.record_table, review_item.record_id, "
     "review_item.field, review_item.source_id, review_item.source_value"
 )
+# What the store says where the item that is there was decided: its own
+# trigger asks before the index is looked into (DAT-055).
+A_DECIDED_ITEM_IS_THERE = "A decided review item (review_item) is never replaced."
 # A row written past the model: every column but the key, in the table's order.
 PAST_THE_MODEL = (
     "INSERT INTO review_item (kind, record_table, record_id, other_record_id, field, "
@@ -186,7 +189,7 @@ def test_the_same_possible_duplicate_is_refused_a_second_time(newest: Engine, st
     first = a_pair(**STATES[state])
     write(newest, first)
 
-    with refused(THE_PAIR_IS_THERE):
+    with refused(THE_PAIR_IS_THERE if state == "open" else A_DECIDED_ITEM_IS_THERE):
         write(newest, a_pair(reason="Found again by the next run.", note="Seen twice."))
 
     assert held(newest) == [tuple(first.values())]
@@ -205,7 +208,7 @@ def test_the_same_doubt_about_a_field_is_refused_a_second_time(
     first = of_a_field(kind=kind, **STATES[state])
     write(queue, first)
 
-    with refused(WHAT_THE_SOURCE_SAYS_IS_THERE):
+    with refused(WHAT_THE_SOURCE_SAYS_IS_THERE if state == "open" else A_DECIDED_ITEM_IS_THERE):
         write(
             queue,
             of_a_field(
