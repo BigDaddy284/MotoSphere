@@ -73,10 +73,9 @@ const TOP_BAR_PIECES = {
 type TopBarPieces = Record<keyof typeof TOP_BAR_PIECES, Piece>
 
 /**
- * Waits until the data status has arrived. Its words are longer then than
- * while the data loads, so the data status is wider and what stands beside it
- * lies elsewhere. The top bar itself is as tall before as afterwards (see
- * `arrival.spec.ts`).
+ * Waits until the data status has arrived. On a narrow screen the top bar is
+ * a line taller then than while the data loads, and everything under it lies
+ * a line lower.
  */
 async function arrived(page: Page): Promise<void> {
   await expect(page.getByRole('banner').getByText('Data updated')).toBeVisible()
@@ -311,9 +310,8 @@ for (const viewport of NARROW_SCREENS) {
 
 // From this width on, the name fits between the two buttons on one line.
 const ONE_LINE_FROM = 360
-// From this width on, the data status and the date share a line; below it
-// each has a line of its own (see `arrival.spec.ts`).
-const TWO_PIECES_FROM = 640
+// From this width on, the data status and the date fit on one line together.
+const TWO_PIECES_FROM = 768
 
 for (const viewport of NARROW_SCREENS.filter((screen) => screen.width >= ONE_LINE_FROM)) {
   test.describe(`narrow screen, ${viewport.width}×${viewport.height}`, () => {

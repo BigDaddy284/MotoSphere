@@ -45,8 +45,6 @@ describe('useNarrowScreen', () => {
     const questions = [...styleSheet.matchAll(/@media ([^{]+?) \{/g)].map((match) => match[1] ?? '')
     const aboutWidth = questions.filter((question) => question.includes('width'))
 
-    // The second is a part of the narrow screen: from 640 pixels on, its two
-    // pieces of information share a line (see the style sheet).
-    expect(aboutWidth).toEqual([NARROW_SCREEN, `(min-width: 640px) and ${NARROW_SCREEN}`])
+    expect(aboutWidth).toEqual([NARROW_SCREEN])
   })
 })

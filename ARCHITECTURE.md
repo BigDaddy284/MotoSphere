@@ -144,20 +144,6 @@ Rules:
   (`frontend/src/layout/AppShell.module.css`) and, for the script, in
   `frontend/src/layout/narrowScreen.ts`; a unit test fails when the two
   differ.
-- On a narrow screen the information of the top bar (the data status and
-  the date) stands under its first line, and how many lines it has depends
-  on the width of the screen and on nothing else: below 640 pixels each
-  piece has a line of its own, and from 640 pixels on the two share one.
-  The words do not decide it, so the bar is as tall while the data loads
-  as when it has arrived or could not be loaded, and nothing under it
-  moves (FND-049). A piece too long for its line is not wrapped: it ends
-  in "…", and on a shared line the data status stays whole and the date
-  gives way. At 640 pixels both pieces have room on one line in each of
-  the 61 languages the planner's test browser writes dates in, on every
-  day of a year: the widest pair needs 572 pixels with the edges of the
-  bar, with the fonts of that machine. The 640 is written in the style
-  sheet and in the browser tests, and the unit test of the widths names
-  every question about width the style sheet asks.
 - On a narrow screen an open side panel covers the globe stage, so both
   panels start closed, at most one is open, and nothing about them is
   remembered: loading the page again shows the globe. On a wide screen each

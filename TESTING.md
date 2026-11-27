@@ -102,11 +102,9 @@ the page said "Loading data…", which the page says before it asks, and so
 it could fail by chance.
 
 A browser test that measures the page waits first for whatever changes
-what it measures. Once the data has arrived the data status has longer
-words than while it loads, so it is wider and what stands beside it lies
-elsewhere; until FND-049 the top bar of a narrow screen was also a line
-taller then, and everything under it lay a line lower. So the tests of
-the narrow screen (`e2e/narrow.spec.ts`) load the
+what it measures. On a narrow screen the top bar is a line taller once the
+data has arrived than while it loads, and everything under it lies a line
+lower. So the tests of the narrow screen (`e2e/narrow.spec.ts`) load the
 page in two places only: `open`, which waits until the top bar says when
 the data was updated, and `again`, which loads the page again and waits
 for the same. A test of the file holds that there is no third place. Five
@@ -156,28 +154,6 @@ must be whole, on one line, inside the bar and clear of the others. There
 they also open and close the side panels with the buttons, as a visitor
 does, load the page again, and change the width of the window across the
 line between narrow and wide.
-
-That nothing moves when the data arrives is held by tests of their own
-(`frontend/e2e/arrival.spec.ts`, FND-049), at seven narrow sizes from 320
-to 899 pixels wide and at one desktop size. Each holds the data back,
-measures the top bar, the globe stage and every piece of the top bar while
-the page says "Loading data…", lets the data through and measures again:
-the top bar and the stage are where and as large as they were, to the
-pixel, and every piece is whole, on one line, inside the bar and clear of
-the others both times. From 360 pixels on the height of the bar is also
-held to its number: the first line, one line of information from 640
-pixels on and two below, and the room under them. The same is measured
-when the data cannot be loaded, with each of the two things the page then
-says. Two tests stand one pixel on either side of the 640: below it each
-piece of information has a line of its own, from it on the two share one,
-before and after the data arrives. Three tests make the words too long
-for their line, by setting the letters far apart on a day with a long
-date: on a shared line the data status stays whole and the date is cut
-short; a data status too long for the line by itself ends at its edge;
-and where each piece has its own line, each ends at the edge. In all
-three the bar is as tall as ever and the pieces are on one line each.
-These tests load the page before the data is there on purpose, which the
-tests of `narrow.spec.ts` must not do.
 
 The test environment of the unit tests has no screen, so
 `frontend/src/test/screen.ts` stands in for the part of the browser that
