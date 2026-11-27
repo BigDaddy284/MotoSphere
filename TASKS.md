@@ -13,8 +13,8 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 58 | 57 |
-| 2 | Data store and published data (DAT, PUB) | 71 | 55 |
+| 1 | Foundation (FND) | 58 | 58 |
+| 2 | Data store and published data (DAT, PUB) | 73 | 55 |
 | 3 | Interactive 3D Earth (GLB) | 28 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-013 – Regions table.
 
-**Current task, track B (globe):** FND-060 – A browser test can read a pixel of what the page shows.
+**Current task, track B (globe):** GLB-026 – The stage says when the browser cannot show the globe.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -294,6 +294,15 @@ was four objectives: what the stage does where the browser cannot draw
 (GLB-002 from here on) and the size of the surface (GLB-028). Six tasks are
 new, and the plan has 300. Order on track B: FND-058, FND-059, FND-060,
 GLB-026, GLB-027, GLB-002, GLB-028, then GLB-003.
+
+**The regions, in three steps (PLAN-054):** DAT-013 was three objectives:
+the table of the regions, each of one country and by its name; the code the
+standard ISO 3166-2 gives a region, which has a form to hold and must agree
+with the country; and a region inside a region, which makes the table refer
+to itself and changes what one name means. DAT-013 is now the table. The
+code is DAT-064 and the region inside a region is DAT-065, and they follow
+it. Two tasks are new, and the plan has 302. Order on track A: DAT-013,
+DAT-064, DAT-065, then DAT-014.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1489,7 +1498,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/FND-059.md`
 
 ### FND-060 – A browser test can read a pixel of what the page shows
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A helper of the browser tests gives the colour of a point of the page as the browser shows it, a 3D picture too, without the page reading its own picture.
 - **Description:** Added on 2026-11-27 (PLAN-053), for GLB-003, which proves from the pixels that the Earth is drawn; made exact on 2026-11-27 from the planner's trial. In the planner's trial for PLAN-053 a page that read its own 3D picture (`gl.readPixels`) made the browser log a warning, and a browser test fails on a warning. So the tests read the picture from outside. `colourAt(page, x, y)` in the new module `frontend/e2e/pixel.ts` asks the page how large it is, refuses a point that is not a point of the page, has Playwright take a picture of that one pixel (`scale: 'css'`, so that one pixel of the page is one pixel of the picture on any screen), and gives the colour `colourOfOnePixel` reads from the PNG with what Node.js brings (`inflateSync` and `crc32` of `node:zlib`): red, green and blue, each from 0 to 255. Read are the two kinds of PNG a browser makes, eight bits for each of red, green and blue, with or without a fourth byte, not interlaced; every chunk is checked against its checksum, and the data of all `IDAT` chunks is put together, because the browser's own picture of one pixel has two. A picture that is no PNG, is damaged anywhere, has more or fewer pixels than one, is of another kind, or whose pixel is not opaque is refused with a sentence and is not read as a colour. No package is added. The task has no globe in it: the helper is tested with colours the test itself puts on the page, flat in the project of the other tests and in 3D in the project of the globe. Nothing under `frontend/src` changes, and no test that was there.
 - **Acceptance criteria:**
@@ -1504,10 +1513,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   9. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   10. Only the six files under "Scope" of the plan changed.
 - **Tests required:** 17 new browser tests in the project `chromium`: 13 of the reading of a PNG, with pictures made in the test chunk by chunk and one picture as the browser made it (both kinds, each of the five filters, data in several pieces, every refusal, the picture cut short after each of its bytes, and each of its bytes in turn changed); 4 that ask a page (eighteen points of a flat picture, the corners among them; what the page shows when it is asked; nine points that are not points of the page; a page on a screen that is larger and twice as sharp). 1 new browser test in the project `globe`: a 3D picture of two colours read at ten points with nothing on the console. Planted defects in the helper. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #212, merged there with `main` and with the pull request of DAT-061, which was merged to `main` before it (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32, Playwright 1.63.0 with its Chromium 153.0.8010.12): the full run, 19 of 19 gates passed, "Tests: 3586 passed, 0 failed, 0 skipped.", exit code 0 (browser tests 291: 273 before, 18 new; backend tests 2588). The planner's 56 planted defects, one at a time, in `e2e/pixel.ts` of the pull request (eleven in the parts of a PNG, three in the size, eight in the kind, four in the data, five in the line, seven in the pixel, eighteen in the point of the page), each against the 18 tests of the two new files with two workers: 56 of 56 detected, each by the same tests as in the planner's trial. The plan's nine prove-it steps, run by the planner too: each fails the tests the plan names (1, 6, 1, 1, 1, 9, 3, 2 and 1 tests). On GitHub, read by the planner from the runs and job logs: run 46079989836 on the pull request's commit, which started from `main` before DAT-061, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3550 passed, 0 failed, 0 skipped.", with 291 browser tests on both machines, the eleven globe tests the last eleven of them and the test that reads the 3D picture the last, the three jobs after the gates skipped; run 46083293064 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3586 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3586 / 0 tests on both machines on GitHub for `main`, and locally with `main` merged in (repository 82, script tests 219, backend 2588, frontend unit 406, browser 291); 3550 / 0 on both machines for the pull request; all 19 gates passed; 56 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 6 files are the same change as the planner's trial. No test, fixture or setting that was there changed, nothing under `frontend/src` changed, and no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #211, run 46078609309). The builder reported the same counts from its own runs (18 passed in the two new files, 3550 with 291 browser tests in the full run, from `main` at `5637356`, Node 22.23.5) and that each of the plan's nine prove-it steps failed the tests the plan names (1, 6, 1, 1, 1, 9, 3, 2 and 1 tests). It also reported that its environment starts the browser through a wrapper that takes `--use-angle=swiftshader` away and runs Chromium 158.0.8127.36: before it set anything, the existing globe test and the new one failed with "GPU stall due to ReadPixels"; every run it reports was then made with the two variables the plan names (`CHROMIUM_HEADLESS_SHELL=playwright` and `CHROMIUM_KEEP_GL_SWITCHES=1`), with Chrome for Testing 153.0.8010.12.
+- **Commit:** `ddeae70`
 - **Plan:** `docs/plans/FND-060.md`
 
 ### DAT-001 – Data store research and decision record
@@ -2659,11 +2668,47 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-061.md`
 
 ### DAT-013 – Regions table
+- **Status:** IN PROGRESS
+- **Objective:** The store holds the regions of a country (a state, a county, a province), each of one country and by its name, so that a track can say where in its country it is.
+- **Description:** Narrowed on 2026-11-27 (PLAN-054): the code of ISO 3166-2 is DAT-064, and a region inside a region is DAT-065. The table `region`, its model `Region` in `motosphere.db.models.region`, and the sixteenth migration, `make_the_regions`. Settled in the planner's trial. The columns: `country_id`, the country the region is a part of, which cannot be without a value and refers to `country`; and `name`, text that is not empty, stored as its source writes it. A region is a collected record (`Collected`), the second real table of them, so the eight columns that say where a row came from, their checks, the reference to `source`, the index `ix_region_source_id` and the check of the two times come with that, and `NOT_COLLECTED` is unchanged. No two regions of one country have one name (`uq_region_country_id_name`, over the country and then the name); two countries can each have a region of a name; two names are one name only if they are the same text, and the table does not judge whether two names mean one region. A country that has regions cannot be deleted: the reference says nothing of deleting, and SQLite deletes nothing by itself. SQLite keeps an index for the rule of the names, with the country first, and uses it to find the regions of one country, also when a country is to be deleted, so the table has no index of its own over the country; a test holds what SQLite says it uses. The table has no rows and no reference rows: a region comes with the record that needs it.
+- **Acceptance criteria:**
+  1. The schema is at version 16. The sixteenth migration makes the table `region` and the index `ix_region_source_id` and nothing else; a store that holds sources, countries and what points to them keeps them as they were. Where a table or an index of its name is there already the migration fails, and the store stays at version 15 with nothing of the migration kept.
+  2. A region is stored and read back with its country, its name and the eight things that say where it came from. A row cannot be without any of them but the day it was published, and neither the model nor the table gives one a value.
+  3. A region is a part of a country that is there, when it is stored and when it is moved. A country that has regions cannot be deleted; one without regions can, and so can a country whose regions were taken away first.
+  4. Two regions of one country cannot have one name, when a region is stored, when it is given another name and when it is moved. Two countries can each have a region of a name. Two names are one name only if they are the same text.
+  5. A name is text that is not empty and is stored as it was given.
+  6. A region comes from a source that is there; a source that regions came from cannot be deleted; a region can be deleted, and its key is not given again.
+  7. The eight columns keep their rules in the real table: a web address, a calendar day, the three lists, and the two times held together.
+  8. The regions of one source are found through `ix_region_source_id`, and the regions of one country through the index of the rule of the names; SQLite reads no table whole when a country or a source is to be deleted.
+  9. `change` changes a region and writes its history; a change the table refuses leaves the region and no history.
+  10. The model and the migration agree: the test of the models and the migrations passes unchanged. The whole schema with the regions breaks neither the rules every table keeps nor the rule of where records came from, whose list is unchanged.
+  11. One existing test changes, the list of the migrations' names; no other existing test changes, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  12. `python scripts/check.py` reports 19 of 19 gates, with 2705 backend tests, and 117 tests more in all than `main` gives at the commit the branch starts from (3685 when that is `a8b30bb`); on the pull request both gates jobs are green (Linux and Windows) at the first attempt and the three jobs after the gates are skipped.
+  13. Only the eleven files under "Scope" of the plan changed.
+- **Tests required:** 104 new integration tests in 32 functions, in a store the migrations built, with one source and two countries in it, on a real SQLite file, through the model and past it as plain SQL, each refusal with what SQLite said: what is stored; what a region cannot be without; the country that must be there, when a region is stored and when it is moved; a country with regions, without them and after they were taken away; one name in one country and in two, when a region is stored, renamed and moved; names that differ in a capital, a space or an accent; names that are empty; the source; the key of a deleted region; the rules of the eight columns; the two indexes, as SQLite says it uses them; the history. 9 new unit tests of the model. 3 new integration tests of the sixteenth migration, on a store that holds sources, countries and what points to them, and one case more of the test that tries every migration alone. Planted defects in the model and in the migration. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-013.md`
+
+### DAT-064 – A region says its code of ISO 3166-2
 - **Status:** NOT STARTED
-- **Objective:** A country can be divided into regions (a state, a county, a province), so that a track can say where in the country it is.
-- **Description:** Table, model and migration for regions: the country, the name, the ISO 3166-2 code where one exists, an optional parent region, and provenance. No reference rows: regions arrive with the records that need them.
-- **Acceptance criteria:** a region belongs to exactly one country; two regions of one country cannot share a code or, under the same parent, a name; a region's parent is in the same country; a country with regions cannot be deleted.
-- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
+- **Objective:** A region can say the code the standard ISO 3166-2 gives it, such as `NZ-CAN`, so that a region is known across sources that write its name differently.
+- **Description:** Added on 2026-11-27 (PLAN-054), cut out of DAT-013. One column of `region`, which may be without a value: not every region a source names has a code, and a region is not kept out of the store for lacking one. The migration changes a table that is there. The planner's trial settles the form a code is held to (the standard writes the two letters of the country, a hyphen, and up to three letters or digits), how the table holds that the code of a region begins with the code of its country, which is a column of another table, and whether that is a rule of the table or of the code that writes a region. No codes are loaded: which codes there are is what a source says.
+- **Acceptance criteria:** a region may be without a code, and any number of regions may be; a code is stored in the standard's form and refused in any other; no two regions have one code; the code of a region agrees with the country it is a part of; the regions that were there keep everything they had and have no code; the model and the migration agree.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it that holds countries and regions; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-065 – A region inside a region
+- **Status:** NOT STARTED
+- **Objective:** A region can be a part of another region of its country, as a county is of a state, so that a track can be placed as closely as its source places it.
+- **Description:** Added on 2026-11-27 (PLAN-054), cut out of DAT-013. One column of `region` that refers to the table itself and may be without a value: a region without a parent is a part of its country only. The migration changes a table that is there. With a parent, the rule of the names changes: two regions of one country may have one name when they are parts of different regions (there are counties of one name in many states), so the rule of DAT-013, one name in a country, becomes one name under the same parent, and one name among the regions of a country that have no parent. The planner's trial settles how SQLite is given that rule where the parent may be without a value, how the table holds that a parent is of the same country, and what is done about a region that would be a part of itself, directly or through others.
+- **Acceptance criteria:** a region may be without a parent; a parent is a region that is there, of the same country; a region is not its own parent; two regions under one parent cannot have one name, nor two regions of one country that have no parent, and two under different parents can; a region that other regions are parts of cannot be deleted; the regions that were there keep everything they had and have no parent; the model and the migration agree.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it that holds countries and regions; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
