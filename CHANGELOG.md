@@ -422,6 +422,11 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   country, the loading puts what the file says to the review queue: one
   item for each field the two differ in, which waits there for a
   person's decision. The country itself stays as it is (DAT-062).
+- The store a command works on: one function gives a command the data
+  store the settings name, and only when it is there and at the newest
+  schema. It makes no file and gives the store no migration; what is
+  wrong is said in one sentence, with the advice to run `migrate` first
+  where that puts it right. No command uses it yet (DAT-063).
 
 ### Removed
 
