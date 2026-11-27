@@ -361,6 +361,13 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   before hears the same sentence where the item that is there was
   decided, and one told to pass over a clash with a decided item is
   refused as well. An open item is replaced as before (DAT-055).
+- The table of the countries, `country`, and the thirteenth migration,
+  which makes it. A country is known by its two codes of ISO 3166-1,
+  of two and of three letters, which the table holds to capital
+  letters and to one country each, and has its English name. It is the
+  first table of collected records: every row says which source it
+  came from, where, when and how, and how far it can be trusted. The
+  table has no rows yet (DAT-011).
 
 ### Removed
 

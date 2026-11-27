@@ -11,11 +11,20 @@ from sqlalchemy import MetaData
 
 from motosphere.db.base import Base
 from motosphere.db.models.collection_run import CollectionRun
+from motosphere.db.models.country import Country
 from motosphere.db.models.record_change import RecordChange
 from motosphere.db.models.review_item import ReviewItem
 from motosphere.db.models.source import Source, SourceOffer
 
-__all__ = ["SCHEMA", "CollectionRun", "RecordChange", "ReviewItem", "Source", "SourceOffer"]
+__all__ = [
+    "SCHEMA",
+    "CollectionRun",
+    "Country",
+    "RecordChange",
+    "ReviewItem",
+    "Source",
+    "SourceOffer",
+]
 
 # Every table of the store, as the models say them. A test holds the
 # migrations to it, and another proves that no model anywhere in the code
