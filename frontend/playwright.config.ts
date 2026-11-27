@@ -23,11 +23,13 @@ export default defineConfig({
   use: {
     baseURL: BASE_URL,
     trace: 'off',
-    // Every test runs in a browser started this way (e2e/browser.ts).
+    // How a browser is started where a project does not say otherwise
+    // (e2e/browser.ts).
     launchOptions: TEST_BROWSER,
   },
   projects: [
-    // Every test that is not about the globe.
+    // Every test that is not about the globe, in a browser that gives a page
+    // no 3D picture.
     {
       name: 'chromium',
       testIgnore: '**/e2e/globe/**',
