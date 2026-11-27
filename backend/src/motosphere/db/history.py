@@ -29,6 +29,7 @@ __all__ = [
     "hold_one_doubt_to_one_review_item",
     "index_the_record_changes",
     "index_the_runs_of_a_source",
+    "keep_the_decision_of_a_review_item",
     "let_the_record_changes_only_be_added_to",
     "make_the_collection_runs",
     "make_the_record_changes",
@@ -352,6 +353,28 @@ def hold_one_doubt_to_one_review_item(connection: Connection) -> None:
     )
 
 
+def keep_the_decision_of_a_review_item(connection: Connection) -> None:
+    """10: the triggers by which a decided review item is neither edited nor deleted (DAT-054)."""
+    connection.exec_driver_sql(
+        """
+        CREATE TRIGGER tr_review_item_decided_never_edited BEFORE UPDATE ON review_item
+        WHEN OLD.state != 'open'
+        BEGIN
+            SELECT RAISE(ABORT, 'A decided review item (review_item) is never edited.');
+        END
+        """
+    )
+    connection.exec_driver_sql(
+        """
+        CREATE TRIGGER tr_review_item_decided_never_deleted BEFORE DELETE ON review_item
+        WHEN OLD.state != 'open'
+        BEGIN
+            SELECT RAISE(ABORT, 'A decided review item (review_item) is never deleted.');
+        END
+        """
+    )
+
+
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
@@ -362,4 +385,5 @@ MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     index_the_record_changes,
     make_the_review_items,
     hold_one_doubt_to_one_review_item,
+    keep_the_decision_of_a_review_item,
 )

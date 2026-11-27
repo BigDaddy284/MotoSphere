@@ -20,12 +20,18 @@ What else an item names goes with its kind. A possible duplicate names
 the other record, which is of the same table. The two other kinds name
 a field of the record, the source that says what the field should hold,
 the address at which it says so, and what it says.
+
+A decision is kept. An item that was decided is as it is for good: the
+store itself refuses to edit it and to delete it. The refusal stands in
+the file, as triggers, so it holds whoever writes to the file, through
+the models or past them. An open item is not kept so: it is given a note,
+decided, and can be deleted.
 """
 
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, text
+from sqlalchemy import CheckConstraint, Connection, ForeignKey, Index, event, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from motosphere.db.base import Base
@@ -68,7 +74,8 @@ class ReviewItem(Base):
     The table itself refuses an item that does not name what goes with
     its kind, or names what does not; a record that is said to be its own
     duplicate; a decision without who made it and when; who or when
-    without a decision; and the same doubt a second time.
+    without a decision; the same doubt a second time; and any change to
+    an item that was decided.
     """
 
     __tablename__ = "review_item"
@@ -158,3 +165,29 @@ class ReviewItem(Base):
     decided_at: Mapped[datetime | None]
     # What a person wants kept with the item. It never leaves the store.
     note: Mapped[NotEmpty | None]
+
+
+# The two triggers by which a decision is kept. SQLite stops the statement
+# that fires one, and the sentence is what it says. Each asks what the
+# item was before the statement: an open item is changed and decided as
+# before, and an item that was decided is as it is for good.
+_A_DECISION_IS_KEPT = (
+    "CREATE TRIGGER tr_review_item_decided_never_edited BEFORE UPDATE ON review_item "
+    "WHEN OLD.state != 'open' "
+    "BEGIN SELECT RAISE(ABORT, "
+    "'A decided review item (review_item) is never edited.'); END",
+    "CREATE TRIGGER tr_review_item_decided_never_deleted BEFORE DELETE ON review_item "
+    "WHEN OLD.state != 'open' "
+    "BEGIN SELECT RAISE(ABORT, "
+    "'A decided review item (review_item) is never deleted.'); END",
+)
+
+
+def _keep_a_decision(table: object, connection: Connection, **said: object) -> None:
+    """Make the two triggers, with the connection that has just made the table."""
+    for trigger in _A_DECISION_IS_KEPT:
+        connection.exec_driver_sql(trigger)
+
+
+# Wherever the table is made from the model, its triggers are made with it.
+event.listen(ReviewItem.__table__, "after_create", _keep_a_decision)

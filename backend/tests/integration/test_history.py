@@ -53,6 +53,7 @@ def test_the_history_is_these_migrations_in_this_order() -> None:
         "index_the_record_changes",
         "make_the_review_items",
         "hold_one_doubt_to_one_review_item",
+        "keep_the_decision_of_a_review_item",
     ]
 
 
@@ -595,6 +596,78 @@ def test_the_ninth_migration_does_not_pass_over_an_index_of_its_name_that_is_the
     assert schema_version(store) == 8
     assert len(before) == 5
     assert indexes(store) == before
+
+
+A_DECIDED_ITEM_AT_VERSION_9 = (
+    "INSERT INTO review_item (kind, record_table, record_id, other_record_id, reason, state, "
+    "decided_by, decided_at, created_at, updated_at) VALUES ('possible duplicate', 'track', "
+    "8, 9, 'They have one name.', 'accepted', 'Jo Example', '2026-11-26T12:30:00.000000+00:00', "
+    "'2026-11-26T09:00:00.000000+00:00', '2026-11-26T12:30:00.000000+00:00')"
+)
+NEVER_EDITED = "tr_review_item_decided_never_edited"
+NEVER_DELETED = "tr_review_item_decided_never_deleted"
+
+
+def test_the_tenth_migration_makes_the_triggers_of_a_kept_decision_and_holds_what_there_was(
+    store: Engine,
+) -> None:
+    migrate(store, MIGRATIONS[:9])
+    with store.begin() as connection:
+        connection.exec_driver_sql(A_SOURCE_AT_VERSION_8)
+        connection.exec_driver_sql(AN_ITEM_AT_VERSION_8, (*A_PAIR, "They have one name."))
+        connection.exec_driver_sql(A_DECIDED_ITEM_AT_VERSION_9)
+    with store.connect() as connection:
+        items = connection.exec_driver_sql("SELECT * FROM review_item ORDER BY id").all()
+    before = (tables(store), indexes(store), triggers(store))
+
+    migrate(store, MIGRATIONS[:10])
+
+    assert tables(store) == before[0]
+    assert indexes(store) == before[1]
+    assert len(before[2]) == 4
+    assert triggers(store) == sorted(
+        [*before[2], (NEVER_DELETED, "review_item"), (NEVER_EDITED, "review_item")]
+    )
+    # The item that was decided before the triggers is held by them as any
+    # other, and the open one is not.
+    for statement, why in [
+        ("UPDATE review_item SET state = 'open', decided_by = NULL, decided_at = NULL", "edited"),
+        ("DELETE FROM review_item", "deleted"),
+    ]:
+        with pytest.raises(IntegrityError) as refusal, store.begin() as connection:
+            connection.exec_driver_sql(statement)
+        assert str(refusal.value.orig) == f"A decided review item (review_item) is never {why}."
+    with store.connect() as connection:
+        after = connection.exec_driver_sql("SELECT * FROM review_item ORDER BY id").all()
+    assert len(items) == 2
+    assert after == items
+    with store.begin() as connection:
+        connection.exec_driver_sql("UPDATE review_item SET note = 'To be looked at.' WHERE id = 1")
+    with store.connect() as connection:
+        notes = connection.exec_driver_sql("SELECT id, note FROM review_item ORDER BY id").all()
+    assert notes == [(1, "To be looked at."), (2, None)]
+
+
+@pytest.mark.parametrize("trigger", [NEVER_EDITED, NEVER_DELETED], ids=["first", "second"])
+def test_the_tenth_migration_does_not_pass_over_a_trigger_of_its_name_that_is_there(
+    store: Engine, trigger: str
+) -> None:
+    # Where the trigger that is there has the name of the second of the
+    # two, the first is made before it, and taken back with the migration.
+    migrate(store, MIGRATIONS[:9])
+    with store.begin() as connection:
+        connection.exec_driver_sql(
+            f"CREATE TRIGGER {trigger} AFTER INSERT ON review_item BEGIN SELECT 1; END"
+        )
+    before = triggers(store)
+
+    with pytest.raises(OperationalError) as refusal:
+        migrate(store, MIGRATIONS[:10])
+
+    assert str(refusal.value.orig) == f"trigger {trigger} already exists"
+    assert schema_version(store) == 9
+    assert len(before) == 5
+    assert triggers(store) == before
 
 
 def test_a_store_with_the_newest_schema_lacks_no_migration(newest: Engine) -> None:

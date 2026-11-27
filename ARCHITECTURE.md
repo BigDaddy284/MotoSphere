@@ -377,7 +377,9 @@ pipeline's command line. The settings and logging modules stay.
   the same for what a source says of a field of a record, which it
   keeps as the text the source gave (DAT-053). A third, `decide`, puts
   down a person's decision on an open item, by whom and when, and
-  refuses an item that was decided already (DAT-052).
+  refuses an item that was decided already (DAT-052). The table keeps
+  a decision itself: two triggers in the store refuse to edit or to
+  delete an item that was decided, whoever writes to it (DAT-054).
 
 The schema is documented in DATABASE.md as tables are added.
 
