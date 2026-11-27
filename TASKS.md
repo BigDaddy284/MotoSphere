@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 47 | 44 |
+| 1 | Foundation (FND) | 47 | 45 |
 | 2 | Data store and published data (DAT, PUB) | 62 | 43 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-054 – A decided review item keeps its decision.
 
-**Current task, track B (globe):** FND-048 – The narrow-screen tests measure the top bar after the data has arrived.
+**Current task, track B (globe):** FND-047 – The licences of the shipped packages go with the site.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -933,7 +933,7 @@ Windows 11. No database and no globe yet.
 - **Commit:** –
 
 ### FND-048 – The narrow-screen tests measure the top bar after the data has arrived
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** No browser test of the narrow screen measures the top bar, or what lies under it, before the data has arrived, so that none can fail by chance.
 - **Description:** Added on 2026-11-27 (PLAN-036), found in the planner's run of the pull request of GLB-001. On a narrow screen the top bar is a line taller once the data has arrived than while it loads (99 pixels and 78 at a width of 360), because "Data updated" and the day take a line each where "Loading data…" and the day share one, and everything under the bar then lies a line lower. Five of the 19 tests of `frontend/e2e/narrow.spec.ts` measured without waiting for the data, at 14 of the file's 71 places. Two measured the bar first and waited afterwards (everything in the top bar is whole and inside it; the data status and the date each have a line): with the data a second late they fail every time, at five places, and one of them failed once in the planner's run ("Expected: 9, Received: -12"). Three measured the bar and then the globe stage or a panel with no wait at all: they fail when the data arrives between the two measurements, which the planner's trial brought about on purpose. The task gives the file two helpers, `open` and `again`, that load the page and wait for the data; every test loads the page through them, and a test of the file holds that no test loads it by itself. Three tests hold the data back for a second and check that the helpers have waited. Only tests change. That the bar changes its height at all is FND-049.
 - **Acceptance criteria:**
@@ -945,10 +945,10 @@ Windows 11. No database and no globe yet.
   6. On the pull request both gates jobs are green with those numbers.
   7. Only the three files under "Scope" of the plan changed.
 - **Tests required:** 4 new browser tests (three with the data a second late, one that reads the file itself); the whole browser suite with the data a second late in every test before the change, and late by 0.12, 0.3 and 1 second after it; the old tests with the data arriving right after each test's first measurement; planted defects in the helpers and at every place that loads the page; the full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #148 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run once, 19 of 19 gates, "Tests: 2440 passed, 0 failed, 0 skipped." (browser tests 175: 171 before, 4 new). The planner's 31 planted defects against the tests as they are, each against the whole file: 31 of 31 detected, the 6 in the helpers by the three tests that hold the data back and the 25 that load the page outside the helpers by the test of the rule. The one defect the plan says the tests do not find (`topBarPieces` without its own wait) was not found, as said. The whole browser suite with the data late by 0.12, 0.3 and 1 second in every test: 175 of 175 each time. The plan's seven prove-it steps: six with the plan's result, and step 3 with one failure more than the plan's three, a test of the old ones that measured too early because the step takes the wait away. On GitHub, run 45935196401 for the pull request and run 45938103627 for `main` after the merge, read from the job logs: both gates jobs green on Linux and on Windows with the same two closing lines and 175 browser tests; on `main` the site was republished and "Check the published site" ended "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 2440 / 0 tests locally and on both machines on GitHub (repository 62, script tests 206, backend 1774, frontend unit 223, browser 175); all 19 gates passed; 31 / 0 planted defects detected; 175 / 0 browser tests with the data late, three times.
+- **Verification status:** Verified by the planner on 2026-11-27. All 3 files are identical to the planner's trial. No expectation of an existing test changed, none was skipped or given more time, and no file of the application changed. The builder's report agreed with the planner's test: one local full run with 2440 tests, the seven prove-it steps with the plan's results, and its pull request run green on both machines.
+- **Commit:** `326574b`
 - **Plan:** `docs/plans/FND-048.md`
 
 ### FND-049 – The top bar keeps its height when the data arrives
