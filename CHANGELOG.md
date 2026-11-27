@@ -418,10 +418,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and a country the file does not have, are left as they are and
   named. Loaded again, it writes nothing. No command calls it yet
   (DAT-059).
-- Where the store and the reference file say different things of a
-  country, the loading puts what the file says to the review queue: one
-  item for each field the two differ in, which waits there for a
-  person's decision. The country itself stays as it is (DAT-062).
 
 ### Removed
 

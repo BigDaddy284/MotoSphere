@@ -2061,7 +2061,7 @@ fetched from; that the note beside the file names the same release, day,
 file and folder; and that what a loading gives back is four lists in one
 order and cannot be changed afterwards.
 
-`backend/tests/integration/test_countries_load.py`, 48 tests against a
+`backend/tests/integration/test_countries_load.py`, 32 tests against a
 real SQLite file that the migrations built. Every row is read back as
 SQLite holds it:
 
@@ -2070,7 +2070,7 @@ SQLite holds it:
   writes them; every column of a new row, with the clock set; one
   moment for all rows of a loading; the source with its offer, switched
   off, and a source of the countries that is there already; no
-  collection run and no history.
+  collection run, no history and no item of the review queue.
 - **Loaded again.** A second loading sends SQLite no statement that
   writes, which the test hears by listening to the statements, and
   another test holds that the listening hears a loading that does
@@ -2083,17 +2083,6 @@ SQLite holds it:
   A country the file does not have is left and named, in the order of
   the codes. What was found is named in the order of the file. With
   all of it at once, no statement changes or deletes a country.
-- **What waits in the review queue** (DAT-062). For each of the six ways
-  in which the store says otherwise, the items that are opened: the
-  record, the field and what the file says. Every column of an item,
-  with the clock set. A code of three under another code of two, which
-  waits as what the file says of that country, and a country that
-  differs both ways. The order of the file. No item where the store is
-  as the file has it or has a country the file does not have. Loaded
-  again, no statement that writes is sent; an item a person has decided
-  stays as it was decided and is not opened again; a file that says yet
-  another thing opens an item beside it. The items go with a unit of
-  work that fails.
 - **What is handed over.** A list that is given one country at a time;
   no countries; a list that has one code twice, of two letters, of
   three, or a whole country, which the store refuses.

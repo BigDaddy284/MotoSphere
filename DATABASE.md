@@ -2728,42 +2728,20 @@ file says, as `countries_of_the_project()` gives it, and adds every
 country the store does not have. No command calls it yet (DAT-061), so
 no store has the countries until then.
 
-**The loading adds countries, and it changes none.** A country is known
-by its code of two letters.
+**The loading adds, and it does nothing else.** A country is known by
+its code of two letters.
 
 | What the store has of a country of the file | What the loading does |
 |---|---|
 | Nothing: neither its code of two letters nor its code of three | Adds it |
 | The code of two letters, with the same code of three and the same name | Leaves it as it is |
-| The code of two letters, with another code of three or another name | Leaves it as it is, names it, and puts what the file says to the review queue |
-| The code of three letters, under another code of two | Adds nothing, names it, and puts what the file says to the review queue |
+| The code of two letters, with another code of three or another name | Leaves it as it is, and names it |
+| The code of three letters, under another code of two | Adds nothing, and names it |
 
 A country of the store whose code of two letters the file does not have
-is left as it is and named too. No country is ever changed and none is
+is left as it is and named too. Nothing is ever changed and nothing is
 ever deleted. A name is compared letter for letter: a capital, a space
 or a letter written in another way makes it another name.
-
-**What waits in the review queue.** Where the store and the file say
-different things of a country, the loading does not choose. It puts what
-the file says to the review queue (see "The review queue"), as what the
-source of the countries says of one field of a stored country, and a
-person decides (DAT-062).
-
-| What the store has | The item is about | Field | What the source says |
-|---|---|---|---|
-| The code of two letters with another code of three | That country | `alpha_3` | The file's code of three |
-| The code of two letters with another name | That country | `name` | The file's name |
-| The file's code of three letters under another code of two | The country that has the code of three | `alpha_2` | The file's code of two |
-
-A country that differs in two of these has two items. Every item is of
-the kind `sources disagree`, names the source of the countries and the
-address of the release, and says why in one sentence, such as "Release
-4.20.1 of iso-codes has another name for the country TR." The items are
-opened in the order of the file. A doubt the queue holds already is not
-put to it again, whether it is open or decided: a question a person has
-answered is not asked a second time. A country of the store that the
-file does not have is no doubt, because the file says nothing of it. It
-is only named.
 
 **What a new row says of where it came from.**
 
@@ -2789,21 +2767,18 @@ when it took the row.
 - **Loaded again, it writes nothing.** A second loading of the same
   file finds every country as it was. No row is touched, not even to
   say that it was seen again: the file is the same file, and the source
-  itself was not looked at. What waits in the review queue is found
-  there and not opened again.
+  itself was not looked at.
 - **It is not a collection run.** Nothing is fetched: the file was
   fetched once, by hand, and is part of the project. So a loading
   stores no run, and the source need not be switched on for it. It
-  leaves no history either.
+  leaves no history and opens no item of the review queue either.
 - **Why it does not change a country.** A record is changed with its
   history, and a change names what caused it: a collection run, or the
   person who decided it (see "Changing a record"). A loading is neither.
   The store and the file can only come to say different things of a
   country when a person changed the store by hand, or when a newer
   release is taken into the repository; then a person decides which is
-  right. The loading names the countries, and what the file says of
-  them waits in the review queue. What follows from a decision, that
-  the country gets what the file says, is not done by the loading.
+  right, and the loading names the countries for them.
 - **A country that is there is left whatever source it names.** Only
   the two codes and the name are compared. A country that a person put
   in from another source, and that is as the file has it, stays that
@@ -2811,10 +2786,9 @@ when it took the row.
 - **A list that has one code twice is refused by the store**, as the
   reader refuses a file that has one: SQLite's own refusal reaches the
   caller, and nothing is kept.
-- **It is part of its unit of work.** The source, its offer, the
-  countries and the items of the review queue are written when the
-  function returns, and are kept or taken back with whatever else the
-  unit of work does.
+- **It is part of its unit of work.** The source, its offer and the
+  countries are written when the function returns, and are kept or
+  taken back with whatever else the unit of work does.
 
 ## What the store relies on in SQLite
 

@@ -4,8 +4,7 @@ The store of every test is built the way a real store is built: by the
 migrations. What the loading stores is read as SQLite holds it, and what
 it must leave alone is written the way a person or another program would
 have written it. The statements the loading sends to SQLite are listened
-to where a test holds that nothing was written. What the loading puts to
-the review queue is read as SQLite holds it too.
+to where a test holds that nothing was written.
 """
 
 from collections.abc import Iterator
@@ -16,11 +15,9 @@ import pytest
 from sqlalchemy import Engine, event
 from sqlalchemy.exc import IntegrityError
 
-from motosphere.db.models import Country, ReviewItem, Source, SourceOffer
+from motosphere.db.models import Country, Source, SourceOffer
 from motosphere.db.models.provenance import Confidence, VerificationStatus
-from motosphere.db.models.review_item import ReviewState
 from motosphere.db.models.source import CollectionMethod, InformationType, SourceCategory
-from motosphere.db.review import decide
 from motosphere.db.work import unit_of_work
 from motosphere.reference.countries import ReferenceCountry, countries_of_the_project
 from motosphere.reference.countries_load import (
@@ -53,10 +50,8 @@ BY_HAND_ADDRESS = "https://federation.example/members"
 COUNT_OF = {
     "collection_run": "SELECT count(*) FROM collection_run",
     "record_change": "SELECT count(*) FROM record_change",
+    "review_item": "SELECT count(*) FROM review_item",
 }
-# Why the file's name, and its code of three, wait for a person, as the item says it.
-ANOTHER_NAME = "Release 4.20.1 of iso-codes has another name for the country TR."
-ANOTHER_CODE = "Release 4.20.1 of iso-codes has another code of three letters for the country TR."
 
 
 def said(seconds: int) -> str:
@@ -97,22 +92,6 @@ def offers(store: Engine) -> list[tuple[object, ...]]:
             "SELECT source_id, information_type FROM source_offer ORDER BY id"
         )
         return [tuple(row) for row in rows]
-
-
-def doubts(store: Engine) -> list[tuple[object, ...]]:
-    """Every item of the review queue as SQLite holds it, by its key."""
-    with store.connect() as connection:
-        rows = connection.exec_driver_sql(
-            "SELECT id, kind, record_table, record_id, other_record_id, field, source_id, "
-            "source_address, source_value, state, reason, decided_by, decided_at, note, "
-            "created_at, updated_at FROM review_item ORDER BY id"
-        )
-        return [tuple(row) for row in rows]
-
-
-def waiting(store: Engine) -> list[tuple[object, ...]]:
-    """Of every item of the queue: the key of its record, the field, and what the source says."""
-    return [(row[3], row[5], row[8]) for row in doubts(store)]
 
 
 def rows_in(store: Engine, table: str) -> int:
@@ -281,14 +260,14 @@ def test_a_source_of_the_countries_that_is_there_is_the_one_the_rows_name(newest
     assert sent != []
 
 
-def test_a_loading_is_no_collection_run_and_leaves_no_history(newest: Engine) -> None:
+def test_a_loading_is_no_collection_run_and_leaves_no_history_and_no_doubt(newest: Engine) -> None:
     by_hand(
         newest, ReferenceCountry("TR", "TUR", "Turkey"), ReferenceCountry("XK", "XKX", "Kosovo")
     )
 
     loaded(newest, *THREE)
 
-    assert [rows_in(newest, table) for table in COUNT_OF] == [0, 0]
+    assert [rows_in(newest, table) for table in COUNT_OF] == [0, 0, 0]
 
 
 # ------------------------------------------------------------- loaded again
@@ -496,232 +475,11 @@ def test_nothing_is_changed_and_nothing_deleted_whatever_is_found(newest: Engine
         added=(), as_they_were=("SE",), said_otherwise=("NZ", "TR"), not_in_the_file=("NC", "XK")
     )
     assert countries(newest) == before
-    # The source of the countries and its offer were stored, and what the
-    # file says of the two countries was put to the review queue. Nothing
-    # else was written, and nothing of a country.
+    # Only the source of the countries and its offer were stored.
     assert [statement.split()[:3] for statement in sent] == [
         ["INSERT", "INTO", "source"],
         ["INSERT", "INTO", "source_offer"],
-        ["INSERT", "INTO", "review_item"],
-        ["INSERT", "INTO", "review_item"],
     ]
-
-
-# ------------------------------------------- what waits in the review queue
-
-# What the file says of the country TR and the store does not, for each of
-# the ways above in which the store says otherwise.
-SAID_BY_THE_FILE = {
-    "another name": [("name", "T\u00fcrkiye")],
-    "a name that differs by a capital": [("name", "T\u00fcrkiye")],
-    "a name with its letter written as two": [("name", "T\u00fcrkiye")],
-    "a name with a space after it": [("name", "T\u00fcrkiye")],
-    "another code of three": [("alpha_3", "TUR")],
-    "another code of three and another name": [("alpha_3", "TUR"), ("name", "T\u00fcrkiye")],
-}
-
-
-def test_every_way_of_saying_otherwise_has_what_the_file_says() -> None:
-    assert SAID_BY_THE_FILE.keys() == OTHERWISE.keys()
-
-
-@pytest.mark.parametrize(
-    ("stored", "says"),
-    [(OTHERWISE[how], SAID_BY_THE_FILE[how]) for how in OTHERWISE],
-    ids=OTHERWISE.keys(),
-)
-def test_what_the_file_says_of_a_country_the_store_says_otherwise_of_waits_in_the_review_queue(
-    newest: Engine, stored: ReferenceCountry, says: list[tuple[str, str]]
-) -> None:
-    by_hand(newest, stored)
-
-    loaded(newest, *THREE)
-
-    # One item for each field the two differ in, about the stored country.
-    assert waiting(newest) == [(1, field, value) for field, value in says]
-
-
-@pytest.mark.usefixtures("clock")
-def test_an_item_says_what_this_source_says_of_the_field_and_where(newest: Engine) -> None:
-    federation = by_hand(newest, ReferenceCountry("TR", "TRK", "Turkey"))
-
-    loaded(newest, *THREE)
-
-    # The source of the countries was stored after the federation.
-    assert [row[:2] for row in sources(newest)] == [(federation, "Example Federation"), (2, NAME)]
-    # The clock had been asked twice before the loading, which asked it
-    # for the source, for its offer, for its own moment and for each of
-    # its two rows. The eighth and the ninth asking are the two items.
-    assert doubts(newest) == [
-        (
-            1,
-            "sources disagree",
-            "country",
-            1,
-            None,
-            "alpha_3",
-            2,
-            RELEASE_ADDRESS,
-            "TUR",
-            "open",
-            ANOTHER_CODE,
-            None,
-            None,
-            None,
-            said(7),
-            said(7),
-        ),
-        (
-            2,
-            "sources disagree",
-            "country",
-            1,
-            None,
-            "name",
-            2,
-            RELEASE_ADDRESS,
-            "T\u00fcrkiye",
-            "open",
-            ANOTHER_NAME,
-            None,
-            None,
-            None,
-            said(8),
-            said(8),
-        ),
-    ]
-
-
-def test_a_code_of_three_under_another_code_of_two_waits_as_what_the_file_says_of_that_country(
-    newest: Engine,
-) -> None:
-    by_hand(newest, SWEDEN, ReferenceCountry("TK", "TUR", "T\u00fcrkiye"))
-
-    loaded(newest, *THREE)
-
-    # The store has no country TR. The file says that the country that has
-    # the code TUR, the second of the store, has the code TR.
-    assert [(row[3], row[5], row[8], row[10]) for row in doubts(newest)] == [
-        (
-            2,
-            "alpha_2",
-            "TR",
-            "Release 4.20.1 of iso-codes has the code of three letters TUR for the country TR, "
-            "and the store has it for the country TK.",
-        )
-    ]
-
-
-def test_a_country_whose_code_of_three_another_country_has_waits_twice(newest: Engine) -> None:
-    by_hand(
-        newest,
-        ReferenceCountry("TK", "TUR", "Tokelau"),
-        ReferenceCountry("TR", "TRK", "T\u00fcrkiye"),
-    )
-
-    found = loaded(newest, *THREE)
-
-    assert found.said_otherwise == ("TR",)
-    # Of the country TR, its code of three; of the country that has that
-    # code, its code of two.
-    assert waiting(newest) == [(2, "alpha_3", "TUR"), (1, "alpha_2", "TR")]
-
-
-def test_what_waits_is_in_the_order_of_the_file(newest: Engine) -> None:
-    by_hand(
-        newest,
-        ReferenceCountry("BE", "BEL", "Belgium, Kingdom of"),
-        ReferenceCountry("YE", "YEM", "Yemen Republic"),
-    )
-
-    loaded(
-        newest,
-        ReferenceCountry("YE", "YEM", "Yemen"),
-        NEW_ZEALAND,
-        ReferenceCountry("BE", "BEL", "Belgium"),
-    )
-
-    assert waiting(newest) == [(2, "name", "Yemen"), (1, "name", "Belgium")]
-
-
-def test_the_store_as_the_file_has_it_and_a_country_the_file_does_not_have_are_no_doubt(
-    newest: Engine,
-) -> None:
-    by_hand(newest, SWEDEN, ReferenceCountry("XK", "XKX", "Kosovo"))
-
-    found = loaded(newest, *countries_of_the_project())
-
-    assert (found.as_they_were, found.said_otherwise, found.not_in_the_file) == (
-        ("SE",),
-        (),
-        ("XK",),
-    )
-    assert doubts(newest) == []
-
-
-def test_loaded_again_what_waits_is_not_put_to_the_queue_again(newest: Engine) -> None:
-    by_hand(newest, ReferenceCountry("TR", "TRK", "Turkey"), ReferenceCountry("TK", "TUR", "X"))
-    loaded(newest, *THREE)
-    before = doubts(newest)
-
-    with written(newest) as sent:
-        found = loaded(newest, *THREE)
-
-    assert sent == []
-    assert found.said_otherwise == ("TR",)
-    assert doubts(newest) == before
-    assert len(before) == 3
-
-
-def test_what_a_person_has_decided_is_not_put_to_them_again(newest: Engine) -> None:
-    by_hand(newest, ReferenceCountry("TR", "TUR", "Turkey"))
-    loaded(newest, *THREE)
-    with unit_of_work(newest) as work:
-        decide(
-            work,
-            work.get_one(ReviewItem, 1),
-            ReviewState.REJECTED,
-            by="A person",
-            note="The federation writes Turkey.",
-        )
-    before = doubts(newest)
-
-    with written(newest) as sent:
-        found = loaded(newest, *THREE)
-
-    assert sent == []
-    assert found.said_otherwise == ("TR",)
-    assert doubts(newest) == before
-    assert [(row[9], row[11], row[13]) for row in before] == [
-        ("rejected", "A person", "The federation writes Turkey.")
-    ]
-
-
-def test_a_file_that_says_yet_another_thing_waits_beside_what_waited(newest: Engine) -> None:
-    by_hand(newest, ReferenceCountry("TR", "TUR", "Turkey"))
-    loaded(newest, *THREE)
-
-    loaded(newest, ReferenceCountry("TR", "TUR", "Republic of T\u00fcrkiye"))
-
-    assert waiting(newest) == [
-        (1, "name", "T\u00fcrkiye"),
-        (1, "name", "Republic of T\u00fcrkiye"),
-    ]
-
-
-def test_what_waits_is_taken_back_with_a_unit_of_work_that_fails(newest: Engine) -> None:
-    by_hand(newest, ReferenceCountry("TR", "TUR", "Turkey"))
-
-    def the_work() -> None:
-        with unit_of_work(newest) as work:
-            load_countries(work, THREE)
-            raise RuntimeError("Something else went wrong.")
-
-    with pytest.raises(RuntimeError):
-        the_work()
-
-    assert doubts(newest) == []
-    assert known(newest) == [("TR", "TUR", "Turkey")]
 
 
 # ------------------------------------------------------- what is handed over
