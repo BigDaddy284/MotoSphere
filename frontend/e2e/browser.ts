@@ -52,3 +52,27 @@ export const TEST_BROWSER: LaunchOptions = {
   ignoreDefaultArgs: [PLAYWRIGHTS_OWN_SWITCH],
   args: [TEST_BROWSER_SWITCH],
 }
+
+/**
+ * The word a browser is told with to draw 3D pictures in software, with the
+ * renderer that comes with it.
+ *
+ * The browser of the tests has no graphics card to draw with, on GitHub's
+ * machines as little as on a developer's. Left to itself, it still draws a
+ * 3D picture in software, but it shows the picture on the page by a way
+ * round: for every page with a 3D picture it then logs four warnings of its
+ * own ("GPU stall due to ReadPixels"), which the browser tests count as
+ * problems of the page, and the Earth takes four to five times as long to
+ * appear. Told this word, it does neither (FND-058; TESTING.md has what was
+ * measured).
+ */
+export const SOFTWARE_3D_SWITCH = '--use-angle=swiftshader'
+
+/**
+ * How the browser of the globe tests is started: as the browser of every
+ * test, and told to draw 3D pictures in software.
+ */
+export const GLOBE_BROWSER: LaunchOptions = {
+  ...TEST_BROWSER,
+  args: [TEST_BROWSER_SWITCH, SOFTWARE_3D_SWITCH],
+}
