@@ -113,6 +113,13 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the built site, under `cesium/`. Two logos of other companies that the
   engine brings are left out. Nothing of the application asks for the
   files yet, so a visitor's browser fetches none of them (GLB-022).
+- The check of the published site has a rule for every kind of file the
+  site is made of. It now also holds a program for the browser's own
+  machine (`.wasm`), a JPEG picture, an XML file and a text to what a
+  browser must be told they are, as GitHub Pages was read to serve them.
+  A list of the site's kinds of file is held to the built site by one
+  test and to the check's rules by another, so a site with a new kind of
+  file does not pass the gates without a rule for it (FND-053).
 - The data store's first decisions (`DATABASE.md`): what it relies on in
   SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
   gates run on, and where the store is kept between scheduled runs
