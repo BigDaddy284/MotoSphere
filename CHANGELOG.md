@@ -19,11 +19,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   browser is told to draw 3D pictures in software
   (`--use-angle=swiftshader`): without that word the browser logs four
   warnings of its own for every page with a 3D picture, which the
-  browser tests count as problems of the page, and the Earth takes four
-  to five times as long to appear. Its tests run one at a time: two
-  globes drawn at once starved each other on GitHub's Windows machine,
-  where seven of eight were not complete within 40 seconds. A globe
-  test that runs beside another fails and says so (FND-058).
+  browser tests count as problems of the page, and on GitHub's Linux
+  machine the Earth takes four to five times as long to appear. Its
+  tests run one at a time: two globes drawn at once starved each other
+  on GitHub's Windows machine, where seven of eight were not complete
+  within 40 seconds. A globe test that runs beside another fails and
+  says so (FND-058).
 
 ### Added
 

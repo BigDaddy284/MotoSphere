@@ -2382,10 +2382,10 @@ the browser draws in software, with the renderer that comes with it
   twenty globes made and taken away one after another. Nine other words
   a browser can be started with were tried, and none of them helps on
   all three machines.
-- **The Earth appears four to five times sooner.** One globe alone, on
-  GitHub's Linux machine, until the Earth was drawn complete: 4.8 to
-  5.4 seconds without the word, 0.9 seconds with it (once 2.2). Two at
-  once: 7.9 to 8.7 seconds without, 1.9 to 2.1 with.
+- **On GitHub's Linux machine the Earth appears four to five times
+  sooner.** One globe alone there, until the Earth was drawn complete:
+  4.8 to 5.4 seconds without the word, 0.9 seconds with it (once 2.2).
+  Two at once: 7.9 to 8.7 seconds without, 1.9 to 2.1 with.
 - **Two globes at once starve each other on GitHub's Windows machine.**
   One globe alone was drawn complete there in 2.1 to 4.8 seconds with
   the word (2.9 to 6.2 without). Of eight globes that were started two
@@ -2397,11 +2397,15 @@ the browser draws in software, with the renderer that comes with it
   reported. It looks as if the drawing in software takes the
   processors and everything else waits; why Windows shares them so much
   less evenly than Linux was not looked into.
-- **One globe at a time, beside the other tests, is drawn.** With the
-  tests of the globe held to one at a time while the other browser
-  tests ran beside them: on GitHub's Windows machine 16 of 16 globes
-  were complete in 1.5 to 7.6 seconds (the first took the longest), on
-  its Linux machine 16 of 16 in 0.6 to 0.8 seconds.
+- **One globe at a time is drawn.** In a run of all browser tests with
+  the tests of the globe held to one at a time: on GitHub's Windows
+  machine 16 of 16 globes were complete in 1.5 to 7.6 seconds (the
+  first took the longest), on its Linux machine 16 of 16 in 0.6 to 0.8
+  seconds. Playwright starts the tests of the first project first, so
+  the globes were drawn at the end of the run: on both machines two of
+  the 261 other tests ended later than the first test of the project
+  `globe`. A globe drawn while other browser tests run beside it was
+  not measured.
 
 **One at a time is held by the tests themselves.** Every globe test
 uses the `test` of `frontend/e2e/globe/fixtures.ts`, which is the `test`

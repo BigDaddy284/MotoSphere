@@ -62,9 +62,9 @@ export const TEST_BROWSER: LaunchOptions = {
  * 3D picture in software, but it shows the picture on the page by a way
  * round: for every page with a 3D picture it then logs four warnings of its
  * own ("GPU stall due to ReadPixels"), which the browser tests count as
- * problems of the page, and the Earth takes four to five times as long to
- * appear. Told this word, it does neither (FND-058; TESTING.md has what was
- * measured).
+ * problems of the page, and on GitHub's Linux machine the Earth takes four
+ * to five times as long to appear. Told this word, it does neither (FND-058;
+ * TESTING.md has what was measured).
  */
 export const SOFTWARE_3D_SWITCH = '--use-angle=swiftshader'
 
