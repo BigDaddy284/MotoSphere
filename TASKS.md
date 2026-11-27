@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 55 | 54 |
+| 1 | Foundation (FND) | 55 | 55 |
 | 2 | Data store and published data (DAT, PUB) | 69 | 51 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-059 – The countries are loaded into the store.
 
-**Current task, track B (globe):** FND-056 – No unit test ends with work of the page waiting.
+**Current task, track B (globe):** GLB-002 – The globe shows the Earth.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -1315,7 +1315,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/FND-055.md`
 
 ### FND-056 – No unit test ends with work of the page waiting
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The set-up of the unit tests lets no test end while React still has work waiting, so that no work of the page can run after the test's document is gone, whatever a test written later does.
 - **Description:** Added on 2026-11-27 (PLAN-046) as "A unit test file that ends with work of the page waiting fails", and named after what it does on 2026-11-27 (PLAN-048). FND-055 put right the two tests that left React's work waiting; nothing held a test written later. The planner's trial built the guard as it was planned, one that fails a unit test file which ends with work of React's waiting, and counted first what tests leave waiting. Over five whole runs of the unit tests, 1,935 ends of the 387 tests there were, one test ended with one piece of React's work waiting, once: `DataStatus > loads the published manifest when it is given no loader`, a test that waits for the page as Testing Library advises (`findBy…`) and does nothing wrong. It goes on at the moment the page shows what it waits for, and React may then still have a piece of work in its queue. A guard that fails such a test fails a run now and then, which is the fault it was to remove. The set-up of the unit tests watches what React asks the system for (`setImmediate`, with a function named `performWorkUntilDeadline`) and, after each test, once what the test showed is unmounted and the session cleared, lets that work run until none is waiting, while the test's document is still there. Work can ask for more work, so the set-up looks again after each turn, up to 100 times, and then fails the test with "React still has work waiting after it was let run 100 times: something asks it for more work without end." When the file is over, the system gets its own `setImmediate` back, and the file fails if anything of React's is still waiting; after each test nothing is, and this is what is left to say so if that step is ever lost. With that set-up the two tests as they were before FND-055 pass ten times of ten with no error; with the one line taken out that lets React finish, the file of FND-055's fault fails five times of five with "The test file ends with 1 of React's work still waiting: it would run after the test's document is gone." The watch is in a module of its own, `frontend/src/test/reactsWork.ts`, which `frontend/src/test/setup.ts` brings in before anything that loads React, because React keeps the `setImmediate` it finds when it is loaded. No file of the application and no existing test changes. Not seen by the watch: a page that waits, when its test ends, for a file it loads later or for an answer from the network.
 - **Acceptance criteria:**
@@ -1330,10 +1330,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   9. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, with 406 frontend unit tests on both machines and no line `Errors`, and the three jobs after the gates are skipped.
   10. Only the five files under "Scope" of the plan changed.
 - **Tests required:** 19 new unit tests: 2 of the system the tests run on (it is the system itself; something without a `setImmediate` is refused with a sentence); 10 of the watch over a stand-in for the system (what is counted and what is not, what is handed on and back, a piece that fails when it runs, work that asks for more work, the 100 turns and the sentence after them, the end of a file with and without work waiting); 4 of what the set-up does after each test and at the end of a file, with a stand-in for the test runner; 3 with React itself, a page started outside `act`, of which a pair holds the set-up with the real test runner. Planted defects in the module and in the set-up. The two tests of FND-055 as they were before it, under the new set-up. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #194 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32; React 19.3.1, jsdom 31.0.1, Testing Library 16.3.3, Vitest 5.1.0): the full run, 19 of 19 gates passed, "Tests: 3409 passed, 0 failed, 0 skipped.", exit code 0 (frontend unit tests 406: 387 before, 19 new). The planner's 41 planted defects, one at a time, in the module and in the set-up of the pull request (twelve in the watch, eight in the wait, six in the end of a file, six in what the tests of a file are held to, five in the system the tests run on, four in the set-up), each against all unit tests: 41 of 41 detected, each by the same tests as in the planner's trial. The plan's six prove-it steps, run by the planner too: each fails the tests the plan names (3, 3, 3, 1, 2 and 2 tests). With the two tests put back as they were before FND-055, the two files passed ten times of ten under the pull request's set-up with no line `Errors`; with the one line taken out that lets React finish, the file of FND-055's fault failed five times of five with "The test file ends with 1 of React's work still waiting: it would run after the test's document is gone." On GitHub, read by the planner from the runs and job logs: run 46045668484 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3409 passed, 0 failed, 0 skipped.", with "Test Files  19 passed (19)", "Tests  406 passed (406)" and no line "Errors" on both machines, the three jobs after the gates skipped. Run 46050166506 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3447 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files." The other track's DAT-060 was merged in between, so `main` has its 38 backend tests too: 3447 there, where the pull request by itself gives 3409.
+- **Passed / Failed:** 3447 / 0 tests on both machines on GitHub for `main` (repository 82, script tests 219, backend 2479, frontend unit 406, browser 261), 3409 / 0 for the pull request and locally; all 19 gates passed; 41 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 5 files are the same change as the planner's trial. No existing test changed, none is skipped, no file of the application changed and no package was added. The form of the tests was run on GitHub's Windows machine before the plan in three forms (trial pull requests #190, #191 and #192). What the watch does not see is as the plan says: a page that waits, when its test ends, for a file it loads later or for an answer from the network.
+- **Commit:** `403d1fd`
 - **Plan:** `docs/plans/FND-056.md`
 
 ### FND-057 – The checks on GitHub's Windows machine do not run out of time
