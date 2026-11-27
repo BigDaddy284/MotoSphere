@@ -1916,6 +1916,49 @@ one code and the reference, and the one index; and the whole schema
 with the countries breaks neither the rules every table keeps nor the
 rule of where records came from.
 
+## The countries file
+
+`backend/tests/unit/test_reference_countries.py` tests the list of the
+countries that comes with the project and its reader
+(`motosphere.reference.countries`, DAT-012). No store is opened and
+nothing is fetched.
+
+- **The files.** The countries file and the licence beside it are those
+  of release 4.20.1 of iso-codes, byte for byte: each is held to its
+  SHA-256, which the test names. Neither has a line ending a checkout
+  could change. The note beside them names both files with those
+  values, the release, the notice of copyright and the licence as the
+  release states them, and says that the files are unchanged. The folder
+  holds those three files and no other.
+- **The countries of the file.** There are 249, read from the file of
+  the project, in the order of the file. Eight are named as the file
+  writes them, among them names with letters that are not of the 26,
+  with a comma and with an apostrophe. No two have one code; every code
+  is capitals of the 26 letters, two or three; no name has white space
+  around it.
+- **What is read.** A file made up for the test gives its countries in
+  its order. What more an entry holds is left unread, whatever it is. A
+  name is given as it is written, also in another script, and the same
+  when the file writes its letters as numbers. Two countries can have
+  one name. A country cannot be changed once it is read.
+- **What is refused**, each with its sentence, word for word: content
+  that is not UTF-8; content that cannot be read as JSON, cut off, with
+  a mark of byte order, with something after its end, with a number too
+  long to be read; the three words Python reads as numbers and JSON does
+  not have; content nested too deeply; a name twice in one place, also
+  in what is left unread; content that is not the one list under its
+  name and nothing else; something else than a list there; a list
+  without countries; an entry that is not names and values; an entry
+  without one of its two codes or its name, or with something there that
+  is not text; a code in any form but capitals of the 26 letters in the
+  right number (small letters, a figure, a space or a line break around
+  it, a letter with a ring, Greek and wide letters that look the same, a
+  nought character); a name that is empty, that has white space around
+  it, that has white space inside other than a plain space, or that has
+  a control character; and one code in two entries, of two letters or of
+  three. A wrong entry at any place in a file refuses the whole file,
+  and so does the project's own file with one entry damaged.
+
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`
