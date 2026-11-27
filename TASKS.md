@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 51 | 49 |
+| 1 | Foundation (FND) | 51 | 50 |
 | 2 | Data store and published data (DAT, PUB) | 64 | 45 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-055 – A decided review item is not replaced.
 
-**Current task, track B (globe):** FND-052 – The site under test answers a missing file as the published site does.
+**Current task, track B (globe):** GLB-022 – The engine's own files in the built site.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -1128,7 +1128,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 (PLAN-040): DAT-056, which stands before DAT-055.
 
 ### FND-052 – The site under test answers a missing file as the published site does
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The server the browser tests run against answers an address that names no file with "not found" (404), as GitHub Pages does, and not with the page.
 - **Description:** Added on 2026-11-27 (PLAN-041), found by the planner's trial of GLB-022. The published site is files on GitHub Pages, and an address that names no file is answered there with the status 404. The server of the build under test (`vite preview`) and the development server answered such an address with the page itself and the status 200, because Vite takes a site for an application that reads the address itself unless it is told otherwise. A browser test that asked for a file the build had left out was so given an answer, and the file would have been missing on the published site only. One setting in `frontend/vite.config.ts`, `appType: 'mpa'`, makes both servers answer 404; the page is still answered at the site's path, at `index.html` and with a question after the path. The built site does not change. Thirteen new browser tests in `frontend/e2e/site.spec.ts` hold it for the site under test; the development server was asked by hand in the trial, and gets a test with GLB-024.
 - **Acceptance criteria:**
@@ -1141,10 +1141,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   7. `python scripts/check.py` reports 19 of 19 gates, with 230 browser tests and 304 frontend unit tests, and 13 tests more in all than `main` gives at the commit the branch starts from (2752 when that is `26abe02`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   8. Only the five files under "Scope" of the plan changed.
 - **Tests required:** 13 new browser tests against the built site: nine addresses that name no file, three at which the page is still answered, and one opened in the browser; planted defects in the setting against the 20 browser tests of the file; the two builds compared; the full run of all gates on both machines; the deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #162, merged there with `main` as it stood (two commits more, which change only `TASKS.md`, `PROGRESS.md` and a plan of the other track) (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run once, 19 of 19 gates, "Tests: 2752 passed, 0 failed, 0 skipped." (browser tests 230: 217 before, 13 new; frontend unit tests 304, unchanged). The planner's 3 planted defects in the setting, each against the 20 browser tests of `site.spec.ts` with the site built anew: 3 of 3 detected, each with the same result as in the trial (the setting taken out and the setting `'spa'` each fail the same 10 of 20; with `'custom'` the server answers no page and the run does not start). On GitHub, run 45966004043 for the pull request and run 45967684025 for `main` after the merge, read from the job logs: both gates jobs green on Linux and on Windows, with 304 frontend unit tests and 230 browser tests on both machines; on `main` the site was republished and "Check the published site" ended "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 8 of 8 files."
+- **Passed / Failed:** 2752 / 0 tests locally and on both machines on GitHub, for the pull request and for `main` (repository 80, script tests 206, backend 1932, frontend unit 304, browser 230); all 19 gates passed; 3 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 5 files are identical to the planner's trial. No existing test changed, no package was added and the lock file is unchanged. The server of Windows answers the nine addresses as that of Linux does. The builder reported the full run with 2752 tests, the two prove-it steps with the plan's results and no deviation.
+- **Commit:** `356b502`
 - **Plan:** `docs/plans/FND-052.md`
 
 ### FND-053 – The check of the published site knows the engine's kinds of file
