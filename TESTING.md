@@ -1292,7 +1292,7 @@ no row.
   that is not there is stored; and a decided item can be put back to
   open, or deleted. The tests are there so that neither is taken for
   something the table does, and the last is changed by the task that
-  closes it (DAT-052).
+  closes it (DAT-054).
 
 `backend/tests/unit/test_db_models_review_item.py` tests the two lists
 without a store: their texts are written out in the test, in their
@@ -1451,11 +1451,66 @@ read back with plain SQL.
   of the index of what a source says.
 - **Between the look and the write** another connection tries to
   store the same doubt, and SQLite says "database is locked" to it.
-- **The module** gives its two functions by name.
+- **The module** gives its functions by name: the list is held
+  whole, so the test changes with every function the module gets.
 
 The tests of `open_possible_duplicate` are unchanged and pass: the
 rules for which records and which tables are taken are now asked by
 both functions in one place.
+
+### Deciding an item
+
+`backend/tests/integration/test_review_decide.py` tests `decide`
+(`motosphere.db.review`, DAT-052), in a store that the migrations
+built, on a real SQLite file. The table of the review queue holds
+neither the table nor the key of a record to a row that exists, so
+these tests need no table of records: their store has one source and
+two open items, a possible duplicate and a doubt about a field that
+has a note already. What the store holds is read back with plain SQL,
+every column of every item.
+
+- **Deciding an open item**, each of the two items with each of the
+  two decisions: exactly four columns of the item are another
+  afterwards, its state, who decided, when, and when it was last
+  changed; the two times are one reading of the clock; the other item
+  is as it was; and the item given says what was stored.
+- **The note**: without one, an item without a note has none and an
+  item with a note keeps it; a note given is stored, also in the
+  place of one, and with the white space it was given with; the note
+  the item has, given again, changes nothing.
+- **The name** is kept as it was given: with white space around it,
+  in small letters, and with a character beyond ASCII.
+- **Decided once**: an item that was accepted or rejected is refused
+  with its sentence when it is given the same decision, the other
+  one, or open; not one column is another, and the clock is not
+  asked. A second decision in the same unit of work is refused too,
+  and the first is the one that is kept.
+- **What is no decision** is refused with its sentence: open, text
+  that is spelled like each of the two decisions, nothing, a value of
+  another list, and yes.
+- **What is refused for the item**: one that is new, one that was
+  given to the unit of work and is not written yet, one the unit has
+  deleted, one of a unit that has ended, and one of another unit that
+  is open, which that unit does not write either. An item stored
+  earlier in the same unit of work is decided.
+- **What the store refuses is refused at the call**, and the unit of
+  work fails as a whole: an empty name, a blank one, nobody, and an
+  empty and a blank note.
+- **The unit of work**: the decision is in the table before the
+  function returns, and another connection finds the item open until
+  the unit ends; a unit that fails afterwards leaves the item open.
+- **Only the item is touched**: the source is as it was, and the
+  history gets no row.
+- **What the function sends**: one statement, which sets the four
+  columns, and the note where one is given, by the key of the item.
+- **Before the decision is written** another connection finds the
+  item open, changes it, and is told "database is locked" when it
+  tries to keep that: the function's decision is the one that is
+  kept.
+
+The test of DAT-010 that puts a decided item back to open past the
+function is unchanged and passes: that the table refuses it is
+DAT-054.
 
 ## How far a collected record can be trusted
 
