@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 51 | 50 |
+| 1 | Foundation (FND) | 52 | 51 |
 | 2 | Data store and published data (DAT, PUB) | 65 | 46 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 2 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-011 – Countries table.
 
-**Current task, track B (globe):** FND-053 – The check of the published site knows the engine's kinds of file.
+**Current task, track B (globe):** GLB-024 – The engine's own files in development.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -102,6 +102,16 @@ GLB-024 and GLB-025. The check of the published site learns the two
 kinds of file the engine brings that a browser is particular about in
 FND-053, after GLB-022, when such files are published. Order on track B:
 FND-052, GLB-022, FND-053, GLB-024, GLB-025, then GLB-002.
+
+**A machine without room for a connection (PLAN-043):** twice a run for
+`main` failed on GitHub's Windows machine in one browser test that could
+not open the page, because the machine had no room for one more network
+connection (with FND-019 and with FND-053); each time the failed job
+passed when it was run once more. The first record said that a second
+time makes it a task of its own. That is FND-054, a task of Phase 1 on
+track B. It stands after GLB-025 and before GLB-002, the first task
+whose browser tests make the browser fetch the engine's files. Order on
+track B: GLB-024, GLB-025, FND-054, then GLB-002.
 
 **The countries, in two steps (PLAN-042):** DAT-011 was two objectives:
 the table of the countries, and the country of a source, which is a
@@ -1154,7 +1164,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/FND-052.md`
 
 ### FND-053 – The check of the published site knows the engine's kinds of file
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The check of the published site has a rule for every kind of file the site is made of, the four the engine of the globe brought among them, and a site that gains a kind of file does not pass the gates without one.
 - **Description:** Added on 2026-11-27 (PLAN-041); settled in the planner's trial. After every deployment `scripts/live.py` fetches each published file, compares it byte for byte with the built one, and for seven kinds of file also holds what the server says the file is, because a script served as plain text is not run. With the engine's files (GLB-022) the site holds three kinds more, and a fourth was there before without a rule: programs for the browser's own machine (`.wasm`), which a browser compiles while they arrive only when they are served as `application/wasm`; JPEG pictures (`.jpg`); one XML file; and the list of the licences, `licences.txt`. What GitHub Pages says each of them is was read from the published site on 2026-11-27, from a machine of GitHub's (trial pull request #166, run 45976844272, closed without merging): `application/wasm`, `image/jpeg`, `application/xml` and `text/plain; charset=utf-8`. Each of the four gets a rule; none is left without one for a written reason, which the task had allowed, and the site holds no `.md` file. A list of the kinds of file the built site holds, `frontend/e2e/siteKinds.json`, joins the two sides: a browser test holds the list to the site as it was built, and script tests hold the check's rules to the list, a rule for every listed kind and none for another. What the check does with a file whose kind has no rule is unchanged (it is judged by its content); no such file reaches the published site without a test failing first. The same trial read that GitHub Pages answers an address that names no file with the status 404, which is what FND-052 made the site under test answer.
 - **Acceptance criteria:**
@@ -1170,11 +1180,22 @@ did not have, that a key is 1 or more, and made that a task of its own
   10. After the merge, the check of the published site passes with the new rules.
   11. Only the six files under "Scope" of the plan changed.
 - **Tests required:** 13 new script tests of the check with stand-in answers: the four rules, the list, and the whole check run against a stand-in site that holds the four kinds. One new browser test that reads the kinds of file of the built site. Planted defects in the rules, in how a kind is found, in the list and in the build, against the script tests and against the browser tests. The full run of all gates on both machines. The deployment and the check of the published site, which is where the rules meet GitHub Pages.
+- **Tests executed:** In a clean checkout of pull request #169 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates, "Tests: 2956 passed, 0 failed, 0 skipped.", exit code 0 (script tests 219: 206 before, 13 new; browser tests 254: 253 before, 1 new). The planner's 53 planted defects: 41 against the 55 tests of `tests/scripts/test_live.py`, 41 of 41 detected; 12 against the 21 browser tests of `e2e/site.spec.ts`, with the site built anew for each, 12 of 12 detected, each by the new test alone. On GitHub, read by the planner from the runs and job logs: run 45982870593 on the pull request, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2956 passed, 0 failed, 0 skipped.", with 219 script tests and 254 browser tests on both machines, the three jobs after the gates skipped; run 45984920265 for `main` after the merge, first attempt: "All gates (Linux)" green with "Tests: 2956 passed, 0 failed, 0 skipped."; "All gates (Windows)" FAILED with "18 of 19 gates passed. FAILED: Browser tests." and "Tests: 2955 passed, 1 failed, 0 skipped.": one browser test this task did not touch, "narrow screen, 360×740 › the top bar and the globe stage each have the whole width", could not open the page ("page.goto: net::ERR_NO_BUFFER_SPACE at http://127.0.0.1:4173/MotoSphere/"), the other 253 passed, and nothing was published from that attempt. The same run, second attempt (the failed job run once more, nothing changed): all five jobs green, both gates jobs ending "Tests: 2956 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site, now with the four new rules, ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 2956 / 0 tests locally, on both machines on GitHub for the pull request, and on both machines for `main` at the second attempt (repository 80, script tests 219, backend 2083, frontend unit 320, browser 254), with all 19 gates passed; 2955 / 1 on Windows at the first attempt for `main`, where one browser test could not reach the test server; 53 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 6 files are identical to the planner's trial. No existing test changed and no package was added. What GitHub Pages says each kind of file is was read from the published site itself before the plan (trial pull request #166, run 45976844272), and the check of the published site passed with the four rules against GitHub Pages after the merge. The failed first attempt on Windows is the second time in this project that GitHub's Windows machine had no room for a network connection during the browser tests (the first was run 44429659797, FND-019), and as that record said it is now a task of its own, FND-054 (PLAN-043). The builder ran the plan's 8 prove-it steps, each with the result the plan names, and reported the same numbers.
+- **Commit:** `b129b71`
+- **Plan:** `docs/plans/FND-053.md`
+
+### FND-054 – The browser tests do not run out of network connections on Windows
+- **Status:** NOT STARTED
+- **Objective:** It is known from measurement why GitHub's Windows machine sometimes has no room for a network connection during the browser tests, and the browser tests no longer fail for it.
+- **Description:** Added on 2026-11-27 (PLAN-043). Twice a run for `main` failed on Windows in one browser test that could not open the page: "page.goto: net::ERR_NO_BUFFER_SPACE at http://127.0.0.1:4173/MotoSphere/" (run 44429659797 with FND-019, run 45984920265 with FND-053). The message is Windows's for a machine that has no room left for one more network connection, here between the test browser and the test server on the same machine. Both times the task had changed no file the failed test reads, every other browser test passed, and the failed job passed when it was run once more. The record of the first time said that a second time makes it a task of its own. What is not known: what the machine ran out of (the ports it gives to connections made from it, which Windows keeps back for a time after a connection ends, or something else); what used it up (the gates that run before the browser tests on the same machine, the browser tests themselves, each of which opens the page anew, or something of the machine's own); and whether more connections make it likelier, which matters before GLB-002, the first task whose browser tests make the browser fetch the engine's files. The planner's trial measures on GitHub's Windows machine before anything is changed, and the plan follows what was measured. A browser test is not given a second try: a test that is run again until it passes hides a defect of the application as well as a fault of a machine.
+- **Acceptance criteria:** what GitHub's Windows machine has room for, and how much of it is in use before and after each gate that opens connections, is measured there and written down; the cause of the two failures is named from the measurement, or it is written down exactly what was measured and what is still unknown; where the cause is in how the project's tests or its test server use connections, that is changed and a measured figure shows the difference; no browser test is skipped, weakened or given a second try; all tests pass on both machines. The criteria are made exact in the plan, from the trial.
+- **Tests required:** the measurement on GitHub's Windows machine, in a trial run and in the pull request's run; the tests the remedy needs, settled in the trial; planted defects where code changes; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
-- **Plan:** `docs/plans/FND-053.md`
 
 ### DAT-001 – Data store research and decision record
 - **Status:** PASSED – VERIFIED
@@ -2401,15 +2422,27 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-022.md`
 
 ### GLB-024 – The engine's own files in development
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** In development the engine's files are answered at the same addresses as in the built site, with the same bytes.
-- **Description:** Added on 2026-11-27 (PLAN-041), cut out of GLB-022. The step of GLB-022 works when the site is built. `npm run dev` builds nothing: the development server answers from the folder of the project, where the engine's files are not. The same step is taught to answer the folder `cesium/` of the site's path from the installed engine while the development server runs, with the same list of what is left out, so that the globe is developed against what the site will hold. A test starts the development server itself; the same test holds that it answers an address that names no file with "not found" (FND-052 asked that by hand).
-- **Acceptance criteria:** the development server answers every address the built site has under `cesium/` with the file of the installed engine and the type a browser needs; a file that is left out, a file the engine does not bring, and an address outside the folder that names no file are answered "not found"; the application is served as before; the built site does not change.
-- **Tests required:** tests that start the development server on a free port and ask it, on Linux and on Windows; unit tests of the step where it changes; planted defects; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-27 (PLAN-041), cut out of GLB-022; settled in the planner's trial. The step of GLB-022 works when the site is built. `npm run dev` builds nothing: the development server answers from the folder of the project, where the engine's files are not. A second step in the same file, `engineFilesInDevelopment`, answers the folder `cesium/` of the site's path from the installed engine while the development server runs. It goes by the same list as the build (`engineFiles`), so the two cannot differ in which files they hold: each file the built site has is answered, read anew for every request, with its length and the type a browser needs (a table of the eight kinds the engine brings, `SERVED_AS`), and every other address in that folder is answered "not found" by the step itself, the two logos that are left out and a file the project or its folder `public/` has there among them. A name is looked up in the list and never on the disk, so a name that leaves the folder and a name in other capitals than the file has are "not found" on every computer. The server does not start when the engine is not installed, when a listed file is not there, and when the engine brings a file of a kind the table has no type for, which it names. The task spoke of teaching the same step; a step of Vite is for the build or for the server, so it is a second one beside it, and the step of the build and its tests stay as they are. The tests start the development server itself, on this computer only and on a port that is free; the same tests hold that it answers an address that names no file with "not found" and not with the page (FND-052 asked that by hand).
+- **Acceptance criteria:**
+  1. With `npm run dev`, every address the built site has under `cesium/` of the site's path is answered with the file of the installed engine, byte for byte, with the status 200, its length and the type `SERVED_AS` has for its kind.
+  2. `SERVED_AS` has a type for each kind of file the installed engine brings, and for no other.
+  3. Every other address in that folder is answered "not found" with no content: the two logos, a file the engine does not bring, the folder itself, a name that leaves the folder, a name in other capitals than the file has, and a file the project or its folder `public/` has there.
+  4. A request that would change something is answered with no file of the engine.
+  5. An address outside the folder that names no file is answered "not found" and not with the page; the engine's files are not at the root of the server; the page, the application's code and an icon are answered as before.
+  6. A file is answered as it is on the disk now.
+  7. The development server does not start, and says why, when the engine is not installed, when a file listed as left out is not there, and when the engine brings a file of a kind without a type.
+  8. The step is for the development server only; the step of the build and the built site are unchanged, and no existing test changes.
+  9. No package is added; all tests pass.
+  10. `python scripts/check.py` reports 19 of 19 gates, with 371 frontend unit tests, and 51 tests more in all than `main` gives at the commit the branch starts from (3007 when that is `2802943`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  11. Only the seven files under "Scope" of the plan changed.
+- **Tests required:** 51 new unit tests that start the development server on a free port and ask it over the network, on Linux and on Windows: with the project's own settings, every one of the 275 files with its bytes, its type and its length, what is "not found" in the folder and outside it, and the application as before; with projects made up for the test, the path of another site, what the project has in that folder, a file that changed, and the three cases in which the server does not start. Planted defects in the step and in the settings. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/GLB-024.md`
 
 ### GLB-025 – The engine is told where its files are
 - **Status:** NOT STARTED
