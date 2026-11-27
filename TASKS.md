@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 52 | 51 |
-| 2 | Data store and published data (DAT, PUB) | 65 | 46 |
+| 2 | Data store and published data (DAT, PUB) | 65 | 47 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 2 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-011 – Countries table.
+**Current task, track A (data store):** DAT-057 – A source says its country.
 
 **Current task, track B (globe):** GLB-024 – The engine's own files in development.
 
@@ -2121,7 +2121,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-055.md`
 
 ### DAT-011 – Countries table
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store holds countries, so that everything else can say where it is.
 - **Description:** Narrowed on 2026-11-27 (PLAN-042): the country of a source is DAT-057. The table `country`, its model `Country` in `motosphere.db.models.country`, and the thirteenth migration, `make_the_countries`. Settled in the planner's trial. The columns: `alpha_2` and `alpha_3`, the two codes of ISO 3166-1, and `name`, the English short name as its source writes it; then the eight columns of a collected record (DAT-008). The countries are the first real table of collected records, with the index `ix_country_source_id` (DAT-045) and under the rule of DAT-046, whose list is unchanged. A code is held to its form by a check (`ck_country_alpha_2_two_capitals`, `ck_country_alpha_3_three_capitals`): SQLite's `GLOB` with one class of the 26 capital letters for each letter, and a second question for a character with the number 0, which `GLOB` does not read past. Neither the model nor the table puts a code into capitals: what a source writes is stored or refused. Each code is unique by itself. The name is text that is not empty, and two rows can hold one name. The table knows the form of a code and not the standard's list, and it has no rows: they come with DAT-012. Not in the table: the number the standard gives a country, and regions (DAT-013). A defect of the documents is put right on the way: the list in `DATABASE.md` of the tables that hold no collected records lacked `review_item`. The schema goes to version 13. The planner's trial has 154 new tests and detects 55 of 55 planted defects.
 - **Acceptance criteria:**
@@ -2139,10 +2139,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   12. `python scripts/check.py` reports 19 of 19 gates, with 2237 backend tests, and 154 tests more in all than `main` gives at the commit the branch starts from (3096 when that is `3c3b81f`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   13. Only the eleven files under "Scope" of the plan changed.
 - **Tests required:** 142 new integration tests in 30 functions, in a store the migrations built, with one source in it, on a real SQLite file, through the model and past it as plain SQL, each refusal with what SQLite said: what is stored; what a country cannot be without; eighteen texts that are not a code, for each code; one code, one country; the name; the source; the rules of the eight columns; the index; a country changed with its history. 8 new unit tests of the model. 3 new tests of the thirteenth migration, and one case more of the test that tries every migration alone. Planted defects in the model and the migration. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #170, merged there with `main` as it stood after the other track's FND-053 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 3110 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2237: 2083 before, 154 new). The total holds the 14 tests of the other track's FND-053, which was merged in between; the branch by itself gives 3096, in the planner's trial of the same files and in the builder's run. The planner's 70 planted defects, one at a time, on the pull request: 55 in the model and in the migration against the 419 tests of the eight files that hold the countries, the history, the migrations, the whole schema and the rules every table keeps, 55 of 55 detected; and the plan's 15 prove-it steps against all backend tests, 15 of 15 detected, each with the tests the plan names. On GitHub, read by the planner from the runs and job logs: run 45985174563 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 3110 passed, 0 failed, 0 skipped." (GitHub tests a pull request merged with `main`, which held the other track's FND-053 by then), with 2237 backend tests on both machines, the three jobs after the gates skipped; run 45990616304 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3110 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3110 / 0 tests locally and on both machines on GitHub for `main` (repository 80, script tests 219, backend 2237, frontend unit 320, browser 254); 3110 / 0 on both machines for the pull request, merged with `main` as it then stood; all 19 gates passed; 70 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 11 files are identical to the planner's trial. One existing test changed, the list of the migrations' names, as the plan says; no package was added. What SQLite's `GLOB` does with a code was read on the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows. The builder ran the plan's 15 prove-it steps with the plan's results; two of them name a text that stands more than once in `history.py` and once inside `make_the_countries`, and the builder made the change there, as the steps mean.
+- **Commit:** `15d08b3`
 - **Plan:** `docs/plans/DAT-011.md`
 
 ### DAT-057 – A source says its country
