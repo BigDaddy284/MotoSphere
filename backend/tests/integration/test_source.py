@@ -149,6 +149,7 @@ def test_what_the_table_holds_is_plain_text_and_whole_numbers(
             "Name the federation wherever its calendar is shown.",
             "2026-11-18T21:30:00.000000+00:00",
             1,
+            None,
             "2026-11-19T08:00:00.000000+00:00",
             "2026-11-19T08:00:00.000000+00:00",
         )
