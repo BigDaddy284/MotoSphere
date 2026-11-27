@@ -2000,44 +2000,6 @@ the clock from two.
 A test that does not ask for the fixture runs with the real clock. Only
 the clock is replaced, never the store.
 
-## A unit test that starts the page
-
-Two unit tests start the whole page by bringing in `src/main.tsx`: one in
-`frontend/src/main.test.tsx` and one in
-`frontend/src/globe/engineAddress.test.ts`. React does not show a page at
-once. It puts the work in a queue and does it a moment later, and what
-follows from showing the page a moment after that. A test that ends
-before the queue is empty leaves that work waiting. If the test's file
-ends too, the test's document is taken away, and the work runs
-afterwards without one: the run then ends with "ReferenceError: window is
-not defined" and counts as failed, although every test passed. Whether
-that happens is a matter of a few moments either way, so it happens
-rarely: once so far, on GitHub's Linux machine (run 46006701452).
-
-So both tests start the page inside React's `act`:
-
-```ts
-await act(async () => {
-  await import('./main.tsx')
-})
-```
-
-`act` comes back only when React has nothing left to do: the page is
-shown in full, with all that follows from showing it. Each of the two
-tests then looks at the page at once, without waiting for it
-(`getByRole` where it was `findByRole`, and a root element that is not
-empty). A start outside `act` therefore fails its test every time, and
-not one run in many.
-
-A new unit test that brings in `main.tsx`, or that shows something with
-React by any other way than `render` of Testing Library, does the same.
-`render` of Testing Library uses `act` by itself.
-
-The document of a test has work of its own waiting when these two files
-end, one piece for each style sheet `main.tsx` brings in. That is not
-React's: the document drops what it has waiting when it is taken away
-(`_queueATask` of jsdom says so), and it is left as it is.
-
 ## The tools a computer needs
 
 `python scripts/tools.py` says whether a computer has the five tools the

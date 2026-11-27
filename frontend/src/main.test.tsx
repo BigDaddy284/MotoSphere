@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { APP_NAME } from './App.tsx'
 
@@ -21,14 +21,9 @@ describe('entry point', () => {
     root.id = 'root'
     document.body.append(root)
 
-    // Inside `act`, React does all it has to do before the test goes on:
-    // the page is shown in full, and nothing of it is left waiting that
-    // could run after the test's document is gone.
-    await act(async () => {
-      await import('./main.tsx')
-    })
+    await import('./main.tsx')
 
-    expect(screen.getByRole('heading', { level: 1, name: APP_NAME })).toBeVisible()
+    expect(await screen.findByRole('heading', { level: 1, name: APP_NAME })).toBeVisible()
   })
 
   it('fails with a clear message when the root element is missing', async () => {

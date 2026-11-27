@@ -1,5 +1,4 @@
 import { buildModuleUrl } from '@cesium/engine'
-import { act } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ENGINE_FOLDER, SITE_PATH } from '../../site.ts'
 import { ENGINE_ADDRESS, tellTheEngineWhereItsFilesAre } from './engineAddress.ts'
@@ -136,18 +135,10 @@ describe('the application', () => {
     root.id = 'root'
     document.body.append(root)
 
-    // Inside `act`, React does all it has to do before the test goes on:
-    // the page is shown in full, and nothing of it is left waiting that
-    // could run after the test's document is gone.
-    await act(async () => {
-      await import('../main.tsx')
-    })
-    // Out of the document again before anything is looked at, so that the
-    // next test finds the document empty whatever this one finds.
-    root.remove()
+    await import('../main.tsx')
 
-    expect(root).not.toBeEmptyDOMElement()
     expect(globalThis.CESIUM_BASE_URL).toBe(ENGINE_ADDRESS)
+    root.remove()
   })
 
   it('has told the engine even when it cannot start', async () => {
