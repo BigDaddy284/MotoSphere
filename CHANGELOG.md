@@ -388,3 +388,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   folder `google`, and only the licence of the package itself was
   written. The build now looks into every folder of a package, but not
   into the packages put beneath it (FND-051).
+- On a phone the top bar grew by a line a moment after the page appeared,
+  and the globe under it moved down: the data status and the date shared
+  a line while the data loaded and took two once it had arrived, because
+  they wrapped by how long their words were. Now the width of the screen
+  alone decides: below 640 pixels each has a line of its own from the
+  start, and from 640 pixels on they share one. Words too long for a
+  line end in "…" (FND-049).
