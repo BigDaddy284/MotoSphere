@@ -8,9 +8,9 @@ references are copied from real output, never estimated.
 
 - **Phases:** 2 – Data store and published data (track A) and 3 – Interactive 3D Earth (track B), side by side since 2026-11-27 (PLAN-033); Phase 1 – Foundation is complete
 - **Current task, track A (data store):** DAT-054 – A decided review item keeps its decision (`NOT STARTED`, the planner is trialling it and writing its plan)
-- **Current task, track B (globe):** GLB-001 – The Cesium engine installed (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 87 of 273
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (2416 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store has its first four tables, and no rows yet: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (there are nine so far, which make the tables of the information sources, of what they offer, of the collection runs and of the changes to records, an index that takes SQLite straight to the runs of one source, the triggers by which the history of the records is only added to, two indexes that take SQLite straight to the changes of one record and to the changes one run caused, the table of the review queue, where what is in doubt waits for a person's decision, and the two indexes by which the store refuses the same doubt a second time; one function puts two records that may be the same thing to that queue, another what a source says of a field of a record, and a third puts down a person's decision on an item, and nothing calls them yet); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, and only `migrate` writes to it; there is a base for all models, which makes every table strict and names its constraints and indexes by one rule, and a test that holds every table to that; a time is stored as text in one form, in UTC with its offset written out, a time without an offset is refused, and a model's `datetime` column gets that type from the base; every model gets its key from the base, a whole number `id` that SQLite never gives twice, and the two times `created_at` and `updated_at`, which the store's code sets from the store's one clock; the test that holds every table to the rules names a table without that key or without those two times, and a name that more than one constraint or index of a table has; a model can say of a column that its text must not be empty, and SQLite itself then refuses empty text in it, also text of nothing but white space, and the test that holds every table to the rules names such a column whose table is without the check for it; any column type can bring the check for its column in that way; a model can say of a column that it is yes or no, and SQLite itself then refuses every number but 1 and 0 in it; a model can say that a column's value is one of a list the code knows, and SQLite itself then refuses any text that is not on that list; a model can say that a column is a web address, and SQLite itself then refuses text that does not begin as one or has white space in it; the store has its first table, that of the information sources, each described by one of twelve kinds of source and one of ten ways of collecting, and switched off until a person has read its terms; a second table says which of nine kinds of information each source offers, and a source that has offers cannot be deleted; a third table records every collection run, with its source, its start and end, how it ended and what it counted, and one function, `mark_interrupted`, marks the runs a dead job left running as interrupted; another, `standing_of`, says how a source is doing (its last attempt, its last success, its last error and its health) by reading its runs, and stores none of it; the code has the two lists that say how far a collected record can be trusted, three levels of confidence and four verification statuses from official to unverified, and no table has a column of them yet; a model can say that a column is a calendar day, which is kept as text such as `2026-11-24` with no time made up for it and which the store refuses when no calendar has it, and no table has such a column yet either; the columns by which every collected record says where it came from are one set in the code, which a model of collected records takes whole, and with them an index that takes SQLite straight to the records of one source, and no table has them yet; a rule names every table that neither has those columns nor is on the list of the tables that hold no collected records, where each stands with its reason, and a test holds the real schema to it; one table is there to keep, for one field of one record, what it held before it was changed and what it holds now, with the collection run or the person that caused the change, and one function changes a stored record and writes that history in the same unit of work, so that neither is kept without the other, which nothing calls yet because no table holds records; that history is only added to, because the store itself refuses to edit, delete or replace a row of it, whoever writes to the file; the migrations are written in a module of their own, as plain SQL that names nothing of the code; one test holds the models and the migrations together, and fails with a sentence for each table or index that is not the same in both (`DATABASE.md`). No globe yet.
+- **Current task, track B (globe):** FND-048 – The narrow-screen tests measure the top bar after the data has arrived (`NOT STARTED`, the planner is trialling it and writing its plan)
+- **Tasks verified:** 88 of 275
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (2436 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store has its first four tables, and no rows yet: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (there are nine so far, which make the tables of the information sources, of what they offer, of the collection runs and of the changes to records, an index that takes SQLite straight to the runs of one source, the triggers by which the history of the records is only added to, two indexes that take SQLite straight to the changes of one record and to the changes one run caused, the table of the review queue, where what is in doubt waits for a person's decision, and the two indexes by which the store refuses the same doubt a second time; one function puts two records that may be the same thing to that queue, another what a source says of a field of a record, and a third puts down a person's decision on an item, and nothing calls them yet); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, and only `migrate` writes to it; there is a base for all models, which makes every table strict and names its constraints and indexes by one rule, and a test that holds every table to that; a time is stored as text in one form, in UTC with its offset written out, a time without an offset is refused, and a model's `datetime` column gets that type from the base; every model gets its key from the base, a whole number `id` that SQLite never gives twice, and the two times `created_at` and `updated_at`, which the store's code sets from the store's one clock; the test that holds every table to the rules names a table without that key or without those two times, and a name that more than one constraint or index of a table has; a model can say of a column that its text must not be empty, and SQLite itself then refuses empty text in it, also text of nothing but white space, and the test that holds every table to the rules names such a column whose table is without the check for it; any column type can bring the check for its column in that way; a model can say of a column that it is yes or no, and SQLite itself then refuses every number but 1 and 0 in it; a model can say that a column's value is one of a list the code knows, and SQLite itself then refuses any text that is not on that list; a model can say that a column is a web address, and SQLite itself then refuses text that does not begin as one or has white space in it; the store has its first table, that of the information sources, each described by one of twelve kinds of source and one of ten ways of collecting, and switched off until a person has read its terms; a second table says which of nine kinds of information each source offers, and a source that has offers cannot be deleted; a third table records every collection run, with its source, its start and end, how it ended and what it counted, and one function, `mark_interrupted`, marks the runs a dead job left running as interrupted; another, `standing_of`, says how a source is doing (its last attempt, its last success, its last error and its health) by reading its runs, and stores none of it; the code has the two lists that say how far a collected record can be trusted, three levels of confidence and four verification statuses from official to unverified, and no table has a column of them yet; a model can say that a column is a calendar day, which is kept as text such as `2026-11-24` with no time made up for it and which the store refuses when no calendar has it, and no table has such a column yet either; the columns by which every collected record says where it came from are one set in the code, which a model of collected records takes whole, and with them an index that takes SQLite straight to the records of one source, and no table has them yet; a rule names every table that neither has those columns nor is on the list of the tables that hold no collected records, where each stands with its reason, and a test holds the real schema to it; one table is there to keep, for one field of one record, what it held before it was changed and what it holds now, with the collection run or the person that caused the change, and one function changes a stored record and writes that history in the same unit of work, so that neither is kept without the other, which nothing calls yet because no table holds records; that history is only added to, because the store itself refuses to edit, delete or replace a row of it, whoever writes to the file; the migrations are written in a module of their own, as plain SQL that names nothing of the code; one test holds the models and the migrations together, and fails with a sentence for each table or index that is not the same in both (`DATABASE.md`). No globe yet: its engine, `@cesium/engine` with `@cesium/core`, is installed and tested as installed, and nothing of the application uses it so far.
 
 ## Reports
 
@@ -8110,3 +8110,137 @@ puts files of the engine into the site.
 Phase 1 now has 45 tasks, and the plan one more than before.
 
 Next task on track B: GLB-001 – The Cesium engine installed.
+
+### GLB-001 – The Cesium engine installed (2026-11-27)
+
+TASK: GLB-001 – The Cesium engine installed
+
+Implementation: Complete (builder thread, pull request #145).
+The front end has the engine of the globe as a locked dependency:
+`@cesium/engine` 26.5.0 (CesiumJS 1.147, Apache 2.0), the engine without
+the ready-made viewer of the full `cesium` package, and `@cesium/core`
+0.1.1, where the engine keeps its arithmetic and from where it asks
+that those names be imported. The two bring 28 packages, none with a
+script at install; the least Node.js stays 22.22.2. Eleven unit tests
+use the engine as it is installed: the reference ellipsoid WGS84, six
+places on the Earth, the order of longitude and latitude, heights, the
+way back to degrees, and that the engine's globe stands on the very
+ellipsoid the application gets, which two copies of the arithmetic
+would not give; a warning from the engine fails a test. Nine repository
+checks hold which packages the site ships, that the lock file installs
+one copy of each, and that neither the full package, nor its viewer,
+nor a wrapper is named or installed. Nothing of the application imports
+the engine yet. Exactly the 7 planned files; all are identical to the
+planner's trial. No existing test changed.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The full run, first time: 18 of 19 gates, "Tests: 2435 passed, 1
+  failed, 0 skipped." The failure was one browser test this task did
+  not touch, in `narrow.spec.ts`: "narrow screen, 360×740 › the data
+  status and the date each have a line", with "Expected: 9, Received:
+  -12". The planner did not run it again to get a pass, but looked for
+  the cause first: the test measures the top bar, then waits for the
+  data, then measures the pieces; on a phone the bar is a line (21
+  pixels) taller once the data is there, and 9 - 21 is -12. The
+  computer was running planted defects of the other track in four
+  worktrees at the time, so the data came late. A scratch test that
+  holds the data back a second gives -12 every time, and the whole
+  suite on `main` with the data a second late fails in five tests of
+  that file every time. The pull request changes no file of the
+  application and no browser test, and what the build makes is the
+  same as on `main`, byte for byte. So the failure is a defect of a
+  test that is on `main`, not of this task; it is FND-048 (PLAN-036).
+- The full run, second and last time: 19 of 19 gates passed, exit code
+  0, with the line "Tests: 2436 passed, 0 failed, 0 skipped."
+  Repository checks: 62 (53 before, 9 new). Frontend unit tests: 223
+  (212 before, 11 new).
+- Planted defects against the repository checks: 35, and 35 of 35
+  detected, among them the plan's prove-it steps 1 to 6. Every one gave
+  the result of the planner's trial.
+- The plan's prove-it steps 7 to 12 against the unit tests, each with
+  the plan's result: a name taken from the engine (1 of 11 fails, with
+  the engine's warning), the degrees changed over (4 fail), the globe
+  on another ellipsoid (1), another radius in the installed package
+  (1), and each of the two packages moved away (no test runs).
+- The six files the build makes are the same as on `main`, compared by
+  their SHA-256.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 45925021461, the pull request's commit (`c8d34e2`): "All gates
+  (Linux)" and "All gates (Windows)" green at the first attempt, each
+  log ending "19 of 19 gates passed." and "Tests: 2436 passed, 0
+  failed, 0 skipped.", with 62 repository checks and 223 frontend unit
+  tests on both machines (Node.js 22.23.5 on both; `npm ci` added 136
+  packages on Linux and 133 on Windows, with no warning); "Build the
+  site", "Publish the site" and "Check the published site" skipped.
+- Run 45926591250, for `main` after the merge (`6554b04`): all five
+  jobs green at the first attempt, both gates jobs with the same two
+  closing lines, the site republished, and the log of "Check the
+  published site" ending
+  "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+
+Unit and integration tests: 2265/2265 passed (repository 62, script tests
+206, backend 1774, frontend 223). Browser tests: 171/171 passed in the
+second local run and on both machines on GitHub; 170/171 in the first
+local run, for the reason above.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the deployment succeeded and the
+published site is the site that was built. The task changes nothing a
+user sees.
+
+Overall applicable tests: 2436/2436 passed (100%), all 19 gates passed, on
+both machines on GitHub and in the planner's second run.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: Nothing of the application uses the engine yet, and none
+of its own files (its background scripts, pictures and tables) is in the
+site; that is GLB-022 and GLB-002. The engine still hands out the names it
+has moved to `@cesium/core`, with a warning; only the tests of this task
+turn that warning into an error, so a later file could import one from the
+engine unnoticed until the tests of the globe hold it too. `@cesium/core` is
+at 0.1.1, a first version, and an update of the engine may ask for another;
+the check of one copy then fails and says so. The site as published carries
+no licence text of the packages it ships (FND-047). The builder's report
+agreed with the planner's test in every count: its one local full run passed
+with 2436 tests, and so did its pull request run on both machines.
+
+Commit: `6554b04` (squash merge of pull request #145).
+
+Next task on track B: FND-048 – The narrow-screen tests measure the top bar after the data has arrived.
+
+### PLAN-036 – A browser test that could fail by chance, and what it showed (2026-11-27)
+
+Not a development task: no application code changed.
+
+In the planner's first run of the pull request of GLB-001 one browser
+test failed that the task had not touched (see the report above). The
+cause is in the test and in the layout both:
+
+- **The test.** Four places in `frontend/e2e/narrow.spec.ts` measure
+  the top bar first and wait for the data afterwards. When the data
+  arrives between the two, they compare two layouts. With the data a
+  second late, five tests fail every time: "everything in the top bar
+  is whole and inside it" at 320, 360 and 390 pixels, and "the data
+  status and the date each have a line" at 360 and 390. A test that
+  can fail by chance is a defect of the gates, as FND-043 was. It is
+  FND-048 – The narrow-screen tests measure the top bar after the data has arrived,
+  and it stands first on track B, because every later task goes
+  through these gates.
+- **The layout.** That the two measurements can differ at all is
+  because on a phone the top bar grows by a line when the data
+  arrives (from 78 to 99 pixels at 360 pixels wide), and the globe
+  stage under it moves down. That is a defect a visitor sees. It is
+  FND-049 – The top bar keeps its height when the data arrives,
+  after FND-047 on track B.
+
+Neither is moved into a later phase (CLAUDE.md §3), and neither is
+part of another task (CLAUDE.md §1). Phase 1 now has 47 tasks, and the
+plan two more than before.
+
+Order on track B from here: FND-048, FND-047, FND-049, then GLB-022.

@@ -102,6 +102,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `python scripts/tools.py` says whether a computer has the tools MotoSphere
   needs: the version of each it found, and where to get one that is missing,
   too old or broken (FND-019).
+- The engine of the globe is installed: `@cesium/engine` 26.5.0 (CesiumJS
+  1.147, Apache 2.0), the Cesium engine without the ready-made viewer of
+  the full `cesium` package, and `@cesium/core` 0.1.1, where the engine
+  keeps its arithmetic. Nothing of the application uses it yet, so the
+  site is what it was. A repository check holds which packages the site
+  ships, and that there is one copy of each (GLB-001).
 - The data store's first decisions (`DATABASE.md`): what it relies on in
   SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
   gates run on, and where the store is kept between scheduled runs
