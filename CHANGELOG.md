@@ -28,6 +28,11 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The browser tests that are not about the globe run in a browser that
   gives a page no 3D picture (`--disable-3d-apis`), so that the tests
   of the globe are the only ones that draw one (FND-059).
+- A browser test can read the colour of a point of the page as the
+  browser shows it, a 3D picture too, from outside the page: Playwright
+  takes a picture of the one pixel and the colour is read from the PNG
+  with what Node.js brings. What cannot be read is refused with a
+  sentence. No package was added (FND-060).
 
 ### Added
 
