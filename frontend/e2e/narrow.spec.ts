@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import type { Locator, Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 
@@ -71,9 +72,33 @@ const TOP_BAR_PIECES = {
 
 type TopBarPieces = Record<keyof typeof TOP_BAR_PIECES, Piece>
 
+/**
+ * Waits until the data status has arrived. On a narrow screen the top bar is
+ * a line taller then than while the data loads, and everything under it lies
+ * a line lower.
+ */
+async function arrived(page: Page): Promise<void> {
+  await expect(page.getByRole('banner').getByText('Data updated')).toBeVisible()
+}
+
+/**
+ * Opens the page and waits for the data status. Every test here opens the
+ * page with this, so that none measures a layout that is about to change.
+ */
+async function open(page: Page): Promise<void> {
+  await page.goto('./')
+  await arrived(page)
+}
+
+/** Loads the page again and waits for the data status, as `open` does. */
+async function again(page: Page): Promise<void> {
+  await page.reload()
+  await arrived(page)
+}
+
 /** Everything the top bar shows, measured once the data status has arrived. */
 async function topBarPieces(page: Page): Promise<TopBarPieces> {
-  await expect(page.getByRole('banner').getByText('Data updated')).toBeVisible()
+  await arrived(page)
   const measure = async ([name, selector]: readonly [string, string]): Promise<Piece> =>
     page.locator(selector).evaluate((element, called) => {
       const rect = element.getBoundingClientRect()
@@ -118,7 +143,7 @@ for (const viewport of NARROW_SCREENS) {
     test.use({ viewport })
 
     test('the top bar and the globe stage each have the whole width', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       const region = regions(page)
       const topBar = await box(region.topBar)
       const stage = await box(region.stage)
@@ -133,7 +158,7 @@ for (const viewport of NARROW_SCREENS) {
     })
 
     test('the page opens with both panels closed and the globe stage in view', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       const region = regions(page)
 
       await expect(region.sectionsButton).toHaveAttribute('aria-expanded', 'false')
@@ -145,7 +170,7 @@ for (const viewport of NARROW_SCREENS) {
     })
 
     test('the sections panel lies over the globe stage, from the left', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       const region = regions(page)
       await region.sectionsButton.click()
       await expect(region.sectionsButton).toHaveAttribute('aria-expanded', 'true')
@@ -164,7 +189,7 @@ for (const viewport of NARROW_SCREENS) {
     })
 
     test('the details panel lies over the globe stage, from the right', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       const region = regions(page)
       await region.detailsButton.click()
       await expect(region.detailsButton).toHaveAttribute('aria-expanded', 'true')
@@ -183,7 +208,7 @@ for (const viewport of NARROW_SCREENS) {
     })
 
     test('a button closes the panel it opened', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       const region = regions(page)
 
       await region.sectionsButton.click()
@@ -201,7 +226,7 @@ for (const viewport of NARROW_SCREENS) {
     })
 
     test('opening one panel closes the other', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       const region = regions(page)
 
       await region.sectionsButton.click()
@@ -218,12 +243,12 @@ for (const viewport of NARROW_SCREENS) {
     })
 
     test('the panels are closed again when the page is loaded again', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       const region = regions(page)
       await region.detailsButton.click()
       await expect(region.details).toBeVisible()
 
-      await page.reload()
+      await again(page)
 
       await expect(region.detailsButton).toHaveAttribute('aria-expanded', 'false')
       await expect(region.details).toBeHidden()
@@ -231,7 +256,7 @@ for (const viewport of NARROW_SCREENS) {
     })
 
     test('the page itself does not scroll', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       const overflow = await page.evaluate(() => {
         const root = document.documentElement
         return {
@@ -243,7 +268,7 @@ for (const viewport of NARROW_SCREENS) {
     })
 
     test('everything in the top bar is whole and inside it', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       const topBar = await box(regions(page).topBar)
 
       for (const piece of Object.values(await topBarPieces(page))) {
@@ -259,7 +284,7 @@ for (const viewport of NARROW_SCREENS) {
     })
 
     test('nothing in the top bar lies over anything else in it', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       const pieces = Object.values(await topBarPieces(page))
 
       for (const [index, one] of pieces.entries()) {
@@ -275,7 +300,7 @@ for (const viewport of NARROW_SCREENS) {
     })
 
     test('the tagline gives way', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       await expect(page.getByRole('banner').getByRole('heading', { level: 1 })).toBeVisible()
 
       await expect(page.getByText(TAGLINE)).toBeHidden()
@@ -293,7 +318,7 @@ for (const viewport of NARROW_SCREENS.filter((screen) => screen.width >= ONE_LIN
     test.use({ viewport })
 
     test('the top bar starts with one line: the name between the two buttons', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       const { sectionsButton, name, detailsButton } = await topBarPieces(page)
 
       expect(sectionsButton.left).toBe(TOP_BAR_PADDING)
@@ -307,7 +332,7 @@ for (const viewport of NARROW_SCREENS.filter((screen) => screen.width >= ONE_LIN
     })
 
     test('the information starts right under that line, at the left edge', async ({ page }) => {
-      await page.goto('./')
+      await open(page)
       const { status } = await topBarPieces(page)
 
       expect(status.top).toBe(TOP_BAR_HEIGHT)
@@ -317,7 +342,7 @@ for (const viewport of NARROW_SCREENS.filter((screen) => screen.width >= ONE_LIN
 
     if (viewport.width < TWO_PIECES_FROM) {
       test('the data status and the date each have a line', async ({ page }) => {
-        await page.goto('./')
+        await open(page)
         const topBar = await box(regions(page).topBar)
         const { status, date } = await topBarPieces(page)
 
@@ -328,7 +353,7 @@ for (const viewport of NARROW_SCREENS.filter((screen) => screen.width >= ONE_LIN
       })
     } else {
       test('the data status and the date share a line', async ({ page }) => {
-        await page.goto('./')
+        await open(page)
         const topBar = await box(regions(page).topBar)
         const { status, date } = await topBarPieces(page)
 
@@ -344,7 +369,7 @@ test.describe(`the narrowest wide screen, ${NARROW_BELOW} pixels`, () => {
   test.use({ viewport: { width: NARROW_BELOW, height: 700 } })
 
   test('has the panels beside the globe stage', async ({ page }) => {
-    await page.goto('./')
+    await open(page)
     const region = regions(page)
     const sections = await box(region.sections)
     const stage = await box(region.stage)
@@ -359,7 +384,7 @@ test.describe(`the narrowest wide screen, ${NARROW_BELOW} pixels`, () => {
   })
 
   test('has a top bar of one line, with the tagline', async ({ page }) => {
-    await page.goto('./')
+    await open(page)
     const topBar = await box(regions(page).topBar)
     const pieces = Object.values(await topBarPieces(page))
 
@@ -391,7 +416,7 @@ test.describe('between a wide screen and a narrow one', () => {
   test.use({ viewport: WIDE })
 
   test('the panels change at once when the width crosses the line', async ({ page }) => {
-    await page.goto('./')
+    await open(page)
     const region = regions(page)
     await expect(region.sections).toBeVisible()
     await expect(region.details).toBeVisible()
@@ -412,7 +437,7 @@ test.describe('between a wide screen and a narrow one', () => {
   })
 
   test('what was chosen on the wide screen is still there afterwards', async ({ page }) => {
-    await page.goto('./')
+    await open(page)
     const region = regions(page)
     await region.detailsButton.click()
     await expect(region.details).toBeHidden()
@@ -433,8 +458,55 @@ test.describe('between a wide screen and a narrow one', () => {
       width: WIDE.width - SECTIONS_WIDTH,
     })
 
-    await page.reload()
+    await again(page)
     await expect(region.sections).toBeVisible()
     await expect(region.details).toBeHidden()
+  })
+})
+
+test.describe('when the data arrives late', () => {
+  const LATE = 1000
+  test.use({ viewport: { width: 360, height: 740 } })
+
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/data/manifest.json', async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, LATE))
+      await route.fallback()
+    })
+  })
+
+  test('opening the page waits for it', async ({ page }) => {
+    await open(page)
+
+    // Read at once, with no waiting: the data status is there already.
+    const status = await page.getByRole('banner').getByRole('status').textContent()
+    expect(status).toMatch(/^Data updated /)
+  })
+
+  test('the top bar is measured as it is with the data', async ({ page }) => {
+    await open(page)
+    const topBar = await box(regions(page).topBar)
+
+    expect(topBar.height).toBe(TOP_BAR_HEIGHT + 2 * INFO_LINE_HEIGHT + TOP_BAR_END)
+  })
+
+  test('loading the page again waits for it too', async ({ page }) => {
+    await open(page)
+    await again(page)
+
+    const status = await page.getByRole('banner').getByRole('status').textContent()
+    expect(status).toMatch(/^Data updated /)
+  })
+})
+
+test.describe('the tests of the narrow screen themselves', () => {
+  const source = readFileSync(import.meta.filename, 'utf8')
+
+  // A test that loads the page by itself can measure it before the data has
+  // arrived, or measure one thing before and the next after. `open` and
+  // `again` wait, and they are the only two places that load the page.
+  test('load the page only where they wait for the data', () => {
+    expect(source.match(/\bpage\.goto\(/g)).toHaveLength(1)
+    expect(source.match(/\bpage\.reload\(/g)).toHaveLength(1)
   })
 })
