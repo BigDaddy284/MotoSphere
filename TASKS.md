@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 55 | 55 |
-| 2 | Data store and published data (DAT, PUB) | 69 | 51 |
+| 2 | Data store and published data (DAT, PUB) | 69 | 52 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-059 – The countries are loaded into the store.
+**Current task, track A (data store):** DAT-061 – A command loads the countries.
 
 **Current task, track B (globe):** GLB-002 – The globe shows the Earth.
 
@@ -2420,7 +2420,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-060.md`
 
 ### DAT-059 – The countries are loaded into the store
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One function adds to the store every country of the reference file that the store does not have, each naming the source and the release it came from, and changes nothing else: run again, it writes nothing.
 - **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012; narrowed on 2026-11-27 (PLAN-049) to the loading, where the source is DAT-060 and the command is DAT-061; settled in the planner's trial (PLAN-050). A new module, `motosphere.reference.countries_load`, says which release of iso-codes the file is from (`RELEASE`, 4.20.1), the day it was published (`PUBLISHED_ON`, 2026-01-01) and the address it was fetched from (`ADDRESS`, the file of the release at the Ubuntu archive), as the note beside the file has them. `load_countries(work, countries)` is handed what the file says, asks for the source of the countries (DAT-060), reads the clock once and goes through the countries. A country is known by its code of two letters. One the store has neither by its code of two letters nor by its code of three is added. One the store has with the same code of three and the same name is left as it is and not touched. One the store has with another code of three or another name, or whose code of three the store has under another code of two, is left as it is and named; so is a country of the store that the file does not have. A new row names the source, the address, the moment of the loading as when it was collected and last seen, the day of the release, `public dataset`, `high` and `independent`. The function gives back four lists of codes of two letters (`CountriesLoaded`: `added`, `as_they_were`, `said_otherwise`, `not_in_the_file`). A loading is not a collection run: a run is one attempt to collect from one source, and nothing is collected here, because the file was fetched once, by hand (DAT-012), and is part of the project. That is also why the source need not be switched on for its countries to be loaded (DAT-060). A record is changed with its history, and a change names what caused it: a collection run, or the person who decided it (DAT-047). A loading is neither, and no cause is made up for it. So the loading adds the countries the store does not have and does nothing else: a country the store says something else of than the file, and a country of the store that the file does not have, are left as they are and named to whoever called the function. The store and the file can come to say different things of a country in two ways only: a person changed the store by hand, or a newer release was taken into the repository. Either way a person is at hand to decide which is right. Nothing calls the function yet; no model, migration or command changes. The planner's trial has 40 new tests.
 - **Acceptance criteria:**
@@ -2439,10 +2439,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   13. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   14. Only the nine files under "Scope" of the plan changed.
 - **Tests required:** 8 new unit tests without a store: the release, its day and its address, each written out a second time and held to the note beside the file; what a loading gives back, four lists in one order that cannot be changed afterwards. 32 new integration tests in 25 functions against a real SQLite file that the migrations built, every row read back as SQLite holds it: the 249 countries of the project's file in an empty store; every column of a new row, with the clock set; one moment for a loading; the source with the countries; no run, no history and no item of the review queue; a second loading that sends no statement that writes, heard by listening to the statements; a later loading; a country from another source; what the store says otherwise of, in six forms, and a code of three under another code of two; what the file does not have; the orders; a list given one at a time, an empty one, and one with a code twice; the unit of work. Planted defects in the module. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #197 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32): the full run, 19 of 19 gates passed, "Tests: 3487 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2519: 2479 before, 40 new). The planner's 44 planted defects, one at a time, in the new module of the pull request (six in what it says of the release, ten in a new row, one in the source, seven in when a country counts as the same, five in what the store says otherwise of, five in what the file does not have, four in the orders, four in what is given back, two in the storing), each against the 40 tests of the two new files: 44 of 44 detected, each by the same tests as in the planner's trial. The plan's ten prove-it steps, run by the planner too: each fails the tests the plan names (5, 3, 2, 6, 2, 9, 1, 9, 1 and 2 tests). On GitHub, read by the planner from the runs and job logs: run 46052973434 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3487 passed, 0 failed, 0 skipped.", with 2519 backend tests on both machines, the three jobs after the gates skipped; run 46054972422 for `main` after the merge, green at the first attempt, both gates jobs ending "Tests: 3487 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3487 / 0 tests on both machines on GitHub for `main` and for the pull request, and locally (repository 82, script tests 219, backend 2519, frontend unit 406, browser 261); all 19 gates passed; 44 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 9 files are the same change as the planner's trial. No existing test changed, no model, migration or command changed, and no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #196, run 46051241386). The builder reported the same counts from its own run (Node 22.23.5 where the planner had 22.23.4) and the plan's ten prove-it steps as the plan has them; it could not ask the owner for a review, because the pull request counts as the owner's own.
+- **Commit:** `2063f15`
 - **Plan:** `docs/plans/DAT-059.md`
 
 ### DAT-061 – A command loads the countries
