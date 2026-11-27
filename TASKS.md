@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 55 | 53 |
+| 1 | Foundation (FND) | 55 | 54 |
 | 2 | Data store and published data (DAT, PUB) | 67 | 49 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-058 – A kind of source for reference lists.
 
-**Current task, track B (globe):** FND-054 – The browser tests do not ask Windows for random ports.
+**Current task, track B (globe):** FND-056 – A unit test file that ends with work of the page waiting fails.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -1246,7 +1246,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/FND-053.md`
 
 ### FND-054 – The browser tests do not ask Windows for random ports
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The browser of the browser tests is started with the one feature turned off that makes a connection fail by chance on Windows, and browser tests hold it there.
 - **Description:** Added on 2026-11-27 (PLAN-043) as "The browser tests do not run out of network connections on Windows", and named after its cause on 2026-11-27 (PLAN-047). Three times a run on GitHub's Windows machine failed in one browser test that could not open the page: "page.goto: net::ERR_NO_BUFFER_SPACE at http://127.0.0.1:4173/MotoSphere/" (run 44429659797 with FND-019, run 45984920265 with FND-053, run 45996124551 in a trial for GLB-025). Each time it was another test, every other test passed, and the job passed when it was run once more. The planner measured on GitHub's Windows machine, in three runs of a trial pull request (#178, not merged). The machine has room: it gives out 16,384 ports, and in a whole run of all gates the most connections held at one moment were 774 (run 46003052257). The browser the tests use (Chromium 153.0.8010.12) has a feature, `TcpPortRandomizationWin`, that is on by default for Windows 11 22H2 and later, Windows Server 2025 among them: before every connection it asks Windows for a local port picked at random instead of the next free one. With the feature on, 8 of 53,978 connections failed, 2 with `net::ERR_NO_BUFFER_SPACE` and 6 with `net::ERR_ADDRESS_IN_USE`, and one page could not be opened; with it off, none of 53,993 failed, in the same jobs, in turns of a minute (runs 46005653032 and 46009747401). The browser of the tests is now started with that feature off. A browser takes one list of features to turn off and Playwright already gives it one, of 15 names, so Playwright's own list is taken out and given again with the one name added (`frontend/e2e/browser.ts`, used by `frontend/playwright.config.ts`). The list is written out as Playwright 1.63.0 has it, and a browser test holds it to what Playwright really gives, so an upgrade that changes the list fails that test until the file follows. Another browser test sees from outside that the feature is off: on Windows, of 40 connections the browser opens one after another, at least half must come from a port that is one to four after the one before. On GitHub's Windows machine that test failed when the planner gave the feature a name the browser does not know (none of 40 ports in order, run 46035698271) and passed with the right name (run 46034370005). A browser test is not given a second try: a test that is run again until it passes hides a defect of the application as well as a fault of a machine.
 - **Acceptance criteria:**
@@ -1259,10 +1259,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   7. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, with 261 browser tests on both machines, and the three jobs after the gates are skipped.
   8. Only the five files under "Scope" of the plan changed.
 - **Tests required:** 5 new browser tests: the words the browser of the tests is started with, read from a browser started as the tests start theirs; the list as Playwright gives it, read from a browser started with none of the project's options; the settings; and the order of the ports of 40 connections, which holds something on Windows only. Planted defects in the new file and in the settings. The fifth of them on GitHub's Windows machine with the feature under a name the browser does not know, where it must fail. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #188 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32, Playwright 1.63.0): the full run, 19 of 19 gates passed, "Tests: 3369 passed, 0 failed, 0 skipped.", exit code 0 (browser tests 261: 256 before, 5 new). The planner's 18 planted defects, one at a time, in the new file and the settings of the pull request (three in the settings, four in the launch options, six in the word the browser is told, five in Playwright's list and its word), each against the five tests: 18 of 18 detected, each by the same tests as in the planner's trial. The plan's five prove-it steps, run by the planner too: each fails the tests the plan names (2, 1, 1, 1 and 2 tests). On GitHub, read by the planner from the runs and job logs: run 46037737306 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3369 passed, 0 failed, 0 skipped.", with 261 browser tests and all five new tests among the passed on both machines, the three jobs after the gates skipped. Run 46039576231 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3369 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files." On GitHub's Windows machine the fifth of the new tests, which sees the order of the browser's ports, passed in the planner's trial (run 46034370005), in the pull request's run and in the run for `main`; and it failed there, alone of 261, when the planner gave the feature a name the browser does not know (run 46035698271: none of 40 ports in order).
+- **Passed / Failed:** 3369 / 0 tests on both machines on GitHub for `main` (repository 82, script tests 219, backend 2420, frontend unit 387, browser 261), 3369 / 0 for the pull request and locally; all 19 gates passed; 18 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 5 files are the same change as the planner's trial. No existing test changed, `retries` is 0 as before, and no package was added. The cause was measured on GitHub's Windows machine before the plan (trial pull request #178, runs 46003052257, 46005653032 and 46009747401) and the remedy was run there before the plan too (trial pull request #187). Whether the fault is gone can only be seen over time: it showed in 3 runs of some hundreds. What is held is that the feature is off, and that with it off none of about 54,000 connections failed where 8 failed with it on.
+- **Commit:** `ebcd207`
 - **Plan:** `docs/plans/FND-054.md`
 
 ### FND-055 – The unit tests that start the page leave nothing of it running
