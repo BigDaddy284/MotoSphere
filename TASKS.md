@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 55 | 54 |
-| 2 | Data store and published data (DAT, PUB) | 67 | 49 |
+| 2 | Data store and published data (DAT, PUB) | 67 | 50 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,9 +27,9 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-058 – A kind of source for reference lists.
+**Current task, track A (data store):** DAT-059 – The countries are loaded into the store.
 
-**Current task, track B (globe):** FND-056 – A unit test file that ends with work of the page waiting fails.
+**Current task, track B (globe):** FND-056 – No unit test ends with work of the page waiting.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -160,6 +160,26 @@ tests with that one feature off, and is named after its cause from here on:
 it was "The browser tests do not run out of network connections on Windows".
 A browser test is still not given a second try. Order on track B: FND-054,
 FND-056, then GLB-002.
+
+**A guard that would have failed by chance (PLAN-048):** FND-056 was added
+as "A unit test file that ends with work of the page waiting fails". The
+planner's trial built the guard as it was planned, one that fails a unit
+test file which ends with work of React's waiting, and counted first what
+tests leave waiting. Over five whole runs of the unit tests, 1,935 ends of
+the 387 tests there were, one test ended with one piece of React's work
+waiting, once: `DataStatus > loads the published manifest when it is given
+no loader`, a test that waits for the page as Testing Library advises
+(`findBy…`) and does nothing wrong. It goes on at the moment the page shows
+what it waits for, and React may then still have a piece of work in its
+queue. A guard that fails such a test fails a run now and then, which is the
+fault it was to remove. So FND-056 lets the work run instead: the set-up of
+the unit tests watches what React asks the system for (`setImmediate`, with
+a function named `performWorkUntilDeadline`) and, after each test, once what
+the test showed is unmounted and the session cleared, lets that work run
+until none is waiting, while the test's document is still there. The fault
+of FND-055 then cannot come back whatever a later test does, and the task is
+named after that from here on: FND-056 – No unit test ends with work of the
+page waiting. Order on track B: FND-056, then GLB-002.
 
 **The countries, in two steps (PLAN-042):** DAT-011 was two objectives:
 the table of the countries, and the country of a source, which is a
@@ -1284,16 +1304,27 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Commit:** `9b46186`
 - **Plan:** `docs/plans/FND-055.md`
 
-### FND-056 – A unit test file that ends with work of the page waiting fails
-- **Status:** NOT STARTED
-- **Objective:** A unit test file that ends while React still has work waiting fails, with a sentence that says so, on every run and not by chance.
-- **Description:** Added on 2026-11-27 (PLAN-046). FND-055 puts right the two tests that left React's work waiting. Nothing yet stops a test written later from doing the same, and the fault then shows only in a run now and then. The planner's probe of FND-055 counted what was waiting at the end of every file; this task makes such a count part of the set-up of the unit tests, so that a file which ends with work of the page waiting fails every time and names what was waiting. How the count is taken, and what it costs each test, is settled in the planner's trial.
-- **Acceptance criteria:** a unit test file that ends with React's work waiting fails on every run, with a sentence that names the fault; a file that ends with nothing of React's waiting passes as before; the guard is proven against a test that leaves work waiting on purpose; what the test's document itself has waiting is not counted; no existing test is weakened; all tests pass on both machines. The criteria are made exact in the plan, from the trial.
-- **Tests required:** unit tests of the guard, with a file that leaves work waiting and one that does not; planted defects; the full run of all gates on both machines.
+### FND-056 – No unit test ends with work of the page waiting
+- **Status:** IN PROGRESS
+- **Objective:** The set-up of the unit tests lets no test end while React still has work waiting, so that no work of the page can run after the test's document is gone, whatever a test written later does.
+- **Description:** Added on 2026-11-27 (PLAN-046) as "A unit test file that ends with work of the page waiting fails", and named after what it does on 2026-11-27 (PLAN-048). FND-055 put right the two tests that left React's work waiting; nothing held a test written later. The planner's trial built the guard as it was planned, one that fails a unit test file which ends with work of React's waiting, and counted first what tests leave waiting. Over five whole runs of the unit tests, 1,935 ends of the 387 tests there were, one test ended with one piece of React's work waiting, once: `DataStatus > loads the published manifest when it is given no loader`, a test that waits for the page as Testing Library advises (`findBy…`) and does nothing wrong. It goes on at the moment the page shows what it waits for, and React may then still have a piece of work in its queue. A guard that fails such a test fails a run now and then, which is the fault it was to remove. The set-up of the unit tests watches what React asks the system for (`setImmediate`, with a function named `performWorkUntilDeadline`) and, after each test, once what the test showed is unmounted and the session cleared, lets that work run until none is waiting, while the test's document is still there. Work can ask for more work, so the set-up looks again after each turn, up to 100 times, and then fails the test with "React still has work waiting after it was let run 100 times: something asks it for more work without end." When the file is over, the system gets its own `setImmediate` back, and the file fails if anything of React's is still waiting; after each test nothing is, and this is what is left to say so if that step is ever lost. With that set-up the two tests as they were before FND-055 pass ten times of ten with no error; with the one line taken out that lets React finish, the file of FND-055's fault fails five times of five with "The test file ends with 1 of React's work still waiting: it would run after the test's document is gone." The watch is in a module of its own, `frontend/src/test/reactsWork.ts`, which `frontend/src/test/setup.ts` brings in before anything that loads React, because React keeps the `setImmediate` it finds when it is loaded. No file of the application and no existing test changes. Not seen by the watch: a page that waits, when its test ends, for a file it loads later or for an answer from the network.
+- **Acceptance criteria:**
+  1. `frontend/src/test/reactsWork.ts` exports `watchReactsWork`, `endEveryTestSettled`, `theSystem` and `reactsWork`, with the two sentences.
+  2. `frontend/src/test/setup.ts` brings `reactsWork.ts` in before anything that loads React, lets React finish after each test, after what the test left is put away, and closes the watch when the file is over.
+  3. `frontend/src/test/reactsWork.test.tsx` has the 19 tests, and all 19 pass on Linux and on Windows.
+  4. A page that a test starts outside `act` and leaves unshown is shown before the next test begins.
+  5. With React's work looked for under another name, React loaded before the watch, React not let finish after a test, or the set-up not using the watch: a unit test fails.
+  6. No existing test changed, none is skipped, and no file of the application changed.
+  7. `TESTING.md` has the section "What a unit test leaves waiting", and `CHANGELOG.md` the bullet under Fixed.
+  8. `python scripts/check.py` reports 19 of 19 gates, with 406 frontend unit tests, and 19 tests more in all than `main` gives at the commit the branch starts from (3388 when that is `ebcd207`).
+  9. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, with 406 frontend unit tests on both machines and no line `Errors`, and the three jobs after the gates are skipped.
+  10. Only the five files under "Scope" of the plan changed.
+- **Tests required:** 19 new unit tests: 2 of the system the tests run on (it is the system itself; something without a `setImmediate` is refused with a sentence); 10 of the watch over a stand-in for the system (what is counted and what is not, what is handed on and back, a piece that fails when it runs, work that asks for more work, the 100 turns and the sentence after them, the end of a file with and without work waiting); 4 of what the set-up does after each test and at the end of a file, with a stand-in for the test runner; 3 with React itself, a page started outside `act`, of which a pair holds the set-up with the real test runner. Planted defects in the module and in the set-up. The two tests of FND-055 as they were before it, under the new set-up. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-056.md`
 
 ### FND-057 – The checks on GitHub's Windows machine do not run out of time
 - **Status:** PASSED – VERIFIED
@@ -2312,7 +2343,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-012.md`
 
 ### DAT-058 – A kind of source for reference lists
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A source can be described as a keeper of reference lists, so that the source of the countries is registered as what it is.
 - **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012; settled in the planner's trial. A source is described by one of twelve kinds (`SourceCategory`, DAT-039), each a kind of website of the sport. A project that keeps the lists of a standard, as iso-codes does, is none of them, and `DATA_SOURCES.md` left its category open. The list gains one text, `reference list`, as `SourceCategory.REFERENCE`, last: whoever keeps a list that other records are described by. It is not `reference data`, which is a text of the list of the kinds of information: a source of the kind `reference list` offers `reference data`. DESIGN.md §7.1 names the twelve and is not changed; the thirteenth is this project's own, and `DATABASE.md` and `DATA_SOURCES.md` say so. The check of the column `category` names the texts it takes, and SQLite cannot change a check of a table that is there, so the fifteenth migration, `let_a_source_be_a_reference_list`, builds the table anew as the fourteenth did (DAT-057), statement for statement: the foreign keys are checked when the transaction ends, the rows are copied aside, the table is dropped, made again and filled from the copy, the highest key it has given is put back, and the copies are dropped. Three things differ: the check names thirteen texts, a source keeps its country, and the index `ix_source_country_id`, which goes with the table, is made again as the last statement. The four tables whose rows point to a source are not touched. The schema goes to version 15. The planner's trial has 21 new tests and detects 44 of 44 planted defects.
 - **Acceptance criteria:**
@@ -2330,10 +2361,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   12. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   13. Only the nine files under "Scope" of the plan changed.
 - **Tests required:** 17 new tests of the fifteenth migration in eight functions, on a real SQLite file, in a store at version 14 that holds sources with a gap in their keys, one of them of a country, and a row in each of the four tables that point to a source: what every table and index is written as before and after, every row, the highest key, the foreign keys, the thirteen kinds taken and eight texts refused, and the migration failing at a copy and at its last statement. 1 new unit test of the place of the new kind in the list. 3 more cases of tests that run once for each migration or each text. Two existing tests change with the list (the names of the migrations; the texts and the number of the kinds). Planted defects in the model and the migration. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #189 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 3385 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2441: 2420 before, 21 new). On the real migrations, in the same checkout: `migrate` makes a new store and says it is at schema version 15, `schema` says the data store is up to date at schema version 15. The planner's 58 planted defects, one at a time, on the pull request: 44 in the model, the migration and the history against the 356 tests of the six files that hold the history, the models and the migrations, the sources, the lists of the model, a source's country and the countries, 44 of 44 detected, each by the same tests as in the planner's trial; and the plan's 14 prove-it steps against all backend tests, 14 of 14 detected, each with the numbers the plan names. On GitHub, read by the planner from the runs and job logs: run 46038696297 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3385 passed, 0 failed, 0 skipped.", with 2441 backend tests on both machines, the three jobs after the gates skipped; run 46043539454 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3390 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files." The other track's FND-054 was merged in between, so `main` has its 5 browser tests too: 3390 there, where the pull request by itself gives 3385.
+- **Passed / Failed:** 3390 / 0 tests on both machines on GitHub for `main` (repository 82, script tests 219, backend 2441, frontend unit 387, browser 261); 3385 / 0 locally and on both machines for the pull request; all 19 gates passed; 58 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 9 files are the same change as the planner's trial. Two existing tests changed with the list, the names of the migrations and the texts and the number of the kinds, as the plan says; no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #185, run 46030646713). The builder's report agrees with what the planner found: no deviation from the plan, the same counts, and all 14 prove-it steps with the results the plan names. The builder's Node was 22.23.5.
+- **Commit:** `70af414`
 - **Plan:** `docs/plans/DAT-058.md`
 
 ### DAT-059 – The countries are loaded into the store
