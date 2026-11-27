@@ -2040,6 +2040,37 @@ folder the engine keeps the files in and the folder of the installed
 packages; and nothing of it is at the root of the server. These tests
 can tell a file that is not there since FND-052.
 
+In development (`frontend/sitebuild/engineFilesInDevelopment.test.ts`,
+unit tests, GLB-024): the tests start the development server itself, with
+the project's own settings, on this computer only and on a port that is
+free, ask it over the network and stop it again; what the server keeps
+for itself goes to a folder made for the run. It answers every one of the
+275 files at the address the built site has for it, with the bytes of
+the installed engine, the type a browser needs and its length; one file
+of each of the eight kinds is asked by name. A file asked with a question
+after its name is answered, and a question about a file (HEAD) is
+answered without the file. Answered "not found": the two logos, which
+the engine brings; a file and a kind of file the engine does not bring;
+the folder itself and a folder in it; the engine's own code; a name that
+leaves the folder, written with "%", and one with a stroke the other
+way; a name that cannot be read; a file named in other capitals than it
+has; and a request that would change something. Outside the folder, an
+address that names no file is answered "not found" and not with the
+page, which FND-052 had asked the development server by hand; the
+engine's files are not at the root of the server; and the page, the
+application's code and an icon are answered as before. On projects made
+up for the test, each with a server of its own and no settings of this
+project: the files are answered under the path of that site, a name the
+address writes with "%" is read, a file is answered as it is now and not
+as it was when the server started, and nothing else in that folder is
+answered, whatever the project has there, while a folder of the same
+name elsewhere is left to the server. The server does not start, and
+says why in the step's own sentence, when the engine is not installed,
+when a file listed as left out is not there, and when the engine brings
+a file of a kind the step has no type for. The step has a type for
+exactly the eight kinds the installed engine brings, and is for the
+development server and not for the build.
+
 After a deployment the check of the published site fetches each of these
 files with the rest and compares it byte for byte with the built one.
 What GitHub Pages says a program (`.wasm`) and a JPEG picture are is not
