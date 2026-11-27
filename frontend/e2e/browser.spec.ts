@@ -4,7 +4,6 @@ import { chromium } from '@playwright/test'
 import type { LaunchOptions, Page } from '@playwright/test'
 import {
   FEATURES_OFF,
-  GLOBE_BROWSER,
   PLAYWRIGHTS_OWN_FEATURES_OFF,
   PLAYWRIGHTS_OWN_SWITCH,
   RANDOM_PORTS_FEATURE,
@@ -112,15 +111,10 @@ test.describe('the browser of the tests', () => {
     expect(inOrder).toBeGreaterThanOrEqual(atLeast)
   })
 
-  test('is set for every project, and for the project of the globe with one word more', ({
-    browserName,
-  }, testInfo) => {
+  test('is set for the one project there is', ({ browserName }, testInfo) => {
     expect(browserName).toBe('chromium')
-    expect(testInfo.project.name).toBe('chromium')
-    expect(testInfo.project.use.launchOptions).toEqual(TEST_BROWSER)
     expect(testInfo.config.projects.map((project) => project.use.launchOptions)).toEqual([
       TEST_BROWSER,
-      GLOBE_BROWSER,
     ])
   })
 })

@@ -91,11 +91,6 @@ an HTTP error response. A test about a failure names the problems it expects
 with `expectProblem`; it then fails if one of them does not happen, and still
 fails on any other. The rule has tests of its own (`e2e/fixtures.spec.ts`).
 
-The browser tests are in two projects. The tests of the globe are the
-files in `frontend/e2e/globe`: they run in a browser that is told how to
-draw 3D pictures, and one at a time. Every other test is in the project
-`chromium` (see "The browser of the globe tests").
-
 A browser test waits for what it checks. A check that does not wait, on
 something the test collected while the page ran (the requests it recorded
 or held back, the problems the page reported), is right only for what must
@@ -2332,8 +2327,7 @@ has it. Five browser tests (`frontend/e2e/browser.spec.ts`) hold it:
   list `browser.ts` calls Playwright's own. **This is the test that
   fails after an upgrade of Playwright that changes its list:** the
   list in `browser.ts` then has to follow;
-- both projects of the settings are given these options, the project
-  of the globe tests with one word more (see the next section);
+- the one project of the settings is given these options;
 - the browser is seen to take its ports in order. The test starts a
   server of its own, which closes every connection after one answer,
   has the page open 40 connections to it one after another, and reads
@@ -2350,96 +2344,6 @@ has it. Five browser tests (`frontend/e2e/browser.spec.ts`) hold it:
 
 The browser tests are still not given a second try (`retries: 0`), and
 no test is skipped: a failure of `page.goto` is seen as before.
-
-## The browser of the globe tests
-
-The tests of the globe are a project of their own in
-`frontend/playwright.config.ts`, `globe`, with the files in
-`frontend/e2e/globe` (FND-058). Two things set it apart from the project
-of the other tests, `chromium`: its browser is started with one word
-more, `--use-angle=swiftshader` (`GLOBE_BROWSER` in
-`frontend/e2e/browser.ts`), and its tests run one at a time
-(`workers: 1`), whatever the number of workers of the run. Both are
-there for what was measured. To run the tests of the globe alone:
-`npx playwright test --project globe`.
-
-**What was measured (2026-11-27)**, with the engine drawing the Earth
-from the pictures that come with it, in a page of the built site, on a
-developer's Linux machine and on GitHub's Linux and Windows machines.
-None of the three has a graphics card for the browser, and on all three
-the browser draws in software, with the renderer that comes with it
-(SwiftShader), with the word and without it.
-
-- **Four warnings for every page with a 3D picture.** Started as the
-  other tests start it, the browser logs four warnings of its own on
-  the console of every page that shows a 3D picture, whether the engine
-  draws it or four lines of the test's own: "GL Driver Message (OpenGL,
-  Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels".
-  They come from how the browser brings the picture to the page, not
-  from the page. Every browser test fails on a warning on the console,
-  so every test that shows the globe would fail. With the word, on all
-  three machines: none, with the engine, with a plain picture, and with
-  twenty globes made and taken away one after another. Nine other words
-  a browser can be started with were tried, and none of them helps on
-  all three machines.
-- **On GitHub's Linux machine the Earth appears four to five times
-  sooner.** One globe alone there, until the Earth was drawn complete:
-  4.8 to 5.4 seconds without the word, 0.9 seconds with it (once 2.2).
-  Two at once: 7.9 to 8.7 seconds without, 1.9 to 2.1 with.
-- **Two globes at once starve each other on GitHub's Windows machine.**
-  One globe alone was drawn complete there in 2.1 to 4.8 seconds with
-  the word (2.9 to 6.2 without). Of eight globes that were started two
-  at a time, four with the word and four without, one was complete,
-  after 36 seconds, and seven were not within 40 seconds. All the while
-  the browsers went on drawing, up to 40 pictures a second, and files
-  of the site, which the test server on the same machine hands out,
-  took 20 to 37 seconds to arrive. No request failed and nothing was
-  reported. It looks as if the drawing in software takes the
-  processors and everything else waits; why Windows shares them so much
-  less evenly than Linux was not looked into.
-- **One globe at a time is drawn.** In a run of all browser tests with
-  the tests of the globe held to one at a time: on GitHub's Windows
-  machine 16 of 16 globes were complete in 1.5 to 7.6 seconds (the
-  first took the longest), on its Linux machine 16 of 16 in 0.6 to 0.8
-  seconds. Playwright starts the tests of the first project first, so
-  the globes were drawn at the end of the run: on both machines two of
-  the 261 other tests ended later than the first test of the project
-  `globe`. A globe drawn while other browser tests run beside it was
-  not measured.
-
-**One at a time is held by the tests themselves.** Every globe test
-uses the `test` of `frontend/e2e/globe/fixtures.ts`, which is the `test`
-of all browser tests and also takes a turn for as long as the test
-runs: a file in the folder of the run's results that only one can make.
-A globe test that starts while another has the turn fails at once, with
-"Two globe tests ran at once. They must run one at a time: see the
-project "globe" in playwright.config.ts." So a project that is given
-more than one worker, by a change to the settings or by an upgrade of
-Playwright that reads them otherwise, fails its tests and does not
-starve them.
-
-Nine browser tests (`frontend/e2e/globe/browser.spec.ts`) hold this:
-
-- the browser of the project is started with the list of features to
-  turn off that every test's browser has, and with the word;
-- a page shows thirty 3D pictures one after another, drawn in software,
-  and the browser says nothing on the console. **This is the test that
-  fails when a later browser no longer knows the word:** the four
-  warnings are back;
-- the tests are in the project `globe`, the second of two, with these
-  options;
-- a globe test holds the turn while it runs, and another that asks for
-  it is refused with the sentence above;
-- the turn is taken where nobody has it, in a folder that is made for
-  it, refused to a second, who is told what the system said of the
-  file too, and handed back;
-- four tests that do nothing but take a third of a second each. They
-  pass when they run one after another. **These are the tests that
-  fail when the project is given more than one worker:** two of them
-  then run at once, and the one that comes second is refused the turn.
-
-The other tests are not held to a browser without 3D pictures yet. They
-show none: the globe is not in the page yet.
 
 ## The tools a computer needs
 
