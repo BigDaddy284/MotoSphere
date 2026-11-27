@@ -30,6 +30,7 @@ __all__ = [
     "hold_the_key_of_a_review_item_to_1_or_more",
     "index_the_record_changes",
     "index_the_runs_of_a_source",
+    "keep_a_decided_review_item_from_being_replaced",
     "keep_the_decision_of_a_review_item",
     "let_the_record_changes_only_be_added_to",
     "make_the_collection_runs",
@@ -398,6 +399,47 @@ def hold_the_key_of_a_review_item_to_1_or_more(connection: Connection) -> None:
     )
 
 
+def keep_a_decided_review_item_from_being_replaced(connection: Connection) -> None:
+    """12: the triggers by which a decided review item is never replaced (DAT-055)."""
+    connection.exec_driver_sql(
+        """
+        CREATE TRIGGER tr_review_item_decided_never_replaced BEFORE INSERT ON review_item
+        WHEN EXISTS (
+            SELECT 1 FROM review_item WHERE state != 'open' AND (
+                (NEW.id >= 1 AND id = NEW.id)
+                OR (record_table = NEW.record_table AND record_id = NEW.record_id
+                    AND other_record_id = NEW.other_record_id)
+                OR (record_table = NEW.record_table AND record_id = NEW.record_id
+                    AND field = NEW.field AND source_id = NEW.source_id
+                    AND source_value = NEW.source_value)
+            )
+        )
+        BEGIN
+            SELECT RAISE(ABORT, 'A decided review item (review_item) is never replaced.');
+        END
+        """
+    )
+    connection.exec_driver_sql(
+        """
+        CREATE TRIGGER tr_review_item_decided_never_replaced_by_another
+        BEFORE UPDATE ON review_item
+        WHEN OLD.state = 'open' AND EXISTS (
+            SELECT 1 FROM review_item WHERE state != 'open' AND (
+                id = NEW.id
+                OR (record_table = NEW.record_table AND record_id = NEW.record_id
+                    AND other_record_id = NEW.other_record_id)
+                OR (record_table = NEW.record_table AND record_id = NEW.record_id
+                    AND field = NEW.field AND source_id = NEW.source_id
+                    AND source_value = NEW.source_value)
+            )
+        )
+        BEGIN
+            SELECT RAISE(ABORT, 'A decided review item (review_item) is never replaced.');
+        END
+        """
+    )
+
+
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
@@ -410,4 +452,5 @@ MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     hold_one_doubt_to_one_review_item,
     keep_the_decision_of_a_review_item,
     hold_the_key_of_a_review_item_to_1_or_more,
+    keep_a_decided_review_item_from_being_replaced,
 )
