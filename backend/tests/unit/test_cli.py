@@ -101,12 +101,8 @@ def test_help_lists_every_command(capsys: pytest.CaptureFixture[str]) -> None:
 
     assert exit_info.value.code == 0
     captured = capsys.readouterr()
-    # Each command has a line of its own: its name, and what it does.
-    listed = dict(
-        line.split(maxsplit=1) for line in captured.out.splitlines() if line.startswith("    ")
-    )
-    assert listed["export"] == "write the published data files"
-    assert listed["version"] == "print the MotoSphere version"
+    assert "export    write the published data files" in captured.out
+    assert "version   print the MotoSphere version" in captured.out
 
 
 def test_exit_code_of_the_command_is_returned(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -110,21 +110,6 @@ schema it lacks, or that there is no store yet (it makes none). A file that
 `migrate` would refuse is refused here in the same sentence, with the exit
 code 1.
 
-To load the countries of the world into the data store:
-
-```
-uv run python -m motosphere countries
-```
-
-The countries come from a file that is part of the pipeline (`DATA_SOURCES.md`),
-so nothing is fetched. The command adds every country the store does not have
-and says how many it added and how many were there already. It changes no
-country: where the store says something else of a country than the file, it
-names the country, and what the file says waits in the review queue for a
-person. Run again, it adds nothing. The store must be there and at the newest
-schema: otherwise the command says what to do, with the exit code 1, and
-changes nothing.
-
 ## Running the frontend
 
 Prerequisites: [Node.js](https://nodejs.org/) 22.22.2 or newer, which includes

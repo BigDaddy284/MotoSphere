@@ -46,10 +46,7 @@ def test_migrate_is_in_the_help(capsys: pytest.CaptureFixture[str]) -> None:
         main(["--help"])
 
     assert exit_info.value.code == 0
-    listed = capsys.readouterr().out.splitlines()
-    assert [line.split(maxsplit=1) for line in listed if line.startswith("    migrate ")] == [
-        ["migrate", "bring the data store to the newest schema"]
-    ]
+    assert "migrate   bring the data store to the newest schema" in capsys.readouterr().out
 
 
 def test_migrate_has_its_own_help(capsys: pytest.CaptureFixture[str]) -> None:

@@ -162,8 +162,7 @@ terms, and no person has: that is for the owner. Nothing is fetched
 from this source, so it need not be switched on for its countries to be
 loaded from the file in the repository.
 
-**The countries in the store.** The command `python -m motosphere
-countries` loads them (DAT-061), with one function
+**The countries in the store.** One function loads them
 (`motosphere.reference.countries_load`, DAT-059; `DATABASE.md`, "The
 loading of the countries"). Every row names this source, the address
 the release was fetched from (the file `iso-codes_4.20.1.orig.tar.xz` at
