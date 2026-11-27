@@ -401,8 +401,3 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   alone decides: below 640 pixels each has a line of its own from the
   start, and from 640 pixels on they share one. Words too long for a
   line end in "…" (FND-049).
-- The site the browser tests run against, and the development server,
-  answered an address that names no file with the page itself, where the
-  published site answers "not found". A test could so be given an answer
-  for a file the build had left out. Both now answer "not found"
-  (FND-052).

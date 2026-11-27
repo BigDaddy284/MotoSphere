@@ -135,13 +135,6 @@ Rules:
 - GitHub Pages cannot rewrite URLs, so view state that should be shareable
   (camera position, selected item) lives in the query string or fragment, not
   in the path.
-- The site is files and nothing else: an address that names no file is
-  answered with "not found" (404), and the application has no page but the
-  one at the site's path. Vite's servers are told the same
-  (`appType: 'mpa'` in `frontend/vite.config.ts`). Left to themselves they
-  answer every address that names no file with the page, which is meant for
-  an application that reads the address itself; a file missing from the
-  build would then be missing on the published site only (FND-052).
 - Anything shipped to the browser is public. No secret may be placed in the
   frontend or in a published file.
 - A screen under 900 pixels wide is a narrow one (a phone, or a tablet held
