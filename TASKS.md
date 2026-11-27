@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 55 | 55 |
-| 2 | Data store and published data (DAT, PUB) | 70 | 53 |
+| 2 | Data store and published data (DAT, PUB) | 71 | 53 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-061 – A command loads the countries.
+**Current task, track A (data store):** DAT-063 – A command is given the store only when it is ready.
 
 **Current task, track B (globe):** GLB-002 – The globe shows the Earth.
 
@@ -246,6 +246,28 @@ store that the file does not have is no doubt, because the file says nothing
 of it. That is a task of its own, DAT-062, and it stands before the command
 of DAT-061, so that the command's sentences are settled once. The plan has
 one task more than before, 293. Order on track A: DAT-062, DAT-061, then
+DAT-013.
+
+**The store a command works on (PLAN-052):** The two commands that use the
+store are about the store itself: `migrate` makes it and brings it to the
+newest schema, and `schema` looks. The command that loads the countries
+(DAT-061) is the first that works on what is in the store, and many follow
+it. Each needs the same thing first: the store as it is, at the schema the
+code was written for. `open_store` alone does not give that: it makes the
+file where there is none, and it gives a store that lacks migrations. Nor is
+it for such a command to migrate the store by itself: a command that was
+asked for one thing would then do another as well. So one function,
+`store_to_work_on` in a new module `motosphere.cli.store`, gives a command
+the store the settings name, and only when it is there and at the newest
+schema. It makes no file and gives the store no migration. What is wrong is
+said in one sentence (`StoreNotReadyError`): where there is no file and
+where the store lacks migrations, in the words the command `schema` has for
+it, followed by the advice to run `python -m motosphere migrate` first;
+where `migrate` would refuse the store or it cannot be opened, in the words
+`migrate` has for it, and with no advice. The planner's trial of DAT-061
+showed this as a task of its own, DAT-063, with 17 tests, and it stands
+before DAT-061: the command then has only its own work to test. The plan has
+one task more than before, 294. Order on track A: DAT-063, DAT-061, then
 DAT-013.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
@@ -2494,10 +2516,35 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Commit:** `297d95d`
 - **Plan:** `docs/plans/DAT-062.md`
 
+### DAT-063 – A command is given the store only when it is ready
+- **Status:** IN PROGRESS
+- **Objective:** One function gives a command the data store the settings name, and only when the store is there and at the newest schema. It makes no file and gives the store no migration, and it says in one sentence what is wrong.
+- **Description:** Added on 2026-11-27 (PLAN-052), cut out of DAT-061. The two commands that use the store are about the store itself: `migrate` makes it and brings it to the newest schema, and `schema` looks. The command that loads the countries (DAT-061) is the first that works on what is in the store, and many follow it. Each needs the same thing first: the store as it is, at the schema the code was written for. `open_store` alone does not give that: it makes the file where there is none, and it gives a store that lacks migrations. Nor is it for such a command to migrate the store by itself: a command that was asked for one thing would then do another as well. So one function, `store_to_work_on` in a new module `motosphere.cli.store`, gives a command the store the settings name, and only when it is there and at the newest schema. It makes no file and gives the store no migration. What is wrong is said in one sentence (`StoreNotReadyError`): where there is no file and where the store lacks migrations, in the words the command `schema` has for it, followed by the advice to run `python -m motosphere migrate` first; where `migrate` would refuse the store or it cannot be opened, in the words `migrate` has for it, and with no advice. The function takes the settings, as a command has them, and gives the engine `open_store` made. It is built from `open_store`, `pending` and the `report` of the command `schema`, which all stay as they are. The advice is written out in the module (`MIGRATE_FIRST`), because the module that has the program's name imports every command, and a unit test holds it to that name. Nothing is written, and no connection to the store is left open. No command calls the function yet; the first is DAT-061. No command, model or migration changes.
+- **Acceptance criteria:**
+  1. `motosphere.cli.store` has `store_to_work_on`, `StoreNotReadyError` and `MIGRATE_FIRST`.
+  2. Where the settings name no file, `store_to_work_on` raises `StoreNotReadyError` with "There is no data store: … does not exist. Run `python -m motosphere migrate` first.", and neither the file nor its folder is made.
+  3. A store that lacks migrations is not given: the error says how many it lacks, its version and the newest, in the words of `schema`, and then the same advice. The store is not given the migrations.
+  4. A store `migrate` would refuse, a file that is no database and a folder in the store's place are refused with what `migrate` says of them, word for word, in one line and with no advice.
+  5. A store at the newest schema is given, opened as `open_store` opens it, and work on it is kept.
+  6. A relative path of the store is taken from the current folder.
+  7. After a refusal the file is byte for byte as it was and nothing is made beside it. No connection to the store is left open, refused or given.
+  8. `MIGRATE_FIRST` names the command with the command line's own name for the program.
+  9. No command, model, migration or existing test changed.
+  10. The four documents say what the function gives, what it refuses and in which words.
+  11. `python scripts/check.py` reports 19 of 19 gates, with 2552 backend tests, and 17 tests more in all than `main` gives at the commit the branch starts from (3520 when that is `297d95d`).
+  12. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
+  13. Only the seven files under "Scope" of the plan changed.
+- **Tests required:** 16 new integration tests in 10 functions against a real SQLite file that the real `migrate` command or SQLite alone made, most of them with a list of migrations of the test's own in the place of the pipeline's: no file; a store at the newest schema, given, with a unit of work on it kept and its connections enforcing foreign keys; a store at the newest schema of the pipeline's own list; a store that lacks three, two or one of three migrations; each of the four stores `migrate` refuses, held to what the real command then says; a file that is no database; a folder in the store's place; a relative path; and that no connection is left open, after a refusal and after the store was given. Every test of a refusal compares the file byte for byte. 1 new unit test of the advice. Planted defects in the module. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-063.md`
+
 ### DAT-061 – A command loads the countries
 - **Status:** NOT STARTED
 - **Objective:** One command loads the countries of the reference file into the store, and says what the loading found.
-- **Description:** Added on 2026-11-27 (PLAN-049), cut out of DAT-059. A command of `python -m motosphere` opens the store and loads the countries of the reference file (DAT-059, which puts the source of the countries in the store first, DAT-060), in one unit of work, and says on standard output what the loading found: how many countries were added and how many were as they were, and, by their codes, which countries the store says otherwise of and which the file does not have (PLAN-050), and that what the file says of the former waits in the review queue (DAT-062). A store that cannot be opened or is not at the newest schema, a damaged countries file and a source that is described otherwise are refused with their sentence on standard error and the exit code 1, and the store is left as it was. Run again, it writes nothing and says so. Nothing is fetched while it runs. What the published data must say of the licence is PUB-003. The name of the command, its sentences, and its exit code when the store says otherwise of a country are settled in the planner's trial.
+- **Description:** Added on 2026-11-27 (PLAN-049), cut out of DAT-059. A command of `python -m motosphere` is given the store by `store_to_work_on` (DAT-063) and loads the countries of the reference file (DAT-059, which puts the source of the countries in the store first, DAT-060), in one unit of work, and says on standard output what the loading found: how many countries were added and how many were as they were, and, by their codes, which countries the store says otherwise of and which the file does not have (PLAN-050), and that what the file says of the former waits in the review queue (DAT-062). A store that is not ready, which `store_to_work_on` says (DAT-063), a damaged countries file and a source that is described otherwise are refused with their sentence on standard error and the exit code 1, and the store is left as it was. Run again, it writes nothing and says so. Nothing is fetched while it runs. What the published data must say of the licence is PUB-003. The name of the command, its sentences, and its exit code when the store says otherwise of a country are settled in the planner's trial.
 - **Acceptance criteria:** the command, run for real on a new store, leaves the source and the 249 countries of the file in it and says so; run again it writes nothing and says so; a country the store says otherwise of, and one the file does not have, are named; each refusal gives its sentence, the exit code 1 and an unchanged store; `--help` names the command. The criteria are made exact in the plan, from the trial.
 - **Tests required:** unit tests of the command's sentences; integration tests that run the command for real against a real SQLite file; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
