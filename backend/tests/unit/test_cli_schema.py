@@ -53,7 +53,10 @@ def test_schema_is_in_the_help(capsys: pytest.CaptureFixture[str]) -> None:
         main(["--help"])
 
     assert exit_info.value.code == 0
-    assert "schema    say which schema the data store has" in capsys.readouterr().out
+    listed = capsys.readouterr().out.splitlines()
+    assert [line.split(maxsplit=1) for line in listed if line.startswith("    schema ")] == [
+        ["schema", "say which schema the data store has"]
+    ]
 
 
 def test_schema_has_its_own_help(capsys: pytest.CaptureFixture[str]) -> None:
