@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 44 | 43 |
+| 1 | Foundation (FND) | 44 | 44 |
 | 2 | Data store and published data (DAT, PUB) | 62 | 43 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-054 – A decided review item keeps its decision.
 
-**Current task, track B (globe):** FND-046 – The least Node.js is what the locked packages need.
+**Current task, track B (globe):** GLB-001 – The Cesium engine installed.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -883,7 +883,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-043.md`
 
 ### FND-046 – The least Node.js is what the locked packages need
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The project asks for the oldest Node.js that every package in the frontend's lock file runs on, which is 22.22.2, in the package file, the lock file and the README, and a repository check holds it there.
 - **Description:** Added on 2026-11-27 (PLAN-034), found by the planner's trial of GLB-001. `frontend/package.json` and the README say Node.js 22.12 or newer, but `jsdom` and `w3c-xmlserializer`, on which every unit test of the frontend runs, say in the lock file that they need 22.22.2, and seven more packages need a Node.js between 22.13 and 22.19. npm installs a package on an older Node.js with a warning only, and every computer that runs the gates has a newer one, so nothing failed; but the check of the tools a computer needs says `FOUND` for a Node.js 22.12, and the README tells a person that it is enough. The task changes that one number in three files and adds one file of repository checks, which read the range of every locked package and hold the least Node.js to the oldest that all of them allow. No package changes. It stands first on track B because the tasks of the globe add packages with needs of their own.
 - **Acceptance criteria:**
@@ -895,10 +895,10 @@ Windows 11. No database and no globe yet.
   6. No existing test changes; all tests pass. The type check of the tooling passes with no `ignore` and its lint with no `noqa`.
   7. `python scripts/check.py` reports 19 of 19 gates, with 53 repository checks, and 12 tests more in all than `main` gives at the commit the branch starts from (2416 when that is `1035375`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 12 new repository checks in 3 classes, standard library only: the reading of a range at the edges of each form, of forms that are refused, and of the oldest Node.js that made-up sets of ranges allow; the reading of made-up lock files, package files and texts; and five checks of the real package file, lock file and README. 51 planted defects, in what the project says, in the README, in the lock file and in the checks' own reading. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #143 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2416 passed, 0 failed, 0 skipped.", exit code 0 (repository checks 53: 41 before, 12 new); 51 planted defects, each against all repository checks, 51 of 51 detected with the results of the trial, the plan's 9 prove-it steps among them; `python scripts/tools.py` prints "FOUND    Node.js 22.23.4 (22.22.2 or newer is needed)". On GitHub, read by the planner from the runs and job logs: run 45922070914 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2416 passed, 0 failed, 0 skipped.", with 53 repository checks on both machines (Node.js 22.23.5), the three jobs after the gates skipped; run 45923249817 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 2416 / 0 tests (repository 53, script tests 206, backend 1774, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 51 / 0 planted defects detected; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-27. All 7 files are identical to the planner's trial. No existing test changed and no package was added, removed or updated: the lock file differs in one line.
+- **Commit:** `763aca2`
 - **Plan:** `docs/plans/FND-046.md`
 
 ---
