@@ -482,3 +482,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   browser on, none of about 54,000 with it off. The browser tests now
   start their browser with the feature off, and one of them sees on
   Windows that it is off (FND-054).
+- A unit test can no longer leave work of the page waiting when it
+  ends. A test that ends a moment before React has done the last of its
+  work could fail a run with "window is not defined" although every
+  test passed, and a test that does nothing wrong ends so now and then.
+  The set-up of the unit tests now watches what React asks the system
+  for and, after each test, lets it run until nothing is waiting
+  (FND-056).
