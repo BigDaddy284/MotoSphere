@@ -465,6 +465,10 @@ pipeline's command line. The settings and logging modules stay.
   columns every collected record has. The table knows the form of a
   code and not the standard's list: the countries themselves are
   loaded from a source whose licence allows it (DAT-012, DATABASE.md).
+  A source can say which country it is of (DAT-057), so the two tables
+  point to each other: a source is stored before its countries and is
+  said to be of one of them afterwards, and a country that a source is
+  of cannot be deleted.
 
 The schema is documented in DATABASE.md as tables are added.
 

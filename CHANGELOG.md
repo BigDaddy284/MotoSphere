@@ -384,6 +384,14 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   first table of collected records: every row says which source it
   came from, where, when and how, and how far it can be trusted. The
   table has no rows yet (DAT-011).
+- A source can say which country it is of: a new column of `source`,
+  which may be without a value, with an index, so that the sources of
+  one country are found. A country that a source is of cannot be
+  deleted. The fourteenth migration builds the table of the sources
+  anew for it, the first to change a table that holds rows: every
+  source keeps what it had and its key, every row that points to a
+  source points to the same one, and the key of a source that was
+  deleted is still not given again (DAT-057).
 
 ### Removed
 
