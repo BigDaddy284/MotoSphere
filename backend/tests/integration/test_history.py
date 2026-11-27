@@ -55,6 +55,7 @@ def test_the_history_is_these_migrations_in_this_order() -> None:
         "hold_one_doubt_to_one_review_item",
         "keep_the_decision_of_a_review_item",
         "hold_the_key_of_a_review_item_to_1_or_more",
+        "keep_a_decided_review_item_from_being_replaced",
     ]
 
 
@@ -743,6 +744,97 @@ def test_the_eleventh_migration_does_not_pass_over_a_trigger_of_its_name_that_is
     assert str(refusal.value.orig) == f"trigger {trigger} already exists"
     assert schema_version(store) == 10
     assert len(before) == 7
+    assert triggers(store) == before
+
+
+# An item of a store at version 10, with its key: what follows INSERT or REPLACE.
+AN_ITEM_AT_VERSION_10 = (
+    "INTO review_item (id, kind, record_table, record_id, other_record_id, reason, "
+    "state, decided_by, decided_at, created_at, updated_at) VALUES (?, 'possible duplicate', "
+    "'track', ?, ?, 'They have one name.', ?, ?, ?, '2026-11-27T05:00:00.000000+00:00', "
+    "'2026-11-27T05:00:00.000000+00:00')"
+)
+NOT_YET_DECIDED = ("open", None, None)
+DECIDED_AT_VERSION_10 = ("accepted", "Jo Example", "2026-11-27T05:30:00.000000+00:00")
+NEVER_REPLACED = "tr_review_item_decided_never_replaced"
+NEVER_REPLACED_BY_ANOTHER = "tr_review_item_decided_never_replaced_by_another"
+A_DECIDED_ITEM_IS_NEVER_REPLACED = "A decided review item (review_item) is never replaced."
+
+
+def test_the_twelfth_migration_makes_the_triggers_against_replacing_and_keeps_what_there_was(
+    store: Engine,
+) -> None:
+    # A store at version 10 could give an item a key below 1. This one
+    # has a decided item with the key -1, which is what SQLite shows for
+    # the key of a new row that names none, before the row is written.
+    migrate(store, MIGRATIONS[:10])
+    with store.begin() as connection:
+        connection.exec_driver_sql(f"INSERT {AN_ITEM_AT_VERSION_10}", (5, 7, 12, *NOT_YET_DECIDED))
+        for key, record, other in [(-1, 8, 9), (6, 10, 11)]:
+            connection.exec_driver_sql(
+                f"INSERT {AN_ITEM_AT_VERSION_10}", (key, record, other, *DECIDED_AT_VERSION_10)
+            )
+    migrate(store, MIGRATIONS[:11])
+    with store.connect() as connection:
+        items = connection.exec_driver_sql("SELECT * FROM review_item ORDER BY id").all()
+    before = (tables(store), indexes(store), triggers(store))
+
+    migrate(store, MIGRATIONS[:12])
+
+    assert tables(store) == before[0]
+    assert indexes(store) == before[1]
+    assert len(before[2]) == 8
+    assert triggers(store) == sorted(
+        [*before[2], (NEVER_REPLACED, "review_item"), (NEVER_REPLACED_BY_ANOTHER, "review_item")]
+    )
+    # The migration asks nothing of the items that are there and changes
+    # none. From then on neither decided item is replaced, by its key or
+    # as its doubt.
+    for statement, given in [
+        (f"INSERT OR REPLACE {AN_ITEM_AT_VERSION_10}", (6, 20, 21, *NOT_YET_DECIDED)),
+        (f"REPLACE {AN_ITEM_AT_VERSION_10}", (None, 8, 9, *NOT_YET_DECIDED)),
+        ("UPDATE OR REPLACE review_item SET id = 6 WHERE id = 5", ()),
+        ("UPDATE OR REPLACE review_item SET id = -1 WHERE id = 5", ()),
+    ]:
+        with pytest.raises(IntegrityError) as refusal, store.begin() as connection:
+            connection.exec_driver_sql(statement, given)
+        assert str(refusal.value.orig) == A_DECIDED_ITEM_IS_NEVER_REPLACED
+    with store.connect() as connection:
+        after = connection.exec_driver_sql("SELECT * FROM review_item ORDER BY id").all()
+    assert [item[0] for item in items] == [-1, 5, 6]
+    assert after == items
+    # A new item that names no key is stored as ever, though a decided
+    # item has the key SQLite shows for it before it is written.
+    with store.begin() as connection:
+        connection.exec_driver_sql(
+            f"INSERT {AN_ITEM_AT_VERSION_10}", (None, 20, 21, *NOT_YET_DECIDED)
+        )
+    with store.connect() as connection:
+        keys = connection.exec_driver_sql("SELECT id, state FROM review_item ORDER BY id").all()
+    assert keys == [(-1, "accepted"), (5, "open"), (6, "accepted"), (7, "open")]
+
+
+@pytest.mark.parametrize(
+    "trigger", [NEVER_REPLACED, NEVER_REPLACED_BY_ANOTHER], ids=["first", "second"]
+)
+def test_the_twelfth_migration_does_not_pass_over_a_trigger_of_its_name_that_is_there(
+    store: Engine, trigger: str
+) -> None:
+    # Where the trigger that is there has the name of the second of the
+    # two, the first is made before it, and taken back with the migration.
+    migrate(store, MIGRATIONS[:11])
+    with store.begin() as connection:
+        connection.exec_driver_sql(
+            f"CREATE TRIGGER {trigger} AFTER DELETE ON review_item BEGIN SELECT 1; END"
+        )
+    before = triggers(store)
+
+    with pytest.raises(OperationalError) as refusal:
+        migrate(store, MIGRATIONS[:12])
+
+    assert str(refusal.value.orig) == f"trigger {trigger} already exists"
+    assert schema_version(store) == 11
+    assert len(before) == 9
     assert triggers(store) == before
 
 

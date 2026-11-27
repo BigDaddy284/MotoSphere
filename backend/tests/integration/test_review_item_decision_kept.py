@@ -25,6 +25,7 @@ from motosphere.db.work import unit_of_work
 
 NEVER_EDITED = "A decided review item (review_item) is never edited."
 NEVER_DELETED = "A decided review item (review_item) is never deleted."
+NEVER_REPLACED = "A decided review item (review_item) is never replaced."
 FIRST = "2026-11-25T22:00:00.000000+00:00"
 LATER = "2026-11-26T09:30:00.000000+00:00"
 A_SOURCE = (
@@ -61,6 +62,8 @@ REJECTED = ("rejected", "Jo Example", FIRST, None)
 THE_TRIGGERS = [
     ("tr_review_item_decided_never_deleted", "review_item"),
     ("tr_review_item_decided_never_edited", "review_item"),
+    ("tr_review_item_decided_never_replaced", "review_item"),
+    ("tr_review_item_decided_never_replaced_by_another", "review_item"),
 ]
 # Every column of the table with a statement that gives it another value
 # than the accepted item, 2, and the rejected one, 3, hold. Each is tried
@@ -173,7 +176,7 @@ def queue(newest: Engine) -> Engine:
     return newest
 
 
-def test_the_table_of_the_review_queue_has_the_two_triggers_of_a_kept_decision(
+def test_the_table_of_the_review_queue_has_the_four_triggers_of_a_kept_decision(
     newest: Engine,
 ) -> None:
     assert triggers(newest) == THE_TRIGGERS
@@ -556,19 +559,15 @@ def test_a_store_made_from_the_models_has_the_triggers_and_refuses_the_same(
         "an open item made the same doubt",
     ],
 )
-def test_the_table_does_not_yet_keep_a_decided_item_from_being_replaced(
+def test_the_table_keeps_a_decided_item_from_being_replaced(
     queue: Engine, statement: str, given: tuple[object, ...]
 ) -> None:
     # A statement that says REPLACE takes the item it clashes with out and
-    # fires no trigger for it. The accepted item, 2, is gone afterwards.
-    # That a decided item is kept from this too is a task of its own, and
-    # this test is then changed with it.
-    with queue.begin() as connection:
+    # fires no trigger for it. Two triggers of their own ask before the
+    # new row is written (DAT-055), and the accepted item, 2, is as it was.
+    before = everything(queue)
+
+    with refused(NEVER_REPLACED), queue.begin() as connection:
         connection.exec_driver_sql(statement, given)
 
-    with queue.connect() as connection:
-        accepted = connection.exec_driver_sql(
-            "SELECT count(*) FROM review_item WHERE state = 'accepted'"
-        )
-        assert accepted.scalar_one() == 0
-    assert (3, "rejected", "Jo Example", None) in states(queue)
+    assert everything(queue) == before
