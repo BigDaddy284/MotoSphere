@@ -1580,6 +1580,22 @@ real tools printed, ask the real Python for its version, run the script on
 the computer that runs the tests, where all five tools must be ready, and
 run it once with a search path that holds no tool.
 
+The least Node.js is held to what the packages need (FND-046). A package
+in `frontend/package-lock.json` may say which Node.js it runs on, and npm
+installs it on an older one with a warning only. So
+`tests/repo/test_node_version.py`, part of the repository checks, reads
+the range every locked package gives and holds that the least version in
+`frontend/package.json` is the oldest Node.js that all of them allow: a
+package that needs a newer one fails the check, and so does a least
+version above what is needed. The lock file's own entry for the project,
+and every place where the README tells a person which Node.js to have,
+must say the same number, written the same way. The checks read the forms
+of range the lock file uses (`>=22.12.0`, `^20.19.0`, `20`, and several
+with `||` between) and fail on any other form rather than guess at it.
+How they read a range, a lock file and a text is tested on ranges, lock
+files and texts made up for the purpose, so that the checks of the real
+files cannot pass by reading wrongly.
+
 ## Latest results
 
 Results are recorded per task in [PROGRESS.md](PROGRESS.md).
