@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 58 | 56 |
+| 1 | Foundation (FND) | 58 | 57 |
 | 2 | Data store and published data (DAT, PUB) | 71 | 54 |
 | 3 | Interactive 3D Earth (GLB) | 28 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-061 – A command loads the countries.
 
-**Current task, track B (globe):** FND-059 – The other browser tests run in a browser without 3D pictures.
+**Current task, track B (globe):** FND-060 – A browser test can read a pixel of what the page shows.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -1468,7 +1468,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/FND-058.md`
 
 ### FND-059 – The other browser tests run in a browser without 3D pictures
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The browser of every test that is not a globe test is started so that a page gets no 3D picture, so that no test outside the project of the globe can draw one.
 - **Description:** Added on 2026-11-27 (PLAN-053); made exact on 2026-11-27 from the planner's trial. FND-058 holds the globe tests to one at a time, because two pictures drawn in software at once starve each other on GitHub's Windows machine. That holds only as long as no other test draws one, and once the globe is in the page (GLB-002) every browser test that opens the page would. So the browser of the project `chromium` is started with one word more, `--disable-3d-apis` (`NO_3D_SWITCH` in `frontend/e2e/browser.ts`, in `TEST_BROWSER` after the list of features to turn off). A page that asks such a browser for a 3D picture of either kind (`getContext('webgl2')`, `getContext('webgl')`) is given nothing, still gets a flat picture, and the browser says nothing on the console. In the trial two other words were planted and do not do it: `--disable-gpu` leaves a page both kinds, and `--disable-webgl2` takes only the newer one away; a word the browser does not know is not refused, and the page is then given a 3D picture, which is what the test that asks the page is for. The browser of the globe tests (`GLOBE_BROWSER`) names its words itself and is as it was; a test now holds that it is not told the word. Two existing tests are named for what is now so, with no line inside them changed. Nothing under `frontend/src` changes, and until the globe is in the page nothing changes for a test that was there. What the page shows in such a browser is GLB-026.
 - **Acceptance criteria:**
@@ -1482,10 +1482,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   8. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   9. Only the seven files under "Scope" of the plan changed.
 - **Tests required:** 2 new browser tests in the project `chromium`: how its browser was started, and what a page of the site gets when it asks for each kind of picture. 1 new browser test in the project `globe`: its browser is not told the word. The 9 tests of the globe's browser that were there, one of which shows thirty 3D pictures. Planted defects in the word, in both browsers and in the settings. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #209 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32, Playwright 1.63.0 with its Chromium 153.0.8010.12): the full run, 19 of 19 gates passed, "Tests: 3532 passed, 0 failed, 0 skipped.", exit code 0 (browser tests 273: 270 before, 3 new). The planner's 16 planted defects, one at a time, in the pull request (three in the word, five in the browser of the other tests, three in the browser of the globe tests, five in the settings), each against the 17 tests of `e2e/browser.spec.ts` and `e2e/globe` with two workers: 16 of 16 detected, each by the same tests as in the planner's trial. The plan's five prove-it steps, run by the planner too: each fails the tests the plan names (3, 2, 2, 3 and 3 tests). On GitHub, read by the planner from the runs and job logs: run 46075196263 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3532 passed, 0 failed, 0 skipped.", with 273 browser tests on both machines, the ten globe tests the last ten of them, after the 263 others, which ran in the browser without 3D pictures, the three jobs after the gates skipped; run 46076839457 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3532 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3532 / 0 tests on both machines on GitHub for `main` and for the pull request, and locally (repository 82, script tests 219, backend 2552, frontend unit 406, browser 273); all 19 gates passed; 16 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 7 files are the same change as the planner's trial. Two existing tests are named anew, as the plan names them, with no line inside them changed. Nothing under `frontend/src` changed, and no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #208, run 46073457466). The builder's report names the same counts as the planner found, and for the five prove-it steps the same numbers of failing tests; it worked with Node 22.23.5 and started from `main` at `ec548a3`. The builder reports of its own environment, which the planner has not seen: a wrapper around the browser there starts Chromium 158.0.8127.36 in place of Playwright's 153.0.8010.12 and takes `--use-angle=swiftshader` away, so the builder set `CHROMIUM_HEADLESS_SHELL=playwright` and `CHROMIUM_KEEP_GL_SWITCHES=1` for every run; without them the two new tests of the other browser passed there too, so that wrapper lets `--disable-3d-apis` through. GitHub's machines have no such wrapper.
+- **Commit:** `1144a61`
 - **Plan:** `docs/plans/FND-059.md`
 
 ### FND-060 – A browser test can read a pixel of what the page shows

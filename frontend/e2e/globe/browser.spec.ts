@@ -5,6 +5,7 @@ import { chromium } from '@playwright/test'
 import {
   FEATURES_OFF,
   GLOBE_BROWSER,
+  NO_3D_SWITCH,
   SOFTWARE_3D_SWITCH,
   TEST_BROWSER,
   TEST_BROWSER_SWITCH,
@@ -44,7 +45,7 @@ const SHOW_3D_PICTURES = `new Promise((resolve, reject) => {
 })`
 
 test.describe('the browser of the globe tests', () => {
-  test('is started as the browser of every test, and told to draw 3D pictures in software', async () => {
+  test('is started with the features of every test turned off, and told to draw 3D pictures in software', async () => {
     // Inside a test, Playwright starts a browser with the options of the
     // project unless the call says otherwise.
     const started = await chromium.launchServer()
@@ -60,6 +61,18 @@ test.describe('the browser of the globe tests', () => {
       ...TEST_BROWSER,
       args: [TEST_BROWSER_SWITCH, SOFTWARE_3D_SWITCH],
     })
+  })
+
+  test('is not told to give its pages no 3D picture', async () => {
+    const started = await chromium.launchServer()
+    try {
+      const told = started.process().spawnargs
+      expect(told.filter((word) => word.startsWith(NO_3D_SWITCH))).toEqual([])
+    } finally {
+      await started.close()
+    }
+    expect(GLOBE_BROWSER.args).toEqual([TEST_BROWSER_SWITCH, SOFTWARE_3D_SWITCH])
+    expect(TEST_BROWSER.args).toContain(NO_3D_SWITCH)
   })
 
   test('shows 3D pictures, drawn in software, without a word of its own', async ({ page }) => {
