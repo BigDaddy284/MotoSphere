@@ -28,7 +28,7 @@ jobs:
   gates:
     name: All gates (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 90
     strategy:
       # Each system gives its own result: one failing does not stop the other.
       fail-fast: false
@@ -72,7 +72,41 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run every gate
+        if: runner.os != 'Windows'
         run: python scripts/check.py
+
+      # TRIAL ONLY (FND-057), Windows: where the time of the backend tests goes.
+      - name: TRIAL the machine
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          "TEMP=$env:TEMP"
+          "RUNNER_TEMP=$env:RUNNER_TEMP"
+          "processors=$env:NUMBER_OF_PROCESSORS"
+          Get-PSDrive -PSProvider FileSystem | Format-Table Name, Used, Free, Root
+          Get-MpComputerStatus | Format-List AMServiceEnabled, AntivirusEnabled, RealTimeProtectionEnabled, OnAccessProtectionEnabled, BehaviorMonitorEnabled
+          Get-MpPreference | Format-List DisableRealtimeMonitoring, ExclusionPath, ExclusionProcess, ExclusionExtension
+
+      - name: TRIAL what a store costs, by where its file is
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: backend
+        run: |
+          uv sync --locked
+          uv run python ../trial/storebench.py "$env:TEMP\storebench" "$env:RUNNER_TEMP\storebench"
+
+      - name: TRIAL the backend tests with their folders on the work disk
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: backend
+        run: uv run pytest -q --durations=25 -p no:cacheprovider --basetemp="$env:RUNNER_TEMP\pytest-trial"
+
+      - name: TRIAL the backend tests as they are run now
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        working-directory: backend
+        run: uv run pytest -q --durations=25 -p no:cacheprovider
+
 
   # The three jobs below publish the site and check it. They run for a
   # change to `main` only, never for a pull request, and only after every
