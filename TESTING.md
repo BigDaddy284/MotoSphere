@@ -1717,6 +1717,11 @@ the test and taken away after it): which packages of a lock file count,
 one for every place a package is put, and what the step refuses in a
 lock file (no list of packages, a package with no version or with no
 licence named); which files of a package hold a licence, by their names,
+in its top folder and in every folder beneath it (FND-051), each given by
+its path, the files of a folder before those of the folders in it; that
+the packages put beneath a package, in a folder `node_modules` at any
+depth, are not read as part of it, and that a link to a folder is not
+followed, so that a folder which leads back to itself ends;
 and that a text is kept letter for letter but for its line ends and the
 empty lines around it; that a file that is not text, or is empty, is
 refused; that a package which must be there and is not installed stops
@@ -1726,11 +1731,24 @@ brings no text and is not on the list, one on the list that brings a
 text, one on the list that is not shipped, and one whose licence is said
 to come with a package that brings none.
 
+A computer gives the entries of a folder in an order of its own: Linux
+by their names, Windows without regard to capital letters. In these unit
+tests every folder gives them with the first entry last (a stand-in for
+the one call of Node.js that lists a folder, which changes nothing but
+the order), so that the order of the texts in the file is the work of
+the step on every computer.
+
 On this project as it is installed (the same file): every package the
 project names as shipped is in the file with a text of its own, no
 package that is only for the work is in it, React comes with the words
 of its licence, and the packages without a text of their own are the
-five a person has read, each given with a package that is there.
+five a person has read, each given with a package that is there. Every
+licence file of every such package is among the texts, at any depth of
+its folder: the test finds the files another way than the step does,
+from the list of all the files of a package as Node.js gives it. One
+package brings a second licence beneath its top folder today,
+`protobufjs` with `google/LICENSE`, and a test holds that both are
+there.
 
 On the built site (`frontend/e2e/licences.spec.ts`, browser tests): the
 file is served as plain text under the path of the site and not at the

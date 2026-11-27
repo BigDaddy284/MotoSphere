@@ -179,7 +179,10 @@ Rules:
   beside the page: the name, the version and the licence of every
   package the lock file installs that is not only for the work, each
   with the licence files the installed package brings, letter for
-  letter. The build fails when a package brings no such file, unless the
+  letter. A package may bring code of others in a folder of its own with
+  their licence beside it, so the step looks into every folder of the
+  package, but not into `node_modules` beneath it, where other packages
+  are put. The build fails when a package brings no such file, unless the
   step names the package whose file gives its licence; a person who has
   read both puts that there. The source of the page says in a comment
   where the file is.
