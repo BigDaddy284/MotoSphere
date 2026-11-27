@@ -191,8 +191,8 @@ def opened(store: Engine, venue: int = 1, **given: Any) -> ReviewItem:
         return asked(work, work.get_one(ProofVenue, venue), **given)
 
 
-def test_the_module_gives_its_two_functions_by_name() -> None:
-    assert review.__all__ == ["open_field_doubt", "open_possible_duplicate"]
+def test_the_module_gives_its_functions_by_name() -> None:
+    assert review.__all__ == ["decide", "open_field_doubt", "open_possible_duplicate"]
 
 
 @pytest.mark.parametrize("kind", OF_A_FIELD)
