@@ -411,6 +411,13 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   store does not have it, once, switched off; a source of that name
   that is described otherwise is refused and left as it is. Nothing
   calls it yet (DAT-060).
+- The loading of the countries: one function adds every country of the
+  reference file that the store does not have, each naming the source,
+  the release it is from and the moment it was loaded. It changes
+  nothing and deletes nothing: a country the store says otherwise of,
+  and a country the file does not have, are left as they are and
+  named. Loaded again, it writes nothing. No command calls it yet
+  (DAT-059).
 
 ### Removed
 
