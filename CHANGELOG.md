@@ -335,12 +335,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   is given. An item that was decided already is refused and stays as
   it was. An item that is not stored, and anything but one of the two
   decisions, are each refused in one sentence (DAT-052).
-- The store itself keeps a decision on a review item. The tenth
-  migration makes two triggers on `review_item`: a row that was
-  decided is neither edited, in any column, nor deleted, whoever
-  writes to the file, and SQLite says so in one sentence. An open
-  item is changed, decided and deleted as before. A decided item is
-  not yet kept from a statement that says `REPLACE` (DAT-054).
 
 ### Removed
 

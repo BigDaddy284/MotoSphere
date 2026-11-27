@@ -89,11 +89,10 @@ def everything(store: Engine) -> list[tuple[object, ...]]:
 
 
 def triggers(store: Engine) -> list[tuple[str, str]]:
-    """Every trigger of the table of the history, by name."""
+    """Every trigger of the store with its table, by name."""
     with store.connect() as connection:
         found = connection.exec_driver_sql(
-            "SELECT name, tbl_name FROM sqlite_master "
-            "WHERE type = 'trigger' AND tbl_name = 'record_change' ORDER BY name"
+            "SELECT name, tbl_name FROM sqlite_master WHERE type = 'trigger' ORDER BY name"
         )
         return [(str(name), str(table)) for name, table in found]
 
@@ -128,7 +127,7 @@ def a_change(**given: object) -> RecordChange:
     )
 
 
-def test_the_table_of_the_history_has_its_four_triggers_and_no_other(newest: Engine) -> None:
+def test_the_store_has_the_four_triggers_of_the_history_and_no_other(newest: Engine) -> None:
     assert triggers(newest) == THE_TRIGGERS
 
 

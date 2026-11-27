@@ -6,7 +6,7 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 10 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 9 and
 has five tables: `source`, that of the information sources (DAT-006),
 `source_offer`, which says what kinds of information each of them offers
 (DAT-040; see "The information sources" for both), `collection_run`,
@@ -20,9 +20,7 @@ changes of one record and the changes one run caused without reading
 the whole table (DAT-049). The fifth is `review_item`, the review
 queue: what is in doubt and waits for a person's decision (DAT-010;
 see "The review queue"), where the store itself refuses the same doubt
-a second time (DAT-050) and keeps a decision: an item that was decided
-is neither edited nor deleted (DAT-054; see "A decision is kept"). One
-function
+a second time (DAT-050). One function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"), one puts two records that may
 be the same thing to the review queue (DAT-051; see "Opening a possible
@@ -174,7 +172,7 @@ newest schema (DAT-024). It opens the store at `MOTOSPHERE_STORE_PATH`
 with `open_store`, which makes the file if it is not there, calls
 `migrate`, and writes one sentence to standard output, with the file's
 whole path and the store's version: "A new data store was made: …", "The
-data store was brought up to date: … went from schema version 2 to 10." or
+data store was brought up to date: … went from schema version 2 to 9." or
 "The data store is up to date: …". A store that cannot be opened, or that
 is refused, gives its one sentence on standard error, with nothing before
 or after it, and the exit code 1, and is left as it is. An error inside a
@@ -188,8 +186,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 10." or "The data store lacks 7
-migrations: … is at schema version 3, and the newest is version 10." In
+is up to date: … is at schema version 9." or "The data store lacks 6
+migrations: … is at schema version 3, and the newest is version 9." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -210,7 +208,6 @@ list of them, and nothing else (DAT-006):
 | 7 | `index_the_record_changes` | Makes the two indexes of `record_change`: of the changes of one record, `ix_record_change_record_table_record_id`, and of the changes one run caused, `ix_record_change_collection_run_id` | DAT-049 |
 | 8 | `make_the_review_items` | Makes the table of the review queue, `review_item`, and the index of the sources its items name, `ix_review_item_source_id` | DAT-010 |
 | 9 | `hold_one_doubt_to_one_review_item` | Makes the two indexes by which one doubt is one review item, each of which lets no two rows be alike and is over the items of one shape: `ix_review_item_record_table_record_id_other_record_id` and `ix_review_item_record_table_record_id_field_source_id_source_value` | DAT-050 |
-| 10 | `keep_the_decision_of_a_review_item` | Makes the two triggers by which a decided row of `review_item` is neither edited nor deleted | DAT-054 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -986,13 +983,12 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have five tables, six indexes and six triggers to
+Today the two have five tables, six indexes and four triggers to
 agree on: `source`, `source_offer`, `collection_run`, `record_change`,
 `review_item`, the index of the runs of one source, the two indexes
-and the four triggers of `record_change`, and the three indexes and
-the two triggers of `review_item`. For an index that is over some
-rows only, which rows is part of the statement, and so of what must
-agree.
+and the triggers of `record_change`, and the three indexes of
+`review_item`. For an index that is over some rows only, which rows
+is part of the statement, and so of what must agree.
 That the comparison can fail is proven with two models and migrations of
 the tests' own (`TESTING.md`).
 
@@ -1862,9 +1858,8 @@ and decided. A possible duplicate is opened by
 `open_possible_duplicate` (DAT-051; see "Opening a possible duplicate"
 below), and a doubt about a field by `open_field_doubt` (DAT-053; see
 "Opening a doubt about a field"). An item is decided by `decide`
-(DAT-052; see "Deciding an item"), which decides an item once, and
-the table itself keeps a decision, whoever writes to it (DAT-054; see
-"A decision is kept").
+(DAT-052; see "Deciding an item"), which decides an item once. That
+the table itself keeps a decision, whoever writes to it, is DAT-054.
 
 | Column | Holds | Rule |
 |---|---|---|
@@ -2015,15 +2010,14 @@ the table itself keeps a decision, whoever writes to it (DAT-054; see
   neither index: the migration does not choose which of two items to
   keep, and a person looks. No real store has items yet, because
   nothing collects yet.
-- **What the table does not hold yet.** A decided item is kept from
-  being edited and from being deleted (see "A decision is kept"), but
-  not yet from being replaced: a statement that says `INSERT OR
-  REPLACE` puts its new row in the place of the item it would clash
-  with, decided or not. Nothing in the store's code says that, and
-  that a decided item is kept from it is DAT-055. An open item can be
-  deleted. Nothing holds the moment of a decision to the moment the
-  item was stored. A test puts the first on record, and is changed by
-  the task that closes it.
+- **What the table does not hold yet.** A decided item can be put back
+  to open, and any item can be deleted (DAT-054). A statement that
+  says `INSERT OR REPLACE` is not refused either: SQLite puts the new
+  row in the place of the item it would clash with. Nothing in the
+  store's code says that, and that a decided item is kept from it
+  belongs to DAT-054 too. Nothing holds the moment of a decision to
+  the moment the item was stored. A test puts the first on record,
+  and is changed by the task that closes it.
 - **Not collected records.** The table is on the list of the tables
   that hold no collected records (see "Every table says where its
   records came from, or why not"): an item is the store's own record
@@ -2263,78 +2257,11 @@ What it refuses before anything is changed, each with one sentence:
   calls writes it first.
 - **What it does not do, and what is not done yet.** It does not say
   who may decide: `by` is a name, and the administration will say
-  whose. It does not hold the name to a list of people. The function
-  refuses a second decision in its own words, before anything is
-  written; a statement written past the function is refused by the
-  table (see "A decision is kept").
-
-### A decision is kept
-
-"Preserve original records and update history wherever practical."
-(CLAUDE.md §11). A person's decision on a doubt is such a record: the
-code that later merges two records, or gives a field another value,
-goes by it. The tenth migration (`keep_the_decision_of_a_review_item`,
-DAT-054) makes two triggers on `review_item`, and the model makes the
-same two wherever the table is made from it (see "The models and the
-migrations agree"):
-
-| Trigger | Fires | What SQLite says |
-|---|---|---|
-| `tr_review_item_decided_never_edited` | Before a row is changed whose state was not `open` | "A decided review item (review_item) is never edited." |
-| `tr_review_item_decided_never_deleted` | Before a row is deleted whose state was not `open` | "A decided review item (review_item) is never deleted." |
-
-- **An item that was decided is as it is for good.** It is not put
-  back to open and not given the other decision, another person or
-  another moment. No other column changes either: not its note, its
-  reason, its record, its source, what the source says, its key, or
-  the moment it says it was last changed. The whole row is the record
-  of what was decided, and about what. An item whose reason or record
-  could still change would come to say that a person decided
-  something they never saw.
-- **The note too.** `decide` takes a note with the decision. What
-  comes to mind afterwards is not written onto the decided item;
-  where it is written is for the administration to say (Phase 10).
-- **The triggers ask what the item was before the statement**
-  (`OLD.state != 'open'`), not what it would become. So an open item
-  is changed as before, and to decide it is such a change, by `decide`
-  or with plain SQL. From the statement that decides it on, the item
-  is kept. A change that would change nothing (`SET state = state`)
-  is refused as well: SQLite fires the trigger for every row a
-  statement meets, whatever the row would hold afterwards.
-- **An open item can still be deleted.** Whether a doubt that was
-  opened may be taken back is not decided here, and nothing in the
-  store's code deletes one.
-- **A new item can still be stored as decided**, in one statement:
-  the triggers are for a row that is there.
-- **SQLite stops the statement, and no more.** What the statement had
-  done to other rows before it met the decided item is taken back
-  with it. What the work did before the statement stays, and code
-  that catches the refusal can go on. In a unit of work nothing
-  catches it, so the unit fails as a whole. A statement that is told
-  to pass over what is refused (`UPDATE OR IGNORE`) is refused all
-  the same.
-- **In the file, not in the code**, as with the history (see "The
-  history is only added to"): the refusal holds on a connection the
-  store's code did not open, with foreign keys off, and through the
-  models as past them. A statement that meets no decided item is not
-  refused, and neither is one in an empty table.
-- **A store that holds decided items already** is given the two
-  triggers and nothing else. The migration reads and changes no row:
-  the items are held from then on as they are. No real store has
-  items yet.
-- **What is not kept yet: an item that is replaced.** `INSERT OR
-  REPLACE`, `REPLACE` and `UPDATE OR REPLACE` take out the row their
-  new row clashes with, by its key or as the same doubt (the indexes
-  of DAT-050), and SQLite fires no trigger for a row it takes out in
-  that way. A decided item can still be lost so. Nothing in the
-  store's code says `REPLACE`. To close it, the store must ask before
-  every new and every changed row whether it would take the place of
-  a decided item, by the key and by both indexes, which is a task of
-  its own (DAT-055). A test puts the gap on record, with four
-  statements, and is changed by that task.
-- **Whoever can change the schema can take a trigger away.** The test
-  of the models and the migrations fails when one of the two is
-  missing from either.
+  whose. It does not hold the name to a list of people. And it is the
+  function that refuses a second decision, not yet the table: a
+  statement written past the function can still put a decided item
+  back to open or delete it. That the store itself refuses that is
+  DAT-054.
 
 ## What the store relies on in SQLite
 
