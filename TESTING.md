@@ -865,9 +865,10 @@ sources, two more that were deleted, so that the keys have a gap and
 the highest key given is above every key that is there, and a row in
 each of the four tables that point to a source: every source has what
 it had, its key too, and is of no country, every row of the four tables
-is as it was, no pointer is broken, the two copies are gone, and the
-seven indexes and ten triggers are there with the new index beside
-them; the key of a deleted source is not given again afterwards, in a
+is as it was, the highest key each table has given is as it was, no
+pointer is broken, the two copies are gone, and the seven indexes and
+ten triggers are there with the new index beside them; the key of a
+deleted source is not given again afterwards, in a
 table without sources too, whether it ever had one or not; the rows are
 held to their sources again, and a source to a country that is there;
 and it fails, with the store left at its version, the table without the

@@ -950,7 +950,7 @@ OF_A_SOURCE_AT_VERSION_13 = [
 ]
 # What a store at version 13 holds of its sources: every row of the four
 # tables whose rows point to a source, the sources themselves with the
-# columns they had then, and the highest key the table of the sources gave.
+# columns they had then, and the highest key each table gave.
 HELD_AT_VERSION_13 = {
     "source_offer": "SELECT * FROM source_offer ORDER BY id",
     "collection_run": "SELECT * FROM collection_run ORDER BY id",
@@ -961,7 +961,7 @@ HELD_AT_VERSION_13 = {
         "terms_address, licence, usage_restrictions, terms_read_at, switched_on, created_at, "
         "updated_at FROM source ORDER BY id"
     ),
-    "the highest key of a source": "SELECT name, seq FROM sqlite_sequence WHERE name = 'source'",
+    "the highest key of each table": "SELECT name, seq FROM sqlite_sequence ORDER BY name",
 }
 
 
@@ -1084,9 +1084,17 @@ def test_the_fourteenth_migration_gives_the_sources_the_column_and_keeps_what_th
         "review_item": 1,
         "country": 1,
         "source": 2,
-        "the highest key of a source": 1,
+        "the highest key of each table": 5,
     }
-    assert held["the highest key of a source"] == [("source", 4)]
+    # The highest key of the sources is above that of every source that
+    # is there, and the migration leaves those of the other tables alone.
+    assert held["the highest key of each table"] == [
+        ("collection_run", 1),
+        ("country", 1),
+        ("review_item", 1),
+        ("source", 4),
+        ("source_offer", 2),
+    ]
     assert [key for key, *_ in held["source"]] == [1, 3]
     assert held_at_version_13(store) == held
     with store.connect() as connection:

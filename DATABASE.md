@@ -1133,6 +1133,7 @@ its tracks. The column `country_id` holds the key of a row of `country`
   to the next one. So the migration reads the highest key before it
   drops the table (`source_key_before`) and puts it back after filling
   it. A table that never gave a key has none before and none after.
+  The highest keys of the other tables are not touched.
 - **The migration is all or nothing**, like every migration. Where a
   table of the name of one of its two copies is there already, or an
   index of the name of its index, it fails and the store is as it was:
