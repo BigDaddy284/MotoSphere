@@ -2284,15 +2284,29 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-012.md`
 
 ### DAT-058 – A kind of source for reference lists
-- **Status:** NOT STARTED
-- **Objective:** A source can be described as a publisher of reference lists, so that the source of the countries is registered as what it is.
-- **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012. A source is described by one of twelve kinds (`SourceCategory`, DAT-039), each a kind of website of the sport. A project that keeps the lists of a standard, as iso-codes does, is none of them, and the record of DAT-006 left that to the trial of DAT-012. The list gains one text for it, and a migration lets the table `source` take it, because the table's check names the texts. The text and its place in the list are settled in the planner's trial. DESIGN.md §7.1 names the twelve; the thirteenth is this project's, and `DATABASE.md` and `DATA_SOURCES.md` say so.
-- **Acceptance criteria:** the list has the new kind, with what it means; after the migration the table takes a source of that kind and still refuses every text that is not of the list; every source that is there keeps what it had, its key too; the model and the migration agree; `DATA_SOURCES.md` gives the row of iso-codes its category.
-- **Tests required:** unit tests of the list; integration tests against a real SQLite file, with the migration applied to a store that holds sources and what points to them; planted defects; the full run of all gates on both machines.
+- **Status:** IN PROGRESS
+- **Objective:** A source can be described as a keeper of reference lists, so that the source of the countries is registered as what it is.
+- **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012; settled in the planner's trial. A source is described by one of twelve kinds (`SourceCategory`, DAT-039), each a kind of website of the sport. A project that keeps the lists of a standard, as iso-codes does, is none of them, and `DATA_SOURCES.md` left its category open. The list gains one text, `reference list`, as `SourceCategory.REFERENCE`, last: whoever keeps a list that other records are described by. It is not `reference data`, which is a text of the list of the kinds of information: a source of the kind `reference list` offers `reference data`. DESIGN.md §7.1 names the twelve and is not changed; the thirteenth is this project's own, and `DATABASE.md` and `DATA_SOURCES.md` say so. The check of the column `category` names the texts it takes, and SQLite cannot change a check of a table that is there, so the fifteenth migration, `let_a_source_be_a_reference_list`, builds the table anew as the fourteenth did (DAT-057), statement for statement: the foreign keys are checked when the transaction ends, the rows are copied aside, the table is dropped, made again and filled from the copy, the highest key it has given is put back, and the copies are dropped. Three things differ: the check names thirteen texts, a source keeps its country, and the index `ix_source_country_id`, which goes with the table, is made again as the last statement. The four tables whose rows point to a source are not touched. The schema goes to version 15. The planner's trial has 21 new tests and detects 44 of 44 planted defects.
+- **Acceptance criteria:**
+  1. `SourceCategory` has thirteen texts: the twelve as they were, in their order, and `reference list` last, as `SourceCategory.REFERENCE`.
+  2. `MIGRATIONS` has fifteen migrations, the last `let_a_source_be_a_reference_list`; the first fourteen are unchanged, letter for letter.
+  3. A store at version 14 refuses a source of the kind `reference list`; after the migration it takes one, and a source of each of the twelve.
+  4. After the migration every text that is not of the list is refused as before: the new text with a capital, with white space after it, with two spaces in it, in the plural, its first word alone, and `reference data` among them.
+  5. Every source that was in the store has all it had: its key, every column, its country. Every row of `source_offer`, `collection_run`, `review_item` and `country` is as it was, and `PRAGMA foreign_key_check` finds nothing.
+  6. The highest key the table has given is as it was, in a table with sources, in one whose sources were all deleted and in one that never had one.
+  7. Of all the tables and indexes, as SQLite holds them, only `source` is written otherwise than before, and only in the one text more. The index `ix_source_country_id` is there again, over `country_id`.
+  8. Where the migration fails, at a table of the name of either copy or at its last statement, the store is at version 14 and as it was.
+  9. The models and the migrations agree: the test of the models and the migrations passes unchanged.
+  10. `DATA_SOURCES.md` gives iso-codes the category `reference list`, and `DATABASE.md` says that the thirteenth kind is this project's own.
+  11. `python scripts/check.py` reports 19 of 19 gates, with 2441 backend tests, and 21 tests more in all than `main` gives at the commit the branch starts from (3385 when that is `9243163`).
+  12. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
+  13. Only the nine files under "Scope" of the plan changed.
+- **Tests required:** 17 new tests of the fifteenth migration in eight functions, on a real SQLite file, in a store at version 14 that holds sources with a gap in their keys, one of them of a country, and a row in each of the four tables that point to a source: what every table and index is written as before and after, every row, the highest key, the foreign keys, the thirteen kinds taken and eight texts refused, and the migration failing at a copy and at its last statement. 1 new unit test of the place of the new kind in the list. 3 more cases of tests that run once for each migration or each text. Two existing tests change with the list (the names of the migrations; the texts and the number of the kinds). Planted defects in the model and the migration. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-058.md`
 
 ### DAT-059 – The countries are loaded into the store
 - **Status:** NOT STARTED
