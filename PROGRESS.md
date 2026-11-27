@@ -8,9 +8,9 @@ references are copied from real output, never estimated.
 
 - **Phases:** 2 – Data store and published data (track A) and 3 – Interactive 3D Earth (track B), side by side since 2026-11-27 (PLAN-033); Phase 1 – Foundation is complete
 - **Current task, track A (data store):** DAT-054 – A decided review item keeps its decision (`IN PROGRESS`, with a builder)
-- **Current task, track B (globe):** FND-047 – The licences of the shipped packages go with the site (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 89 of 277
-- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (2440 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store has its first four tables, and no rows yet: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (there are nine so far, which make the tables of the information sources, of what they offer, of the collection runs and of the changes to records, an index that takes SQLite straight to the runs of one source, the triggers by which the history of the records is only added to, two indexes that take SQLite straight to the changes of one record and to the changes one run caused, the table of the review queue, where what is in doubt waits for a person's decision, and the two indexes by which the store refuses the same doubt a second time; one function puts two records that may be the same thing to that queue, another what a source says of a field of a record, and a third puts down a person's decision on an item, and nothing calls them yet); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, and only `migrate` writes to it; there is a base for all models, which makes every table strict and names its constraints and indexes by one rule, and a test that holds every table to that; a time is stored as text in one form, in UTC with its offset written out, a time without an offset is refused, and a model's `datetime` column gets that type from the base; every model gets its key from the base, a whole number `id` that SQLite never gives twice, and the two times `created_at` and `updated_at`, which the store's code sets from the store's one clock; the test that holds every table to the rules names a table without that key or without those two times, and a name that more than one constraint or index of a table has; a model can say of a column that its text must not be empty, and SQLite itself then refuses empty text in it, also text of nothing but white space, and the test that holds every table to the rules names such a column whose table is without the check for it; any column type can bring the check for its column in that way; a model can say of a column that it is yes or no, and SQLite itself then refuses every number but 1 and 0 in it; a model can say that a column's value is one of a list the code knows, and SQLite itself then refuses any text that is not on that list; a model can say that a column is a web address, and SQLite itself then refuses text that does not begin as one or has white space in it; the store has its first table, that of the information sources, each described by one of twelve kinds of source and one of ten ways of collecting, and switched off until a person has read its terms; a second table says which of nine kinds of information each source offers, and a source that has offers cannot be deleted; a third table records every collection run, with its source, its start and end, how it ended and what it counted, and one function, `mark_interrupted`, marks the runs a dead job left running as interrupted; another, `standing_of`, says how a source is doing (its last attempt, its last success, its last error and its health) by reading its runs, and stores none of it; the code has the two lists that say how far a collected record can be trusted, three levels of confidence and four verification statuses from official to unverified, and no table has a column of them yet; a model can say that a column is a calendar day, which is kept as text such as `2026-11-24` with no time made up for it and which the store refuses when no calendar has it, and no table has such a column yet either; the columns by which every collected record says where it came from are one set in the code, which a model of collected records takes whole, and with them an index that takes SQLite straight to the records of one source, and no table has them yet; a rule names every table that neither has those columns nor is on the list of the tables that hold no collected records, where each stands with its reason, and a test holds the real schema to it; one table is there to keep, for one field of one record, what it held before it was changed and what it holds now, with the collection run or the person that caused the change, and one function changes a stored record and writes that history in the same unit of work, so that neither is kept without the other, which nothing calls yet because no table holds records; that history is only added to, because the store itself refuses to edit, delete or replace a row of it, whoever writes to the file; the migrations are written in a module of their own, as plain SQL that names nothing of the code; one test holds the models and the migrations together, and fails with a sentence for each table or index that is not the same in both (`DATABASE.md`). No globe yet: its engine, `@cesium/engine` with `@cesium/core`, is installed and tested as installed, and nothing of the application uses it so far.
+- **Current task, track B (globe):** FND-050 – The licences of the shipped packages are ones the project has accepted (`NOT STARTED`, the planner is trialling it and writing its plan)
+- **Tasks verified:** 90 of 278
+- **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with four commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; and `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar takes the lines it needs, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (2515 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store has its first four tables, and no rows yet: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (there are nine so far, which make the tables of the information sources, of what they offer, of the collection runs and of the changes to records, an index that takes SQLite straight to the runs of one source, the triggers by which the history of the records is only added to, two indexes that take SQLite straight to the changes of one record and to the changes one run caused, the table of the review queue, where what is in doubt waits for a person's decision, and the two indexes by which the store refuses the same doubt a second time; one function puts two records that may be the same thing to that queue, another what a source says of a field of a record, and a third puts down a person's decision on an item, and nothing calls them yet); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate` and `schema` are the only commands that use the store, and only `migrate` writes to it; there is a base for all models, which makes every table strict and names its constraints and indexes by one rule, and a test that holds every table to that; a time is stored as text in one form, in UTC with its offset written out, a time without an offset is refused, and a model's `datetime` column gets that type from the base; every model gets its key from the base, a whole number `id` that SQLite never gives twice, and the two times `created_at` and `updated_at`, which the store's code sets from the store's one clock; the test that holds every table to the rules names a table without that key or without those two times, and a name that more than one constraint or index of a table has; a model can say of a column that its text must not be empty, and SQLite itself then refuses empty text in it, also text of nothing but white space, and the test that holds every table to the rules names such a column whose table is without the check for it; any column type can bring the check for its column in that way; a model can say of a column that it is yes or no, and SQLite itself then refuses every number but 1 and 0 in it; a model can say that a column's value is one of a list the code knows, and SQLite itself then refuses any text that is not on that list; a model can say that a column is a web address, and SQLite itself then refuses text that does not begin as one or has white space in it; the store has its first table, that of the information sources, each described by one of twelve kinds of source and one of ten ways of collecting, and switched off until a person has read its terms; a second table says which of nine kinds of information each source offers, and a source that has offers cannot be deleted; a third table records every collection run, with its source, its start and end, how it ended and what it counted, and one function, `mark_interrupted`, marks the runs a dead job left running as interrupted; another, `standing_of`, says how a source is doing (its last attempt, its last success, its last error and its health) by reading its runs, and stores none of it; the code has the two lists that say how far a collected record can be trusted, three levels of confidence and four verification statuses from official to unverified, and no table has a column of them yet; a model can say that a column is a calendar day, which is kept as text such as `2026-11-24` with no time made up for it and which the store refuses when no calendar has it, and no table has such a column yet either; the columns by which every collected record says where it came from are one set in the code, which a model of collected records takes whole, and with them an index that takes SQLite straight to the records of one source, and no table has them yet; a rule names every table that neither has those columns nor is on the list of the tables that hold no collected records, where each stands with its reason, and a test holds the real schema to it; one table is there to keep, for one field of one record, what it held before it was changed and what it holds now, with the collection run or the person that caused the change, and one function changes a stored record and writes that history in the same unit of work, so that neither is kept without the other, which nothing calls yet because no table holds records; that history is only added to, because the store itself refuses to edit, delete or replace a row of it, whoever writes to the file; the migrations are written in a module of their own, as plain SQL that names nothing of the code; one test holds the models and the migrations together, and fails with a sentence for each table or index that is not the same in both (`DATABASE.md`). No globe yet: its engine, `@cesium/engine` with `@cesium/core`, is installed and tested as installed, and nothing of the application uses it so far. The published site carries the licences of the packages it is built with, in one file, `licences.txt`, which the build writes from the packages as they are installed.
 
 ## Reports
 
@@ -8405,3 +8405,123 @@ globe's imagery (ARCHITECTURE.md §8).
 Phase 1 now has 48 tasks, and the plan one more than before.
 
 Order on track B from here: FND-047, FND-050, FND-049, then GLB-022.
+
+### FND-047 – The licences of the shipped packages go with the site (2026-11-27)
+
+TASK: FND-047 – The licences of the shipped packages go with the site
+
+Implementation: Complete (builder thread, pull request #150).
+A step of the build (`frontend/sitebuild/licences.ts`, a Vite plugin for
+the build only) writes one file into the site, `licences.txt`, beside
+the page: the name, the version and the licence of every package the
+lock file installs that is not only for the work (32 today), each with
+the licence files in the top folder of the installed package, letter
+for letter but for line ends and the empty lines around a text. A
+package that brings no licence file stops the build, unless the step
+names the package whose file gives its licence; five are named, all
+given with `@cesium/engine`. The source of the page says in a comment
+where the file is. No package was added. Exactly the 10 planned files
+changed, all identical to the planner's trial. No existing test changed.
+
+Independent test run (planner, clean checkout of the pull request with
+nothing installed beforehand, Linux, Python 3.13.18, Node 22.23.4, npm
+10.9.9, uv 0.11.32):
+
+- The full run, once: 19 of 19 gates passed, exit code 0, with the
+  line "Tests: 2515 passed, 0 failed, 0 skipped." Frontend unit
+  tests: 293 (223 before, 70 new). Browser tests: 180 (175 before, 5
+  new).
+- Planted defects in the step, each against its unit tests: 81, and 81
+  of 81 detected, each with the same number of failing tests as in the
+  planner's trial. Twenty-two are in the reading of the lock file, 22
+  in the reading of a package's files, 15 in what stops the build, 17
+  in what is written, 3 in the list of the five packages without a
+  text of their own, and 2 in the step itself.
+- Planted defects against the browser tests, each against the built
+  site: 9, and 9 of 9 detected (the build without the step, the step
+  for the development server only, the page without the comment or
+  with another file's name in it, the file under another name or
+  among the assets, without its last package, or in capital letters).
+- The plan's nine prove-it steps are among these 90 defects; the
+  builder ran them with the plan's results.
+- `git status` clean afterwards.
+
+On GitHub, read by the planner from the runs and job logs:
+
+- Run 45941761033, the pull request's commit (`8559f46`): "All gates
+  (Linux)" and "All gates (Windows)" green at the first attempt, each
+  log ending "19 of 19 gates passed." and "Tests: 2515 passed, 0
+  failed, 0 skipped.", with 293 frontend unit tests and 180 browser
+  tests on both machines (Node.js 22.23.5 on both); "Build the site",
+  "Publish the site" and "Check the published site" skipped.
+- Run 45943230899, for `main` after the merge (`8656903`): all five
+  jobs green at the first attempt, both gates jobs with the same two
+  closing lines, the site republished, and the log of "Check the
+  published site" ending
+  "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 8 of 8 files."
+
+Unit and integration tests: 2335/2335 passed (repository 62, script tests
+206, backend 1774, frontend 293). Browser tests: 180/180 passed.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: the deployment succeeded and the
+published site is the site that was built, with the new file among
+its files. Nothing a visitor sees on the page changed; the file is at
+<https://bigdaddy284.github.io/MotoSphere/licences.txt>.
+
+Overall applicable tests: 2515/2515 passed (100%), all 19 gates passed.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: The step reads the top folder of a package only. One
+shipped package, `protobufjs`, brings a second licence file beneath it,
+`google/LICENSE`, and that text is not in the file: FND-051 (PLAN-039
+below), which stands before the first task that puts code of the engine into
+the site. Until then the site ships React and what React needs, whose
+licences are in the file in full. The unit test of the order of a package's
+files cannot fail on Linux for a step that does not sort, because Node.js
+gives the entries of a folder by name there already; FND-051 makes the unit
+tests give them out of order. `pako` is under `(MIT AND Zlib)` and brings
+the MIT text only: the package as installed holds built code without the
+notice of the zlib licence, which asks for that notice in a source that is
+passed on, and the site passes on no source. Whether each licence is one the
+project accepts is FND-050. The page has no link a visitor sees to the file;
+that comes with the credits of the globe's imagery (ARCHITECTURE.md §8). The
+builder's report agrees with all of this: the plan's diff applied as
+written, 2515 tests, the nine prove-it steps with the plan's results, and
+the built site the same as that of `main` but for the new file, the comment
+in the page and the moment in the manifest.
+
+Commit: `8656903` (squash merge of pull request #150).
+
+Next task on track B: FND-050 – The licences of the shipped packages are ones the project has accepted.
+
+### PLAN-039 – A licence file deeper in a package is a task (2026-11-27)
+
+Not a development task: no application code changed.
+
+While reading the seven licences for FND-050 in the texts the packages
+bring, the planner found that one shipped package brings two:
+`protobufjs` has its own licence in its top folder, and Google's
+licence in `google/LICENSE` for the descriptions in that folder. Its
+own licence says that a folder with a licence file of its own stands
+under that one. The step of FND-047 reads the top folder of a package
+only, so the second text is not in the site's file of licences. A scan
+of all 32 shipped packages as installed found no other licence file
+beneath a top folder.
+
+Nothing of `protobufjs` is in the built site today: the application
+does not use the engine yet. So what is published is not wrong today,
+and it would be from the first task that builds the engine in. By
+CLAUDE.md §3 the defect does not wait for that:
+FND-051 – A licence file beneath the top folder of a package goes with the site
+stands on track B after FND-050 and before FND-049 and GLB-022.
+
+The planner's first trial of it (11 new unit tests, 25 of 25 planted
+defects detected) also found a weakness in a test of FND-047: Node.js
+gives the entries of a folder by name on Linux, so the test that the
+texts come in the order of the names passes there for a step that does
+not sort. FND-051 closes it.
+
+Phase 1 now has 49 tasks, and the plan one more than before.
+
+Order on track B from here: FND-050, FND-051, FND-049, then GLB-022.

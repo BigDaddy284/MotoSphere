@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 48 | 45 |
+| 1 | Foundation (FND) | 49 | 46 |
 | 2 | Data store and published data (DAT, PUB) | 63 | 43 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-054 – A decided review item keeps its decision.
 
-**Current task, track B (globe):** FND-047 – The licences of the shipped packages go with the site.
+**Current task, track B (globe):** FND-050 – The licences of the shipped packages are ones the project has accepted.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -84,6 +84,12 @@ has accepted. They are two objectives with two kinds of test (a step of
 the build with its unit and browser tests; a repository check of the
 lock file), so the second is FND-050 and stands on track B right after
 FND-047, before FND-049.
+
+**A licence file deeper in a package (PLAN-039):** the step of FND-047
+reads the top folder of a package only. One shipped package, `protobufjs`,
+brings a second licence beneath it, `google/LICENSE`, for the files of
+that folder, and it is not in the site's file of licences. That is
+FND-051, on track B after FND-050 and before FND-049.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -930,7 +936,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-046.md`
 
 ### FND-047 – The licences of the shipped packages go with the site
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The published site carries the licence text of every package it is built with.
 - **Description:** Added on 2026-11-27 (PLAN-035), found by the planner's trial of GLB-001; cut to this one objective by PLAN-038. The site ships React and `react-dom` with the package they need; their MIT licence asks that the copyright notice and the licence go with every copy, and the build takes the notices out of the code, so the site as published carries none. From GLB-002 on the site also ships the engine of the globe and the packages it needs, under Apache 2.0, MIT, ISC, BSD and combined licences, with the same duty. A step of the build (`frontend/sitebuild/licences.ts`, a Vite plugin for the build only) writes one file into the site, `licences.txt`: the name, the version and the licence of every package the lock file installs that is not only for the work (32 today), each with the licence files the installed package brings, letter for letter but for line ends and empty lines around the text. A package that brings no licence file stops the build, unless the step names the package whose file gives its licence; five are named today, all given with `@cesium/engine`, read by the planner. The source of the page says in a comment where the file is. No package is added. A list of accepted licences is FND-050; a link a visitor sees comes with the credits of the globe's imagery.
 - **Acceptance criteria:**
@@ -944,10 +950,10 @@ Windows 11. No database and no globe yet.
   8. On the pull request both gates jobs are green with those numbers; after the merge the site is republished and the check of the published site compares the new file like every other.
   9. Only the ten files under "Scope" of the plan changed.
 - **Tests required:** 70 new unit tests of the step, on made-up lock files and package folders and on the project as installed; 5 new browser tests on the built site; planted defects in the step against the unit tests and in the build against the browser tests; the full run of all gates on both machines; the deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #150 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run once, 19 of 19 gates, "Tests: 2515 passed, 0 failed, 0 skipped." (frontend unit tests 293: 223 before, 70 new; browser tests 180: 175 before, 5 new). The planner's 81 planted defects in the step, each against its unit tests: 81 of 81 detected, each with the same number of failing tests as in the trial. The planner's 9 planted defects against the browser tests, each against the built site: 9 of 9 detected. The plan's nine prove-it steps are among these 90. On GitHub, run 45941761033 for the pull request and run 45943230899 for `main` after the merge, read from the job logs: both gates jobs green on Linux and on Windows with the same two closing lines, 293 frontend unit tests and 180 browser tests; on `main` the site was republished and "Check the published site" ended "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 8 of 8 files."
+- **Passed / Failed:** 2515 / 0 tests locally and on both machines on GitHub (repository 62, script tests 206, backend 1774, frontend unit 293, browser 180); all 19 gates passed; 90 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 10 files are identical to the planner's trial. No existing test changed, no package was added and the lock file is unchanged. The builder's report agrees with all of this: the plan's diff applied as written, 2515 tests, the nine prove-it steps with the plan's results, and the built site the same as that of `main` but for the new file, the comment in the page and the moment in the manifest.
+- **Commit:** `8656903`
 - **Plan:** `docs/plans/FND-047.md`
 
 ### FND-048 – The narrow-screen tests measure the top bar after the data has arrived
@@ -986,6 +992,17 @@ Windows 11. No database and no globe yet.
 - **Description:** Added on 2026-11-27 (PLAN-038), cut out of FND-047. The lock file names the licence of every package. A repository check holds the licences of the packages the site is built with (those the lock file does not mark as only for the work) to a list of licences the project has accepted, written in the check with one line on why each is acceptable for a site that is published to everyone: today MIT, Apache-2.0, ISC, BSD-3-Clause, 0BSD and the two combined ones the engine's packages bring, `(MPL-2.0 OR Apache-2.0)` and `(MIT AND Zlib)`. A package under another licence, or with none named, fails the check until a person has read the licence and put it on the list in the same pull request, where a reviewer sees it. The trial settles how a combined licence is read (as written, or by its parts) and whether the packages that are only for the work are held to a list too. It stands on track B after FND-047 and before FND-049.
 - **Acceptance criteria:** the repository checks fail for a shipped package whose licence is not on the list, for one with no licence named, and for a licence on the list that no shipped package has; the list says why each licence is accepted; how the check reads a lock file is tested on made-up lock files; no package is added.
 - **Tests required:** repository checks on made-up lock files and on the real one; planted defects in the lock file, in the list and in the check's own reading; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-051 – A licence file beneath the top folder of a package goes with the site
+- **Status:** NOT STARTED
+- **Objective:** The site's file of licences holds every licence file a shipped package brings, at any depth of its folder.
+- **Description:** Added on 2026-11-27 (PLAN-039), found by the planner while reading the licences for FND-050. The step of FND-047 reads the licence files in the top folder of an installed package. A package may bring code of others in a folder of its own, with their licence beside it: `protobufjs` brings `google/LICENSE`, Google's licence for the files of its folder `google`, and its own licence says that such a file holds for the folder it is in. That text is not in `licences.txt` today. The step looks into every folder of a package, but not into `node_modules` beneath it, where other packages are put and are held by themselves, and it does not follow a link to a folder. Each text is given by the path of its file from the package's folder. The trial also found that the unit test of the order of the files proves nothing on Linux, where Node.js gives the entries of a folder by name already: in the unit tests every folder gives its entries out of order, so that the order in the file is the step's own work on every computer. It stands on track B after FND-050 and before FND-049, and before GLB-022, the first task that puts files of the engine into the site.
+- **Acceptance criteria:** the built file holds both licence files of `protobufjs`; a licence file at any depth of a package is written with its path; what the packages put beneath a package bring is not written as its own; a folder that leads back to itself ends; the order of the texts is the same on every computer and a test holds it on every computer; no package is added.
+- **Tests required:** unit tests on made-up package folders and on the project as installed, with every licence file of every shipped package found another way than the step finds it; planted defects in the step, with those of FND-047 again; the browser tests of the file on the built site; the full run of all gates on both machines; the deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
