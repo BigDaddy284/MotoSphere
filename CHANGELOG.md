@@ -341,6 +341,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   writes to the file, and SQLite says so in one sentence. An open
   item is changed, decided and deleted as before. A decided item is
   not yet kept from a statement that says `REPLACE` (DAT-054).
+- A key of the review queue is 1 or more. The eleventh migration makes
+  two triggers on `review_item` that refuse a key below 1 written by
+  hand, for a new item and for an open one that is given another key.
+  The store gives keys from 1 up, so nothing it does itself changes;
+  the rule is what the next task, which keeps a decided item from
+  being replaced, stands on (DAT-056).
 
 ### Removed
 
@@ -388,3 +394,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   folder `google`, and only the licence of the package itself was
   written. The build now looks into every folder of a package, but not
   into the packages put beneath it (FND-051).
+- On a phone the top bar grew by a line a moment after the page appeared,
+  and the globe under it moved down: the data status and the date shared
+  a line while the data loaded and took two once it had arrived, because
+  they wrapped by how long their words were. Now the width of the screen
+  alone decides: below 640 pixels each has a line of its own from the
+  start, and from 640 pixels on they share one. Words too long for a
+  line end in "…" (FND-049).

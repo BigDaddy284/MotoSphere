@@ -102,9 +102,11 @@ the page said "Loading data…", which the page says before it asks, and so
 it could fail by chance.
 
 A browser test that measures the page waits first for whatever changes
-what it measures. On a narrow screen the top bar is a line taller once the
-data has arrived than while it loads, and everything under it lies a line
-lower. So the tests of the narrow screen (`e2e/narrow.spec.ts`) load the
+what it measures. Once the data has arrived the data status has longer
+words than while it loads, so it is wider and what stands beside it lies
+elsewhere; until FND-049 the top bar of a narrow screen was also a line
+taller then, and everything under it lay a line lower. So the tests of
+the narrow screen (`e2e/narrow.spec.ts`) load the
 page in two places only: `open`, which waits until the top bar says when
 the data was updated, and `again`, which loads the page again and waits
 for the same. A test of the file holds that there is no third place. Five
@@ -154,6 +156,28 @@ must be whole, on one line, inside the bar and clear of the others. There
 they also open and close the side panels with the buttons, as a visitor
 does, load the page again, and change the width of the window across the
 line between narrow and wide.
+
+That nothing moves when the data arrives is held by tests of their own
+(`frontend/e2e/arrival.spec.ts`, FND-049), at seven narrow sizes from 320
+to 899 pixels wide and at one desktop size. Each holds the data back,
+measures the top bar, the globe stage and every piece of the top bar while
+the page says "Loading data…", lets the data through and measures again:
+the top bar and the stage are where and as large as they were, to the
+pixel, and every piece is whole, on one line, inside the bar and clear of
+the others both times. From 360 pixels on the height of the bar is also
+held to its number: the first line, one line of information from 640
+pixels on and two below, and the room under them. The same is measured
+when the data cannot be loaded, with each of the two things the page then
+says. Two tests stand one pixel on either side of the 640: below it each
+piece of information has a line of its own, from it on the two share one,
+before and after the data arrives. Three tests make the words too long
+for their line, by setting the letters far apart on a day with a long
+date: on a shared line the data status stays whole and the date is cut
+short; a data status too long for the line by itself ends at its edge;
+and where each piece has its own line, each ends at the edge. In all
+three the bar is as tall as ever and the pieces are on one line each.
+These tests load the page before the data is there on purpose, which the
+tests of `narrow.spec.ts` must not do.
 
 The test environment of the unit tests has no screen, so
 `frontend/src/test/screen.ts` stands in for the part of the browser that
@@ -781,7 +805,13 @@ the items are as they were, the open one can then be changed and the
 decided one cannot, with the three indexes of the table and the four
 triggers of the history as they were, and it fails, with the store
 left at its version and neither of its triggers kept, where a trigger
-of either of its names is there already (DAT-054); a store with the newest
+of either of its names is there already (DAT-054); the eleventh makes
+the two triggers of the keys in a store that has an item with a key
+below 1 and one above, the items are as they were, no item is given a
+key below 1 from then on, and the item that had one is still given a
+note and a key of 1 or more, and it fails, with the store left at its
+version and neither of its triggers kept, where a trigger of either of
+its names is there already (DAT-056); a store with the newest
 schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -1588,6 +1618,47 @@ letter of each sentence, is proven by the test of the models and the
 migrations, which is unchanged. The tests of `decide` are unchanged
 and pass: the function refuses a decided item before the table is
 asked.
+
+### A key is 1 or more
+
+`backend/tests/integration/test_review_item_key.py` tests the two
+triggers by which a key of the review queue is 1 or more (DAT-056), in
+a store that the migrations built, on a real SQLite file, with two
+open items and a decided one written past the model. After every
+refusal every column of every item is read back with plain SQL.
+
+- **The table has these triggers and no other**: the two of a kept
+  decision and the two of the keys. This is the one test that names
+  every trigger of the table; a task that gives it another names it
+  there. (The tests of a kept decision ask for their own two.)
+- **A new item with a key below 1 is refused**: with the keys 0, -1,
+  -7 and the least whole number SQLite holds, each as an open item, a
+  decided one, a doubt about a field, and in a statement that says
+  `OR REPLACE` or `OR IGNORE`; also in a queue without items.
+- **A key of 1 or more that is named is taken** (4, 30, the greatest
+  whole number SQLite holds, and 1 in a queue without items), and **a
+  new item that names no key gets the next one**, with plain SQL, with
+  the key written as NULL, and through the model.
+- **An open item is not given a key below 1**, alone, with another
+  column, and with `OR REPLACE` or `OR IGNORE`; a statement that would
+  give one item of several such a key changes none of them, whether it
+  meets that item first or second, and neither does a unit of work
+  whose second statement is refused.
+- **An open item is given another key of 1 or more as before**, also
+  the key it has, and one counted from its own.
+- **Of a decided item the store says first that it is never edited.**
+- **A statement that gives no item a key below 1 is not refused**: an
+  edit that names no key, a key below 1 for an item that is not there,
+  and a delete.
+- **Through the model** a new item with the key 0 or -1 is refused,
+  and so is the key 0 for an open item, with what the unit of work
+  wrote before taken back.
+- **On a connection the store's code did not open**, with foreign
+  keys off, the same is refused in the same sentence; and there a
+  refusal stops the statement and not the work: what was written
+  before it, and what is written after it, is kept.
+- **A store made from the models** has the same four triggers and
+  refuses the same.
 
 ## How far a collected record can be trusted
 
