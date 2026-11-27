@@ -28,7 +28,7 @@ jobs:
   gates:
     name: All gates (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 50
+    timeout-minutes: 20
     strategy:
       # Each system gives its own result: one failing does not stop the other.
       fail-fast: false
@@ -71,53 +71,8 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
-      # TRIAL ONLY (FND-054), Windows: what the machine has room for.
-      - name: TRIAL what the machine has room for
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          netsh int ipv4 show dynamicport tcp
-          netsh int ipv6 show dynamicport tcp
-          netsh int ipv4 show excludedportrange protocol=tcp
-          netsh int ipv6 show excludedportrange protocol=tcp
-          Get-NetTCPSetting | Format-List SettingName, DynamicPortRangeStartPort, DynamicPortRangeNumberOfPorts, AutoReusePortRangeStartPort, AutoReusePortRangeNumberOfPorts
-          Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters' | Format-List TcpTimedWaitDelay, MaxUserPort, TcpNumConnections, StrictTimeWaitSeqCheck
-          netsh int ipv4 show tcpstats
-          netsh int ipv6 show tcpstats
-          Get-CimInstance Win32_OperatingSystem | Format-List Caption, Version, FreePhysicalMemory, TotalVisibleMemorySize
-          Get-Counter '\Memory\Pool Nonpaged Bytes', '\Memory\Pool Paged Bytes' | Format-List
-
-      - name: TRIAL start writing down the connections
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: Start-Process -FilePath python -ArgumentList 'trial/sampler.py', "$env:RUNNER_TEMP\connections.txt" -WindowStyle Hidden
-
       - name: Run every gate
-        if: runner.os != 'Windows'
         run: python scripts/check.py
-
-      # TRIAL ONLY (FND-054), Windows: many connections, with the browser as
-      # it is and with one feature off, in turns.
-      - name: TRIAL many connections, feature on and off
-        if: runner.os == 'Windows'
-        working-directory: frontend
-        env:
-          STRESS_ROUNDS: 10
-          STRESS_CONTEXTS: 600
-          STRESS_PER_SECOND: 10
-        run: node trial/stress2.mjs
-
-      - name: TRIAL what was written down
-        if: always() && runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          New-Item -ItemType File "$env:RUNNER_TEMP\connections.txt.stop" | Out-Null
-          Start-Sleep -Seconds 2
-          Get-Content "$env:RUNNER_TEMP\connections.txt"
-          Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Tcpip'} -MaxEvents 30 -ErrorAction SilentlyContinue | Format-List TimeCreated, Id, LevelDisplayName, Message
-          netsh int ipv4 show tcpstats
-          netsh int ipv6 show tcpstats
-          Get-Counter '\Memory\Pool Nonpaged Bytes', '\Memory\Pool Paged Bytes' | Format-List
 
   # The three jobs below publish the site and check it. They run for a
   # change to `main` only, never for a pull request, and only after every
