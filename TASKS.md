@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 55 | 54 |
-| 2 | Data store and published data (DAT, PUB) | 67 | 49 |
+| 2 | Data store and published data (DAT, PUB) | 67 | 50 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-058 – A kind of source for reference lists.
+**Current task, track A (data store):** DAT-059 – The countries are loaded into the store.
 
 **Current task, track B (globe):** FND-056 – A unit test file that ends with work of the page waiting fails.
 
@@ -2312,7 +2312,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-012.md`
 
 ### DAT-058 – A kind of source for reference lists
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A source can be described as a keeper of reference lists, so that the source of the countries is registered as what it is.
 - **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012; settled in the planner's trial. A source is described by one of twelve kinds (`SourceCategory`, DAT-039), each a kind of website of the sport. A project that keeps the lists of a standard, as iso-codes does, is none of them, and `DATA_SOURCES.md` left its category open. The list gains one text, `reference list`, as `SourceCategory.REFERENCE`, last: whoever keeps a list that other records are described by. It is not `reference data`, which is a text of the list of the kinds of information: a source of the kind `reference list` offers `reference data`. DESIGN.md §7.1 names the twelve and is not changed; the thirteenth is this project's own, and `DATABASE.md` and `DATA_SOURCES.md` say so. The check of the column `category` names the texts it takes, and SQLite cannot change a check of a table that is there, so the fifteenth migration, `let_a_source_be_a_reference_list`, builds the table anew as the fourteenth did (DAT-057), statement for statement: the foreign keys are checked when the transaction ends, the rows are copied aside, the table is dropped, made again and filled from the copy, the highest key it has given is put back, and the copies are dropped. Three things differ: the check names thirteen texts, a source keeps its country, and the index `ix_source_country_id`, which goes with the table, is made again as the last statement. The four tables whose rows point to a source are not touched. The schema goes to version 15. The planner's trial has 21 new tests and detects 44 of 44 planted defects.
 - **Acceptance criteria:**
@@ -2330,10 +2330,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   12. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   13. Only the nine files under "Scope" of the plan changed.
 - **Tests required:** 17 new tests of the fifteenth migration in eight functions, on a real SQLite file, in a store at version 14 that holds sources with a gap in their keys, one of them of a country, and a row in each of the four tables that point to a source: what every table and index is written as before and after, every row, the highest key, the foreign keys, the thirteen kinds taken and eight texts refused, and the migration failing at a copy and at its last statement. 1 new unit test of the place of the new kind in the list. 3 more cases of tests that run once for each migration or each text. Two existing tests change with the list (the names of the migrations; the texts and the number of the kinds). Planted defects in the model and the migration. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #189 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 3385 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2441: 2420 before, 21 new). On the real migrations, in the same checkout: `migrate` makes a new store and says it is at schema version 15, `schema` says the data store is up to date at schema version 15. The planner's 58 planted defects, one at a time, on the pull request: 44 in the model, the migration and the history against the 356 tests of the six files that hold the history, the models and the migrations, the sources, the lists of the model, a source's country and the countries, 44 of 44 detected, each by the same tests as in the planner's trial; and the plan's 14 prove-it steps against all backend tests, 14 of 14 detected, each with the numbers the plan names. On GitHub, read by the planner from the runs and job logs: run 46038696297 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3385 passed, 0 failed, 0 skipped.", with 2441 backend tests on both machines, the three jobs after the gates skipped; run 46043539454 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3390 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files." The other track's FND-054 was merged in between, so `main` has its 5 browser tests too: 3390 there, where the pull request by itself gives 3385.
+- **Passed / Failed:** 3390 / 0 tests on both machines on GitHub for `main` (repository 82, script tests 219, backend 2441, frontend unit 387, browser 261); 3385 / 0 locally and on both machines for the pull request; all 19 gates passed; 58 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 9 files are the same change as the planner's trial. Two existing tests changed with the list, the names of the migrations and the texts and the number of the kinds, as the plan says; no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #185, run 46030646713). The builder's report agrees with what the planner found: no deviation from the plan, the same counts, and all 14 prove-it steps with the results the plan names. The builder's Node was 22.23.5.
+- **Commit:** `70af414`
 - **Plan:** `docs/plans/DAT-058.md`
 
 ### DAT-059 – The countries are loaded into the store
