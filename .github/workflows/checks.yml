@@ -103,9 +103,9 @@ jobs:
         working-directory: frontend
         env:
           STRESS_ROUNDS: 10
-          STRESS_PER_ROUND: 3000
-          STRESS_PER_SECOND: 50
-        run: node trial/stress.mjs
+          STRESS_CONTEXTS: 600
+          STRESS_PER_SECOND: 10
+        run: node trial/stress2.mjs
 
       - name: TRIAL what was written down
         if: always() && runner.os == 'Windows'
