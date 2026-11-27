@@ -539,7 +539,10 @@ the export step, from the data store.
   (`motosphere.reference.countries_source`, DAT-060): the code says
   what the source is, and what is for people to say of it, whether its
   terms were read and whether it is switched on, is left to them.
-  Bringing the list itself into the store is a task of its own.
+  The list itself is brought into the store by a function beside both
+  (`motosphere.reference.countries_load`, DAT-059), which adds what the
+  store does not have and changes nothing. It is not a collection run:
+  nothing is fetched, because the file is part of the project.
 
 ### Scrapling evaluation (preliminary, confirmed in task TRK-007)
 
