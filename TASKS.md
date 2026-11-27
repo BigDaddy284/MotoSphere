@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 49 | 48 |
+| 1 | Foundation (FND) | 49 | 49 |
 | 2 | Data store and published data (DAT, PUB) | 64 | 45 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-055 – A decided review item is not replaced.
 
-**Current task, track B (globe):** FND-049 – The top bar keeps its height when the data arrives.
+**Current task, track B (globe):** GLB-022 – The engine's own files in the built site.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -976,7 +976,7 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-048.md`
 
 ### FND-049 – The top bar keeps its height when the data arrives
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** On a narrow screen the top bar is as tall while the data loads as afterwards, so that nothing under it moves when the data arrives.
 - **Description:** Added on 2026-11-27 (PLAN-036). On a phone the top bar put the data status and the day on one line while it said "Loading data…", and on two lines once it said when the data was updated, because the two pieces wrapped by how long their words were. The bar grew by a line (from 78 to 99 pixels at 360 pixels wide), and the globe stage under it moved down, a moment after the page had appeared. Now the width of the screen alone decides, in the layout's style sheet: below 640 pixels each piece has a line of its own from the start, and from 640 pixels up to the wide screen the two share one line and are never wrapped. A piece too long for its line ends in "…"; on a shared line the data status stays whole and the date gives way. The 640 comes from measuring both pieces in each of the 61 languages the test browser writes dates in, on every day of a year: the widest pair needs 572 pixels with the edges of the bar. A failed load ("Data unavailable", "Reload the page to see the data") shows the same bar. A new file of browser tests, `frontend/e2e/arrival.spec.ts`, holds the data back and measures the page before and after it arrives. No component changes, and a wide screen is as it was.
 - **Acceptance criteria:**
@@ -991,10 +991,10 @@ Windows 11. No database and no globe yet.
   9. `python scripts/check.py` reports 19 of 19 gates, with 217 browser tests and 304 frontend unit tests, and 37 tests more in all than `main` gives at the commit the branch starts from (2668 when that is `3e5007d`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   10. Only the seven files under "Scope" of the plan changed.
 - **Tests required:** 37 new browser tests that hold the data back and measure the top bar, the globe stage and every piece of the top bar before and after it arrives, at seven narrow widths and at a wide one, with a load that fails in two ways, one pixel on either side of the 640, and with words made too long for their line; the unit test of the widths the style sheet asks about, changed; planted defects in the style sheet against the browser tests and against the unit test; the full run of all gates on both machines; the deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #159, merged there with `main` as it stood after the other track's DAT-056 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run once, 19 of 19 gates, "Tests: 2739 passed, 0 failed, 0 skipped." (browser tests 217: 180 before, 37 new; frontend unit tests 304, unchanged). The total holds the 71 tests of DAT-056 too; the pull request by itself gives 2668. The planner's 20 planted defects in the style sheet, each against the 112 browser tests of the two files with the site built anew: 20 of 20 detected. The 6 planted defects in the questions the style sheet asks about width, each against the unit tests of the layout: 6 of 6 detected. Each with the same result as in the trial. On GitHub, run 45957502131 for the pull request and run 45962108033 for `main` after the merge, read from the job logs: both gates jobs green on Linux and on Windows, with 304 frontend unit tests and 217 browser tests on both machines; on `main` the site was republished and "Check the published site" ended "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 8 of 8 files."
+- **Passed / Failed:** 2739 / 0 tests locally and on both machines on GitHub for `main` (repository 80, script tests 206, backend 1932, frontend unit 304, browser 217); 2668 / 0 on both machines for the pull request by itself; all 19 gates passed; 26 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 7 files are identical to the planner's trial. One unit test and one number of a browser test file changed, as the plan says and for its reasons; no package was added and the lock file is unchanged. The heights and the lines of the top bar are the same with the fonts of Windows as with those of Linux, at all eight sizes of screen. The builder's report gave the same numbers: 2668 tests locally and on both machines, 112 in the two browser files, and all thirteen prove-it steps with the plan's counts and names; it names no deviation.
+- **Commit:** `4f41491`
 - **Plan:** `docs/plans/FND-049.md`
 
 ### FND-050 – The licences of the shipped packages are ones the project has accepted
