@@ -440,6 +440,13 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   schema. It makes no file and gives the store no migration; what is
   wrong is said in one sentence, with the advice to run `migrate` first
   where that puts it right. No command uses it yet (DAT-063).
+- The command `python -m motosphere countries`: it loads the countries
+  of the reference file into the data store and says what it found. It
+  adds what the store does not have and changes no country; a country
+  the store says something else of is named, and what the file says
+  waits in the review queue. A store that is not ready, a damaged file
+  and a source that is described otherwise are refused in one sentence
+  with the exit code 1, and the store is left as it was (DAT-061).
 
 ### Removed
 

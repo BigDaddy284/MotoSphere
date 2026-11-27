@@ -27,8 +27,9 @@ no row takes its place (DAT-055; see "A decided item is never
 replaced"). A key of the queue is 1 or more (DAT-056; see "A key is 1
 or more"). The sixth is `country`, the countries by their two codes of
 ISO 3166-1, and the first table of collected records (DAT-011; see
-"The countries"); it has no rows yet, and one function loads them
-(DAT-059; see "The loading of the countries"). One function
+"The countries"); a new store has no rows in it, and the command
+`countries` loads them (DAT-061; see "The loading of the countries").
+One function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"), one puts two records that may
 be the same thing to the review queue (DAT-051; see "Opening a possible
@@ -221,8 +222,9 @@ where `migrate` puts it right the sentence says so:
 | `migrate` would refuse it, or it cannot be opened | What `migrate` says of it, word for word |
 
 The file is byte for byte the same afterwards, nothing is made beside it,
-and no connection to it is left open. No command uses the function yet;
-the first is the command that loads the countries (DAT-061).
+and no connection to it is left open. The first command that uses the
+function is the one that loads the countries (DAT-061; see "The command
+that loads the countries").
 
 **The history.** `motosphere.db.history` has every migration, and the
 list of them, and nothing else (DAT-006):
@@ -2690,8 +2692,9 @@ module `motosphere.reference.countries_source` says what the row of that
 source in the table `source` holds, and its function
 `source_of_the_countries(work)` gives that row, storing it first when
 the store does not have it (DAT-060). The loading of the countries
-calls it (DAT-059; see "The loading of the countries"). No command does
-the loading yet (DAT-061), so no store has the row until then.
+calls it (DAT-059; see "The loading of the countries"), so a store has
+the row from the first time the command `countries` is run on it
+(DAT-061).
 
 | Column | What the pipeline says |
 |---|---|
@@ -2746,8 +2749,44 @@ The countries of the reference file are brought into the table
 `country` by one function, `load_countries(work, countries)`, in
 `motosphere.reference.countries_load` (DAT-059). It is handed what the
 file says, as `countries_of_the_project()` gives it, and adds every
-country the store does not have. No command calls it yet (DAT-061), so
-no store has the countries until then.
+country the store does not have. The command `countries` calls it
+(DAT-061).
+
+**The command that loads the countries.** `python -m motosphere
+countries` asks for the store the settings name
+(`store_to_work_on`, DAT-063), reads the reference file that comes with
+the pipeline, and calls the loading in one unit of work: either all of
+what it found is kept, or none of it. Nothing is fetched. It then says
+on standard output what the loading found, one line for each kind of
+thing:
+
+| What was found | What is said |
+|---|---|
+| Always: how many countries the release has, how many were added and how many were there as the release has them | "Of the 249 countries of release 4.20.1 of iso-codes, 249 were added to the data store … and none was there already." |
+| Countries the store says something else of | "The data store says something else of 2 of them than the release does: FR, TR. They were left as they are, and what the release says waits in the review queue." |
+| Countries of the store that the release does not have | "The data store has 1 country that the release does not have: XK. It was left as it is." |
+
+The second and the third line are there only when there is such a
+country. The place of the store is its whole path. In all these cases
+the exit code is 0: that the store says something else of a country is
+no failure of the command, and what follows from it is a person's
+decision in the review queue. Run again on the same store, the command
+adds nothing and writes nothing, and its first line says so ("none was
+added … and 249 were there already").
+
+Nothing is loaded, and the store is byte for byte as it was, with one
+sentence on standard error and the exit code 1, where
+
+- the store is not ready: there is none, it lacks migrations, or
+  `migrate` would refuse it (what `store_to_work_on` says, with the
+  advice to run `migrate` first where that puts it right);
+- the reference file is damaged (what the reader of the file says);
+- the store has a source called "iso-codes" that is described otherwise
+  than the pipeline describes the source of the countries (what
+  `source_of_the_countries` says).
+
+Any other error is not caught: it reaches the caller as it is, and the
+unit of work has then kept nothing.
 
 **The loading adds countries, and it changes none.** A country is known
 by its code of two letters.

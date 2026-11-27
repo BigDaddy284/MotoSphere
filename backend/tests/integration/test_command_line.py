@@ -281,3 +281,46 @@ def test_schema_refuses_a_file_that_is_no_database_in_one_line(tmp_path: Path) -
         f"The data store cannot be opened: {notes} cannot be read as an SQLite database ("
     )
     assert notes.read_bytes() == b"These are notes, not a database.\n" * 40
+
+
+def test_countries_loads_the_countries_into_a_migrated_store_and_then_adds_nothing(
+    tmp_path: Path,
+) -> None:
+    store = (tmp_path / "store" / "motosphere.sqlite3").resolve()
+    _run(tmp_path, "migrate")
+    of_the_release = "Of the 249 countries of release 4.20.1 of iso-codes, "
+
+    result = _run(tmp_path, "countries")
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == (
+        f"{of_the_release}249 were added to the data store {store} and none was there already.\n"
+    )
+    assert result.stderr == ""
+    with closing(sqlite3.connect(store)) as connection:
+        assert connection.execute("SELECT count(*) FROM country").fetchall() == [(249,)]
+        assert connection.execute("SELECT name FROM source").fetchall() == [("iso-codes",)]
+    before = store.read_bytes()
+
+    again = _run(tmp_path, "countries")
+
+    assert again.returncode == 0, again.stderr
+    assert again.stdout == (
+        f"{of_the_release}none was added to the data store {store} and 249 were there already.\n"
+    )
+    assert again.stderr == ""
+    assert store.read_bytes() == before
+
+
+def test_countries_without_a_store_says_what_to_do_and_makes_none(tmp_path: Path) -> None:
+    store = (tmp_path / "store" / "motosphere.sqlite3").resolve()
+
+    result = _run(tmp_path, "countries")
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        f"There is no data store: {store} does not exist. "
+        "Run `python -m motosphere migrate` first.\n"
+    )
+    assert list(tmp_path.iterdir()) == []

@@ -325,7 +325,10 @@ pipeline's command line. The settings and logging modules stay.
   command that works on the store gets it from one function,
   `store_to_work_on` in `motosphere.cli.store` (DAT-063), which gives the
   store only when it is there and at the newest schema, and makes and
-  migrates nothing: that stays with `migrate`. The
+  migrates nothing: that stays with `migrate`. The first of them is
+  `python -m motosphere countries`, which loads the countries of the
+  reference file into the store in one unit of work and says what it
+  found (DAT-061, DATABASE.md). The
   migrations themselves are written in one module, `motosphere.db.history`,
   as plain SQL that names nothing of the store's code, so that a migration
   builds tomorrow what it builds today (DAT-006).
@@ -548,7 +551,8 @@ the export step, from the data store.
   store does not have and changes no country. It is not a collection
   run: nothing is fetched, because the file is part of the project.
   What the file says otherwise of a country that is there goes to the
-  review queue (DAT-062).
+  review queue (DAT-062). The command `countries` calls the loading
+  (DAT-061).
 
 ### Scrapling evaluation (preliminary, confirmed in task TRK-007)
 
