@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 49 | 48 |
-| 2 | Data store and published data (DAT, PUB) | 64 | 44 |
+| 2 | Data store and published data (DAT, PUB) | 64 | 45 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-056 – A key of the review queue is 1 or more.
+**Current task, track A (data store):** DAT-055 – A decided review item is not replaced.
 
 **Current task, track B (globe):** FND-049 – The top bar keeps its height when the data arrives.
 
@@ -1994,7 +1994,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-054.md`
 
 ### DAT-056 – A key of the review queue is 1 or more
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store itself refuses a key below 1 for an item of the review queue, for a new item and for one that is given another key.
 - **Description:** Added on 2026-11-27 (PLAN-040), cut out of DAT-055 in the planner's trial of it. To keep a decided item from being replaced, the store asks before every new row whether a decided item has the key of that row. A new row that names no key has none until it is written, and SQLite shows -1 for it until then; a decided item with the key -1 would so stop every new item that names no key. The history of changes holds its keys to 1 or more for the same reason (DAT-048). Two triggers on `review_item`, `tr_review_item_key_positive` (after a new row) and `tr_review_item_key_stays_positive` (after a row was given another key), refuse a key below 1 with "A key of the review queue (review_item) is 1 or more." They are made by an eleventh migration, `hold_the_key_of_a_review_item_to_1_or_more`, and by the model alike. Both ask after the row is written, when a new item has the key the store gave it. The second fires only for a statement that names the key, so an item that has a key below 1 already can still be changed and given a key of 1 or more; the migration reads and changes no row. Of a decided item the store says first that it is never edited. The schema goes to version 11. No column, check or index changes, and nothing of `motosphere.db.review`.
 - **Acceptance criteria:**
@@ -2008,10 +2008,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   8. Two existing tests change: the list of the migrations gets its eleventh name, and the test of DAT-054 that held the table to its two triggers asks for the two of a kept decision by their names. No other existing test changes, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
   9. `python scripts/check.py` reports 19 of 19 gates, with 1932 backend tests, and 71 tests more in all than `main` gives at the commit the branch starts from (2702 when that is `b085856`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 67 new integration tests in 16 functions, in a store the migrations built, on a real SQLite file, with two open items and a decided one written past the model and every column of every item read back with plain SQL after each refusal: keys below 1 for a new item in five ways and for a changed key in four, statements over several items, the model, a connection made with Python's own `sqlite3`, a store made from the models. 3 new tests of the eleventh migration, from a store at version 10 that holds an item with a key below 1, and one case more of the test that tries every migration alone. Planted defects in the triggers, the model and the migration, and those of DAT-054 again. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #158 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2702 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1932: 1861 before, 71 new). The planner's 44 planted defects in the two triggers, in the model and in the migration, and a 45th that the trial did not have (a refused new item keeps what the statement had done before it), each against the 477 tests of the review queue and of the migrations, in three checkouts of the pull request: 45 of 45 detected. The 83 planted defects of DAT-054 against the same tests: 83 of 83 detected. The plan's eighteen prove-it steps are among the 44, and the builder ran them against all the backend tests with the plan's results. On GitHub, read by the planner from the runs and job logs: run 45956389739 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2702 passed, 0 failed, 0 skipped.", with 1932 backend tests on both machines, the three jobs after the gates skipped; run 45960421486 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 2702 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 8 of 8 files."
+- **Passed / Failed:** 2702 / 0 tests (repository 80, script tests 206, backend 1932, frontend unit 304, browser 180); all 19 gates passed, locally and on both machines on GitHub; 45 / 0 planted defects of this task and 83 / 0 of DAT-054 detected on the pull request
+- **Verification status:** Verified by the planner on 2026-11-27. All 9 files are identical to the planner's trial. Two existing tests changed, as the plan says and for its reasons; no package was added. What SQLite does with the two triggers was read on the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `e894d74`
 - **Plan:** `docs/plans/DAT-056.md`
 
 ### DAT-055 – A decided review item is not replaced
