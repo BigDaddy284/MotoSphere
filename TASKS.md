@@ -2459,15 +2459,26 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-024.md`
 
 ### GLB-025 – The engine is told where its files are
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** Before the engine is first used, the application tells it the address of its own files, built from the one place that names the site's path.
-- **Description:** Added on 2026-11-27 (PLAN-041), cut out of GLB-022. The engine asks for its files beneath one base address. Left to itself it works that address out from where its own code was loaded, which in a built site is a file of the build with a name of its own, and not the folder of GLB-022. One module of the application gives the address (the site's path and the folder of the engine's files) and sets it for the engine before any other code of the engine runs.
-- **Acceptance criteria:** one module names the address, built from `frontend/site.ts` and the folder the build step names, and nothing else in the application writes it; with it set, the engine as installed builds the address of a background script, of a table and of a picture beneath it; the address is set before the engine is used, whichever module asks for the engine first; no address of another computer is in it.
-- **Tests required:** unit tests through the real engine of the addresses it builds; a test that the module is the only place that sets the address; planted defects; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-27 (PLAN-041), cut out of GLB-022; settled in the planner's trial. The engine asks for its files beneath one base address. Left to itself it works that address out from where its own code was loaded, which in a built site is a file of the build with a name of its own, and not the folder of GLB-022. One module of the application, `frontend/src/globe/engineAddress.ts`, builds the address from the site's path and the name of the folder, both in `frontend/site.ts`, and puts it under the name the engine reads (`CESIUM_BASE_URL`); the build and the development server take the folder's name from the same place. The application tells the engine where it starts, in `main.tsx`, before it shows anything and nowhere else: the engine reads the address the first time it needs a file, and keeps it. The address is a path and names no computer, so the engine asks the site the page came from and nobody else. The engine's own function for this (`buildModuleUrl.setBaseUrl`) is not used: it is not in the engine's type declarations, and calling it needs the engine loaded, which GLB-002 does only when the globe is shown. Nothing of the application loads the engine yet. A test of the engine when nobody tells it was tried and dropped: the engine keeps the address, and the test runner gives a test no second engine.
+- **Acceptance criteria:**
+  1. One module, `frontend/src/globe/engineAddress.ts`, names the address of the engine's files: the site's path and the folder's name, both from `frontend/site.ts`, and a last stroke.
+  2. The address is a path from the top of the site and names no other computer.
+  3. The module's function puts the address under the name the engine reads, also over another address.
+  4. With it told, the engine as installed builds the address of a background script, of a program, of a table, of a picture of the Earth and of the description of those pictures beneath the folder, on the computer of the page.
+  5. Nothing else in the application writes the address or the engine's word for it: not its code, not the page and not the settings of the build. The build and the development server take the folder's name from `frontend/site.ts`.
+  6. The application tells the engine in one place, where it starts, before it shows anything and with nothing before it but what it brings in; it has told it by the time it has started, and also when it cannot start.
+  7. In a browser, the built page has told the address, and the site answers a file of each of the eight kinds beneath it with the status 200, at the address the site has for it, with the length of the engine's file.
+  8. No existing test changes; the built site holds 283 files as before; no package is added; all tests pass.
+  9. `python scripts/check.py` reports 19 of 19 gates, with 387 frontend unit tests and 256 browser tests, and 18 tests more in all than `main` gives at the commit the branch starts from (3179 when that is `4dc58fb`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  10. Only the nine files under "Scope" of the plan changed.
+- **Tests required:** 16 new unit tests: of the address; of the telling; through the real engine as installed, of the addresses it builds; from the text of the application's code, of the page and of the settings of the build, that one module names the address and the engine's word for it and that the application tells in one place, before it shows anything; and by starting the application. 2 new browser tests on the built site: the page has told the address, and the browser gets a file of each kind beneath it. Planted defects against the unit tests and against the browser tests. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/GLB-025.md`
 
 ### GLB-002 – The globe shows the Earth
 - **Status:** NOT STARTED
