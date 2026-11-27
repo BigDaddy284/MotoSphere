@@ -1,6 +1,7 @@
 # MotoSphere – Tasks
 
-The running task list for the whole build. One task is in progress at a time.
+The running task list for the whole build. One task is in progress at a time
+on each of two tracks (see "Two tracks" below).
 A task is `PASSED – VERIFIED` only when 100% of applicable tests pass in the
 planner's independent test run. See `docs/WORKFLOW.md` for the loop and
 `docs/plans/<TASK-ID>.md` for each task's implementation plan.
@@ -14,7 +15,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
 | 2 | Data store and published data (DAT, PUB) | 62 | 43 |
-| 3 | Interactive 3D Earth (GLB) | 21 | 0 |
+| 3 | Interactive 3D Earth (GLB) | 23 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -26,7 +27,28 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-054 – A decided review item keeps its decision.
+**Current task, track A (data store):** DAT-054 – A decided review item keeps its decision.
+
+**Current task, track B (globe):** GLB-001 – The Cesium engine installed.
+
+**Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
+side by side where they cannot clash, until told otherwise. Track A is
+the data store and the published data (Phase 2), whose tasks change the
+pipeline (`backend/`). Track B is the globe (Phase 3), whose tasks change
+the front end (`frontend/`). On each track the rule is what it was: one
+small task at a time, in the order of the plan, with 100% of the
+applicable tests passing before the next one starts. Across the tracks
+two tasks are in progress at once, each with its own plan, its own
+builder thread and its own pull request. The planner tests and merges
+one pull request at a time, and every merge to `main` runs all gates on
+both machines as before. In the documents that both tracks change
+(`ARCHITECTURE.md`, `TESTING.md`, `CHANGELOG.md`) each writes in parts of
+its own. A plan gives the number of tests of the gates its task changes;
+the total of a full run also depends on what the other track has merged
+by then, and a plan says which total it was written against. This is the
+owner's newer rule where CLAUDE.md §2 says "Never work on multiple
+development tasks simultaneously."; everything else in CLAUDE.md holds
+on each track (PLAN-033).
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -83,12 +105,13 @@ was built by then and stays.
 Added tasks are listed where they fall in dependency order, so task numbers
 in Phase 1 are not strictly ascending.
 
-Phases 1 and 2 are specified in full below (Phase 2 since PLAN-012).
-Phases 3–13 are listed as an ordered roadmap of named tasks; each phase is
-expanded into full task entries (with acceptance criteria and required
-tests) before its first task starts, and any task that turns out too large
-to test thoroughly is split further at that point. Task counts above
-therefore grow rather than shrink, unless the owner takes work out.
+Phases 1 to 3 are specified in full below (Phase 2 since PLAN-012, Phase 3
+since PLAN-033). Phases 4–13 are listed as an ordered roadmap of named
+tasks; each phase is expanded into full task entries (with acceptance
+criteria and required tests) before its first task starts, and any task
+that turns out too large to test thoroughly is split further at that
+point. Task counts above therefore grow rather than shrink, unless the
+owner takes work out.
 
 ---
 
@@ -1986,34 +2009,297 @@ DAT-054, which stands after DAT-052.
 
 ---
 
-# Roadmap – Phases 3 to 13
+# Phase 3 – Interactive 3D Earth (GLB)
+
+Written out in full by PLAN-033. The stage in the middle of the screen
+gets a real 3D Earth, drawn by the Cesium engine, that a person can turn,
+zoom, pan and tilt with a mouse, a keyboard and a finger. It is track B
+(see "Two tracks" above): its tasks change the front end (`frontend/`) and
+no file of the pipeline, and they follow one another in the order below.
+
+What holds for every task of the phase:
+
+- **The real globe is tested.** Browser tests run on the built site in
+  headless Chromium, which draws WebGL in software, on Linux and on
+  Windows. A test that says the Earth is shown reads pixels of the
+  picture; a test that says the camera moved reads where the camera is.
+  A stand-in for the engine is used only in unit tests of the page's own
+  logic, where the test environment cannot draw.
+- **Nothing is asked of another computer.** Until a provider of imagery
+  has had its terms read and recorded (GLB-012), the globe uses only
+  files of the site itself. A browser test counts the requests that leave
+  the site, and there are none.
+- **The globe holds no data.** Markers, tracks and events are not part of
+  this phase and are never written into the front end (CLAUDE.md §9);
+  they come from the published data, in Phase 4.
+- **Plain words on the screen.** Controls say what they do ("Zoom in",
+  "North up"), with no words from map software (CLAUDE.md §8).
+- A task's details are settled by the planner's trial before its plan is
+  written, and a task that proves too large to test thoroughly is split
+  then. Two tasks were added when the phase was written out: the old
+  GLB-001 is GLB-001 and GLB-022, which follow one another here although
+  their numbers do not, and touch screens got a task of their own,
+  GLB-023, after tilt.
+
+### GLB-001 – The Cesium engine installed
+- **Status:** NOT STARTED
+- **Objective:** The front end has the Cesium engine as a locked dependency, and the project asks for the Node.js that its locked packages need.
+- **Description:** The package `@cesium/engine` (Apache 2.0) is added to the front end: the engine without the ready-made widgets of the full `cesium` package, which MotoSphere does not use because its controls are its own. Nothing of the application imports it yet, so the built site is what it was. The engine needs a newer Node.js than the project asks for today; the least version the project asks for is raised to what every locked package needs, and a repository test holds that from now on. The planner's trial settles the exact version, whether any package runs a script at install, and how the test reads the version ranges.
+- **Acceptance criteria:** `npm ci` installs the engine on Linux and on Windows from the lock file; the dependency audit reports no advisory; the type check, the lint and the build pass with the engine installed; a unit test imports the engine and gets from it the position of a point on the Earth that the reference ellipsoid gives; the least Node.js the project asks for is enough for every package in the lock file, and a test fails when it is not; the README and the check of the tools a computer needs say the same least version; the built site holds the same files as before.
+- **Tests required:** frontend unit tests of the engine's arithmetic through the real package; repository tests of the least Node.js against every locked package, with planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-022 – The engine's own files in the built site
+- **Status:** NOT STARTED
+- **Objective:** The files the engine fetches while it runs are part of the site, under the site's own path, in development and in the built site alike.
+- **Description:** Added on 2026-11-27 (PLAN-033), cut out of the old GLB-001. The engine does part of its work in background scripts and reads pictures and tables from files of its own; it asks for them at one base address. The build puts those files into the site under one folder, the development server serves the same folder, and the application tells the engine the address before the engine is loaded. No new package is used for the copying. The engine's licence text is published with its files. The trial settles which of the engine's folders are needed, how the check of the published site copes with a few hundred more files, and which kinds of file need a rule for their content type.
+- **Acceptance criteria:** the built site holds the engine's files under one folder of the site's path and nowhere else; the development server answers the same addresses with the same files; the engine is told that address, built from the one place that names the site's path; a file the engine did not ship is not served from the folder; the engine's licence is among the published files; the check of the published site compares every one of them and passes after deployment.
+- **Tests required:** unit tests of the build step on a temporary folder; browser tests that fetch engine files of each kind from the built site with the right content type; script tests of the site check where its rules change; planted defects; the full run of all gates on both machines; the deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-002 – The globe shows the Earth
+- **Status:** NOT STARTED
+- **Objective:** The stage shows a 3D Earth with the imagery that comes with the engine, loaded only from the site itself.
+- **Description:** A `Globe` component owns one drawing surface in the stage and one engine widget. The engine is loaded when the stage is shown and not with the first paint of the page, so the top bar and the panels appear at once. The imagery is the Natural Earth II picture set that comes with the engine (ARCHITECTURE.md §8): no key, no account and no request to another computer. The engine's services that need an account are not used. The surface follows the size of the stage when a panel opens or closes and when the window changes. Leaving the page's globe (the component unmounting) frees the engine. The camera cannot be moved by the user yet in any way this task promises; that is GLB-005 onwards.
+- **Acceptance criteria:** the stage holds one drawing surface that fills it at every screen size the layout knows; the Earth is drawn; no request leaves the site; the page's first paint does not wait for the engine; the surface keeps the size of the stage through opening and closing panels and resizing; unmounting frees the engine and mounting again works; the main landmark is still named "Globe" and the existing layout tests pass unchanged.
+- **Tests required:** frontend unit tests of the component's life (made once, sized, freed) with a stand-in engine; browser tests on the built site: the surface is there and sized, the engine reports its first complete picture, no request leaves the site; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-003 – The picture of the Earth is checked
+- **Status:** NOT STARTED
+- **Objective:** Browser tests prove from the pixels that what is drawn is the Earth, in the right place and the right way up.
+- **Description:** A successful build and a drawing surface are no proof that anything is drawn (CLAUDE.md §18). The tests read the picture: the disc of the Earth stands in the middle of the stage with space around it, the middle is not one flat colour, known places are land or sea as they are on Earth at the home view, and north is up. The checks are written to hold in software drawing on both machines, with tolerances that the trial measures and records, and they fail for an empty, black, upside-down or mirrored picture.
+- **Acceptance criteria:** the checks pass on Linux and on Windows in ten runs out of ten; each of these defects is detected: nothing drawn, the imagery missing, the globe off centre, east and west exchanged, north and south exchanged, the surface not following the stage's size; the tolerances and how they were measured are in TESTING.md.
+- **Tests required:** browser tests that read pixels of the real globe; planted defects in the globe and in the imagery; repeated runs on both machines; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-004 – Loading and failure of the globe
+- **Status:** NOT STARTED
+- **Objective:** A person always sees whether the globe is loading, shown or could not be shown, in plain words.
+- **Description:** While the engine and the first imagery load, the stage says so. When the browser cannot draw 3D graphics, when the engine's files cannot be fetched, or when the engine stops with an error while drawing, the stage says what happened in a friendly sentence and what the person can do, and the rest of the application keeps working. The messages are read to screen readers.
+- **Acceptance criteria:** a loading message is shown until the first complete picture and not after; a browser without WebGL gets the message for that and no error in the page; engine files that fail to load give the message for that, with a way to try again that works once they load; an error while drawing gives a message and frees the engine; in each case the top bar and both panels still work.
+- **Tests required:** frontend unit tests of the three states and of the way from one to another; browser tests with WebGL switched off, with the engine's files refused, and with a slow network; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-005 – Turning the globe by dragging
+- **Status:** NOT STARTED
+- **Objective:** Dragging with the mouse turns the Earth under the pointer, all the way round in every direction.
+- **Description:** The first movement of the camera. A drag turns the globe so that the place under the pointer follows it; the Earth can be turned through 360 degrees east and west and over both poles; letting go leaves it where it is, or lets it run on briefly as the trial decides. The home view, where the camera starts, is settled here and named in one place.
+- **Acceptance criteria:** a drag to the right brings places further west into the middle, a drag down brings places further north, by amounts that fit the drag; a full turn brings the camera back to where it was; the camera stays outside the Earth and looks at it; a drag that starts on a panel or the top bar does not turn the globe.
+- **Tests required:** browser tests that drag with a real pointer and read the camera's position and the place in the middle before and after; pixel checks reused from GLB-003; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-006 – Zooming with the mouse wheel
+- **Status:** NOT STARTED
+- **Objective:** The wheel moves the camera smoothly between a view of the whole Earth and a view of one circuit, and no further either way.
+- **Description:** Turning the wheel brings the place under the pointer nearer or takes it further away. There is a furthest distance, from which the whole Earth is seen, and a nearest, from which a motocross circuit fills the stage (DESIGN.md §3.1); the trial settles both numbers and they are named in one place. The page itself never scrolls or zooms when the wheel is turned over the globe.
+- **Acceptance criteria:** wheel steps towards the Earth bring the camera nearer and steps away take it further, without a jump; the camera stops at the nearest and at the furthest distance however long the wheel turns; the place under the pointer stays under it while zooming; the page does not scroll.
+- **Tests required:** browser tests that turn a real wheel and read the camera's height before, during and after, at both limits; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-007 – Panning
+- **Status:** NOT STARTED
+- **Objective:** Close to the ground a drag moves the view across the land, left and right and up and down, as on a map.
+- **Description:** From far away a drag turns the Earth (GLB-005). Near the ground the same drag must feel like moving a map: the land follows the pointer exactly, horizontally and vertically, also when the view is tilted. The trial settles what the engine does already and what the task must add or limit.
+- **Acceptance criteria:** near the ground, the place that was under the pointer when the drag began is still under it when the drag ends, within a tolerance the trial measures; that holds for a drag in each of four directions and for a tilted view; the camera's height does not change by a pan.
+- **Tests required:** browser tests that drag near the ground and read which place is under the pointer before and after; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-008 – Tilt and perspective
+- **Status:** NOT STARTED
+- **Objective:** A person can tilt the view from straight down towards the horizon and turn it round a place, and cannot get under the ground.
+- **Description:** The gesture for tilting with a mouse is settled by the trial and said in the README. The view tilts between looking straight down and looking nearly along the ground, turns round the place in the middle, and never goes below the surface.
+- **Acceptance criteria:** the tilt gesture changes the camera's pitch in the direction of the gesture and stops at both limits; turning changes the heading and keeps the place in the middle; the camera's height above the ground is never below the limit; the earlier movements work as before in a tilted view.
+- **Tests required:** browser tests of the gesture that read pitch, heading and height; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-023 – Touch gestures on the globe
+- **Status:** NOT STARTED
+- **Objective:** On a touch screen one finger turns the Earth, two fingers zoom, turn and tilt it, and the page itself stays still.
+- **Description:** Added on 2026-11-27 (PLAN-033). The owner uses the site on a phone, and the layout tasks for narrow screens (FND-038 to FND-042) left the stage ready for it. One finger drags as the mouse does; pinching zooms within the limits of GLB-006; two fingers moved together tilt within the limits of GLB-008; two fingers turned change the heading. The browser's own gestures (scrolling the page, zooming the page, pulling to refresh) do not start on the globe.
+- **Acceptance criteria:** each gesture moves the camera as its mouse counterpart does, read from the camera; the limits of zoom and tilt hold; the page does not scroll or zoom when the gesture starts on the globe, and still does where the layout scrolls; the controls of the top bar still answer a tap.
+- **Tests required:** browser tests in a touch-screen browser of phone size that send real touch points and read the camera; planted defects; the full run of all gates on both machines; the owner's phone as a last look, not as a gate.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-009 – Keyboard navigation
+- **Status:** NOT STARTED
+- **Objective:** Everything the mouse can do to the globe can be done with the keyboard.
+- **Description:** The globe can be reached with the Tab key and shows that it has the focus. Keys turn the Earth, zoom, tilt and turn the view; the keys are settled by the trial, said in the README and told to screen readers. The keys act only while the globe has the focus, so that typing elsewhere is never taken for a movement.
+- **Acceptance criteria:** the globe is in the order of the Tab key and its focus can be seen; each key moves the camera in its direction by a step and, held down, keeps moving; the limits of GLB-006 and GLB-008 hold; the keys do nothing while the focus is elsewhere; the keys are named for screen readers.
+- **Tests required:** frontend unit tests of which key means what; browser tests that press real keys and read the camera; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-010 – Controls on the globe
+- **Status:** NOT STARTED
+- **Objective:** Buttons on the stage zoom in, zoom out, turn north up and go back to the home view.
+- **Description:** Four buttons in a corner of the stage, in the look of the application (Graphite theme, Sky Classic icons), large enough for a finger (FND-041), named in plain words and usable with the keyboard. They do what the gestures do, within the same limits. The trial may make this more than one task.
+- **Acceptance criteria:** each button does what its name says, read from the camera; a button that can do nothing more (zoom at a limit, north already up) says so and does nothing; the buttons are reached with the Tab key, have names for screen readers and meet the contrast rule of the theme; they cover no more of the globe than the trial records, on a phone too.
+- **Tests required:** frontend unit tests of the buttons and their states; browser tests that press each button and read the camera, at desktop and phone size; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-011 – Smooth camera flights
+- **Status:** NOT STARTED
+- **Objective:** When the application moves the camera itself, it flies there smoothly and arrives exactly.
+- **Description:** One function takes the camera to a place and a height: used by the home button now and by markers, search and the track directory later. The flight is smooth, takes a time that fits the distance, can be interrupted by the user's own gesture, and is a plain jump for a person who has asked their system for less motion.
+- **Acceptance criteria:** a flight ends at the place and height asked for, within a tolerance the trial measures; positions read during the flight lie between start and end, with no jump; a gesture during a flight ends it and the gesture works; with reduced motion asked for, the camera is there at once; a second flight asked for during the first replaces it.
+- **Tests required:** frontend unit tests of the function's choices with a stand-in camera; browser tests that start flights and read the camera during and after, with and without reduced motion; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-012 – Imagery providers: research with their terms read
+- **Status:** NOT STARTED
+- **Objective:** For every candidate provider of satellite imagery the project has a record of its real terms, and a decision which may be used.
+- **Description:** A research task with no application code. For each candidate (ARCHITECTURE.md §8: NASA GIBS, EOX Sentinel-2 cloudless, Esri World Imagery, Cesium ion, MapTiler, Mapbox, and others the research finds) the terms of use are read at their source and recorded: licence, the attribution that must be shown, limits of use, whether a key is needed and whether such a key may be public on a static site, how far it zooms, and the date the terms were read. No provider is called free unless its terms say so (DESIGN.md §3.2). No Google imagery. The outcome is a decision record and, where the owner must choose or sign up for something, a question to the owner.
+- **Acceptance criteria:** every candidate has its record with a link to the terms and the date read; each is marked usable without a key, usable with a public key, or not usable, with the reason; the default the next tasks build on is named, or the owner's decision is asked for; ARCHITECTURE.md §8 and DATA_SOURCES.md say the same.
+- **Tests required:** none of code; the repository checks and the full run of all gates on both machines, since documents change; every link in the record answered when it was read.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-013 – A list of imagery providers the globe is set up from
+- **Status:** NOT STARTED
+- **Objective:** Which imagery the globe shows is one entry of a list, so that another provider is a new entry and not a change to the globe.
+- **Description:** A registry in the front end: each entry has a name for people, where its pictures come from, how far it zooms, its attribution and whether it needs a key. The bundled Natural Earth II set is the first entry and the fallback. The globe is given an entry and shows it; an entry that fails to load falls back and says so. A key is never written into the repository.
+- **Acceptance criteria:** the globe shows the entry it is given; an entry that cannot be loaded gives the fallback and a plain message; an entry that needs a key and has none is not offered; the list refuses an entry without attribution; adding an entry changes no file of the globe.
+- **Tests required:** frontend unit tests of the list and its rules; browser tests with a stand-in provider served by the test itself and with one that fails; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-014 – Satellite imagery by default
+- **Status:** NOT STARTED
+- **Objective:** The globe opens with real satellite imagery from the provider GLB-012 decided on, down to the level of a circuit.
+- **Description:** The provider chosen in GLB-012 becomes an entry of the list and the default. The browser tests do not depend on that provider being reachable: they serve stand-in pictures themselves, and one check after deployment looks at the real provider from the published site. Depends on GLB-012's decision, and on the owner where that decision needs one.
+- **Acceptance criteria:** the published site shows satellite imagery at the home view and near the ground; requests go only to the site itself and to the provider's addresses on record; when the provider cannot be reached the globe falls back to the bundled imagery and says so; no key is in the repository or, where the terms allow a public key, only as they allow.
+- **Tests required:** browser tests with stand-in pictures, with the provider refused and with it slow; a check of the published site against the real provider; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-015 – Attribution of the imagery
+- **Status:** NOT STARTED
+- **Objective:** The attribution each provider's terms ask for is always visible on the globe, for the imagery that is shown.
+- **Description:** The words and links the terms require (GLB-012) are shown on the stage in the look of the application, change with the imagery, and are never covered by a panel or a control. The engine's own mark is shown where its terms ask for it. Links open safely in a new tab.
+- **Acceptance criteria:** the attribution of the imagery shown is on the stage at every screen size, readable by the theme's contrast rule; it changes when the imagery changes, also on fallback; nothing covers it; its links are those on record and nothing else from a provider is rendered as markup.
+- **Tests required:** frontend unit tests of what is shown for each entry; browser tests at desktop and phone size, with panels open and closed; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-016 – Terrain: research, and terrain that can be set up
+- **Status:** NOT STARTED
+- **Objective:** The project knows which source of terrain it may use, and the globe shows hills and valleys where that source has them.
+- **Description:** The research of GLB-012 again for terrain, with the same record of terms, and then terrain as a setting of the globe like the imagery: a source that fails or is not set up leaves a smooth Earth. The trial will very likely make this two tasks, research and code.
+- **Acceptance criteria:** every candidate source of terrain has its record with terms and date; with terrain set up, the height of the ground at known places is what the source says, within its accuracy; without it, or when it fails, the globe is smooth and says nothing alarming; the camera's limits of GLB-006 and GLB-008 hold over mountains.
+- **Tests required:** browser tests with a stand-in terrain served by the test and with one that fails; a check of the published site against the real source; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-017 – Borders of countries and regions
+- **Status:** NOT STARTED
+- **Objective:** The globe can show the borders of countries and, nearer the ground, of their regions.
+- **Description:** Lines from a source whose terms are read and recorded first (Natural Earth is the candidate). The lines are data, not code: where they are published from, and whether that waits for the published-data layout of track A (PUB-001), is settled by the trial. Disputed borders are shown as the source marks them, and the source is named.
+- **Acceptance criteria:** borders are drawn where the source says, checked at known points; regions appear only from a height the trial records; the layer can be switched off; the globe stays smooth while they load; the source and its terms are on record and attributed.
+- **Tests required:** unit tests of reading the lines; browser tests that read pixels at known border points with the layer on and off; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-018 – Names of places
+- **Status:** NOT STARTED
+- **Objective:** The globe names countries from afar and regions and towns nearer the ground, readably and without clutter.
+- **Description:** Labels from a source whose terms are read and recorded, in the application's type, more of them the nearer the camera, never one over another, and never hiding a marker later. Names are text from outside and are shown as text only (CLAUDE.md §14).
+- **Acceptance criteria:** known names stand at their places; the number of names on screen stays under a limit the trial records at every height; no two overlap; they can be switched off; a name with markup in it is shown letter for letter.
+- **Tests required:** unit tests of which names are shown at which height; browser tests that read the labels the globe reports and pixels at known places; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-019 – The globe on the whole screen
+- **Status:** NOT STARTED
+- **Objective:** One control gives the globe the whole screen, and one way back always works.
+- **Description:** A button on the stage hides the top bar and the panels and lets the globe fill the screen, using the browser's full-screen mode where it is offered and the whole window where it is not (phones differ). The Escape key and a visible button lead back, and the panels are as they were.
+- **Acceptance criteria:** the control makes the drawing surface as large as the screen or the window; Escape and the button lead back; panels that were open are open again; the camera is where it was; a browser that refuses full screen still gets the whole window and no error.
+- **Tests required:** frontend unit tests of the states; browser tests at desktop and phone size, with full screen granted and refused; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-020 – A view that can be shared by its address
+- **Status:** NOT STARTED
+- **Objective:** The address of the page says where the camera is, so that a link opens the same view.
+- **Description:** The place, the height, the heading and the tilt of the camera are written into the address when the camera comes to rest, without filling the browser's history, and read from it when the page opens. What the address says is input from outside: numbers out of range or not numbers at all give the home view.
+- **Acceptance criteria:** opening an address copied from a view shows that view, within a tolerance the trial measures; moving the camera changes the address once it rests and adds no entry to the history; an address with values out of range, missing or not numbers opens the home view with no error; the Back button leaves the site as before.
+- **Tests required:** frontend unit tests of writing and reading the address, with hostile values; browser tests that copy an address into a new page and compare the cameras; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### GLB-021 – Navigation round the world, tested as a whole
+- **Status:** NOT STARTED
+- **Objective:** One suite proves that a person can get from the whole Earth to a circuit anywhere in the world and back, by every means the globe offers.
+- **Description:** The last task of the phase adds no feature. Journeys to places on every continent, over both poles and across the date line, by mouse, keyboard, touch and the controls, each ending near the ground and returning home, with the picture checked on the way and the time each takes recorded. What the suite finds is fixed in tasks of its own before the phase is closed.
+- **Acceptance criteria:** every journey ends where it should, within the tolerances of the earlier tasks, on both machines; no journey leaves the camera under the ground, inside the Earth or looking away from it; the page reports no error during any of them; the times are recorded in TESTING.md as the baseline for Phase 13.
+- **Tests required:** browser tests of the journeys on the built site, at desktop and phone size; repeated runs on both machines; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+---
+
+# Roadmap – Phases 4 to 13
 
 Ordered by dependency. Every item is one task and will get a full entry like
 those above before its phase starts.
-
-## Phase 3 – Interactive 3D Earth
-
-- GLB-001 Install CesiumJS and wire its static assets into the build
-- GLB-002 Globe component displays the Earth (bundled offline imagery)
-- GLB-003 Browser verification of Earth rendering (WebGL pixel checks)
-- GLB-004 Globe loading and failure states (including no-WebGL message)
-- GLB-005 Camera rotation by drag
-- GLB-006 Mouse-wheel zoom with sensible limits
-- GLB-007 Panning
-- GLB-008 Tilt and perspective
-- GLB-009 Keyboard navigation
-- GLB-010 On-screen controls: zoom in/out, north-up, home view
-- GLB-011 Smooth fly-to camera transitions
-- GLB-012 Imagery provider research with verified licence terms (documented)
-- GLB-013 Configurable imagery provider registry
-- GLB-014 Satellite imagery as default provider
-- GLB-015 Imagery attribution display
-- GLB-016 Terrain provider research and configurable terrain
-- GLB-017 Country and regional boundaries layer
-- GLB-018 Geographic labels
-- GLB-019 Full-screen exploration mode
-- GLB-020 Shareable camera position in the URL
-- GLB-021 Worldwide navigation regression suite (globe to circuit-level zoom)
 
 ## Phase 4 – Geographic marker system
 
