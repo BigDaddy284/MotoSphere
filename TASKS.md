@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 51 | 50 |
-| 2 | Data store and published data (DAT, PUB) | 64 | 45 |
+| 2 | Data store and published data (DAT, PUB) | 64 | 46 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 2 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-055 – A decided review item is not replaced.
+**Current task, track A (data store):** DAT-011 – Countries table.
 
 **Current task, track B (globe):** FND-053 – The check of the published site knows the engine's kinds of file.
 
@@ -2058,7 +2058,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-056.md`
 
 ### DAT-055 – A decided review item is not replaced
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store itself refuses a statement that would put another row in the place of a decided review item.
 - **Description:** Added on 2026-11-27 (PLAN-037), cut out of DAT-054; it stands on DAT-056 (PLAN-040). Since DAT-054 a decided item is neither edited nor deleted. But `INSERT OR REPLACE`, `REPLACE` and `UPDATE OR REPLACE` take out the row their new row clashes with, by its key or as the same doubt (the two indexes of DAT-050), and SQLite fires no trigger for a row it takes out in that way. Two triggers on `review_item`, `tr_review_item_decided_never_replaced` (before a new row) and `tr_review_item_decided_never_replaced_by_another` (before an open row is changed), ask whether a decided item has the key the row would have, or is the same doubt, and refuse with "A decided review item (review_item) is never replaced." They are made by a twelfth migration, `keep_a_decided_review_item_from_being_replaced`, and by the model alike. A trigger cannot know what the statement says is to be done with a clash, so the store refuses whatever it says: a plain `INSERT` that clashes with a decided item is told this sentence where it was told that of the index, and `OR IGNORE` and `ON CONFLICT DO NOTHING`, which would have left the decided item alone, are refused too. An open item is replaced, changed, decided and deleted as before. The key of a new row is asked from 1 on, because a row that names no key shows -1 until it is written (DAT-056). The schema goes to version 12. No column, check or index changes, and nothing of what `motosphere.db.review` does: one sentence of a comment there.
 - **Acceptance criteria:**
@@ -2075,10 +2075,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   11. `python scripts/check.py` reports 19 of 19 gates, with 2083 backend tests, and 151 tests more in all than `main` gives at the commit the branch starts from (2890 when that is `c8e4ba4`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   12. Only the twelve files under "Scope" of the plan changed.
 - **Tests required:** 147 new integration tests in 21 functions, in a store the migrations built, on a real SQLite file, with two open and two decided items written past the model and every column of every item read back with plain SQL after each refusal: a new item in the place of a decided one in eleven ways with four kinds of statement, and with `ON CONFLICT`; an open item put in its place in six ways with three kinds of statement; statements over several rows, in a unit of work and where nothing but SQLite takes them back; another doubt by one column; an open item replaced and changed as before; the model; a connection made with Python's own `sqlite3`, with recursive triggers off and on; a store made from the models. 3 new tests of the twelfth migration, from a store at version 10 that holds a decided item with the key -1, and one case more of the test that tries every migration alone. Planted defects in the triggers, the model and the migration, and those of DAT-054 and DAT-056 again. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #164, merged there with `main` as it stood after the other track's FND-052 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2903 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2083: 1932 before, 151 new). Then once more with `main` merged in after the other track's GLB-022: 19 of 19 gates, "Tests: 2942 passed, 0 failed, 0 skipped.", exit code 0. The total holds the tests of the other track's tasks that were merged in between; the branch by itself gives 2890, in the planner's trial of the same files and in the builder's run. The planner's 66 planted defects in the two triggers, in the model and in the migration, each against the 628 tests of the review queue and of the migrations (nine files), in three checkouts of the pull request: 66 of 66 detected, the two that the trial's first run had not detected each by the function that was added for them. The plan's 22 prove-it steps, written as plain substitutions, against the same tests: 22 of 22 detected; the builder ran them against all the backend tests with the plan's results. The 83 planted defects of DAT-054 and the 45 of DAT-056 against the same tests: 83 of 83 and 45 of 45 detected, each with the result it had in the trial. On GitHub, read by the planner from the runs and job logs: run 45971182356 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2903 passed, 0 failed, 0 skipped." (GitHub tests a pull request merged with `main`, which held FND-052 by then), with 2083 backend tests on both machines, the three jobs after the gates skipped; run 45977280336 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 2942 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 2942 / 0 tests locally and on both machines on GitHub for `main` (repository 80, script tests 206, backend 2083, frontend unit 320, browser 253); 2903 / 0 on both machines for the pull request, merged with `main` as it then stood; all 19 gates passed; 66 / 0 planted defects of this task, 83 / 0 of DAT-054 and 45 / 0 of DAT-056 detected on the pull request
+- **Verification status:** Verified by the planner on 2026-11-27. All 12 files are identical to the planner's trial. Six existing tests changed, as the plan says and for its reasons; no package was added. What SQLite does with the two triggers was read on the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `a245ea2`
 - **Plan:** `docs/plans/DAT-055.md`
 
 ### DAT-011 – Countries table
