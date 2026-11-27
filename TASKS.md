@@ -1468,15 +1468,25 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/FND-058.md`
 
 ### FND-059 – The other browser tests run in a browser without 3D pictures
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** The browser of every test that is not a globe test is started so that a page gets no 3D picture, so that no test outside the project of the globe can draw one.
-- **Description:** Added on 2026-11-27 (PLAN-053). FND-058 holds the globe tests to one at a time, because two pictures drawn in software at once starve each other on GitHub's Windows machine. That holds only as long as no other test draws one, and once the globe is in the page (GLB-002) every browser test that opens the page would. A browser started with `--disable-3d-apis` gives a page no 3D picture (`getContext('webgl2')` and `getContext('webgl')` give nothing), still draws 2D pictures and says nothing on the console; `--disable-gpu` does not take the 3D pictures away. The 261 browser tests there were passed in such a browser on both of GitHub's machines, but for the one that says how the browser is started (trial pull request #202, run 46063407570). The word goes to the browser of the tests (`TEST_BROWSER` in `frontend/e2e/browser.ts`); the browser of the globe tests (`GLOBE_BROWSER`) names its words itself and must not get this one. What the page shows in such a browser is GLB-026; until the globe is in the page, nothing changes for a test.
-- **Acceptance criteria:** in the project `chromium` a page gets neither a `webgl2` nor a `webgl` picture, does get a 2D one, and nothing is on the console; in the project `globe` a page gets a 3D picture as before; the browser of the project `chromium` is started with the word exactly once and the browser of the project `globe` without it; every other browser test passes unchanged; `TESTING.md` says why.
-- **Tests required:** browser tests in both projects of what a page gets and of how each browser was started; planted defects in the browser and in the settings; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-27 (PLAN-053); made exact on 2026-11-27 from the planner's trial. FND-058 holds the globe tests to one at a time, because two pictures drawn in software at once starve each other on GitHub's Windows machine. That holds only as long as no other test draws one, and once the globe is in the page (GLB-002) every browser test that opens the page would. So the browser of the project `chromium` is started with one word more, `--disable-3d-apis` (`NO_3D_SWITCH` in `frontend/e2e/browser.ts`, in `TEST_BROWSER` after the list of features to turn off). A page that asks such a browser for a 3D picture of either kind (`getContext('webgl2')`, `getContext('webgl')`) is given nothing, still gets a flat picture, and the browser says nothing on the console. In the trial two other words were planted and do not do it: `--disable-gpu` leaves a page both kinds, and `--disable-webgl2` takes only the newer one away; a word the browser does not know is not refused, and the page is then given a 3D picture, which is what the test that asks the page is for. The browser of the globe tests (`GLOBE_BROWSER`) names its words itself and is as it was; a test now holds that it is not told the word. Two existing tests are named for what is now so, with no line inside them changed. Nothing under `frontend/src` changes, and until the globe is in the page nothing changes for a test that was there. What the page shows in such a browser is GLB-026.
+- **Acceptance criteria:**
+  1. The browser of the project `chromium` is started with `--disable-3d-apis` exactly once, after the list of features to turn off, which is as it was.
+  2. In the project `chromium`, a page of the site that asks for a `webgl2` picture and for a `webgl` picture gets neither, gets a flat picture and reads its colour back, and nothing is on the console.
+  3. The browser of the project `globe` is started without the word, and as before: a page there shows 3D pictures, drawn in software, with nothing on the console.
+  4. The 270 browser tests that were there pass; of them, only the two the plan names changed, and only in their names.
+  5. Nothing under `frontend/src` changed, no package was added, the two projects of the settings are as they were, and `scripts/check.py` and the workflow are as they were.
+  6. `TESTING.md` says what the browser of the other tests gives a page, why, and which test fails when a later browser no longer knows the word.
+  7. `python scripts/check.py` reports 19 of 19 gates, with 273 browser tests, and 3 tests more in all than `main` gives at the commit the branch starts from (3532 when that is `4bef8bc`).
+  8. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
+  9. Only the seven files under "Scope" of the plan changed.
+- **Tests required:** 2 new browser tests in the project `chromium`: how its browser was started, and what a page of the site gets when it asks for each kind of picture. 1 new browser test in the project `globe`: its browser is not told the word. The 9 tests of the globe's browser that were there, one of which shows thirty 3D pictures. Planted defects in the word, in both browsers and in the settings. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-059.md`
 
 ### FND-060 – A browser test can read a pixel of what the page shows
 - **Status:** NOT STARTED
