@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 43 | 43 |
-| 2 | Data store and published data (DAT, PUB) | 62 | 42 |
+| 2 | Data store and published data (DAT, PUB) | 62 | 43 |
 | 3 | Interactive 3D Earth (GLB) | 21 | 0 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -26,7 +26,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task:** DAT-052 – Deciding a review item.
+**Current task:** DAT-054 – A decided review item keeps its decision.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -1754,7 +1754,7 @@ DAT-054, which stands after DAT-052.
 - **Plan:** `docs/plans/DAT-053.md`
 
 ### DAT-052 – Deciding a review item
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** One function puts down a person's decision on an open review item, with who made it and when, and refuses an item that was decided already.
 - **Description:** Added on 2026-11-26 (PLAN-029), cut out of DAT-010, which asked that "a decided item keeps its decision and cannot be reopened silently". Cut down in the planner's trial on 2026-11-26 (PLAN-031) to the function; that the store itself keeps a decision is DAT-054. `decide(work, item, decision, by=..., note=...)` in `motosphere.db.review` is how a decision is written: accepted or rejected, by whom, and when. It gives nothing back. Settled in the planner's trial: the moment is not given but read from the store's clock, once, and is both when the item was decided and when it was last changed; the person is given by name, kept as given, and the table's own checks refuse an empty name and a decision by nobody; a note given takes the place of the note the item has, and without one that note stays; an item that was decided is refused whatever is given for it, the same decision again as well, because that would give the decision another person and another moment; the refusals are said in the order not stored, decided, no decision, so that who gives open for a decided item is told that a decision is kept; a decision is exactly one of the two values of the list, and text that is spelled like one is refused; only an item that is stored and that this unit of work read or stored is taken, by a rule written out in the function with a sentence of its own; a decision is not written to the history of the changes, because the item is itself the record of it and the table of the items holds no collected records; and the function sends one statement and does not read the item again, because SQLite keeps nothing another connection writes while a unit of work that has read is open, which a test tries on every run. No table, column, check, index or migration changes; one existing test changes, the one that holds the list of what the module gives; no new package. The planner's trial has 43 new tests and detects 50 of 50 new planted defects and 101 of 101 of the two earlier tasks whose module it adds to.
 - **Acceptance criteria:**
@@ -1769,10 +1769,10 @@ DAT-054, which stands after DAT-052.
   9. One existing test changes, the one that holds the list of what the module gives; all tests pass. The type check passes with no `ignore` and the lint with no `noqa`.
   10. `python scripts/check.py` reports 19 of 19 gates and 2404 tests (backend tests 1774); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
 - **Tests required:** 43 new integration tests in 15 functions, in a store the migrations built, on a real SQLite file, with the real table of the review items, every column of every item read back with plain SQL; they count the readings of the clock and the statements the function sends, and have another connection decide the item just before the function's statement; every existing test, one of them changed. Seventeen planted defects by the builder and the planner's own, those of DAT-051 and DAT-053 among them, because their module changes; the full run of all 19 gates; the workflow run on the pull request, on both machines; the run for `main` after the merge, with its deployment and the check of the published site.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #141 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2404 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 1774: 1731 before, 43 new); 50 planted defects in the new function, 50 of 50 detected with the results of the trial, the plan's seventeen prove-it steps among them; no planted defect of an earlier task was planted again on the pull request, because its files are byte for byte those of the planner's trial, in which 101 of 101 of the two earlier tasks in the same module were detected (the 45 of DAT-051 and the 56 of DAT-053), each failing exactly the tests it failed when it was last planted. On GitHub, read by the planner from the runs and job logs: run 45913443244 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2404 passed, 0 failed, 0 skipped.", with 1774 backend tests on both machines, the three jobs after the gates skipped; run 45916363053 for `main` after the merge, all five jobs green at the first attempt, both gates jobs with the same two closing lines, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 7 of 7 files."
+- **Passed / Failed:** 2404 / 0 tests (repository 41, script tests 206, backend 1774, frontend unit 212, browser 171); all 19 gates passed, locally and on both machines on GitHub; 50 / 0 new planted defects detected, and 101 / 0 of the two earlier tasks in the trial; the published site: 7 / 7 files identical to the build
+- **Verification status:** Verified by the planner on 2026-11-27. All 7 files are identical to the planner's trial. One existing test changed, the one that holds the list of what the module gives, and no package was added. What SQLite says to another connection that decides the item just before the function's statement was read on the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `e3fd7be`
 - **Plan:** `docs/plans/DAT-052.md`
 
 ### DAT-054 – A decided review item keeps its decision
