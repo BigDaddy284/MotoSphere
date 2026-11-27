@@ -19,15 +19,3 @@ createRoot(rootElement).render(
     <App />
   </StrictMode>,
 )
-
-async function spike(): Promise<void> {
-  const { start } = await import('./globe/spike.ts')
-  const stage = document.querySelector('main')
-  if (stage !== null) {
-    start(stage)
-  }
-}
-
-if (globalThis.location.search.includes('spike')) {
-  void spike()
-}
