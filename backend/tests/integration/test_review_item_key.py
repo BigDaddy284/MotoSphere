@@ -59,8 +59,6 @@ ACCEPTED = ("accepted", "Jo Example", FIRST)
 THE_TRIGGERS = [
     ("tr_review_item_decided_never_deleted", "review_item"),
     ("tr_review_item_decided_never_edited", "review_item"),
-    ("tr_review_item_decided_never_replaced", "review_item"),
-    ("tr_review_item_decided_never_replaced_by_another", "review_item"),
     ("tr_review_item_key_positive", "review_item"),
     ("tr_review_item_key_stays_positive", "review_item"),
 ]

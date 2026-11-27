@@ -73,10 +73,8 @@ def open_possible_duplicate(work: Session, record: Base, other: Base, *, reason:
     The function looks for the doubt and then writes it. No other
     connection can store the same doubt between the two: SQLite keeps
     nothing another connection writes while a unit of work that has read
-    is open. Past this function, the store itself refuses the same doubt
-    a second time: its index does (DAT-050), and where the item that is
-    there was decided, the trigger that keeps it from being replaced
-    does so first (DAT-055).
+    is open. Past this function, the store's own index refuses the same
+    doubt a second time (DAT-050).
 
     Refused before anything is written, each in one sentence: a record
     that this unit of work did not read or store, or that is not stored

@@ -204,55 +204,9 @@ _A_KEY_IS_1_OR_MORE = (
 )
 
 
-# The two triggers by which a decided item is never replaced: the first
-# for a new item, the second for an open item that is changed. A
-# statement that says REPLACE takes out the row its new row clashes with,
-# by the key or as the same doubt, and SQLite fires no trigger for a row
-# it takes out so. So each trigger asks, before the row is written,
-# whether a decided item has the key of the row or is its doubt, by the
-# two indexes of the table: the same two records, or the same field of
-# the same record of which the same source says the same thing. A row of
-# the other shape has nothing in the column that is asked, and is equal
-# to nothing. A trigger cannot tell what the statement would do with the
-# clash, so the statement is stopped whatever it says.
-#
-# A new item that names no key has none before it is written, and SQLite
-# shows -1: the first trigger asks about a key from 1 on, and the two
-# triggers of the keys take back a row with a key below. An item that
-# was decided is never edited, which its own trigger says, so the second
-# asks of an open item only.
-_A_DECIDED_ITEM_IS_NEVER_REPLACED = (
-    "CREATE TRIGGER tr_review_item_decided_never_replaced BEFORE INSERT ON review_item "
-    "WHEN EXISTS (SELECT 1 FROM review_item WHERE state != 'open' AND ("
-    "(NEW.id >= 1 AND id = NEW.id) "
-    "OR (record_table = NEW.record_table AND record_id = NEW.record_id "
-    "AND other_record_id = NEW.other_record_id) "
-    "OR (record_table = NEW.record_table AND record_id = NEW.record_id "
-    "AND field = NEW.field AND source_id = NEW.source_id "
-    "AND source_value = NEW.source_value))) "
-    "BEGIN SELECT RAISE(ABORT, "
-    "'A decided review item (review_item) is never replaced.'); END",
-    "CREATE TRIGGER tr_review_item_decided_never_replaced_by_another "
-    "BEFORE UPDATE ON review_item "
-    "WHEN OLD.state = 'open' AND EXISTS (SELECT 1 FROM review_item WHERE state != 'open' AND ("
-    "id = NEW.id "
-    "OR (record_table = NEW.record_table AND record_id = NEW.record_id "
-    "AND other_record_id = NEW.other_record_id) "
-    "OR (record_table = NEW.record_table AND record_id = NEW.record_id "
-    "AND field = NEW.field AND source_id = NEW.source_id "
-    "AND source_value = NEW.source_value))) "
-    "BEGIN SELECT RAISE(ABORT, "
-    "'A decided review item (review_item) is never replaced.'); END",
-)
-
-
 def _make_its_triggers(table: object, connection: Connection, **said: object) -> None:
-    """Make the six triggers, with the connection that has just made the table."""
-    for trigger in (
-        *_A_DECISION_IS_KEPT,
-        *_A_KEY_IS_1_OR_MORE,
-        *_A_DECIDED_ITEM_IS_NEVER_REPLACED,
-    ):
+    """Make the four triggers, with the connection that has just made the table."""
+    for trigger in (*_A_DECISION_IS_KEPT, *_A_KEY_IS_1_OR_MORE):
         connection.exec_driver_sql(trigger)
 
 

@@ -347,15 +347,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The store gives keys from 1 up, so nothing it does itself changes;
   the rule is what the next task, which keeps a decided item from
   being replaced, stands on (DAT-056).
-- A decided review item is never replaced. The twelfth migration makes
-  two triggers on `review_item` that ask, before every new row and
-  every changed open row, whether a decided item has its key or is
-  its doubt, and SQLite then refuses the statement in one sentence.
-  So `INSERT OR REPLACE`, `REPLACE` and `UPDATE OR REPLACE` no longer
-  take a decided item out. A plain statement that the index refused
-  before hears the same sentence where the item that is there was
-  decided, and one told to pass over a clash with a decided item is
-  refused as well. An open item is replaced as before (DAT-055).
 
 ### Removed
 
