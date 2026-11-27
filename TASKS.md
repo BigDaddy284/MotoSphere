@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 58 | 55 |
+| 1 | Foundation (FND) | 58 | 56 |
 | 2 | Data store and published data (DAT, PUB) | 71 | 54 |
 | 3 | Interactive 3D Earth (GLB) | 28 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-061 – A command loads the countries.
 
-**Current task, track B (globe):** FND-058 – The globe tests have a browser that draws 3D pictures, one test at a time.
+**Current task, track B (globe):** FND-059 – The other browser tests run in a browser without 3D pictures.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -1444,7 +1444,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/FND-057.md`
 
 ### FND-058 – The globe tests have a browser that draws 3D pictures, one test at a time
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The browser tests of the globe get a project of their own: its browser is told how to draw 3D pictures, so that it says nothing of its own on the console, and its tests run one at a time. A globe test that runs beside another fails and says so.
 - **Description:** Added on 2026-11-27 (PLAN-053), from the planner's trial of GLB-002. Started as the tests start it today, the browser logs four warnings of its own on the console of every page that shows a 3D picture ("GPU stall due to ReadPixels"), and every browser test fails on a warning on the console. Told one word more, `--use-angle=swiftshader`, it says nothing, on a developer's Linux machine and on both of GitHub's machines. On GitHub's Windows machine two globes drawn at once starve each other: of eight that were started two at a time, seven were not complete within 40 seconds, where one alone was complete in 2.1 to 4.8 seconds. With the tests of the globe held to one at a time, 16 of 16 were complete there in 1.5 to 7.6 seconds, and 16 of 16 on the Linux machine in 0.6 to 0.8 seconds. `frontend/playwright.config.ts` gets a second project, `globe`, for the files in a new folder, `frontend/e2e/globe`, with `workers: 1`; the project of the other tests, `chromium`, leaves that folder out. `frontend/e2e/browser.ts` gets the word (`SOFTWARE_3D_SWITCH`) and how the browser of the globe tests is started (`GLOBE_BROWSER`: as the browser of every test, with the word). The limit is held by the tests themselves too: every globe test uses the `test` of `frontend/e2e/globe/fixtures.ts`, which holds a turn for as long as the test runs, a file in the folder of the run's results that only one can make, and a globe test that finds it there fails with "Two globe tests ran at once. They must run one at a time: see the project "globe" in playwright.config.ts." The task has no globe in it, only a plain 3D picture of the test's own; nothing under `frontend/src` changes. A globe drawn while other browser tests run beside it was not measured: Playwright starts the tests of the first project first, and the globes were drawn at the end of the run.
 - **Acceptance criteria:**
@@ -1461,10 +1461,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   11. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   12. Only the eight files under "Scope" of the plan changed.
 - **Tests required:** 9 new browser tests in the project `globe`: how its browser is started; a page that shows thirty 3D pictures, drawn in software, with nothing on the console; the project and its options; the turn held while a test runs, and refused to a second; the turn taken in a folder that is not there yet, refused with what the system said, handed back and taken again; four tests that take a third of a second each, which collide when the project has more than one worker. One existing test says that there are two projects. Planted defects in the browser, the settings and the turn. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #206 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32, Playwright 1.63.0 with its Chromium 153.0.8010.12): the full run, 19 of 19 gates passed, "Tests: 3529 passed, 0 failed, 0 skipped.", exit code 0 (browser tests 270: 261 before, 9 new). The planner's 20 planted defects, one at a time, in the pull request (four in the browser, six in the settings, ten in the turn), each against the 14 tests of `e2e/browser.spec.ts` and `e2e/globe` with two workers: 20 of 20 detected, each by the same tests as in the planner's trial, but for the two defects under which two globe tests can run at once (no limit of workers, and the globe tests run by the other project too), where which tests meet is a matter of timing. The plan's eight prove-it steps, run by the planner too: each fails the tests the plan names (2, 2, 2, 8, 5, 1, 1 and 1 tests). On GitHub, read by the planner from the runs and job logs: run 46070781794 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3529 passed, 0 failed, 0 skipped.", with 270 browser tests on both machines, the nine globe tests the last nine of them, the three jobs after the gates skipped; run 46072135474 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3529 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3529 / 0 tests on both machines on GitHub for `main` and for the pull request, and locally (repository 82, script tests 219, backend 2552, frontend unit 406, browser 270); all 19 gates passed; 20 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 8 files are the same change as the planner's trial. One existing test changed, as the plan names it: it said that the settings have one project, and no assertion was dropped. Nothing under `frontend/src` changed, and no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #205, run 46069120922). The builder's report names the same counts and the same failing tests for the eight steps, with Node 22.23.5. The builder also reports, and the planner did not see it in its own environment: in the builder's container the browser of the tests was a wrapper that took the word `--use-angle=swiftshader` out again and ran Chromium 158.0.8127.36 in place of Playwright's 153.0.8010.12, so that the test with the thirty 3D pictures failed with the four warnings there until the wrapper's own switches `CHROMIUM_HEADLESS_SHELL=playwright` and `CHROMIUM_KEEP_GL_SWITCHES=1` were set; no test holds which version of the browser a run uses.
+- **Commit:** `4bef8bc`
 - **Plan:** `docs/plans/FND-058.md`
 
 ### FND-059 – The other browser tests run in a browser without 3D pictures
