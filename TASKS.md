@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 51 | 50 |
-| 2 | Data store and published data (DAT, PUB) | 64 | 45 |
+| 2 | Data store and published data (DAT, PUB) | 65 | 46 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 2 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-055 – A decided review item is not replaced.
+**Current task, track A (data store):** DAT-011 – Countries table.
 
 **Current task, track B (globe):** FND-053 – The check of the published site knows the engine's kinds of file.
 
@@ -102,6 +102,12 @@ GLB-024 and GLB-025. The check of the published site learns the two
 kinds of file the engine brings that a browser is particular about in
 FND-053, after GLB-022, when such files are published. Order on track B:
 FND-052, GLB-022, FND-053, GLB-024, GLB-025, then GLB-002.
+
+**The countries, in two steps (PLAN-042):** DAT-011 was two objectives:
+the table of the countries, and the country of a source, which is a
+column of a table that is there and holds rows, with a migration of
+another kind. DAT-011 is now the table; the column is DAT-057, which
+follows it. Order on track A: DAT-011, DAT-057, then DAT-012.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -2058,7 +2064,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-056.md`
 
 ### DAT-055 – A decided review item is not replaced
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store itself refuses a statement that would put another row in the place of a decided review item.
 - **Description:** Added on 2026-11-27 (PLAN-037), cut out of DAT-054; it stands on DAT-056 (PLAN-040). Since DAT-054 a decided item is neither edited nor deleted. But `INSERT OR REPLACE`, `REPLACE` and `UPDATE OR REPLACE` take out the row their new row clashes with, by its key or as the same doubt (the two indexes of DAT-050), and SQLite fires no trigger for a row it takes out in that way. Two triggers on `review_item`, `tr_review_item_decided_never_replaced` (before a new row) and `tr_review_item_decided_never_replaced_by_another` (before an open row is changed), ask whether a decided item has the key the row would have, or is the same doubt, and refuse with "A decided review item (review_item) is never replaced." They are made by a twelfth migration, `keep_a_decided_review_item_from_being_replaced`, and by the model alike. A trigger cannot know what the statement says is to be done with a clash, so the store refuses whatever it says: a plain `INSERT` that clashes with a decided item is told this sentence where it was told that of the index, and `OR IGNORE` and `ON CONFLICT DO NOTHING`, which would have left the decided item alone, are refused too. An open item is replaced, changed, decided and deleted as before. The key of a new row is asked from 1 on, because a row that names no key shows -1 until it is written (DAT-056). The schema goes to version 12. No column, check or index changes, and nothing of what `motosphere.db.review` does: one sentence of a comment there.
 - **Acceptance criteria:**
@@ -2075,18 +2081,43 @@ did not have, that a key is 1 or more, and made that a task of its own
   11. `python scripts/check.py` reports 19 of 19 gates, with 2083 backend tests, and 151 tests more in all than `main` gives at the commit the branch starts from (2890 when that is `c8e4ba4`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   12. Only the twelve files under "Scope" of the plan changed.
 - **Tests required:** 147 new integration tests in 21 functions, in a store the migrations built, on a real SQLite file, with two open and two decided items written past the model and every column of every item read back with plain SQL after each refusal: a new item in the place of a decided one in eleven ways with four kinds of statement, and with `ON CONFLICT`; an open item put in its place in six ways with three kinds of statement; statements over several rows, in a unit of work and where nothing but SQLite takes them back; another doubt by one column; an open item replaced and changed as before; the model; a connection made with Python's own `sqlite3`, with recursive triggers off and on; a store made from the models. 3 new tests of the twelfth migration, from a store at version 10 that holds a decided item with the key -1, and one case more of the test that tries every migration alone. Planted defects in the triggers, the model and the migration, and those of DAT-054 and DAT-056 again. The full run of all gates on both machines.
+- **Tests executed:** In a clean checkout of pull request #164, merged there with `main` as it stood after the other track's FND-052 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 2903 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2083: 1932 before, 151 new). Then once more with `main` merged in after the other track's GLB-022: 19 of 19 gates, "Tests: 2942 passed, 0 failed, 0 skipped.", exit code 0. The total holds the tests of the other track's tasks that were merged in between; the branch by itself gives 2890, in the planner's trial of the same files and in the builder's run. The planner's 66 planted defects in the two triggers, in the model and in the migration, each against the 628 tests of the review queue and of the migrations (nine files), in three checkouts of the pull request: 66 of 66 detected, the two that the trial's first run had not detected each by the function that was added for them. The plan's 22 prove-it steps, written as plain substitutions, against the same tests: 22 of 22 detected; the builder ran them against all the backend tests with the plan's results. The 83 planted defects of DAT-054 and the 45 of DAT-056 against the same tests: 83 of 83 and 45 of 45 detected, each with the result it had in the trial. On GitHub, read by the planner from the runs and job logs: run 45971182356 on the pull request's commit, both gates jobs green, each log ending "19 of 19 gates passed." and "Tests: 2903 passed, 0 failed, 0 skipped." (GitHub tests a pull request merged with `main`, which held FND-052 by then), with 2083 backend tests on both machines, the three jobs after the gates skipped; run 45977280336 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 2942 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 2942 / 0 tests locally and on both machines on GitHub for `main` (repository 80, script tests 206, backend 2083, frontend unit 320, browser 253); 2903 / 0 on both machines for the pull request, merged with `main` as it then stood; all 19 gates passed; 66 / 0 planted defects of this task, 83 / 0 of DAT-054 and 45 / 0 of DAT-056 detected on the pull request
+- **Verification status:** Verified by the planner on 2026-11-27. All 12 files are identical to the planner's trial. Six existing tests changed, as the plan says and for its reasons; no package was added. What SQLite does with the two triggers was read on the real SQLite of three machines: the planner's (3.53.1) and the two of GitHub, Linux and Windows.
+- **Commit:** `a245ea2`
+- **Plan:** `docs/plans/DAT-055.md`
+
+### DAT-011 – Countries table
+- **Status:** IN PROGRESS
+- **Objective:** The store holds countries, so that everything else can say where it is.
+- **Description:** Narrowed on 2026-11-27 (PLAN-042): the country of a source is DAT-057. The table `country`, its model `Country` in `motosphere.db.models.country`, and the thirteenth migration, `make_the_countries`. Settled in the planner's trial. The columns: `alpha_2` and `alpha_3`, the two codes of ISO 3166-1, and `name`, the English short name as its source writes it; then the eight columns of a collected record (DAT-008). The countries are the first real table of collected records, with the index `ix_country_source_id` (DAT-045) and under the rule of DAT-046, whose list is unchanged. A code is held to its form by a check (`ck_country_alpha_2_two_capitals`, `ck_country_alpha_3_three_capitals`): SQLite's `GLOB` with one class of the 26 capital letters for each letter, and a second question for a character with the number 0, which `GLOB` does not read past. Neither the model nor the table puts a code into capitals: what a source writes is stored or refused. Each code is unique by itself. The name is text that is not empty, and two rows can hold one name. The table knows the form of a code and not the standard's list, and it has no rows: they come with DAT-012. Not in the table: the number the standard gives a country, and regions (DAT-013). A defect of the documents is put right on the way: the list in `DATABASE.md` of the tables that hold no collected records lacked `review_item`. The schema goes to version 13. The planner's trial has 154 new tests and detects 55 of 55 planted defects.
+- **Acceptance criteria:**
+  1. The schema is at version 13. The thirteenth migration makes the table `country` and the index `ix_country_source_id` and nothing else; a store that holds sources and review items keeps them as they were. Where a table or an index of its name is there already the migration fails, and the store stays at version 12 with nothing of the migration kept.
+  2. A country is stored and read back with its two codes, its name and the eight things that say where it came from. A row cannot be without any of them but the day it was published, and neither the model nor the table gives one a value.
+  3. A code is stored in capitals and refused in any other form or length: each of the eighteen texts of the tests for each code is refused by the check of its column, a text with a character of the number 0 among them. The model does not put a code into capitals.
+  4. Two countries cannot share a code of two letters, nor one of three, when a country is stored and when one is changed. Two countries can hold one name.
+  5. A name is text that is not empty and is stored as it was given.
+  6. A country comes from a source that is there; a source that countries came from cannot be deleted; a country can be deleted, and its key is not given again.
+  7. The eight columns keep their rules in the real table: a web address, a calendar day, the three lists, and the two times held together.
+  8. The countries of one source are found through the index.
+  9. `change` changes a country and writes its history; a change the table refuses leaves the country and no history.
+  10. The model and the migration agree: the test of the models and the migrations passes unchanged. The whole schema with the countries breaks neither the rules every table keeps nor the rule of where records came from, whose list is unchanged.
+  11. One existing test changes, the list of the migrations' names; no other existing test changes, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  12. `python scripts/check.py` reports 19 of 19 gates, with 2237 backend tests, and 154 tests more in all than `main` gives at the commit the branch starts from (3096 when that is `3c3b81f`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  13. Only the eleven files under "Scope" of the plan changed.
+- **Tests required:** 142 new integration tests in 30 functions, in a store the migrations built, with one source in it, on a real SQLite file, through the model and past it as plain SQL, each refusal with what SQLite said: what is stored; what a country cannot be without; eighteen texts that are not a code, for each code; one code, one country; the name; the source; the rules of the eight columns; the index; a country changed with its history. 8 new unit tests of the model. 3 new tests of the thirteenth migration, and one case more of the test that tries every migration alone. Planted defects in the model and the migration. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
-- **Plan:** `docs/plans/DAT-055.md`
+- **Plan:** `docs/plans/DAT-011.md`
 
-### DAT-011 – Countries table
+### DAT-057 – A source says its country
 - **Status:** NOT STARTED
-- **Objective:** The store holds countries, so that everything else can say where it is.
-- **Description:** Table, model and migration for countries: the ISO 3166-1 two-letter and three-letter codes, the English short name, and provenance. Sources gain their country here (the column DAT-006 left out). No rows yet: they come with DAT-012.
-- **Acceptance criteria:** codes are stored in capitals and refused in any other form or length; two countries cannot share a code; a source's country must exist.
-- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it; planted defects; the full run of all gates on both machines.
+- **Objective:** A source can say which country it is of, so that sources can be found by country.
+- **Description:** Added on 2026-11-27 (PLAN-042), cut out of DAT-011. One column of `source`: the key of a row of `country`. It may be without a value, because a body for the whole world is of no country. The migration changes a table that is there and holds rows, which no migration has done so far. The planner's trial settles how (a column added, or the table built anew, which the runner of the migrations allows since DAT-004), whether the column has an index, and that a country sources are of cannot be deleted.
+- **Acceptance criteria:** a source's country must exist; a source may be without one; the sources that were there keep everything they had and have no country; a country that a source is of cannot be deleted; the model and the migration agree.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it that holds sources, offers, runs and countries; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
