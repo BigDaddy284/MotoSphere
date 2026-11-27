@@ -2570,6 +2570,63 @@ Two browser tests (`frontend/e2e/browser.spec.ts`) hold it:
 What a page of the site shows a person whose browser gives no 3D
 picture is GLB-026.
 
+## Reading what the page shows
+
+A test that must know what a person sees looks at the picture itself:
+that the Earth is drawn is proven from its pixels (GLB-003).
+`colourAt(page, x, y)` in `frontend/e2e/pixel.ts` gives the colour of
+one point of the page as the browser shows it: red, green and blue,
+each from 0 to 255 (FND-060). The point is counted in the page's own
+pixels, across from its left edge and down from its top. On a screen
+that is sharper than the page, one pixel of the page is still one
+answer.
+
+**The picture is read from outside the page.** In the planner's trial
+a page that read its own 3D picture back (`gl.readPixels`) made the
+browser log a warning, and every browser test fails on a warning. So
+Playwright takes a picture of the one pixel of the page, a PNG, and
+`colourOfOnePixel` reads the colour from that with what Node.js brings
+(`node:zlib`). No package was added. On the planner's Linux machine a
+point took about 35 thousandths of a second, so a test asks for the
+points it needs and not for the whole page.
+
+**What is on top is what is read.** The answer is the colour the
+browser shows at the point, whatever of the page lies there. A test
+that reads the globe makes sure that nothing lies over the point.
+
+**What cannot be read is refused with a sentence, and nothing is
+guessed.**
+
+| What is asked | What is said |
+|---|---|
+| A point that is not a point of the page: left of it, above it, at or beyond its width or height, between two pixels, or no number | "(1280, 0) is not a point of the page, which is 1280 by 720 pixels." |
+| What is no PNG | "This is not a PNG picture." |
+| A PNG that is cut short, has a chunk whose checksum is wrong, does not begin with its header or end with its end, has data that cannot be unpacked, or a line that is not as long as one pixel or is filtered in a way there is none of | "The PNG picture is damaged." (for data that cannot be unpacked, what Node.js said of it goes with the error as its cause) |
+| A PNG of more or fewer pixels than one | "The PNG picture is 2 by 1 pixels, not one pixel." |
+| A PNG of another kind than a browser makes: sixteen bits, greys, a palette, interlaced | "The PNG picture is of a kind that is not read here (bit depth 16, colour type 2, interlace 0). Read are bit depth 8, colour type 2 or 6, interlace 0." |
+| A pixel that is not opaque | "The pixel of the PNG picture is not opaque (128 of 255), so its colour is not what is seen." |
+
+Eighteen browser tests hold this. Thirteen
+(`frontend/e2e/pixel.spec.ts`) give `colourOfOnePixel` pictures the
+test makes itself, chunk by chunk, and one picture as the browser of
+the tests made it, kept in the test: red, green and blue, with and
+without the fourth byte; each of the five ways a line can be filtered;
+data in several pieces with another chunk between; every refusal of
+the table; the picture cut short after each of its bytes; and the
+picture with each of its bytes in turn changed, none of which is read
+as a colour. Four more in the same file ask a page of the built site:
+a flat picture of four quarters, with a colour of its own for the one
+pixel in each corner, is read at eighteen points, the corners, their
+neighbours, the middle of each edge and where the quarters meet; the
+answer changes when what the page shows changes; nine points that are
+not points of the page are refused; and a page of 200 by 100 pixels on
+a screen that is larger and twice as sharp is read pixel for pixel of
+the page. One test in the project of the globe
+(`frontend/e2e/globe/pixel.spec.ts`) has the page show a 3D picture,
+its upper half in one colour and its lower half in another, and reads
+both colours exactly at ten points, the four corners among them, with
+nothing on the console.
+
 ## The tools a computer needs
 
 `python scripts/tools.py` says whether a computer has the five tools the
