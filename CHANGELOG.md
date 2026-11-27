@@ -108,6 +108,11 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   keeps its arithmetic. Nothing of the application uses it yet, so the
   site is what it was. A repository check holds which packages the site
   ships, and that there is one copy of each (GLB-001).
+- The files the engine of the globe fetches while it runs (background
+  scripts, programs, tables and pictures: 275 files, 8.3 MB) are part of
+  the built site, under `cesium/`. Two logos of other companies that the
+  engine brings are left out. Nothing of the application asks for the
+  files yet, so a visitor's browser fetches none of them (GLB-022).
 - The data store's first decisions (`DATABASE.md`): what it relies on in
   SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
   gates run on, and where the store is kept between scheduled runs
