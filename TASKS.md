@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 53 | 51 |
-| 2 | Data store and published data (DAT, PUB) | 67 | 48 |
+| 2 | Data store and published data (DAT, PUB) | 67 | 49 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-012 – The countries reference file.
+**Current task, track A (data store):** DAT-058 – A kind of source for reference lists.
 
 **Current task, track B (globe):** FND-057 – The checks on GitHub's Windows machine do not run out of time.
 
@@ -2216,7 +2216,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-057.md`
 
 ### DAT-012 – The countries reference file
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The list of the countries of ISO 3166-1 is in the repository, unchanged from a source whose licence allows it, with that source and its licence recorded, and a reader gives its countries or refuses the file whole.
 - **Description:** Narrowed on 2026-11-27 (PLAN-044) from "Countries reference data": registering the source is DAT-058 and DAT-059, and loading is DAT-059. The planner's trial found the source and read its licence: the project iso-codes of Debian, whose file `data/iso_3166-1.json` is the list of the standard, 249 entries, under LGPL-2.1-or-later (copyright 2016 Dr. Tobias Quathamer, as the release's `REUSE.toml` states). The licence permits copying and passing on; it asks that a copy keeps the notice and comes with the licence, that a changed copy says so, and that a work which takes over part of the list is passed on under the same licence. The file and the licence of release 4.20.1 are in `backend/src/motosphere/reference/iso-codes/`, unchanged, with a note of where they came from; the release was fetched once, as its makers published it, from the Ubuntu archive, because the project's own server could not be reached. Every entry's code of three letters and number agree with what Unicode's Common Locale Data Repository gives for its code of two letters. A reader, `motosphere.reference.countries`, gives the countries of such a file, each with its two codes and its name as the file writes it, in the file's order; it reads those three values of an entry and nothing else, and refuses a damaged file whole with a sentence that says what is wrong. `DATA_SOURCES.md` has the source, its licence, what was checked and what else was looked at; ISO's own page could not be read and nothing is said of its terms. Nothing is fetched while the pipeline runs, and nothing is in the store yet.
 - **Acceptance criteria:**
@@ -2232,10 +2232,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   10. `python scripts/check.py` reports 19 of 19 gates, with 2420 backend tests, and 143 tests more in all than `main` gives at the commit the branch starts from (3362 when that is `08c6ebb`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   11. Only the ten files under "Scope" of the plan changed.
 - **Tests required:** 143 new unit tests in 44 functions: the two files held to the release by their SHA-256, on Linux and on Windows, and the note beside them; the countries of the project's file; what the reader reads, on files made up for the test; and everything it refuses, each with its sentence word for word. Planted defects in the files, in the note and in the reader. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #179 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 3362 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2420: 2277 before, 143 new). The planner's 89 planted defects, one at a time, on the pull request, in the reader, in the two files of the release and in the note beside them, against the 143 new tests: 89 of 89 detected, each by as many tests as in the planner's trial. In the first run of them one defect was counted with the failures of the one before it: the two are of one length and were written within one second, and Python's cache of compiled files took the second for the first. The planner's tool now runs without that cache, and the second run gave the trial's numbers for all 89. A file added to the folder of the release by hand fails the test of the folder (1 failed, 142 passed). On GitHub, read by the planner from the runs and job logs: run 46012199364 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3362 passed, 0 failed, 0 skipped.", with 2420 backend tests on both machines, the three jobs after the gates skipped; run 46016966535 for `main` at the merge (`307f1ac`): the Linux job green, ending "Tests: 3362 passed, 0 failed, 0 skipped."; the Windows job was cut off at its limit of 20 minutes during the backend tests, with no test failed, so the three jobs after the gates did not run, and the run was not run again (PLAN-045); run 46026163792 for `main` at `c3106ff`, the next commit, which adds only documents of the planner to the merge: all five jobs green at the first attempt, both gates jobs ending "Tests: 3362 passed, 0 failed, 0 skipped." with 2420 backend tests (602.4 s on Windows, 44.1 s on Linux), the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3362 / 0 tests on both machines on GitHub for `main` (repository 80, script tests 219, backend 2420, frontend unit 387, browser 256) and for the pull request, and locally; all 19 gates passed; 89 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 10 files are identical to the planner's trial; the file of the countries and the licence are the release's, byte for byte, by their SHA-256, on Linux and after a checkout on Windows. No existing test changed and no package was added. The source and its licence were read by the planner in the release itself (`DATA_SOURCES.md`). The builder reported the full run with 3362 tests passed in its own checkout (143 new) and the plan's 16 prove-it steps, each with the plan's result, and no deviation from the plan but Node 22.23.5 where the plan's trial had 22.23.4.
+- **Commit:** `307f1ac`
 - **Plan:** `docs/plans/DAT-012.md`
 
 ### DAT-058 – A kind of source for reference lists
