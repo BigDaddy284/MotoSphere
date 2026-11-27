@@ -208,6 +208,24 @@ because every country names it. DAT-059 is now the loading, by a function.
 DAT-061 is the command that does both. The plan has two tasks more than
 before, 292. Order on track A: DAT-060, DAT-059, DAT-061, then DAT-013.
 
+**The loading adds, and changes nothing (PLAN-050):** The entry of DAT-059
+said that a country whose name the file has changed is changed through the
+history. The planner's trial took that back. A loading is not a collection
+run: a run is one attempt to collect from one source, and nothing is
+collected here, because the file was fetched once, by hand (DAT-012), and is
+part of the project. That is also why the source need not be switched on for
+its countries to be loaded (DAT-060). A record is changed with its history,
+and a change names what caused it: a collection run, or the person who
+decided it (DAT-047). A loading is neither, and no cause is made up for it.
+So the loading adds the countries the store does not have and does nothing
+else: a country the store says something else of than the file, and a
+country of the store that the file does not have, are left as they are and
+named to whoever called the function. The store and the file can come to say
+different things of a country in two ways only: a person changed the store
+by hand, or a newer release was taken into the repository. Either way a
+person is at hand to decide which is right. The command of DAT-061 says what
+the loading named.
+
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
 (`ARCHITECTURE.md`). Tasks FND-001 to FND-013 were planned before that
@@ -2402,21 +2420,36 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-060.md`
 
 ### DAT-059 – The countries are loaded into the store
-- **Status:** NOT STARTED
-- **Objective:** The countries of the reference file are in the store, each naming the source it came from, by a function that changes nothing when it is run again.
-- **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012, and narrowed on 2026-11-27 (PLAN-049) to the loading: the source is DAT-060 and the command is DAT-061. A function brings the countries of the file of DAT-012 into the table of DAT-011, under the source of DAT-060: a country that is not there is added, a country whose name or code of three letters the file has changed is changed through the history of DAT-009, and no country is ever deleted. Every row says which source it came from, at which address and when. Nothing is fetched. The planner's trial settles what a row says of where it came from (the address the release was fetched from, the day the release was published, and the times), whether a loading is recorded as a collection run, and how a country that is in the store and not in the file any more is treated.
-- **Acceptance criteria:** after loading, the store holds exactly the countries of the file, each with provenance naming the source; loading twice leaves the same rows and no new history; a changed name in the file becomes one change with history; a country that is in the store and not in the file is left as it is and reported; whatever is refused, the store is unchanged. The criteria are made exact in the plan, from the trial.
-- **Tests required:** integration tests against a real SQLite file with the real reference file and with files made up for the test; planted defects; the full run of all gates on both machines.
+- **Status:** IN PROGRESS
+- **Objective:** One function adds to the store every country of the reference file that the store does not have, each naming the source and the release it came from, and changes nothing else: run again, it writes nothing.
+- **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012; narrowed on 2026-11-27 (PLAN-049) to the loading, where the source is DAT-060 and the command is DAT-061; settled in the planner's trial (PLAN-050). A new module, `motosphere.reference.countries_load`, says which release of iso-codes the file is from (`RELEASE`, 4.20.1), the day it was published (`PUBLISHED_ON`, 2026-01-01) and the address it was fetched from (`ADDRESS`, the file of the release at the Ubuntu archive), as the note beside the file has them. `load_countries(work, countries)` is handed what the file says, asks for the source of the countries (DAT-060), reads the clock once and goes through the countries. A country is known by its code of two letters. One the store has neither by its code of two letters nor by its code of three is added. One the store has with the same code of three and the same name is left as it is and not touched. One the store has with another code of three or another name, or whose code of three the store has under another code of two, is left as it is and named; so is a country of the store that the file does not have. A new row names the source, the address, the moment of the loading as when it was collected and last seen, the day of the release, `public dataset`, `high` and `independent`. The function gives back four lists of codes of two letters (`CountriesLoaded`: `added`, `as_they_were`, `said_otherwise`, `not_in_the_file`). A loading is not a collection run: a run is one attempt to collect from one source, and nothing is collected here, because the file was fetched once, by hand (DAT-012), and is part of the project. That is also why the source need not be switched on for its countries to be loaded (DAT-060). A record is changed with its history, and a change names what caused it: a collection run, or the person who decided it (DAT-047). A loading is neither, and no cause is made up for it. So the loading adds the countries the store does not have and does nothing else: a country the store says something else of than the file, and a country of the store that the file does not have, are left as they are and named to whoever called the function. The store and the file can come to say different things of a country in two ways only: a person changed the store by hand, or a newer release was taken into the repository. Either way a person is at hand to decide which is right. Nothing calls the function yet; no model, migration or command changes. The planner's trial has 40 new tests.
+- **Acceptance criteria:**
+  1. `motosphere.reference.countries_load` has `RELEASE`, `PUBLISHED_ON`, `ADDRESS`, `CountriesLoaded` and `load_countries`.
+  2. In a store without countries, `load_countries` with the countries of the project's file stores 249 rows in the order of the file, each with its two codes and its name as the file writes them, and gives them back as added.
+  3. Every new row names the source of the countries, `ADDRESS`, one moment of the loading as when it was collected and last seen, `PUBLISHED_ON`, `public dataset`, `high` and `independent`.
+  4. A second loading of the same countries sends SQLite no statement that writes, and gives every country back as it was.
+  5. A country the store has with another name or another code of three, and a country whose code of three the store has under another code of two, is not added and not changed, and is named in `said_otherwise`. A name is compared letter for letter.
+  6. A country of the store that the file does not have is left as it is and named in `not_in_the_file`, in the order of the codes.
+  7. A loading stores no collection run, no row of the history and no item of the review queue.
+  8. The rows are written when the function returns, and are kept or taken back with their unit of work. A source that is described otherwise, and a list that has one code twice, refuse the loading, and nothing is kept.
+  9. The release, its day and its address are the ones the note beside the file names.
+  10. No model, migration, command or existing test changed.
+  11. The five documents and the note beside the file say what the task did, and that a loading adds and changes nothing.
+  12. `python scripts/check.py` reports 19 of 19 gates, with 2519 backend tests, and 40 tests more in all than `main` gives at the commit the branch starts from (3487 when that is `403d1fd`).
+  13. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
+  14. Only the nine files under "Scope" of the plan changed.
+- **Tests required:** 8 new unit tests without a store: the release, its day and its address, each written out a second time and held to the note beside the file; what a loading gives back, four lists in one order that cannot be changed afterwards. 32 new integration tests in 25 functions against a real SQLite file that the migrations built, every row read back as SQLite holds it: the 249 countries of the project's file in an empty store; every column of a new row, with the clock set; one moment for a loading; the source with the countries; no run, no history and no item of the review queue; a second loading that sends no statement that writes, heard by listening to the statements; a later loading; a country from another source; what the store says otherwise of, in six forms, and a code of three under another code of two; what the file does not have; the orders; a list given one at a time, an empty one, and one with a code twice; the unit of work. Planted defects in the module. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-059.md`
 
 ### DAT-061 – A command loads the countries
 - **Status:** NOT STARTED
-- **Objective:** One command puts the source of the countries and the countries of the reference file into the store, and says in one sentence what it did.
-- **Description:** Added on 2026-11-27 (PLAN-049), cut out of DAT-059. A command of `python -m motosphere` opens the store, puts the source of the countries in it (DAT-060) and loads the countries (DAT-059), in one unit of work, and writes one sentence to standard output: how many countries were added, changed and left as they were. A store that cannot be opened or is not at the newest schema, a damaged countries file and a source that is described otherwise are refused with their sentence on standard error and the exit code 1, and the store is left as it was. Run again, it changes nothing and says so. Nothing is fetched while it runs. What the published data must say of the licence is PUB-003. The name of the command and its sentences are settled in the planner's trial.
-- **Acceptance criteria:** the command, run for real on a new store, leaves the source and the 249 countries of the file in it and says so; run again it changes nothing and says so; each refusal gives its sentence, the exit code 1 and an unchanged store; `--help` names the command. The criteria are made exact in the plan, from the trial.
+- **Objective:** One command loads the countries of the reference file into the store, and says what the loading found.
+- **Description:** Added on 2026-11-27 (PLAN-049), cut out of DAT-059. A command of `python -m motosphere` opens the store and loads the countries of the reference file (DAT-059, which puts the source of the countries in the store first, DAT-060), in one unit of work, and says on standard output what the loading found: how many countries were added and how many were as they were, and, by their codes, which countries the store says otherwise of and which the file does not have (PLAN-050). A store that cannot be opened or is not at the newest schema, a damaged countries file and a source that is described otherwise are refused with their sentence on standard error and the exit code 1, and the store is left as it was. Run again, it writes nothing and says so. Nothing is fetched while it runs. What the published data must say of the licence is PUB-003. The name of the command, its sentences, and its exit code when the store says otherwise of a country are settled in the planner's trial.
+- **Acceptance criteria:** the command, run for real on a new store, leaves the source and the 249 countries of the file in it and says so; run again it writes nothing and says so; a country the store says otherwise of, and one the file does not have, are named; each refusal gives its sentence, the exit code 1 and an unchanged store; `--help` names the command. The criteria are made exact in the plan, from the trial.
 - **Tests required:** unit tests of the command's sentences; integration tests that run the command for real against a real SQLite file; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
