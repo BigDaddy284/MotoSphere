@@ -54,6 +54,7 @@ def test_the_history_is_these_migrations_in_this_order() -> None:
         "make_the_review_items",
         "hold_one_doubt_to_one_review_item",
         "keep_the_decision_of_a_review_item",
+        "hold_the_key_of_a_review_item_to_1_or_more",
     ]
 
 
@@ -667,6 +668,81 @@ def test_the_tenth_migration_does_not_pass_over_a_trigger_of_its_name_that_is_th
     assert str(refusal.value.orig) == f"trigger {trigger} already exists"
     assert schema_version(store) == 9
     assert len(before) == 5
+    assert triggers(store) == before
+
+
+AN_ITEM_WITH_A_KEY_AT_VERSION_10 = (
+    "INSERT INTO review_item (id, kind, record_table, record_id, other_record_id, reason, "
+    "state, created_at, updated_at) VALUES (?, 'possible duplicate', 'track', ?, ?, "
+    "'They have one name.', 'open', '2026-11-27T05:00:00.000000+00:00', "
+    "'2026-11-27T05:00:00.000000+00:00')"
+)
+KEY_POSITIVE = "tr_review_item_key_positive"
+KEY_STAYS_POSITIVE = "tr_review_item_key_stays_positive"
+A_KEY_IS_1_OR_MORE = "A key of the review queue (review_item) is 1 or more."
+
+
+def test_the_eleventh_migration_makes_the_triggers_of_the_keys_and_keeps_what_there_was(
+    store: Engine,
+) -> None:
+    migrate(store, MIGRATIONS[:10])
+    with store.begin() as connection:
+        connection.exec_driver_sql(AN_ITEM_WITH_A_KEY_AT_VERSION_10, (5, 7, 12))
+        connection.exec_driver_sql(AN_ITEM_WITH_A_KEY_AT_VERSION_10, (-3, 8, 9))
+    with store.connect() as connection:
+        items = connection.exec_driver_sql("SELECT * FROM review_item ORDER BY id").all()
+    before = (tables(store), indexes(store), triggers(store))
+
+    migrate(store, MIGRATIONS[:11])
+
+    assert tables(store) == before[0]
+    assert indexes(store) == before[1]
+    assert len(before[2]) == 6
+    assert triggers(store) == sorted(
+        [*before[2], (KEY_POSITIVE, "review_item"), (KEY_STAYS_POSITIVE, "review_item")]
+    )
+    # The migration asks nothing of the items that are there and changes
+    # none: an item that had a key below 1 before the triggers keeps it.
+    # From then on no item is given such a key.
+    for statement, given in [
+        (AN_ITEM_WITH_A_KEY_AT_VERSION_10, (0, 20, 21)),
+        ("UPDATE review_item SET id = -5 WHERE id = 5", ()),
+    ]:
+        with pytest.raises(IntegrityError) as refusal, store.begin() as connection:
+            connection.exec_driver_sql(statement, given)
+        assert str(refusal.value.orig) == A_KEY_IS_1_OR_MORE
+    with store.connect() as connection:
+        after = connection.exec_driver_sql("SELECT * FROM review_item ORDER BY id").all()
+    assert [item[0] for item in items] == [-3, 5]
+    assert after == items
+    # Such an item is still given a note, and a key of 1 or more.
+    with store.begin() as connection:
+        connection.exec_driver_sql("UPDATE review_item SET note = 'To be looked at.' WHERE id = -3")
+        connection.exec_driver_sql("UPDATE review_item SET id = 3 WHERE id = -3")
+    with store.connect() as connection:
+        notes = connection.exec_driver_sql("SELECT id, note FROM review_item ORDER BY id").all()
+    assert notes == [(3, "To be looked at."), (5, None)]
+
+
+@pytest.mark.parametrize("trigger", [KEY_POSITIVE, KEY_STAYS_POSITIVE], ids=["first", "second"])
+def test_the_eleventh_migration_does_not_pass_over_a_trigger_of_its_name_that_is_there(
+    store: Engine, trigger: str
+) -> None:
+    # Where the trigger that is there has the name of the second of the
+    # two, the first is made before it, and taken back with the migration.
+    migrate(store, MIGRATIONS[:10])
+    with store.begin() as connection:
+        connection.exec_driver_sql(
+            f"CREATE TRIGGER {trigger} AFTER DELETE ON review_item BEGIN SELECT 1; END"
+        )
+    before = triggers(store)
+
+    with pytest.raises(OperationalError) as refusal:
+        migrate(store, MIGRATIONS[:11])
+
+    assert str(refusal.value.orig) == f"trigger {trigger} already exists"
+    assert schema_version(store) == 10
+    assert len(before) == 7
     assert triggers(store) == before
 
 

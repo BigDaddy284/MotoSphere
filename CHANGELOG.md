@@ -341,6 +341,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   writes to the file, and SQLite says so in one sentence. An open
   item is changed, decided and deleted as before. A decided item is
   not yet kept from a statement that says `REPLACE` (DAT-054).
+- A key of the review queue is 1 or more. The eleventh migration makes
+  two triggers on `review_item` that refuse a key below 1 written by
+  hand, for a new item and for an open one that is given another key.
+  The store gives keys from 1 up, so nothing it does itself changes;
+  the rule is what the next task, which keeps a decided item from
+  being replaced, stands on (DAT-056).
 
 ### Removed
 
