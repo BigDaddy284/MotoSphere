@@ -373,9 +373,7 @@ pipeline's command line. The settings and logging modules stay.
   no model anywhere in the code is missing from it. The first table is
   that of the information sources, `source` (DAT-006), with the two lists
   a source is described by: the twelve kinds of source and the ten ways of
-  collecting of DESIGN.md §7 (DAT-039), and a thirteenth kind of this
-  project's own, for whoever keeps a reference list such as the
-  countries of a standard (DAT-058). A new source is switched off, and
+  collecting of DESIGN.md §7 (DAT-039). A new source is switched off, and
   the table refuses one that is switched on before its terms were read.
   A second table, `source_offer`, says which of nine kinds of information
   each source offers, a row for each (DAT-040, DATABASE.md).

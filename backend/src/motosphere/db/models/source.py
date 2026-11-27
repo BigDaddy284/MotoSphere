@@ -30,11 +30,7 @@ __all__ = ["CollectionMethod", "InformationType", "Source", "SourceCategory", "S
 
 
 class SourceCategory(StrEnum):
-    """What kind of source this is: who publishes it.
-
-    The twelve of DESIGN.md 7.1, in its order, each a kind of website of
-    the sport, and after them one that is this project's own.
-    """
+    """What kind of source this is: who publishes it (DESIGN.md 7.1, in its order)."""
 
     # A body that makes the rules of the sport, for the world or for a country.
     GOVERNING_BODY = "governing body"
@@ -60,9 +56,6 @@ class SourceCategory(StrEnum):
     SOCIAL_MEDIA = "social media page"
     # A public archive of how the sport was.
     ARCHIVE = "historical archive"
-    # Not of the sport and not in the design: whoever keeps a list that
-    # other records are described by, such as the countries of a standard.
-    REFERENCE = "reference list"
 
 
 class CollectionMethod(StrEnum):

@@ -6,7 +6,7 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 15 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 14 and
 has six tables: `source`, that of the information sources (DAT-006),
 each of which can say which country it is of (DAT-057),
 `source_offer`, which says what kinds of information each of them offers
@@ -194,8 +194,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 15." or "The data store lacks 12
-migrations: … is at schema version 3, and the newest is version 15." In
+is up to date: … is at schema version 14." or "The data store lacks 11
+migrations: … is at schema version 3, and the newest is version 14." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -221,7 +221,6 @@ list of them, and nothing else (DAT-006):
 | 12 | `keep_a_decided_review_item_from_being_replaced` | Makes the two triggers by which no row takes the place of a decided row of `review_item` | DAT-055 |
 | 13 | `make_the_countries` | Makes the table `country` and the index over the source of its rows | DAT-011 |
 | 14 | `let_a_source_say_its_country` | Builds the table `source` anew with the column `country_id`, every source with what it had, and makes the index over that column, `ix_source_country_id` | DAT-057 |
-| 15 | `let_a_source_be_a_reference_list` | Builds the table `source` anew with a check of `category` that names one more kind of source, `reference list`, every source with what it had, and makes the index `ix_source_country_id` again | DAT-058 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -248,8 +247,7 @@ and drops the copy. If a row that is pointed to was lost on the way, the
 commit is refused and the store is as it was before. The tests do exactly
 this on every machine the gates run on. The fourteenth migration is the
 first that does it to a table of the store (DAT-057; see "A source says
-which country it is of"). The fifteenth does it a second time, to the
-same table (DAT-058; see "A kind of source that is not of the sport").
+which country it is of").
 
 The mark was chosen on 2026-11-19 (DAT-023). SQLite's own list of the
 marks it knows (`magic.txt` in its source, read that day) names Fossil,
@@ -1006,9 +1004,8 @@ agree on: `source`, `source_offer`, `collection_run`, `record_change`,
 indexes and the four triggers of `record_change`, the three indexes
 and the six triggers of `review_item`, the index of the countries
 of one source, and the index of the sources of one country. For
-`source` the two agree on the table as the fifteenth migration built
-it anew, not as the first made it or as the fourteenth built it. For an
-index that is over some
+`source` the two agree on the table as the fourteenth migration built
+it anew, not as the first made it. For an index that is over some
 rows only, which rows is part of the statement, and so of what must
 agree.
 That the comparison can fail is proven with two models and migrations of
@@ -1030,9 +1027,7 @@ for a few that belong together. The package names every model, and
 table. The first migration makes it (`make_the_sources`), and the
 fourteenth builds it anew with the column `country_id`
 (`let_a_source_say_its_country`; see "A source says which country it is
-of" below). The fifteenth builds it anew once more, for one more kind
-of source (`let_a_source_be_a_reference_list`; see "A kind of source
-that is not of the sport" below).
+of" below).
 
 | Column | What it holds | When it is without a value | What the table refuses |
 |---|---|---|---|
@@ -1146,46 +1141,6 @@ its tracks. The column `country_id` holds the key of a row of `country`
   highest key as before. A test makes it fail at its very last
   statement, after the table was dropped, made anew and filled.
 
-**A kind of source that is not of the sport** (DAT-058). The twelve
-kinds of source of the design are each a kind of website of the sport.
-The countries of the world come from none of them: from a project that
-keeps the lists of a standard (`DATA_SOURCES.md`, "The countries:
-iso-codes"). So that such a source is registered as what it is, the
-list has a thirteenth kind, `reference list`.
-
-- **What it is for.** Whoever keeps a list that other records are
-  described by: the countries of a standard today, and what else of
-  that sort the store comes to need. It says who publishes, as the
-  twelve do. What such a source offers is said by the kind of
-  information `reference data`, and how it is collected from by a way
-  of collecting, as for every source.
-- **It stands last.** The twelve keep the order of the design, and the
-  one that is this project's own follows them. A test holds the place.
-- **The table has to be built anew for it.** The check of the column
-  `category` names the texts it takes, and SQLite cannot change a check
-  of a table that is there. The fifteenth migration does what the
-  fourteenth did ("How the migration adds the column" and "The highest
-  key is kept" above): it copies the rows aside, drops the table, makes
-  it again with the check that names the thirteenth text too, fills it
-  from the copy, every source with all it had, its key and its country
-  too, puts the highest key back and drops the copies. The index of
-  the sources of one country went with the table, and the migration
-  makes it again. The four tables whose rows point to a source are not
-  touched.
-- **Nothing else of the table changes.** A test reads how SQLite holds
-  every table and index before and after: only `source` is written
-  otherwise, and only in the one text more.
-- **Every other text is refused as before**, a text that is nearly the
-  new one too: with a capital, with white space after it or two spaces
-  in it, in the plural, and the kind of information `reference data`,
-  which is of another list.
-- **The migration is all or nothing.** Where a table of the name of one
-  of its two copies is there already, or where its last statement
-  fails, the store is as it was: at version 14, the table without the
-  new kind, every row and the highest key as before. For the last
-  statement to fail, the test puts a table of the index's name where
-  the index was.
-
 Each list is said once, in the code, as a `StrEnum` whose values are the
 texts that are stored (see "One of a list"). The texts are words in small
 letters, with one space between two. Once a table has a column of a list,
@@ -1193,8 +1148,7 @@ a text is changed or taken away only by a migration: the table's check
 names the texts, and rows hold them.
 
 **What kind of source it is**, `SourceCategory`: who publishes it. The
-twelve of DESIGN.md §7.1, in its order, and after them one that is this
-project's own (DAT-058; see "A kind of source that is not of the sport").
+twelve of DESIGN.md §7.1, in its order.
 
 | The text that is stored | In the design | What it is |
 |---|---|---|
@@ -1210,7 +1164,6 @@ project's own (DAT-058; see "A kind of source that is not of the sport").
 | `community website` | Publicly accessible community websites | A website the riders and followers of the sport write themselves |
 | `social media page` | Public social media pages where permitted | A public page on a social network, only where that network permits collecting |
 | `historical archive` | Publicly accessible historical archives | A public archive of how the sport was |
-| `reference list` | – (not in the design) | Whoever keeps a list that other records are described by, such as the countries of a standard; not a website of the sport |
 
 **How it is collected from**, `CollectionMethod`. The ten of DESIGN.md
 §7.2, in its order. Three of them are permitted only on a condition, which

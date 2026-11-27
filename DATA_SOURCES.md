@@ -56,7 +56,7 @@ collecting.
 
 | Name | Website | Country | Category | Information types | Collection method | Licence / terms | Restrictions | Status |
 |---|---|---|---|---|---|---|---|---|
-| iso-codes | <https://salsa.debian.org/iso-codes-team/iso-codes> | – (of no one country) | `reference list` | `reference data` | `public dataset` | LGPL-2.1-or-later, © 2016 Dr. Tobias Quathamer; read in release 4.20.1 on 2026-11-27 | Every copy keeps the notice and comes with the licence; a changed copy says that it was changed and when; a work that takes over part of the list is passed on under the same licence | File in the repository, unchanged (DAT-012). Not in the store yet |
+| iso-codes | <https://salsa.debian.org/iso-codes-team/iso-codes> | – (of no one country) | – (none of the list fits: see below) | `reference data` | `public dataset` | LGPL-2.1-or-later, © 2016 Dr. Tobias Quathamer; read in release 4.20.1 on 2026-11-27 | Every copy keeps the notice and comes with the licence; a changed copy says that it was changed and when; a work that takes over part of the list is passed on under the same licence | File in the repository, unchanged (DAT-012). Not in the store yet |
 
 ## The countries: iso-codes
 
@@ -137,11 +137,9 @@ the site shows is decided where countries are first shown.
   Earth. None was needed once a source was found that has the list
   itself under a licence that allows passing it on.
 
-**Its category.** The design describes a source by one of twelve kinds
-(`SourceCategory`, DAT-039), each a kind of website of the sport: a
+**Why it has no category yet.** A source is described by one of twelve
+kinds (`SourceCategory`, DAT-039), each a kind of website of the sport: a
 governing body, a championship, a track, a club and so on. A project
 that keeps the lists of a standard is none of them, and it is not put
-under one that does not fit. The list has a thirteenth kind for it,
-`reference list`, which is this project's own (DAT-058; `DATABASE.md`,
-"A kind of source that is not of the sport"). The source is registered
-in the store with DAT-059.
+under one that does not fit. The kind it needs is a task of its own,
+before the source is registered in the store.

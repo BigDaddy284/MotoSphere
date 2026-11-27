@@ -399,12 +399,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   with its two codes and its English name, or refuses a damaged file
   whole. `DATA_SOURCES.md` has the source, its licence and what else was
   looked at. Nothing of it is in the store yet (DAT-012).
-- A thirteenth kind of source, `reference list`, for whoever keeps a
-  list that other records are described by, such as the countries of a
-  standard: the twelve kinds of the design are each a kind of website
-  of the sport. The fifteenth migration builds the table of the sources
-  anew so that it takes the new kind; every source keeps all it had,
-  its key and its country too (DAT-058).
 
 ### Removed
 
