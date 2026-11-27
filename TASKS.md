@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 58 | 57 |
+| 1 | Foundation (FND) | 58 | 58 |
 | 2 | Data store and published data (DAT, PUB) | 73 | 55 |
 | 3 | Interactive 3D Earth (GLB) | 28 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-013 – Regions table.
 
-**Current task, track B (globe):** FND-060 – A browser test can read a pixel of what the page shows.
+**Current task, track B (globe):** GLB-026 – The stage says when the browser cannot show the globe.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -1498,7 +1498,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/FND-059.md`
 
 ### FND-060 – A browser test can read a pixel of what the page shows
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A helper of the browser tests gives the colour of a point of the page as the browser shows it, a 3D picture too, without the page reading its own picture.
 - **Description:** Added on 2026-11-27 (PLAN-053), for GLB-003, which proves from the pixels that the Earth is drawn; made exact on 2026-11-27 from the planner's trial. In the planner's trial for PLAN-053 a page that read its own 3D picture (`gl.readPixels`) made the browser log a warning, and a browser test fails on a warning. So the tests read the picture from outside. `colourAt(page, x, y)` in the new module `frontend/e2e/pixel.ts` asks the page how large it is, refuses a point that is not a point of the page, has Playwright take a picture of that one pixel (`scale: 'css'`, so that one pixel of the page is one pixel of the picture on any screen), and gives the colour `colourOfOnePixel` reads from the PNG with what Node.js brings (`inflateSync` and `crc32` of `node:zlib`): red, green and blue, each from 0 to 255. Read are the two kinds of PNG a browser makes, eight bits for each of red, green and blue, with or without a fourth byte, not interlaced; every chunk is checked against its checksum, and the data of all `IDAT` chunks is put together, because the browser's own picture of one pixel has two. A picture that is no PNG, is damaged anywhere, has more or fewer pixels than one, is of another kind, or whose pixel is not opaque is refused with a sentence and is not read as a colour. No package is added. The task has no globe in it: the helper is tested with colours the test itself puts on the page, flat in the project of the other tests and in 3D in the project of the globe. Nothing under `frontend/src` changes, and no test that was there.
 - **Acceptance criteria:**
@@ -1513,10 +1513,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   9. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   10. Only the six files under "Scope" of the plan changed.
 - **Tests required:** 17 new browser tests in the project `chromium`: 13 of the reading of a PNG, with pictures made in the test chunk by chunk and one picture as the browser made it (both kinds, each of the five filters, data in several pieces, every refusal, the picture cut short after each of its bytes, and each of its bytes in turn changed); 4 that ask a page (eighteen points of a flat picture, the corners among them; what the page shows when it is asked; nine points that are not points of the page; a page on a screen that is larger and twice as sharp). 1 new browser test in the project `globe`: a 3D picture of two colours read at ten points with nothing on the console. Planted defects in the helper. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #212, merged there with `main` and with the pull request of DAT-061, which was merged to `main` before it (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32, Playwright 1.63.0 with its Chromium 153.0.8010.12): the full run, 19 of 19 gates passed, "Tests: 3586 passed, 0 failed, 0 skipped.", exit code 0 (browser tests 291: 273 before, 18 new; backend tests 2588). The planner's 56 planted defects, one at a time, in `e2e/pixel.ts` of the pull request (eleven in the parts of a PNG, three in the size, eight in the kind, four in the data, five in the line, seven in the pixel, eighteen in the point of the page), each against the 18 tests of the two new files with two workers: 56 of 56 detected, each by the same tests as in the planner's trial. The plan's nine prove-it steps, run by the planner too: each fails the tests the plan names (1, 6, 1, 1, 1, 9, 3, 2 and 1 tests). On GitHub, read by the planner from the runs and job logs: run 46079989836 on the pull request's commit, which started from `main` before DAT-061, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3550 passed, 0 failed, 0 skipped.", with 291 browser tests on both machines, the eleven globe tests the last eleven of them and the test that reads the 3D picture the last, the three jobs after the gates skipped; run 46083293064 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3586 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3586 / 0 tests on both machines on GitHub for `main`, and locally with `main` merged in (repository 82, script tests 219, backend 2588, frontend unit 406, browser 291); 3550 / 0 on both machines for the pull request; all 19 gates passed; 56 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 6 files are the same change as the planner's trial. No test, fixture or setting that was there changed, nothing under `frontend/src` changed, and no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #211, run 46078609309). The builder reported the same counts from its own runs (18 passed in the two new files, 3550 with 291 browser tests in the full run, from `main` at `5637356`, Node 22.23.5) and that each of the plan's nine prove-it steps failed the tests the plan names (1, 6, 1, 1, 1, 9, 3, 2 and 1 tests). It also reported that its environment starts the browser through a wrapper that takes `--use-angle=swiftshader` away and runs Chromium 158.0.8127.36: before it set anything, the existing globe test and the new one failed with "GPU stall due to ReadPixels"; every run it reports was then made with the two variables the plan names (`CHROMIUM_HEADLESS_SHELL=playwright` and `CHROMIUM_KEEP_GL_SWITCHES=1`), with Chrome for Testing 153.0.8010.12.
+- **Commit:** `ddeae70`
 - **Plan:** `docs/plans/FND-060.md`
 
 ### DAT-001 – Data store research and decision record
