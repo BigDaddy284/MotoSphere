@@ -44,7 +44,7 @@ site is then compared with what was built ([TESTING.md](TESTING.md),
 MotoSphere needs five tools: Python 3.12 or newer,
 [Git](https://git-scm.com/downloads),
 [uv](https://docs.astral.sh/uv/getting-started/installation/) and
-[Node.js](https://nodejs.org/) 22.22.2 or newer, which includes npm. With
+[Node.js](https://nodejs.org/) 22.12 or newer, which includes npm. With
 Python installed, one command says which of them your computer has, from any
 folder of the repository:
 
@@ -112,7 +112,7 @@ code 1.
 
 ## Running the frontend
 
-Prerequisites: [Node.js](https://nodejs.org/) 22.22.2 or newer, which includes
+Prerequisites: [Node.js](https://nodejs.org/) 22.12 or newer, which includes
 npm, and [uv](https://docs.astral.sh/uv/getting-started/installation/).
 
 From the repository root:
@@ -158,7 +158,7 @@ with `npm run icons`, and committed. Run it only when a design changes.
 
 Prerequisites: Python 3.12 or newer, Git and
 [uv](https://docs.astral.sh/uv/getting-started/installation/). The frontend
-checks also need Node.js 22.22.2 or newer.
+checks also need Node.js 22.12 or newer.
 
 Every check with one command, from any folder of the repository:
 

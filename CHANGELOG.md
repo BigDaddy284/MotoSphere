@@ -350,9 +350,3 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   name of the column's own check. It went by whichever of the two it came
   to last, and the order in which it comes to them is not fixed. The
   column now has its check if either of the two is that check (DAT-038).
-- The least Node.js the project asks for. It said 22.12, but the packages
-  the unit tests run on need 22.22.2, and npm installs them on an older
-  Node.js with a warning only. `frontend/package.json`, its lock file and
-  the README now say 22.22.2, which is also what the check of the tools
-  a computer needs goes by. A repository check holds the number to the
-  oldest Node.js that every locked package runs on (FND-046).

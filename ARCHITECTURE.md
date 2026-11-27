@@ -514,10 +514,7 @@ the gates run on a Windows machine for every pull request (§11).
 `scripts/tools.py` says whether a computer has the tools the project
 needs. It reads the least versions of Python and Node.js from the files
 where those tools read them (`backend/pyproject.toml`,
-`frontend/package.json`), and it only looks: it installs nothing. The
-least Node.js is not chosen by hand: it is the oldest that every locked
-package of the frontend runs on, and a repository check holds it there
-(FND-046).
+`frontend/package.json`), and it only looks: it installs nothing.
 
 ## 13. Deployment (Decided)
 
