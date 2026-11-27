@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 47 | 45 |
+| 1 | Foundation (FND) | 48 | 45 |
 | 2 | Data store and published data (DAT, PUB) | 63 | 43 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -76,6 +76,14 @@ arrived, and stands first on track B because every later task goes
 through these gates; FND-049 is the bar itself, which on a phone moves
 everything under it down by a line when the data arrives, and stands
 after FND-047.
+
+**The accepted licences are a task of their own (PLAN-038):** FND-047
+was written as two things: the licence texts go with the site, and a
+check holds the licences of the shipped packages to a list the project
+has accepted. They are two objectives with two kinds of test (a step of
+the build with its unit and browser tests; a repository check of the
+lock file), so the second is FND-050 and stands on track B right after
+FND-047, before FND-049.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -922,15 +930,25 @@ Windows 11. No database and no globe yet.
 - **Plan:** `docs/plans/FND-046.md`
 
 ### FND-047 – The licences of the shipped packages go with the site
-- **Status:** NOT STARTED
-- **Objective:** The published site carries the licence text of every package whose code it ships.
-- **Description:** Added on 2026-11-27 (PLAN-035), found by the planner's trial of GLB-001. The site ships React and `react-dom` with the package they need; their MIT licence asks that the copyright notice and the licence go with every copy, and the build takes the notices out of the code, so the site as published carries none. From GLB-002 on the site also ships the engine of the globe and the packages it needs, under Apache 2.0, MIT, ISC, BSD and two combined licences, with the same duty. The build writes one text file into the site with the name, the version and the licence text of every package it ships, read from the installed packages. A repository check holds the licences of the shipped packages to a list of accepted ones, so that a package under a licence nobody has read is not shipped unnoticed. No new package is used. The trial settles whether the file lists every package of the lock file that is not only for the work or only those whose code is in the build, what happens when a package ships no licence file, and where a visitor finds the file. It stands on track B after GLB-001 and before GLB-022.
-- **Acceptance criteria:** the built site holds one file with the name, the version and the licence text of every package it ships; the build fails when one of them has no licence text; a repository check fails for a shipped package whose licence is not on the accepted list; the check of the published site compares the file like every other and passes after deployment; no package is added.
-- **Tests required:** unit tests of the build step on made-up package folders; repository checks of the accepted licences against the lock file, with planted defects; a browser test that fetches the file from the built site; the full run of all gates on both machines; the deployment and the check of the published site.
+- **Status:** IN PROGRESS
+- **Objective:** The published site carries the licence text of every package it is built with.
+- **Description:** Added on 2026-11-27 (PLAN-035), found by the planner's trial of GLB-001; cut to this one objective by PLAN-038. The site ships React and `react-dom` with the package they need; their MIT licence asks that the copyright notice and the licence go with every copy, and the build takes the notices out of the code, so the site as published carries none. From GLB-002 on the site also ships the engine of the globe and the packages it needs, under Apache 2.0, MIT, ISC, BSD and combined licences, with the same duty. A step of the build (`frontend/sitebuild/licences.ts`, a Vite plugin for the build only) writes one file into the site, `licences.txt`: the name, the version and the licence of every package the lock file installs that is not only for the work (32 today), each with the licence files the installed package brings, letter for letter but for line ends and empty lines around the text. A package that brings no licence file stops the build, unless the step names the package whose file gives its licence; five are named today, all given with `@cesium/engine`, read by the planner. The source of the page says in a comment where the file is. No package is added. A list of accepted licences is FND-050; a link a visitor sees comes with the credits of the globe's imagery.
+- **Acceptance criteria:**
+  1. `npm run build` writes `licences.txt` into the built site, beside the page: the name, the version and the licence of every package the lock file installs that is not only for the work (32 today), each with the licence files the installed package brings.
+  2. The build stops with a sentence that names the package when a package that must be there is not installed, when one brings no licence file and is not named as given with another, and when the list of such packages is wrong in any of three ways.
+  3. The source of the page names the file.
+  4. The built site serves the file as plain text under the path of the site, letter for letter what the step writes.
+  5. No package is added and the lock file is unchanged.
+  6. No existing test changes; all tests pass.
+  7. `python scripts/check.py` reports 19 of 19 gates, with 293 frontend unit tests and 180 browser tests, and 75 tests more in all than `main` gives at the commit the branch starts from (2515 when that is `e0a377c`).
+  8. On the pull request both gates jobs are green with those numbers; after the merge the site is republished and the check of the published site compares the new file like every other.
+  9. Only the ten files under "Scope" of the plan changed.
+- **Tests required:** 70 new unit tests of the step, on made-up lock files and package folders and on the project as installed; 5 new browser tests on the built site; planted defects in the step against the unit tests and in the build against the browser tests; the full run of all gates on both machines; the deployment and the check of the published site.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/FND-047.md`
 
 ### FND-048 – The narrow-screen tests measure the top bar after the data has arrived
 - **Status:** PASSED – VERIFIED
@@ -957,6 +975,17 @@ Windows 11. No database and no globe yet.
 - **Description:** Added on 2026-11-27 (PLAN-036). On a phone the top bar puts the data status and the day on one line while it says "Loading data…", and on two lines once it says when the data was updated, because the two pieces wrap by how long their words are. The bar grows by a line (from 78 to 99 pixels at 360 pixels wide), and the globe stage under it moves down, a moment after the page has appeared. The layout should not depend on how long the words happen to be: where the two pieces cannot share a line once the data is there, each has its line from the start. The trial settles from which width the two share a line, whatever the words and the visitor's language, and what a failed or slow load shows. It stands on track B after FND-047.
 - **Acceptance criteria:** at every tested narrow width the top bar has the same height while the data loads, when it has arrived, and when it could not be loaded; the globe stage does not move; the pieces of the top bar are whole and do not lie over each other in each of those states; a wide screen is as it was.
 - **Tests required:** browser tests that hold the data back and measure the top bar and the stage before and after it arrives, at the narrow widths and at a wide one, and with a load that fails; unit tests where the layout's numbers are written twice; planted defects; the full run of all gates on both machines; the deployment and the check of the published site.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### FND-050 – The licences of the shipped packages are ones the project has accepted
+- **Status:** NOT STARTED
+- **Objective:** A package whose licence nobody has read and accepted for the project is not shipped unnoticed.
+- **Description:** Added on 2026-11-27 (PLAN-038), cut out of FND-047. The lock file names the licence of every package. A repository check holds the licences of the packages the site is built with (those the lock file does not mark as only for the work) to a list of licences the project has accepted, written in the check with one line on why each is acceptable for a site that is published to everyone: today MIT, Apache-2.0, ISC, BSD-3-Clause, 0BSD and the two combined ones the engine's packages bring, `(MPL-2.0 OR Apache-2.0)` and `(MIT AND Zlib)`. A package under another licence, or with none named, fails the check until a person has read the licence and put it on the list in the same pull request, where a reviewer sees it. The trial settles how a combined licence is read (as written, or by its parts) and whether the packages that are only for the work are held to a list too. It stands on track B after FND-047 and before FND-049.
+- **Acceptance criteria:** the repository checks fail for a shipped package whose licence is not on the list, for one with no licence named, and for a licence on the list that no shipped package has; the list says why each licence is accepted; how the check reads a lock file is tested on made-up lock files; no package is added.
+- **Tests required:** repository checks on made-up lock files and on the real one; planted defects in the lock file, in the list and in the check's own reading; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
