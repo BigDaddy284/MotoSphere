@@ -1741,6 +1741,42 @@ path under the site that it does not know with the page itself, so a
 test that the file is there goes by its text and its kind, never by the
 status of the answer alone.
 
+## The licences the project has accepted
+
+`tests/repo/test_frontend_licences.py`, part of the repository checks,
+holds the licence of every package the site is built with to a list: the
+packages the lock file does not mark as only for the work, which are the
+ones whose licences go with the site. The list names each accepted
+licence as the lock file writes it, with what it asks of whoever passes
+the code on and how the project meets that. There are seven today: MIT,
+ISC, 0BSD, BSD-3-Clause, Apache-2.0, `(MPL-2.0 OR Apache-2.0)` and
+`(MIT AND Zlib)`.
+
+The checks fail for a package under a licence that is not on the list,
+and name the package and the licence; for a package the lock file gives
+no licence for, or something that is not a text; and for a licence on
+the list that no package is under any more, so that the list says what
+the site passes on today and nothing else. A package put in two places
+is held in each. A licence is taken as it is written: `mit`,
+`(Zlib AND MIT)` and `MIT OR GPL-3.0` are not on a list that has `MIT`
+and `(MIT AND Zlib)`, and two licences on the list do not make their
+combination one. What a combination asks is for a person to read, not
+for a check to work out. A lock file the checks cannot read fails them;
+it does not pass for want of anything found, and one check holds that
+the reading finds the four packages the project itself names as shipped,
+with their licences.
+
+When a check fails: read the licence of the package it names, in the
+text the package brings, and put it on the list with what it asks and
+how the project meets it, in the same pull request, or do not take the
+package. Do not put a licence on the list unread.
+
+The list was first written by the planner of this project, who read each
+of the seven in the texts the packages bring. It is the project's own
+record of what it relies on, not a lawyer's opinion. How the checks read
+a lock file and hold packages to a list is tested on lock files and
+lists made up for the purpose.
+
 ## Latest results
 
 Results are recorded per task in [PROGRESS.md](PROGRESS.md).
