@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 52 | 51 |
-| 2 | Data store and published data (DAT, PUB) | 65 | 47 |
+| 2 | Data store and published data (DAT, PUB) | 65 | 48 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-057 – A source says its country.
+**Current task, track A (data store):** DAT-012 – Countries reference data.
 
 **Current task, track B (globe):** FND-054 – The browser tests do not run out of network connections on Windows.
 
@@ -2146,7 +2146,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-011.md`
 
 ### DAT-057 – A source says its country
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A source can say which country it is of, so that sources can be found by country.
 - **Description:** Added on 2026-11-27 (PLAN-042), cut out of DAT-011; settled in the planner's trial. One column of `source`, `country_id`: the key of a row of `country`, after `switched_on` and before the two times. It may be without a value, because a body for the whole world is of no one country, and of a source that was stored before somebody looked nobody has said yet; the table does not tell the two apart. The foreign key, `fk_source_country_id_country`, says nothing of deleting: a country that a source is of cannot be deleted. An index over the column, `ix_source_country_id`, finds the sources of one country and answers what SQLite asks before a country is deleted. The fourteenth migration, `let_a_source_say_its_country`, is the first that changes a table that is there and holds rows. It builds the table anew, because SQLite puts an added column after all the others and cannot give it a foreign key with a name, and the table would not be as its model makes it: with the foreign keys left on and checked when the transaction ends, the rows are copied aside, the table is dropped, made again with the column and filled from the copy, every source with its key and everything it had and with no country. The highest key the table has given, which SQLite forgets when a table is dropped, is kept and put back, so the key of a deleted source is still never given again. The four tables whose rows point to a source are not touched. The sources and the countries now point to each other, the only two tables that do: a source is stored before its countries and is said to be of one of them afterwards. The schema goes to version 14. The planner's trial has 40 new tests and detects 57 of 57 planted defects.
 - **Acceptance criteria:**
@@ -2164,10 +2164,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   12. `python scripts/check.py` reports 19 of 19 gates, with 2277 backend tests, and 40 tests more in all than `main` gives at the commit the branch starts from (3201 when that is `839e225`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
   13. Only the ten files under "Scope" of the plan changed.
 - **Tests required:** 25 new integration tests in 19 functions, in a store the migrations built, with one source and the two countries that came from it, on a real SQLite file, through the model and past it as plain SQL, each refusal with what SQLite said: a source with and without a country; a country that is not there; what is not a whole number; a country that a source is of; the two tables pointing to each other; the column, its foreign key and its index as SQLite has them, with the query plans. 6 new unit tests of the model. 8 new tests of the fourteenth migration, in a store that holds sources with a gap in their keys and a row in each of the four tables that point to a source, and one case more of the test that tries every migration alone. Planted defects in the model and the migration. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #175 (Linux, Python 3.13.18 with SQLite 3.53.1, SQLAlchemy 2.1.9, pytest 9.2.0, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run, 19 of 19 gates passed, "Tests: 3201 passed, 0 failed, 0 skipped.", exit code 0 (backend tests 2277: 2237 before, 40 new). The planner's 73 planted defects, one at a time, on the pull request: 57 in the model and in the migration against the 584 tests of the twelve files that hold a source's country, the sources and their offers, the countries, the history, the migrations, the whole schema and the rules every table keeps, 57 of 57 detected; and the plan's 16 prove-it steps against all backend tests, 16 of 16 detected, each with the numbers the plan names. On GitHub, read by the planner from the runs and job logs: run 46000506998 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3201 passed, 0 failed, 0 skipped.", with 2277 backend tests on both machines, the three jobs after the gates skipped; run 46006732397 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3219 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files." The other track's GLB-025 was merged in between, so `main` has its 16 unit tests and 2 browser tests too: 3219 there, where the pull request by itself gives 3201.
+- **Passed / Failed:** 3219 / 0 tests on both machines on GitHub for `main` (repository 80, script tests 219, backend 2277, frontend unit 387, browser 256); 3201 / 0 locally and on both machines for the pull request; all 19 gates passed; 73 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 10 files are identical to the planner's trial. Two existing tests changed, the list of the migrations' names and one row of a source read whole, as the plan says; no package was added. In the planner's trial one planted defect had passed every test at first, a migration after which every table forgot the highest key it had given; the test of the migration now holds the highest key of every table, and all 57 were run again. The builder reported 2277 backend tests and the full run with 3201 tests passed in its own checkout, a new store at schema version 14, and the plan's 16 prove-it steps, each with the plan's closing line and function names; its only deviation was Node 22.23.5 where the plan's trial had 22.23.4.
+- **Commit:** `cd3f42a`
 - **Plan:** `docs/plans/DAT-057.md`
 
 ### DAT-012 – Countries reference data
