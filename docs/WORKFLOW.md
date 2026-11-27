@@ -4,6 +4,11 @@ CLAUDE.md sets the rules: one small task at a time, 100% of applicable tests
 passing before the next task starts. This document describes how that rule is
 carried out by two separate roles.
 
+Since 2026-11-27, by the owner's decision, the work runs on two tracks
+side by side: track A is the data store and the published data
+(`backend/`), track B the globe (`frontend/`). The rule holds on each
+track. `TASKS.md` ("Two tracks") says how they are kept apart.
+
 ## Roles
 
 | Role | Who | Does |
@@ -11,7 +16,8 @@ carried out by two separate roles.
 | **Planner / tester** | One long-lived planning thread | Owns TASKS.md, PROGRESS.md and `docs/plans/`. Breaks work into tasks, writes one implementation plan per task, independently tests each finished task, merges it, records the result, then hands over the next task. |
 | **Builder** | A new thread for every task | Implements exactly one task from its plan, with tests, on its own branch, and opens a pull request to `main`. |
 
-Only one task is in progress at any time.
+Only one task of a track is in progress at any time, and so at most two in all.
+A builder has one task, and does not touch what the other track changes.
 
 ## The loop
 
@@ -53,7 +59,9 @@ Only one task is in progress at any time.
 ## Pull request format
 
 - Title: `<TASK-ID>: <task name>`.
-- One task per pull request, branched from the current `main`.
+- One task per pull request, branched from the current `main`. While it is
+  open, `main` may get the other track's task; the pull request is not
+  rebased for that, and the planner tests it together with what `main` holds.
 - The description contains a **Test report**: each verification command, its
   result and the pass/fail counts copied from real output, plus any deviation
   from the plan and why.
