@@ -58,6 +58,7 @@ def test_the_history_is_these_migrations_in_this_order() -> None:
         "keep_a_decided_review_item_from_being_replaced",
         "make_the_countries",
         "let_a_source_say_its_country",
+        "let_a_source_be_a_reference_list",
     ]
 
 
@@ -1258,6 +1259,309 @@ def test_the_fourteenth_migration_that_fails_at_its_end_leaves_the_sources_as_th
     ) == before
     assert "country_id" not in before[3]
     assert held_at_version_13(store) == held
+    with store.begin() as connection:
+        assert connection.exec_driver_sql("PRAGMA foreign_key_check").all() == []
+        # The key of the deleted source is still not given again.
+        assert connection.exec_driver_sql(A_NEW_SOURCE).scalar_one() == 5
+
+
+# What a store at version 14 holds of its sources: as at version 13, and
+# of each source its country too.
+HELD_AT_VERSION_14 = {
+    **HELD_AT_VERSION_13,
+    "source": "SELECT * FROM source ORDER BY id",
+}
+# The twelve kinds of source a store at version 14 takes, as the first
+# migration wrote them, and the one the fifteenth adds.
+KINDS_AT_VERSION_14 = [
+    "governing body",
+    "championship",
+    "organiser",
+    "promoter",
+    "track",
+    "club",
+    "regional organisation",
+    "results database",
+    "news publication",
+    "community website",
+    "social media page",
+    "historical archive",
+]
+THE_NEW_KIND = "reference list"
+A_SOURCE_OF_A_KIND = (
+    "INSERT INTO source (name, website, category, collection_method, switched_on, "
+    "created_at, updated_at) VALUES (?, 'https://lists.example', ?, 'public dataset', 0, "
+    "'2026-11-27T12:00:00.000000+00:00', '2026-11-27T12:00:00.000000+00:00') RETURNING id"
+)
+
+
+def sources_with_a_country_and_what_points_to_them(store: Engine) -> None:
+    """Fill a store at version 14: as at version 13, and the third source is of the country."""
+    sources_and_what_points_to_them(store)
+    with store.begin() as connection:
+        connection.exec_driver_sql("UPDATE source SET country_id = 1 WHERE id = 3")
+
+
+def held_at_version_14(store: Engine) -> dict[str, list[tuple[object, ...]]]:
+    """Every row of the sources and of the tables that point to them, each table by its key."""
+    with store.connect() as connection:
+        return {
+            what: [tuple(row) for row in connection.exec_driver_sql(asked)]
+            for what, asked in HELD_AT_VERSION_14.items()
+        }
+
+
+def as_written(store: Engine) -> dict[str, str]:
+    """How SQLite holds each table and index of the store: its name and its statement."""
+    with store.connect() as connection:
+        found = connection.exec_driver_sql(
+            "SELECT name, sql FROM sqlite_master WHERE type IN ('table', 'index') "
+            "AND sql IS NOT NULL ORDER BY name"
+        )
+        return {str(name): str(statement) for name, statement in found}
+
+
+def test_the_fifteenth_migration_lets_a_source_be_a_reference_list_and_keeps_what_there_was(
+    store: Engine,
+) -> None:
+    migrate(store, MIGRATIONS[:14])
+    sources_with_a_country_and_what_points_to_them(store)
+    held = held_at_version_14(store)
+    before = (tables(store), indexes(store), triggers(store), columns_of_the_sources(store))
+    written = as_written(store)
+    with pytest.raises(IntegrityError) as not_yet, store.begin() as connection:
+        connection.exec_driver_sql(A_SOURCE_OF_A_KIND, ("Example Lists", THE_NEW_KIND))
+
+    migrate(store, MIGRATIONS[:15])
+
+    assert str(not_yet.value.orig) == "CHECK constraint failed: ck_source_category_one_of"
+    assert schema_version(store) == 15
+    # The copies the migration works with are gone again, and nothing is
+    # there that was not: the index of the sources of a country, which
+    # went with the table, is back.
+    assert len(before[0]) == 6
+    assert len(before[1]) == 8
+    assert len(before[2]) == 10
+    assert len(before[3]) == 14
+    assert (
+        tables(store),
+        indexes(store),
+        triggers(store),
+        columns_of_the_sources(store),
+    ) == before
+    # Every source has what it had, its key and its country too, and
+    # every row that pointed to a source points to the same one.
+    assert {what: len(rows) for what, rows in held.items()} == {
+        "source_offer": 2,
+        "collection_run": 1,
+        "review_item": 1,
+        "country": 1,
+        "source": 2,
+        "the highest key of each table": 5,
+    }
+    assert held["the highest key of each table"] == [
+        ("collection_run", 1),
+        ("country", 1),
+        ("review_item", 1),
+        ("source", 4),
+        ("source_offer", 2),
+    ]
+    assert [(row[0], row[11]) for row in held["source"]] == [(1, None), (3, 1)]
+    assert held_at_version_14(store) == held
+    # Of all the tables and indexes, only the table of the sources is
+    # written otherwise than it was, and only in the one text more that
+    # its check names.
+    after = as_written(store)
+    assert sorted(after) == sorted(written)
+    assert [name for name in after if after[name] != written[name]] == ["source"]
+    assert "'historical archive'" in written["source"]
+    assert THE_NEW_KIND not in written["source"]
+    with_the_new_kind = written["source"].replace(
+        "'historical archive'", f"'historical archive', '{THE_NEW_KIND}'"
+    )
+    assert after["source"].split() == with_the_new_kind.split()
+    with store.connect() as connection:
+        broken = connection.exec_driver_sql("PRAGMA foreign_key_check").all()
+        index = connection.exec_driver_sql("PRAGMA index_info(ix_source_country_id)").all()
+    assert broken == []
+    assert [name for _, _, name in index] == ["country_id"]
+
+
+def test_after_the_fifteenth_migration_a_source_is_of_one_of_the_thirteen_kinds(
+    store: Engine,
+) -> None:
+    migrate(store, MIGRATIONS[:15])
+
+    with store.begin() as connection:
+        for kind in [*KINDS_AT_VERSION_14, THE_NEW_KIND]:
+            connection.exec_driver_sql(A_SOURCE_OF_A_KIND, (f"Example of the kind {kind}", kind))
+        kinds = connection.exec_driver_sql("SELECT category FROM source ORDER BY id").all()
+
+    assert len(KINDS_AT_VERSION_14) == 12
+    assert [kind for (kind,) in kinds] == [*KINDS_AT_VERSION_14, THE_NEW_KIND]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Reference list",
+        "reference list ",
+        "reference  list",
+        "reference",
+        "reference data",
+        "reference lists",
+        "",
+        "public dataset",
+    ],
+)
+def test_after_the_fifteenth_migration_a_text_that_is_not_of_the_list_is_still_refused(
+    store: Engine, text: str
+) -> None:
+    migrate(store, MIGRATIONS[:15])
+
+    with pytest.raises(IntegrityError) as refusal, store.begin() as connection:
+        connection.exec_driver_sql(A_SOURCE_OF_A_KIND, ("Example Lists", text))
+
+    assert str(refusal.value.orig) == "CHECK constraint failed: ck_source_category_one_of"
+    with store.connect() as connection:
+        assert connection.exec_driver_sql("SELECT count(*) FROM source").scalar_one() == 0
+
+
+def test_after_the_fifteenth_migration_the_key_of_a_deleted_source_is_not_given_again(
+    store: Engine,
+) -> None:
+    migrate(store, MIGRATIONS[:14])
+    sources_with_a_country_and_what_points_to_them(store)
+
+    migrate(store, MIGRATIONS[:15])
+
+    with store.begin() as connection:
+        key = connection.exec_driver_sql(
+            A_SOURCE_OF_A_KIND, ("Example Lists", THE_NEW_KIND)
+        ).scalar_one()
+        highest = connection.exec_driver_sql(
+            "SELECT name, seq FROM sqlite_sequence WHERE name = 'source'"
+        ).all()
+    # The fourth source was deleted before the migration. Its key stays its own.
+    assert key == 5
+    assert [tuple(row) for row in highest] == [("source", 5)]
+
+
+@pytest.mark.parametrize("ever", [0, 2], ids=["never a source", "two sources, both deleted"])
+def test_the_fifteenth_migration_keeps_the_highest_key_of_a_table_without_sources(
+    store: Engine, ever: int
+) -> None:
+    migrate(store, MIGRATIONS[:14])
+    with store.begin() as connection:
+        for number in range(ever):
+            connection.exec_driver_sql(
+                "INSERT INTO source (name, website, category, collection_method, switched_on, "
+                "created_at, updated_at) VALUES (?, 'https://club.example', 'club', "
+                "'html extraction', 0, '2026-11-19T08:00:00.000000+00:00', "
+                "'2026-11-19T08:00:00.000000+00:00')",
+                (f"Example Club {number}",),
+            )
+        connection.exec_driver_sql("DELETE FROM source")
+
+    migrate(store, MIGRATIONS[:15])
+
+    with store.begin() as connection:
+        kept = connection.exec_driver_sql(
+            "SELECT seq FROM sqlite_sequence WHERE name = 'source'"
+        ).all()
+        key = connection.exec_driver_sql(A_NEW_SOURCE).scalar_one()
+    # A table that never gave a key has no highest one, before and after.
+    assert [tuple(row) for row in kept] == ([(2,)] if ever else [])
+    assert key == ever + 1
+
+
+def test_after_the_fifteenth_migration_the_rows_are_held_to_their_sources_again(
+    store: Engine,
+) -> None:
+    migrate(store, MIGRATIONS[:14])
+    sources_with_a_country_and_what_points_to_them(store)
+
+    migrate(store, MIGRATIONS[:15])
+
+    with pytest.raises(IntegrityError) as no_such_source, store.begin() as connection:
+        connection.exec_driver_sql(
+            "INSERT INTO source_offer (source_id, information_type, created_at, updated_at) "
+            "VALUES (2, 'news', '2026-11-27T12:00:00.000000+00:00', "
+            "'2026-11-27T12:00:00.000000+00:00')"
+        )
+    with pytest.raises(IntegrityError) as still_needed, store.begin() as connection:
+        connection.exec_driver_sql("DELETE FROM source WHERE id = 1")
+    with pytest.raises(IntegrityError) as no_such_country, store.begin() as connection:
+        connection.exec_driver_sql("UPDATE source SET country_id = 2 WHERE id = 1")
+    with pytest.raises(IntegrityError) as a_source_is_of_it, store.begin() as connection:
+        connection.exec_driver_sql("DELETE FROM country WHERE id = 1")
+    with store.begin() as connection:
+        of = connection.exec_driver_sql(
+            "SELECT source.id, country.alpha_2 FROM source "
+            "JOIN country ON country.id = source.country_id"
+        ).all()
+
+    refusals = (no_such_source, still_needed, no_such_country, a_source_is_of_it)
+    assert [str(refusal.value.orig) for refusal in refusals] == [
+        "FOREIGN KEY constraint failed",
+        "FOREIGN KEY constraint failed",
+        "FOREIGN KEY constraint failed",
+        "FOREIGN KEY constraint failed",
+    ]
+    assert [tuple(row) for row in of] == [(3, "NZ")]
+
+
+@pytest.mark.parametrize("copy", list(IN_THE_PLACE_OF_A_COPY))
+def test_the_fifteenth_migration_does_not_pass_over_a_table_of_the_name_of_a_copy(
+    store: Engine, copy: str
+) -> None:
+    make, fill, read = IN_THE_PLACE_OF_A_COPY[copy]
+    migrate(store, MIGRATIONS[:14])
+    sources_with_a_country_and_what_points_to_them(store)
+    with store.begin() as connection:
+        connection.exec_driver_sql(make)
+        connection.exec_driver_sql(fill)
+    held = held_at_version_14(store)
+    written = as_written(store)
+
+    with pytest.raises(OperationalError) as refusal:
+        migrate(store, MIGRATIONS[:15])
+
+    assert str(refusal.value.orig) == f"table {copy} already exists"
+    assert schema_version(store) == 14
+    assert as_written(store) == written
+    assert THE_NEW_KIND not in written["source"]
+    assert held_at_version_14(store) == held
+    with store.connect() as connection:
+        assert connection.exec_driver_sql(read).all() == [("kept",)]
+
+
+def test_the_fifteenth_migration_that_fails_at_its_end_leaves_the_sources_as_they_were(
+    store: Engine,
+) -> None:
+    # The index is the last thing the migration makes. By then the table
+    # of the sources was dropped, made anew and filled, and all of that is
+    # taken back with the migration. So that the index cannot be made, the
+    # store has a table of its name where the index was.
+    migrate(store, MIGRATIONS[:14])
+    sources_with_a_country_and_what_points_to_them(store)
+    with store.begin() as connection:
+        connection.exec_driver_sql("DROP INDEX ix_source_country_id")
+        connection.exec_driver_sql("CREATE TABLE ix_source_country_id (note TEXT)")
+    held = held_at_version_14(store)
+    written = as_written(store)
+
+    with pytest.raises(OperationalError) as refusal:
+        migrate(store, MIGRATIONS[:15])
+
+    assert str(refusal.value.orig) == "there is already a table named ix_source_country_id"
+    assert schema_version(store) == 14
+    assert as_written(store) == written
+    assert THE_NEW_KIND not in written["source"]
+    assert held_at_version_14(store) == held
+    with pytest.raises(IntegrityError) as still_not, store.begin() as connection:
+        connection.exec_driver_sql(A_SOURCE_OF_A_KIND, ("Example Lists", THE_NEW_KIND))
+    assert str(still_not.value.orig) == "CHECK constraint failed: ck_source_category_one_of"
     with store.begin() as connection:
         assert connection.exec_driver_sql("PRAGMA foreign_key_check").all() == []
         # The key of the deleted source is still not given again.

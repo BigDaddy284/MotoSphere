@@ -32,6 +32,7 @@ __all__ = [
     "index_the_runs_of_a_source",
     "keep_a_decided_review_item_from_being_replaced",
     "keep_the_decision_of_a_review_item",
+    "let_a_source_be_a_reference_list",
     "let_a_source_say_its_country",
     "let_the_record_changes_only_be_added_to",
     "make_the_collection_runs",
@@ -604,6 +605,115 @@ def let_a_source_say_its_country(connection: Connection) -> None:
     connection.exec_driver_sql("CREATE INDEX ix_source_country_id ON source (country_id)")
 
 
+def let_a_source_be_a_reference_list(connection: Connection) -> None:
+    """15: one more kind of source, ``reference list`` (DAT-058).
+
+    The check of the column ``category`` names the texts it takes, and
+    SQLite cannot change a check of a table that is there. So the table
+    is built anew, as the fourteenth migration built it: its rows are
+    copied aside, the table is dropped, made again with the check that
+    names the new text too, and filled from the copy, every row with all
+    it had, its key and its country too. Other tables point to the
+    sources. Their foreign keys stay on and are checked when the
+    migration ends, when every source is there again. The highest key the
+    table has given is kept, and the index over the countries of the
+    sources, which went with the table, is made again.
+    """
+    white_space = (
+        "char(9, 10, 11, 12, 13, 28, 29, 30, 31, 32, 133, 160, 5760, 8192, 8193, 8194, 8195, "
+        "8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288)"
+    )
+
+    def not_empty(column: str) -> str:
+        return (
+            f"CONSTRAINT ck_source_{column}_not_empty CHECK (trim({column}, {white_space}) != '')"
+        )
+
+    def web_address(column: str) -> str:
+        return (
+            f"CONSTRAINT ck_source_{column}_web_address CHECK ("
+            f"(({column} GLOB '[Hh][Tt][Tt][Pp][Ss]://[^/?#]*')"
+            f" OR ({column} GLOB '[Hh][Tt][Tt][Pp]://[^/?#]*'))"
+            f" AND NOT ({column} GLOB '*[' || {white_space} || ']*')"
+            f" AND instr({column}, char(0)) = 0)"
+        )
+
+    connection.exec_driver_sql("PRAGMA defer_foreign_keys = ON")
+    connection.exec_driver_sql("CREATE TABLE source_before AS SELECT * FROM source")
+    connection.exec_driver_sql(
+        "CREATE TABLE source_key_before AS SELECT seq FROM sqlite_sequence WHERE name = 'source'"
+    )
+    connection.exec_driver_sql("DROP TABLE source")
+    connection.exec_driver_sql(
+        f"""
+        CREATE TABLE source (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            website TEXT NOT NULL,
+            category TEXT NOT NULL,
+            collection_method TEXT NOT NULL,
+            scan_every_hours INTEGER,
+            terms_address TEXT,
+            licence TEXT,
+            usage_restrictions TEXT,
+            terms_read_at TEXT,
+            switched_on INTEGER NOT NULL,
+            country_id INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            CONSTRAINT ck_source_scan_every_hours_positive CHECK (scan_every_hours > 0),
+            CONSTRAINT ck_source_switched_on_terms_read
+                CHECK (switched_on = 0 OR terms_read_at IS NOT NULL),
+            CONSTRAINT uq_source_name UNIQUE (name),
+            CONSTRAINT fk_source_country_id_country
+                FOREIGN KEY(country_id) REFERENCES country (id),
+            {not_empty("name")},
+            {web_address("website")},
+            CONSTRAINT ck_source_category_one_of CHECK (category IN (
+                'governing body', 'championship', 'organiser', 'promoter', 'track', 'club',
+                'regional organisation', 'results database', 'news publication',
+                'community website', 'social media page', 'historical archive',
+                'reference list'
+            )),
+            CONSTRAINT ck_source_collection_method_one_of CHECK (collection_method IN (
+                'official api', 'structured feed', 'rss feed', 'public dataset',
+                'html extraction', 'structured document', 'json endpoint', 'sitemap discovery',
+                'search engine discovery', 'human submission'
+            )),
+            {web_address("terms_address")},
+            {not_empty("licence")},
+            {not_empty("usage_restrictions")},
+            CONSTRAINT ck_source_switched_on_yes_or_no CHECK (switched_on IN (0, 1))
+        ) STRICT
+        """
+    )
+    # Every source gets all it had before, column for column.
+    connection.exec_driver_sql(
+        """
+        INSERT INTO source (
+            id, name, website, category, collection_method, scan_every_hours, terms_address,
+            licence, usage_restrictions, terms_read_at, switched_on, country_id, created_at,
+            updated_at
+        )
+        SELECT
+            id, name, website, category, collection_method, scan_every_hours, terms_address,
+            licence, usage_restrictions, terms_read_at, switched_on, country_id, created_at,
+            updated_at
+        FROM source_before ORDER BY id
+        """
+    )
+    # Filling the table set its highest key to that of the rows that are
+    # there. The one it had before is put back.
+    connection.exec_driver_sql("DELETE FROM sqlite_sequence WHERE name = 'source'")
+    connection.exec_driver_sql(
+        "INSERT INTO sqlite_sequence (name, seq) SELECT 'source', seq FROM source_key_before"
+    )
+    connection.exec_driver_sql("DROP TABLE source_key_before")
+    connection.exec_driver_sql("DROP TABLE source_before")
+    # The index went with the table it was over.
+    connection.exec_driver_sql("CREATE INDEX ix_source_country_id ON source (country_id)")
+
+
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
@@ -619,4 +729,5 @@ MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     keep_a_decided_review_item_from_being_replaced,
     make_the_countries,
     let_a_source_say_its_country,
+    let_a_source_be_a_reference_list,
 )
