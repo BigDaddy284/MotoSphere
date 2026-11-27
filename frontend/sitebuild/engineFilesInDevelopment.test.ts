@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, extname, join } from 'node:path'
+import { basename, dirname, extname, join } from 'node:path'
 import { createServer, type ViteDevServer } from 'vite'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { SITE_PATH } from '../site.ts'
@@ -343,8 +343,11 @@ describe('the development server of a project made up for the test', () => {
 
   it('does not start when the engine is not installed, and says so', async () => {
     await expect(start()).rejects.toThrow(EngineFilesError)
+    // The sentence is held from the project's own folder on. What is before
+    // it is the computer's folder for such files, which has two names on
+    // Windows, a short one and a long one.
     await expect(start()).rejects.toThrow(
-      `${join(project, ENGINE_PACKAGE, BROUGHT_IN)} cannot be read. Run "npm ci" first.`,
+      `${join(basename(project), ENGINE_PACKAGE, BROUGHT_IN)} cannot be read. Run "npm ci" first.`,
     )
   })
 
