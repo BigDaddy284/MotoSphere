@@ -7,7 +7,9 @@ restrictions and collection status.
 
 No source is registered in the store yet. One source has been found, its
 licence read, and its file taken into the repository: the list of the
-countries, from the project iso-codes (DAT-012, below).
+countries, from the project iso-codes (DAT-012, below). The pipeline can
+put that source in a store, as it is described here (DAT-060); it does
+so when the countries are loaded (DAT-059).
 
 ## How a source is described
 
@@ -56,7 +58,7 @@ collecting.
 
 | Name | Website | Country | Category | Information types | Collection method | Licence / terms | Restrictions | Status |
 |---|---|---|---|---|---|---|---|---|
-| iso-codes | <https://salsa.debian.org/iso-codes-team/iso-codes> | – (of no one country) | `reference list` | `reference data` | `public dataset` | LGPL-2.1-or-later, © 2016 Dr. Tobias Quathamer; read in release 4.20.1 on 2026-11-27 | Every copy keeps the notice and comes with the licence; a changed copy says that it was changed and when; a work that takes over part of the list is passed on under the same licence | File in the repository, unchanged (DAT-012). Not in the store yet |
+| iso-codes | <https://salsa.debian.org/iso-codes-team/iso-codes> | – (of no one country) | `reference list` | `reference data` | `public dataset` | LGPL-2.1-or-later, © 2016 Dr. Tobias Quathamer; read in release 4.20.1 on 2026-11-27 | Every copy keeps the notice and comes with the licence; a changed copy says that it was changed and when; a work that takes over part of the list is passed on under the same licence | File in the repository, unchanged (DAT-012). Described for the store (DAT-060): switched off, its terms read by no person yet. In no store until the countries are loaded (DAT-059) |
 
 ## The countries: iso-codes
 
@@ -143,5 +145,19 @@ governing body, a championship, a track, a club and so on. A project
 that keeps the lists of a standard is none of them, and it is not put
 under one that does not fit. The list has a thirteenth kind for it,
 `reference list`, which is this project's own (DAT-058; `DATABASE.md`,
-"A kind of source that is not of the sport"). The source is registered
-in the store with DAT-059.
+"A kind of source that is not of the sport").
+
+**In the store.** The code says what the store is told of this source
+(`motosphere.reference.countries_source`, DAT-060; `DATABASE.md`, "The
+source of the countries"): its name, its website, its kind, how it is
+collected from, its licence and what the licence asks, as the row of the
+registry above has them, and that it offers `reference data`. It has no
+page of terms; its terms are its licence. A test holds the website and
+the licence to the note beside the file.
+
+The source is stored **switched off**, and its row says that **nobody
+has read its terms**. The planner read the licence and wrote down above
+what it found. The store asks when a *person* last read a source's
+terms, and no person has: that is for the owner. Nothing is fetched
+from this source, so it need not be switched on for its countries to be
+loaded from the file in the repository.
