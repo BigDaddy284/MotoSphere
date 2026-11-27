@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 55 | 54 |
-| 2 | Data store and published data (DAT, PUB) | 67 | 50 |
+| 2 | Data store and published data (DAT, PUB) | 69 | 50 |
 | 3 | Interactive 3D Earth (GLB) | 25 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-059 – The countries are loaded into the store.
+**Current task, track A (data store):** DAT-060 – The source of the countries can be put in the store.
 
 **Current task, track B (globe):** FND-056 – No unit test ends with work of the page waiting.
 
@@ -197,6 +197,16 @@ the file, its licence and its reader, with the source recorded in
 `DATA_SOURCES.md`; DAT-058 gives the list of the kinds of source a kind
 for it; DAT-059 registers the source and loads the countries. Order on
 track A: DAT-057, DAT-012, DAT-058, DAT-059, then DAT-013.
+
+**The countries into the store, in three steps (PLAN-049):** DAT-059 was
+added as one task that registers the source of the countries and loads them
+with a command. Those are three objectives with three kinds of test: a row
+of the table of the sources that is stored once and never written over; the
+countries of a file brought into a table with their history; and a command
+with its sentences and exit codes. DAT-060 is the source, and stands first
+because every country names it. DAT-059 is now the loading, by a function.
+DAT-061 is the command that does both. The plan has two tasks more than
+before, 292. Order on track A: DAT-060, DAT-059, DAT-061, then DAT-013.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -2367,12 +2377,47 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Commit:** `70af414`
 - **Plan:** `docs/plans/DAT-058.md`
 
+### DAT-060 – The source of the countries can be put in the store
+- **Status:** IN PROGRESS
+- **Objective:** One function gives the row of the source of the countries in the store, and stores that row first when the store does not have it: once, as `DATA_SOURCES.md` describes the source, and switched off.
+- **Description:** Added on 2026-11-27 (PLAN-049), cut out of DAT-059; settled in the planner's trial. A new module, `motosphere.reference.countries_source`, says what the store is told of the project iso-codes: its name, its website, its kind (`reference list`, DAT-058), how it is collected from (`public dataset`), its licence (`LGPL-2.1-or-later`), what the licence asks in three sentences, that it has no page of terms, and that it offers `reference data`. `source_of_the_countries(work)` looks for a source of that name. Where there is none it stores one as described, with its offer, and writes both before it returns. Where there is one as described it gives it as it is and writes nothing: what people have said of it (whether its terms were read, whether it is switched on, how often it is looked at, which country it is of) is not looked at, and neither is what else it offers. A source of the name that is described otherwise, in one of the six described columns or because it does not offer `reference data`, is refused with a `CountriesSourceError` whose sentence names everything that differs, and is left as it is: the code does not write over what the store holds, and does not load countries under a description that is not its own. A new row is switched off and says that nobody has read its terms. The planner read the licence of iso-codes, and `DATA_SOURCES.md` says what it found; the column says when a person last read a source's terms, and no person has. The source need not be switched on for its countries to be loaded, because nothing is fetched from it: its file is in the repository. The owner switches it on, or leaves it, after reading the licence. Nothing calls the function yet; no model, migration or command changes. The planner's trial has 38 new tests.
+- **Acceptance criteria:**
+  1. `motosphere.reference.countries_source` has `NAME`, `WEBSITE`, `LICENCE`, `USAGE_RESTRICTIONS`, `DESCRIBED`, `OFFERS`, `CountriesSourceError` and `source_of_the_countries`.
+  2. In a store without a source called `iso-codes`, the function stores one row as described, switched off, with its terms read by nobody, no hours and no country, and one offer, `reference data`.
+  3. Called again, in the same unit of work or a later one, it gives the same row and writes nothing.
+  4. A source of the name that is as described is given as it is: what people said of it stays, and it may offer more.
+  5. A source of the name that differs in one of the six described columns, or does not offer `reference data`, is refused with the sentence, which names everything that differs in the order of the table, and nothing is changed.
+  6. The source and its offer are kept or taken back with their unit of work.
+  7. Every column of a source is described, for people to say, or the store's own; the note beside the file names the same website and licence.
+  8. No model, migration, command or existing test changed.
+  9. The five documents say what the task did, and that the source is switched off with its terms read by no person.
+  10. `python scripts/check.py` reports 19 of 19 gates, with 2479 backend tests, and 38 tests more in all than `main` gives at the commit the branch starts from (3428 when that is `70af414`).
+  11. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
+  12. Only the eight files under "Scope" of the plan changed.
+- **Tests required:** 12 new unit tests of the description, without a store: its texts, each written out a second time; that it names columns of a source in the order of the table; that every column of a source is described, for people, or the store's own; that the note beside the file names the same website and licence. 26 new integration tests in 15 functions against a real SQLite file that the migrations built, every row read back as SQLite holds it: stored as described; stored once; beside another source; a source of another name; given as it is, with what people said of it and with more offers; refused for each described column and for the offer, with the sentence word for word; kept or taken back with its unit of work. Planted defects in the module. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-060.md`
+
 ### DAT-059 – The countries are loaded into the store
 - **Status:** NOT STARTED
-- **Objective:** The countries of the reference file are in the store, each naming the source it came from, through a command that changes nothing when it is run again.
-- **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012. A command registers the source of the countries (iso-codes, with its licence, where its terms are and when they were read, as `DATA_SOURCES.md` has them) and brings the countries of the file of DAT-012 into the table of DAT-011: a country that is not there is added, a country whose name the file has changed is changed through the history of DAT-009, and no country is ever deleted. Every row says which source it came from and when. Nothing is fetched while the command runs. The planner's trial settles whether registering the source and loading the countries are one task or two, how a country that is in the store and not in the file any more is treated, and what the published data must say of the licence (PUB-003).
-- **Acceptance criteria:** after loading, the store holds exactly the countries of the file, each with provenance naming the source; loading twice leaves the same rows and no new history; a changed name in the file becomes one change with history; a malformed file is refused whole and the store is unchanged; the source is registered once, however often the command runs.
-- **Tests required:** integration tests against a real SQLite file with the real reference file and with damaged ones; the command run for real; planted defects; the full run of all gates on both machines.
+- **Objective:** The countries of the reference file are in the store, each naming the source it came from, by a function that changes nothing when it is run again.
+- **Description:** Added on 2026-11-27 (PLAN-044), cut out of DAT-012, and narrowed on 2026-11-27 (PLAN-049) to the loading: the source is DAT-060 and the command is DAT-061. A function brings the countries of the file of DAT-012 into the table of DAT-011, under the source of DAT-060: a country that is not there is added, a country whose name or code of three letters the file has changed is changed through the history of DAT-009, and no country is ever deleted. Every row says which source it came from, at which address and when. Nothing is fetched. The planner's trial settles what a row says of where it came from (the address the release was fetched from, the day the release was published, and the times), whether a loading is recorded as a collection run, and how a country that is in the store and not in the file any more is treated.
+- **Acceptance criteria:** after loading, the store holds exactly the countries of the file, each with provenance naming the source; loading twice leaves the same rows and no new history; a changed name in the file becomes one change with history; a country that is in the store and not in the file is left as it is and reported; whatever is refused, the store is unchanged. The criteria are made exact in the plan, from the trial.
+- **Tests required:** integration tests against a real SQLite file with the real reference file and with files made up for the test; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-061 – A command loads the countries
+- **Status:** NOT STARTED
+- **Objective:** One command puts the source of the countries and the countries of the reference file into the store, and says in one sentence what it did.
+- **Description:** Added on 2026-11-27 (PLAN-049), cut out of DAT-059. A command of `python -m motosphere` opens the store, puts the source of the countries in it (DAT-060) and loads the countries (DAT-059), in one unit of work, and writes one sentence to standard output: how many countries were added, changed and left as they were. A store that cannot be opened or is not at the newest schema, a damaged countries file and a source that is described otherwise are refused with their sentence on standard error and the exit code 1, and the store is left as it was. Run again, it changes nothing and says so. Nothing is fetched while it runs. What the published data must say of the licence is PUB-003. The name of the command and its sentences are settled in the planner's trial.
+- **Acceptance criteria:** the command, run for real on a new store, leaves the source and the 249 countries of the file in it and says so; run again it changes nothing and says so; each refusal gives its sentence, the exit code 1 and an unchanged store; `--help` names the command. The criteria are made exact in the plan, from the trial.
+- **Tests required:** unit tests of the command's sentences; integration tests that run the command for real against a real SQLite file; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
