@@ -534,8 +534,12 @@ the export step, from the data store.
   reads what MotoSphere keeps and leaves the rest unread. The file is
   data from outside like any other: nothing of it is run. The first such
   list is the countries of ISO 3166-1, from the project iso-codes
-  (DAT-012; `DATA_SOURCES.md` has the source and its licence). Bringing
-  a list into the store is a task of its own.
+  (DAT-012; `DATA_SOURCES.md` has the source and its licence). The
+  source of a list is described for the store beside its reader
+  (`motosphere.reference.countries_source`, DAT-060): the code says
+  what the source is, and what is for people to say of it, whether its
+  terms were read and whether it is switched on, is left to them.
+  Bringing the list itself into the store is a task of its own.
 
 ### Scrapling evaluation (preliminary, confirmed in task TRK-007)
 

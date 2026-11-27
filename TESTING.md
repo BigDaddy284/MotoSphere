@@ -2004,6 +2004,51 @@ nothing is fetched.
   three. A wrong entry at any place in a file refuses the whole file,
   and so does the project's own file with one entry damaged.
 
+## The source of the countries
+
+Two files test how the source of the countries is described and put in
+the store (`motosphere.reference.countries_source`, DAT-060).
+
+`backend/tests/unit/test_reference_countries_source.py`, 12 tests
+without a store: the name, which is also the name of the folder that
+holds what was taken from the source; the kind, the way of collecting
+and the one kind of information it offers; the website, the licence and
+the restrictions, each written out a second time; that the description
+names columns of a source in the order of the table, and that every
+column of a source is described, or is one of the four that are for
+people to say, or is the store's own; that the note beside the file
+names the same website and licence, and that the text of the licence is
+beside the file under the licence's name.
+
+`backend/tests/integration/test_countries_source.py`, 26 tests against a
+real SQLite file that the migrations built:
+
+- **Stored as described.** In an empty store the function stores one
+  row, read back as SQLite holds it, column for column, and one offer.
+  The row is switched off, says that nobody has read its terms, and has
+  no country and no hours.
+- **Once.** Asked for four times, in two units of work, it is one row,
+  and nothing was written after the first time: the row says it was
+  last changed when it was stored. Beside another source it takes the
+  next key and leaves the other alone. A source whose name differs by a
+  capital, a figure or a space is another source.
+- **Given as it is.** A source of the name that is there as described
+  is given back and nothing is written. What a person said of it stays:
+  when its terms were read, that it is switched on, its hours and its
+  country. It may offer more than the pipeline says.
+- **Refused**, each with its sentence, word for word, and the store as
+  it was: another website, also one that differs by a stroke at its
+  end; another kind; another way of collecting; an address of terms;
+  another licence or none; other restrictions or none; no offer of
+  `reference data`, with no offer at all and with another one. What
+  another source offers does not count for this one. A refusal names
+  everything that differs, in the order of the table, with two things
+  and with four.
+- **Part of its unit of work.** The source and its offer are written
+  when the function returns. When the unit of work fails afterwards,
+  neither is kept; when the function refuses, what the unit of work
+  did before goes with it.
+
 ## A data store of its own for every test
 
 A backend test that needs the data store asks for the fixture `store`
