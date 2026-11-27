@@ -2146,15 +2146,29 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-011.md`
 
 ### DAT-057 – A source says its country
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** A source can say which country it is of, so that sources can be found by country.
-- **Description:** Added on 2026-11-27 (PLAN-042), cut out of DAT-011. One column of `source`: the key of a row of `country`. It may be without a value, because a body for the whole world is of no country. The migration changes a table that is there and holds rows, which no migration has done so far. The planner's trial settles how (a column added, or the table built anew, which the runner of the migrations allows since DAT-004), whether the column has an index, and that a country sources are of cannot be deleted.
-- **Acceptance criteria:** a source's country must exist; a source may be without one; the sources that were there keep everything they had and have no country; a country that a source is of cannot be deleted; the model and the migration agree.
-- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it that holds sources, offers, runs and countries; planted defects; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-27 (PLAN-042), cut out of DAT-011; settled in the planner's trial. One column of `source`, `country_id`: the key of a row of `country`, after `switched_on` and before the two times. It may be without a value, because a body for the whole world is of no one country, and of a source that was stored before somebody looked nobody has said yet; the table does not tell the two apart. The foreign key, `fk_source_country_id_country`, says nothing of deleting: a country that a source is of cannot be deleted. An index over the column, `ix_source_country_id`, finds the sources of one country and answers what SQLite asks before a country is deleted. The fourteenth migration, `let_a_source_say_its_country`, is the first that changes a table that is there and holds rows. It builds the table anew, because SQLite puts an added column after all the others and cannot give it a foreign key with a name, and the table would not be as its model makes it: with the foreign keys left on and checked when the transaction ends, the rows are copied aside, the table is dropped, made again with the column and filled from the copy, every source with its key and everything it had and with no country. The highest key the table has given, which SQLite forgets when a table is dropped, is kept and put back, so the key of a deleted source is still never given again. The four tables whose rows point to a source are not touched. The sources and the countries now point to each other, the only two tables that do: a source is stored before its countries and is said to be of one of them afterwards. The schema goes to version 14. The planner's trial has 40 new tests and detects 57 of 57 planted defects.
+- **Acceptance criteria:**
+  1. The schema is at version 14. The fourteenth migration gives the table `source` the column `country_id`, after `switched_on` and before the two times, with the foreign key `fk_source_country_id_country` to `country (id)`, and makes the index `ix_source_country_id`; nothing else in the store changes.
+  2. In a store that holds sources, offers, runs, review items and countries, every source has after the migration what it had before, its key too, and no country; every row of the four tables that point to a source is as it was; the two copies are gone.
+  3. The key of a source that was deleted is not given again after the migration, also where the table has no sources left; a table that never gave a key has none recorded afterwards either.
+  4. Where a table of the name of either copy or an index of the name of the index is there already, the migration fails and the store stays at version 13, with the table, its rows and its highest key as before.
+  5. A source is stored and read back with its country, and without one; neither the model nor the table gives the column a value.
+  6. The country of a source must be there, when a source is stored and when it is changed. What is not a whole number is refused; a whole number written as text or with a point is stored as that number.
+  7. A country that a source is of cannot be deleted; it can once no source is of it. Two sources can be of one country.
+  8. A source can be of a country that came from it; the two are stored and taken away in the order the tests walk.
+  9. The sources of one country are found through the index, and SQLite uses it before a country is deleted.
+  10. The model and the migration agree: the test of the models and the migrations passes unchanged. The sources and the countries are the only two tables that point to each other, and the schema breaks no rule.
+  11. Two existing tests change, the list of the migrations' names and one row of a source read whole; no other existing test changes, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  12. `python scripts/check.py` reports 19 of 19 gates, with 2277 backend tests, and 40 tests more in all than `main` gives at the commit the branch starts from (3201 when that is `839e225`); on the pull request both gates jobs are green (Linux and Windows) and the three jobs after the gates are skipped.
+  13. Only the ten files under "Scope" of the plan changed.
+- **Tests required:** 25 new integration tests in 19 functions, in a store the migrations built, with one source and the two countries that came from it, on a real SQLite file, through the model and past it as plain SQL, each refusal with what SQLite said: a source with and without a country; a country that is not there; what is not a whole number; a country that a source is of; the two tables pointing to each other; the column, its foreign key and its index as SQLite has them, with the query plans. 6 new unit tests of the model. 8 new tests of the fourteenth migration, in a store that holds sources with a gap in their keys and a row in each of the four tables that point to a source, and one case more of the test that tries every migration alone. Planted defects in the model and the migration. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/DAT-057.md`
 
 ### DAT-012 – Countries reference data
 - **Status:** NOT STARTED
