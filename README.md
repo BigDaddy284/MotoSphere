@@ -147,9 +147,7 @@ tagline. There the page opens with both side panels closed, so that the globe
 area is in view, and only one panel is open at a time. On a touch screen the
 buttons and the sections are taller, so that a finger can hit them. The
 layout is as tall as the part of the screen the browser really shows, so on a
-phone its lower edge is not under the browser's own bars. The development
-server answers the files of the globe engine under `/MotoSphere/cesium/`, from
-the installed package, as the published site holds them. Press Ctrl+C to stop
+phone its lower edge is not under the browser's own bars. Press Ctrl+C to stop
 the development server.
 
 The icon files in `frontend/public/` (`favicon.svg`, `favicon.ico` and

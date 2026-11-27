@@ -229,20 +229,10 @@ Rules:
   companies. The globe uses neither, and a provider of imagery is taken
   on with its terms read, its pictures with it (§8). The files are
   passed on unchanged, as the package brings them under the engine's
-  licence, whose text is in `licences.txt`. The engine is not yet told
-  its address (GLB-025), and nothing of the application asks for a file
-  of it, so a visitor's browser fetches none.
-- In development nothing is built, and the development server answers
-  from the folder of the project, where the engine's files are not. A
-  second step in the same file answers the folder `cesium/` of the
-  site's path from the installed engine while the development server
-  runs (GLB-024): each file the built site has, read anew for every
-  request, with the type a browser needs, and "not found" for every
-  other address in that folder, the two logos among them. It goes by
-  the same list as the build, so the globe is developed against what
-  the site will hold. The server does not start when the engine is not
-  installed, or when the engine brings a file of a kind the step has no
-  type for: a person then says what a browser must be told it is.
+  licence, whose text is in `licences.txt`. The development server does
+  not answer the folder yet (GLB-024), the engine is not yet told its
+  address (GLB-025), and nothing of the application asks for a file of
+  it, so a visitor's browser fetches none.
 - A name the engine has moved to `@cesium/core` (`Cartesian3`,
   `Ellipsoid`, `Math` and about 150 in all) is imported from there. The
   engine still hands those names out, with a warning, and says it will
