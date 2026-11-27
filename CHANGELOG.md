@@ -466,10 +466,3 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   in the runner's own folder, on the work disk: the 2420 tests of the
   pipeline took 82 seconds there, against 635 on the system disk in the
   same job (FND-057).
-- Two unit tests that could fail a run by chance. The tests that start
-  the whole page ended while React still had work waiting. When that
-  work ran after the test's document was gone, the run failed with
-  "window is not defined" although every test had passed (once, on
-  GitHub's Linux machine). Both tests now start the page inside React's
-  `act`, which comes back when nothing is waiting, and look at the page
-  at once, so a start outside `act` fails every time (FND-055).
