@@ -13,7 +13,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
-| 1 | Foundation (FND) | 49 | 46 |
+| 1 | Foundation (FND) | 49 | 47 |
 | 2 | Data store and published data (DAT, PUB) | 63 | 44 |
 | 3 | Interactive 3D Earth (GLB) | 23 | 1 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-055 – A decided review item is not replaced.
 
-**Current task, track B (globe):** FND-050 – The licences of the shipped packages are ones the project has accepted.
+**Current task, track B (globe):** FND-051 – A licence file beneath the top folder of a package goes with the site.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -987,7 +987,7 @@ Windows 11. No database and no globe yet.
 - **Commit:** –
 
 ### FND-050 – The licences of the shipped packages are ones the project has accepted
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A package whose licence nobody has read and accepted for the project is not shipped unnoticed.
 - **Description:** Added on 2026-11-27 (PLAN-038), cut out of FND-047. The lock file names the licence of every package. A new file of repository checks, `tests/repo/test_frontend_licences.py`, holds the licences of the packages the site is built with (those the lock file does not mark as only for the work, 32 today, the same ones whose licences the build writes into `licences.txt`) to a list of the licences the project has accepted. The list names each licence as the lock file writes it, with what it asks of whoever passes the code on and how the project meets that: `MIT`, `Apache-2.0`, `ISC`, `BSD-3-Clause`, `0BSD`, `(MPL-2.0 OR Apache-2.0)` and `(MIT AND Zlib)`. A package under another licence, or with none named, fails the checks until its licence has been read and put on the list in the same pull request, where a reviewer sees it. A licence is taken as it is written: two licences on the list do not make their combination one, because what a combination asks is for a person to read. A licence on the list that no package is under any more fails the checks too. The packages that only build and test the site are not held to the list: nothing of them is passed on. The list is the project's own record, written by the planner, who read each of the seven in the texts the packages bring; it is not a lawyer's opinion, and the documents say so. Nothing under `frontend/` changes.
 - **Acceptance criteria:**
@@ -1002,10 +1002,10 @@ Windows 11. No database and no globe yet.
   9. On the pull request both gates jobs are green with those numbers.
   10. Only the four files under "Scope" of the plan changed.
 - **Tests required:** 18 new repository checks, on made-up lock files and lists and on the real lock file against the real list; planted defects in the lock file, in the list, in the reading of a lock file and in how packages are held to a list; the full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** In a clean checkout of pull request #153 (Linux, Python 3.13.18, Node 22.23.4, npm 10.9.9, uv 0.11.32), with nothing installed beforehand: the full run once, 19 of 19 gates, "Tests: 2620 passed, 0 failed, 0 skipped." (repository checks 80: 62 before, 18 new). The planner's 44 planted defects, one at a time, each against all the repository checks: 44 of 44 detected, each with the same result as in the trial. The plan's ten prove-it steps are among these 44. On GitHub, run 45946343544 for the pull request and run 45947583820 for `main` after the merge, read from the job logs: both gates jobs green on Linux and on Windows with the same two closing lines and 80 repository checks; on `main` the site was republished and "Check the published site" ended "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 8 of 8 files."
+- **Passed / Failed:** 2620 / 0 tests locally and on both machines on GitHub (repository 80, script tests 206, backend 1861, frontend unit 293, browser 180); all 19 gates passed; 44 / 0 planted defects detected.
+- **Verification status:** Verified by the planner on 2026-11-27. All 4 files are identical to the planner's trial. No existing test changed, no package was added, the lock file is unchanged and nothing under `frontend/` changed. The builder's report gives 2620 tests in the full local run, the ten prove-it steps each with the plan's result, and no deviation from the plan.
+- **Commit:** `48bb95a`
 - **Plan:** `docs/plans/FND-050.md`
 
 ### FND-051 – A licence file beneath the top folder of a package goes with the site
