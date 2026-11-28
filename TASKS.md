@@ -15,7 +15,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 |---|---|---|---|
 | 1 | Foundation (FND) | 58 | 58 |
 | 2 | Data store and published data (DAT, PUB) | 76 | 56 |
-| 3 | Interactive 3D Earth (GLB) | 28 | 6 |
+| 3 | Interactive 3D Earth (GLB) | 29 | 6 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-064 – A region says its code of ISO 3166-2.
 
-**Current task, track B (globe):** GLB-002 – The globe shows the Earth.
+**Current task, track B (globe):** GLB-029 – The globe says when its first complete picture is drawn.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -316,6 +316,15 @@ queue is 1 or more, does not hold when a statement sets the key by the name
 `rowid`: putting that right is DAT-068, the third new task, and comes first.
 The plan has 305 tasks. Order on track A: DAT-064, DAT-068, DAT-067,
 DAT-066, DAT-065, then DAT-014.
+
+**The first complete picture (PLAN-057):** before the real engine is put
+into the page (GLB-002) the planner looked at what its browser tests need,
+and found that they have to wait for the moment the Earth is drawn
+completely, which only the engine knows. How the engine says it and how the
+component passes it on is a task of its own, GLB-029, with unit tests and
+the stand-in, as GLB-027 was: GLB-002 then has the real engine say it. One
+task is new; Phase 3 has 29 tasks and the plan 306. Order on track B:
+GLB-029, GLB-002, GLB-028, then GLB-003.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -3112,10 +3121,35 @@ What holds for every task of the phase:
 - **Commit:** `a36f4b4`
 - **Plan:** `docs/plans/GLB-027.md`
 
+### GLB-029 – The globe says when its first complete picture is drawn
+- **Status:** IN PROGRESS
+- **Objective:** The `Globe` component tells whoever shows it, once, when its engine has drawn the first complete picture, proven by unit tests with the stand-in for the engine.
+- **Description:** Added on 2026-11-28 (PLAN-057), cut out of GLB-002, from the planner's trial. The engine needs a moment after it is started, and two things have to know when the first complete picture is there: the browser tests of the globe (GLB-002, GLB-003), which must not look before it, and what a person is told while the globe loads (GLB-004). An engine is now started with a listener (`Listener`, with `drawn`), which it cannot be started without, and the component can be handed whom to tell (`onDrawn`), which may be left out. The component tells once, though the engine says it again; never for a globe that has gone; the listener it has then, through `useEffectEvent`, so that another listener starts nothing anew; and each showing has its own note of what was told. A listener that fails is not a failure of the engine: what it fails with goes back to the engine. The component still keeps no state and brings in `react` and nothing else. The stand-in of the tests keeps whom each engine was handed and has an engine say it when a test says so (`draws()`), at once, for the engine started first or the one named, stopped or not. The listener is an object so that GLB-004 can have the engine say a second thing, that it failed while drawing. The component is not in the page yet, so nothing a user sees changes and the task has no browser tests. No package is added.
+- **Acceptance criteria:**
+  1. An engine is started with a listener, and the component can be handed whom to tell that the picture is drawn; it can also be shown without.
+  2. When the engine says that its first complete picture is drawn, whoever shows the globe is told once, with nothing else, and the engine goes on running. Nobody is told before the engine says it.
+  3. An engine that says it again tells nobody a second time.
+  4. Nobody is told what an engine says after its globe has gone.
+  5. The listener the globe has then is the one told. Another listener handed in later neither loads nor starts nor stops anything.
+  6. Of two globes each is told of its own engine only, and a globe that is shown again after it has gone is told of its new engine only. A globe that React put aside and shows again is told a second time, of its new engine. Under `StrictMode` it is told once, of the one engine that runs.
+  7. Nobody is told that a picture is drawn when the engine cannot be loaded or started. A listener that fails is not told to `onFailed`; what it fails with goes back to the engine, which goes on running.
+  8. The stand-in has an engine say it when a test says so, at once, for the engine started first or the one named, and names an engine that was not started in a sentence.
+  9. The component still brings in `react` and nothing else.
+  10. No test of `Globe.test.tsx` changes; in `engine.test.ts` only the calls that start an engine change, and none loses an assertion. All tests pass. The type check, the lint and the format check pass.
+  11. `python scripts/check.py` reports 19 of 19 gates, with 505 frontend unit tests and 304 browser tests, and 28 tests more in all than `main` gives at the commit the branch starts from (3815 when that is `386697a`).
+  12. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
+  13. Only the seven files under "Scope" of the plan changed.
+- **Tests required:** 28 new frontend unit tests. 17 of the component: nobody told before the engine says it; told once, with nothing else; once though the engine says it again; nobody told for a globe that has gone; the newest listener told, also one handed in after the engine was started; nothing anew for another listener; a globe shown by someone who does not ask; two globes; a globe shown again; a globe that React put aside and shows again; an engine that cannot be loaded or started; a listener that fails; three cases under `StrictMode`. 11 of the stand-in. Planted defects in the component and in the stand-in. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/GLB-029.md`
+
 ### GLB-002 – The globe shows the Earth
 - **Status:** NOT STARTED
 - **Objective:** The stage shows a 3D Earth with the imagery that comes with the engine, loaded only from the site itself.
-- **Description:** Narrowed on 2026-11-27 (PLAN-053): what the stage does where the browser cannot draw is GLB-026, the life of the component is GLB-027, and that the surface follows the size of the stage is GLB-028. This task is the real engine in the page. The way to start it that the `Globe` component of GLB-027 is handed makes one engine widget in the component's element, with the Natural Earth II picture set that comes with the engine (ARCHITECTURE.md §8): no key, no account and no request to another computer. The engine's services that need an account are not used. The engine draws when something has changed and not all the time. Stopping takes the widget away and gives the browser its 3D picture back, which the engine's own way of ending did not do in the planner's trial. The rules of the engine's style sheet that the surface needs for its size come with it. The stage shows the component where the browser can draw (GLB-026), and the engine is loaded when the stage is shown and not with the first paint of the page, so the top bar and the panels appear at once. The browser tests of the globe run in the project `globe` (FND-058). The camera cannot be moved by the user yet in any way this task promises; that is GLB-005 onwards. What the engine says of its imagery on the globe is GLB-015.
+- **Description:** Narrowed on 2026-11-27 (PLAN-053): what the stage does where the browser cannot draw is GLB-026, the life of the component is GLB-027, and that the surface follows the size of the stage is GLB-028. This task is the real engine in the page. The way to start it that the `Globe` component of GLB-027 is handed makes one engine widget in the component's element, with the Natural Earth II picture set that comes with the engine (ARCHITECTURE.md §8): no key, no account and no request to another computer. The engine's services that need an account are not used. The engine draws when something has changed and not all the time. Stopping takes the widget away and gives the browser its 3D picture back, which the engine's own way of ending did not do in the planner's trial. The rules of the engine's style sheet that the surface needs for its size come with it. The stage shows the component where the browser can draw (GLB-026), and the engine is loaded when the stage is shown and not with the first paint of the page, so the top bar and the panels appear at once. The browser tests of the globe run in the project `globe` (FND-058). The camera cannot be moved by the user yet in any way this task promises; that is GLB-005 onwards. What the engine says of its imagery on the globe is GLB-015. How the component is told that the first complete picture is drawn is GLB-029 (PLAN-057); in this task the real engine says it.
 - **Acceptance criteria:** in the project `globe` the stage holds one drawing surface that fills it; the Earth is drawn, and the engine reports its first complete picture; no request leaves the site and nothing is on the console; the page's first paint does not wait for the engine; leaving and showing the globe again works, and the browser has its 3D picture back in between; in the project `chromium` the stage still shows the sentence of GLB-026 and no file of the engine is asked for; the main landmark is still named "Globe" and the existing layout tests pass unchanged.
 - **Tests required:** frontend unit tests of what the stage shows, with a stand-in engine; browser tests on the built site in the project `globe`: the surface is there, the engine reports its first complete picture, no request leaves the site, the globe can go and come back; browser tests in the project `chromium` that the engine is not loaded; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
