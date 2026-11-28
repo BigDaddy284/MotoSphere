@@ -3172,7 +3172,7 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-029.md`
 
 ### GLB-002 – The globe shows the Earth
-- **Status:** IN PROGRESS
+- **Status:** FAILED – FIX REQUIRED
 - **Objective:** Where the browser gives a 3D picture, the globe stage shows the Earth, drawn by the real engine with the pictures that come with it, loaded only from the site itself and after the page is there.
 - **Description:** Narrowed on 2026-11-27 (PLAN-053) and on 2026-11-28 (PLAN-057); made exact on 2026-11-28 from the planner's trial. One new module, `frontend/src/globe/earth.ts`, is the real way to start the engine and the only module of the application that brings the engine in: one `CesiumWidget` in the element it is handed, with the Natural Earth II pictures that are among the engine's files in the site, found through the engine's own `buildModuleUrl`, and told to draw only when something has changed. After every picture it asks whether a piece of the Earth is still waiting (`scene.globe.tilesLoaded`); when none is, it stops asking and says that the Earth is drawn, once the engine has finished that picture (`queueMicrotask`), so that whoever is told can stop it there and then. Stopping takes the widget away and gives the browser its 3D picture back (`WEBGL_lose_context`), which the engine's own way of ending does not do. The page hands the application the way to load that module, and fetches it, and the engine with it, when the stage shows the globe: the engine is a script of its own of 3,920 kB (1,041 kB as it travels) beside the page's own 230 kB. The stage shows the `Globe` component in an element that fills it and marks it as busy (`aria-busy`) until the Earth is drawn; a failure is handed to the browser until GLB-004. The unit tests cannot draw and hand the stage the stand-in; the real engine is tested in the browser tests. The engine's own mark in a corner, its sky and its way with the mouse are left as the engine has them (GLB-005, GLB-012, GLB-015). The build's advice that a script is larger than 500 kB is left: the engine is a script of its own already (Phase 13). No package is added.
 - **Acceptance criteria:**
@@ -3189,11 +3189,11 @@ What holds for every task of the phase:
   11. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   12. Only the sixteen files under "Scope" of the plan changed.
 - **Tests required:** 11 new frontend unit tests with the stand-in engine: nine of the stage (what it shows where the browser draws, the engine asked for once and started in the surface, busy until the first complete picture and not after, the engine stopped when the stage goes, a failure to load and one to start handed to the browser, nothing handed while all goes well, no engine asked for where the browser cannot draw), one of the page (it fetches the module that starts the engine and starts it in the stage) and one of the address (only that module brings the engine in, and it writes no address). Five new browser tests on the built site in the project `globe`, with the real engine: one surface that fills the stage; the page not held back by the engine's script; drawn means that the pictures have arrived, noted by the page at the moment it is said, and nothing is asked for and nothing new drawn after it; nothing asked of another computer; stopped and started again twenty times. The browser test of the project `chromium` that no file of the engine is asked for. Planted defects against the unit tests and against the browser tests. The full run of all gates on both machines.
-- **Tests executed:** –
+- **Tests executed:** By the tester thread on 2026-11-28, pull request #229 at `7764e81`: all 3947 tests passed and every planted defect was detected, but one planted defect of the 22 against the unit tests failed two tests in some runs where the planner's list names one. The cause is in three tests of the stage, which looked before React had done what it was asked for (PLAN-059); amendment 1 of the plan puts them right. Not merged.
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
-- **Plan:** `docs/plans/GLB-002.md`
+- **Plan:** `docs/plans/GLB-002.md`, with amendment 1
 
 ### GLB-030 – The view the globe opens with
 - **Status:** NOT STARTED
