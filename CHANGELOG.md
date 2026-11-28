@@ -32,12 +32,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   otherwise: its browser draws in software, and with the whole Earth in
   view the tests that were there took up to four times as long on
   GitHub's Windows machine, one of them 24 of its 30 seconds (GLB-031).
-- The browser tests of the Earth wait up to sixty seconds for the
-  globe to say that the Earth is drawn, where they waited twenty; and
-  the test of what the engine does after that moment holds that the
-  engine comes to rest, where it allowed one more picture. On GitHub's
-  Windows machine each of the two had failed once with nothing wrong
-  in the page (GLB-032).
 - A browser test can read the colour of a point of the page as the
   browser shows it, a 3D picture too, from outside the page: Playwright
   takes a picture of the one pixel and the colour is read from the PNG
@@ -177,12 +171,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   other computer. The engine is fetched after the page is there, so the
   top bar and the panels appear at once, and the stage marks the globe
   as busy until the Earth is drawn complete (GLB-002).
-- The globe opens with the whole Earth in view, at every size of the
-  screen: the camera is straight above the middle of the North Atlantic
-  (30 degrees north, 40 degrees west), north up, as far away as it
-  takes for the Earth to take four fifths of the shorter side of the
-  globe area. Until now the engine's own view was kept, which cut the
-  Earth off on a phone (GLB-030).
 - The data store's first decisions (`DATABASE.md`): what it relies on in
   SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
   gates run on, and where the store is kept between scheduled runs
