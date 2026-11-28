@@ -88,18 +88,45 @@ def test_a_region_points_to_its_country_and_to_its_source() -> None:
     }
 
 
-def test_no_two_regions_of_one_country_have_one_name_and_no_two_regions_one_code() -> None:
+def test_no_two_regions_without_a_code_have_one_name_in_a_country_and_no_two_one_code() -> None:
     rules = sorted(
         (str(unique.name), [column.name for column in unique.columns])
         for unique in TABLE.constraints
         if isinstance(unique, UniqueConstraint)
     )
+    of_some_rows = [
+        (
+            str(index.name),
+            [column.name for column in index.columns],
+            str(index.dialect_options["sqlite"]["where"]),
+        )
+        for index in TABLE.indexes
+        if index.unique
+    ]
 
-    # In the rule of the names the country stands first: the index SQLite
-    # keeps for the rule then finds the regions of one country.
-    assert rules == [
-        ("uq_region_country_id_name", ["country_id", "name"]),
-        ("uq_region_iso_3166_2", ["iso_3166_2"]),
+    # The rule of the codes is written into the table. The rule of the
+    # names is an index, because it is over some regions only: those
+    # that say no code.
+    assert rules == [("uq_region_iso_3166_2", ["iso_3166_2"])]
+    assert of_some_rows == [
+        ("ix_region_country_id_name", ["country_id", "name"], "iso_3166_2 IS NULL")
+    ]
+
+
+def test_the_country_of_a_region_has_an_index_of_its_own() -> None:
+    country = TABLE.columns["country_id"]
+    over_every_region = [
+        (str(index.name), [column.name for column in index.columns])
+        for index in TABLE.indexes
+        if index.dialect_options["sqlite"]["where"] is None
+    ]
+
+    # The index of the rule of the names begins with the country too, but
+    # it is over the regions without a code only and finds no others.
+    assert country.index is True
+    assert sorted(over_every_region) == [
+        ("ix_region_country_id", ["country_id"]),
+        ("ix_region_source_id", ["source_id"]),
     ]
 
 
@@ -140,7 +167,7 @@ def test_a_region_is_made_without_a_code_and_with_one() -> None:
     assert with_one.iso_3166_2 == "NZ-CAN"
 
 
-def test_the_table_has_these_constraints_and_this_index() -> None:
+def test_the_table_has_these_constraints_and_these_indexes() -> None:
     by_kind = {
         kind: sorted(str(one.name) for one in TABLE.constraints if isinstance(one, kind))
         for kind in (CheckConstraint, UniqueConstraint, ForeignKeyConstraint)
@@ -157,12 +184,16 @@ def test_the_table_has_these_constraints_and_this_index() -> None:
             "ck_region_source_address_web_address",
             "ck_region_verification_status_one_of",
         ],
-        UniqueConstraint: ["uq_region_country_id_name", "uq_region_iso_3166_2"],
+        UniqueConstraint: ["uq_region_iso_3166_2"],
         ForeignKeyConstraint: ["fk_region_country_id_country", "fk_region_source_id_source"],
     }
-    assert [
+    assert sorted(
         (str(index.name), [column.name for column in index.columns]) for index in TABLE.indexes
-    ] == [("ix_region_source_id", ["source_id"])]
+    ) == [
+        ("ix_region_country_id", ["country_id"]),
+        ("ix_region_country_id_name", ["country_id", "name"]),
+        ("ix_region_source_id", ["source_id"]),
+    ]
 
 
 def test_the_schema_with_the_regions_keeps_every_rule() -> None:

@@ -972,7 +972,7 @@ def test_the_rule_is_four_triggers_two_on_the_regions_and_two_on_the_countries(
     assert [name for name, statement in written.items() if "UPDATE OF" in statement.upper()] == []
 
 
-def test_the_regions_of_a_country_are_found_for_the_rule_by_the_index_of_the_names(
+def test_the_regions_of_a_country_are_found_for_the_rule_by_the_index_of_the_country(
     mapped: Engine,
 ) -> None:
     # What the triggers of the countries ask, as a query of its own.
@@ -983,7 +983,7 @@ def test_the_regions_of_a_country_are_found_for_the_rule_by_the_index_of_the_nam
     with mapped.connect() as connection:
         plan = [str(row[3]) for row in connection.exec_driver_sql(asked)]
 
-    assert plan == ["SEARCH region USING INDEX sqlite_autoindex_region_1 (country_id=?)"]
+    assert plan == ["SEARCH region USING INDEX ix_region_country_id (country_id=?)"]
 
 
 # ----------------------------------------- a store that had regions before the rule
@@ -1005,7 +1005,7 @@ def test_the_nineteenth_migration_puts_no_region_right_and_changes_no_row(store:
     a_store_at_version_18_with_a_region_of_another_country(store)
     before = everything(store)
 
-    assert migrate(store) == [19]
+    assert migrate(store, MIGRATIONS[:19]) == [19]
 
     assert schema_version(store) == 19
     assert everything(store) == before

@@ -6,7 +6,7 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 19 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 20 and
 has seven tables: `source`, that of the information sources (DAT-006),
 each of which can say which country it is of (DAT-057),
 `source_offer`, which says what kinds of information each of them offers
@@ -201,8 +201,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 19." or "The data store lacks 16
-migrations: … is at schema version 3, and the newest is version 19." In
+is up to date: … is at schema version 20." or "The data store lacks 17
+migrations: … is at schema version 3, and the newest is version 20." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -223,7 +223,7 @@ where `migrate` puts it right the sentence says so:
 | The store | What is said |
 |---|---|
 | There is no file | "There is no data store: … does not exist. Run `python -m motosphere migrate` first." |
-| It lacks migrations | "The data store lacks 6 migrations: … is at schema version 13, and the newest is version 19. Run `python -m motosphere migrate` first." |
+| It lacks migrations | "The data store lacks 7 migrations: … is at schema version 13, and the newest is version 20. Run `python -m motosphere migrate` first." |
 | `migrate` would refuse it, or it cannot be opened | What `migrate` says of it, word for word |
 
 The file is byte for byte the same afterwards, nothing is made beside it,
@@ -255,6 +255,7 @@ list of them, and nothing else (DAT-006):
 | 17 | `let_a_region_say_its_code` | Builds the table `region` anew with the column `iso_3166_2`, the check of its form and the rule that no two regions have one code, every region with what it had, and makes the index `ix_region_source_id` again | DAT-064 |
 | 18 | `hold_the_key_of_a_review_item_under_every_name` | Makes the second trigger of the keys of `review_item` anew, so that it fires after every change of a row and not only after one that names the column `id` | DAT-068 |
 | 19 | `hold_the_code_of_a_region_to_its_country` | Makes four triggers, two on `region` and two on `country`, by which the code of a region begins with the code of its country; it changes no table, no index and no row | DAT-067 |
+| 20 | `let_regions_with_codes_share_a_name` | Builds the table `region` anew without the rule that no two regions of one country have one name, every region with what it had, and makes the index `ix_region_source_id` and the two triggers on `region` again, an index over the country, `ix_region_country_id`, and the index that holds one name among the regions of a country that say no code, `ix_region_country_id_name` | DAT-066 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -2734,7 +2735,9 @@ and the table `region` knows them (DAT-013). Its model is `Region`, in
 code (DAT-064), and the nineteenth,
 `hold_the_code_of_a_region_to_its_country`, holds that code to the
 country (DAT-067; see "The code of a region is of its country"). The
-table has no
+twentieth, `let_regions_with_codes_share_a_name`, builds it anew once
+more, so that two regions of a country can have one name when their
+codes tell them apart (DAT-066). The table has no
 rows, and no reference rows are loaded into it: a region comes with the
 record that needs it, from the source that names it.
 
@@ -2755,10 +2758,36 @@ in every table.
   cannot be deleted**: its regions are taken away first. Nothing is
   said of what is to happen to the regions then, so SQLite refuses the
   deletion; it deletes nothing by itself.
-- **No two regions of one country have one name**
-  (`uq_region_country_id_name`), when a region is stored, when it is
-  given another name and when it is moved to another country. Two
-  countries can each have a region of a name.
+- **Two regions of one country can have one name when their codes
+  tell them apart** (DAT-066). The standard's own list has such
+  regions: on the list that comes with release 4.20.1 of iso-codes, 36
+  pairs of regions share a name within one country, as Maputo, the
+  city (`MZ-MPM`) and the province (`MZ-L`) of Mozambique. A region
+  that says its code can have any name, also one that another region
+  of its country has, and can be given one later.
+- **No two regions of one country that say no code have one name**
+  (`ix_region_country_id_name`): nothing would tell them apart. The
+  second is refused when it is stored, when a region is given the name
+  of the other, when it is moved to the country of the other, and when
+  a region loses its code beside one of its name that says none. Two
+  countries can each have a region of a name. The rule is an index
+  over the country and the name that holds the regions without a code
+  and no others (`WHERE iso_3166_2 IS NULL`); a rule that is written
+  into the table is over every row of it. SQLite says of a refusal
+  "UNIQUE constraint failed: region.country_id, region.name", as it
+  did of the rule before.
+- **A region that says its code and one that says none can have one
+  name** in a country. Whether the two are one region, named by two
+  sources of which one gives the code, or two parts of the country,
+  the table cannot know, and it does not make them one. That is a
+  question for a person (see "Opening a possible duplicate"), to be
+  asked by the task that first stores regions; none does yet.
+- **A statement that stores a region or does nothing where one of its
+  name is there** has to say which regions the rule is over: `ON
+  CONFLICT (country_id, name) WHERE iso_3166_2 IS NULL DO NOTHING`.
+  Without the condition SQLite refuses the statement ("ON CONFLICT
+  clause does not match any PRIMARY KEY or UNIQUE constraint"). A
+  statement that did nothing has used up a key all the same.
 - **Two names are one name only if they are the same text.**
   "Canterbury" and "canterbury" are two names, and so are "Canterbury"
   and "Canterbury " with a space after it. The table does not judge
@@ -2791,7 +2820,7 @@ in every table.
   their countries, when a region is stored and when it is given a code
   later. A code is free again once the region that had it is deleted,
   has another code or has none. SQLite keeps an index for the rule
-  (`sqlite_autoindex_region_2`), and it finds the region of a code
+  (`sqlite_autoindex_region_1`), and it finds the region of a code
   without reading the table; a test holds what SQLite says it uses.
 - **The seventeenth migration builds the table anew** (see "How the
   schema changes"): SQLite puts a column that is added in place after
@@ -2801,6 +2830,20 @@ in every table.
   again, and the index over `source_id` is made again. No table points
   to a region yet. If the migration fails, at its last statement too,
   the store is as it was.
+- **The twentieth migration builds the table anew once more**: the
+  rule of the names as it was (`uq_region_country_id_name`, over every
+  region of a country) was written into the table, and SQLite cannot
+  take a rule out of a table that is there. Every region keeps what it
+  had, its code and its key, and the highest key the table gave is
+  kept. The index over `source_id` and the two triggers of the
+  nineteenth migration that are on the regions go with the table and
+  are made again, the triggers after the table is filled: a region
+  whose code is not of its country, which the nineteenth migration
+  left as it was, is left as it is. The two triggers on the countries
+  stay. No region can be
+  in the way of the new rule, because every store kept the old one,
+  which asked for more. If the migration fails, at its last statement
+  too, the store is as it was.
 - **A region is a collected record.** `Region` is a subclass of
   `Collected` and names three columns; the eight, their checks, the
   reference to `source`, the index over `source_id`
@@ -2808,14 +2851,17 @@ in every table.
   together come with that. A region comes from a source that is there,
   and a source that regions came from cannot be deleted. The source of
   a region need not be the source of its country.
-- **The regions of one country are found without reading the table.**
-  SQLite keeps an index for the rule of the names
-  (`sqlite_autoindex_region_1`, over the country and then the name).
-  Because the country stands first in it, it finds the regions of one
-  country, for whoever asks for them and for SQLite itself when a
-  country is to be deleted and it looks whether the country has
-  regions. So the table has no index of its own over `country_id`; a
-  test holds what SQLite says it uses.
+- **The regions of one country are found without reading the table**,
+  by an index over the country (`ix_region_country_id`), for whoever
+  asks for them and for SQLite itself when a country is to be deleted
+  and it looks whether the country has regions. Until DAT-066 the
+  index SQLite kept for the rule of the names did that. The index of
+  the rule as it is now holds the regions without a code only, so it
+  cannot find the regions of a country, and the table has an index
+  over `country_id` of its own. The regions of one name in a country
+  are looked for among the regions of that country; a region without a
+  code is found by its country and name through the index of the rule.
+  Tests hold what SQLite says it uses for each.
 - **Nothing gives itself a value.** A row cannot be without a country,
   a name or any of the seven things that are known of every collected
   record, and neither the model nor the table makes one up. A region
@@ -2823,12 +2869,7 @@ in every table.
 - **A region is changed with its history**, by `change` (see "Changing
   a record"), like every record. A region can be deleted while nothing
   refers to it; nothing refers to a region yet.
-- **What is not in the table yet.** Two
-  regions of one country that share a name: the standard's own list
-  has 36 such pairs, as Maputo, the city and the province of
-  Mozambique, which differ in their codes, and the rule of the names
-  lets the table hold only one of each pair until the task that lets
-  their codes tell them apart (DAT-066). A region that is a part of
+- **What is not in the table yet.** A region that is a part of
   another region, as a county is of a state (DAT-065): until then
   every region is a part of its country only. Names in other
   languages, and the other names a region is known by, are not in this
@@ -2901,8 +2942,8 @@ tables are made from the models.
   connection of another kind has stored one, a country that is given
   the key it points to is held to its code.
 - **The regions of a country are found for the rule without reading
-  the table**, by the index SQLite keeps for the rule of the names
-  (`sqlite_autoindex_region_1`), which a test holds.
+  the table**, by the index over the country (`ix_region_country_id`,
+  since DAT-066), which a test holds.
 - **The migration puts nothing right.** It makes the four triggers
   and reads and changes no row; every table, index and trigger that
   was there is as it was. A store could hold a region whose code

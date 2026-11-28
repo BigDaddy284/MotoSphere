@@ -449,15 +449,17 @@ def test_the_table_has_the_column_after_the_name(mapped: Engine) -> None:
 
 def test_the_region_of_a_code_is_found_by_the_index(mapped: Engine) -> None:
     with mapped.connect() as connection:
-        index = connection.exec_driver_sql("PRAGMA index_info(sqlite_autoindex_region_2)").all()
+        index = connection.exec_driver_sql("PRAGMA index_info(sqlite_autoindex_region_1)").all()
         plan = connection.exec_driver_sql(
             "EXPLAIN QUERY PLAN SELECT * FROM region WHERE iso_3166_2 = 'NZ-CAN'"
         ).all()
 
     # The index SQLite keeps for the rule that no two regions have one code.
+    # It is the only one SQLite keeps for a rule that is written into the
+    # table, so it is the first.
     assert [name for _, _, name in index] == ["iso_3166_2"]
     assert [detail for *_, detail in plan] == [
-        "SEARCH region USING INDEX sqlite_autoindex_region_2 (iso_3166_2=?)"
+        "SEARCH region USING INDEX sqlite_autoindex_region_1 (iso_3166_2=?)"
     ]
 
 

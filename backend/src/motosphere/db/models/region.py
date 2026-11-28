@@ -28,12 +28,13 @@ from sqlalchemy import (
     ColumnClause,
     Connection,
     ForeignKey,
-    UniqueConstraint,
+    Index,
     and_,
     column,
     event,
     func,
     or_,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -68,24 +69,39 @@ class Region(Collected):
 
     A region is a part of exactly one country, one that is in the store,
     and a country that has regions cannot be deleted: its regions are
-    taken away first. No two regions of one country have one name; two
-    countries can each have a region of a name. A region may be without
-    a code, and any number of regions may be; no two regions have one
-    code.
+    taken away first. A region may be without a code, and any number of
+    regions may be; no two regions have one code.
+
+    Two regions of one country can have one name when each says its
+    code: the standard itself has such pairs, as Maputo the city and
+    Maputo the province of Mozambique, and their codes tell them apart.
+    No two regions of one country that say no code have one name:
+    nothing would tell them apart. A region that says its code and one
+    that says none can have one name too. Whether they are one region,
+    named by two sources, the table cannot know; that is asked in the
+    review queue by whoever stores them. Two countries can each have a
+    region of a name.
     """
 
     __tablename__ = "region"
-    # SQLite keeps an index for this rule, which begins with the country.
-    # It is what finds the regions of one country: for whoever asks for
-    # them, and for SQLite itself when a country is to be deleted and it
-    # looks whether the country has regions.
     __table_args__ = (
-        UniqueConstraint("country_id", "name"),
+        # One name among the regions of a country that say no code. The
+        # index is over those regions only.
+        Index(
+            None,
+            "country_id",
+            "name",
+            unique=True,
+            sqlite_where=text("iso_3166_2 IS NULL"),
+        ),
         _code_of_the_standard("iso_3166_2"),
     )
 
-    # The country it is a part of.
-    country_id: Mapped[int] = mapped_column(ForeignKey("country.id"))
+    # The country it is a part of. The index over it is what finds the
+    # regions of one country: for whoever asks for them, and for SQLite
+    # itself when a country is to be deleted and it looks whether the
+    # country has regions.
+    country_id: Mapped[int] = mapped_column(ForeignKey("country.id"), index=True)
     # What it is called, as its source writes it. Two names are one name
     # only if they are the same text: the table does not judge whether
     # "Bayern" and "Bavaria" mean one region.
