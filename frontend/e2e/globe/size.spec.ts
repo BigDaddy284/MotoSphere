@@ -248,22 +248,25 @@ test.describe('the globe when the stage changes its size', () => {
     expect(await noted(page, PICTURES), 'a new picture').toBeGreaterThan(pictures)
   })
 
-  test('takes four fifths of the shorter side again when the window is made smaller and larger, on a desktop', async ({
+  test('takes four fifths of the shorter side again when the window is made larger and smaller, on a desktop', async ({
     page,
   }) => {
-    await openAt(page, 1280, 720)
-    await fillsTheStageWithTheWholeEarth(page, 'as it opens')
+    // No window here is larger than the largest of the other tests: what a
+    // larger one costs the slowest machine is told in TESTING.md.
+    await openAt(page, 1000, 560)
+    const small = await fillsTheStageWithTheWholeEarth(page, 'as it opens')
+    expect(small).toEqual({ x: 220, y: 48, width: 420, height: 512 })
 
     let pictures = await noted(page, PICTURES)
-    await page.setViewportSize({ width: 1000, height: 560 })
-    const smaller = await fillsTheStageWithTheWholeEarth(page, 'in a smaller window')
-    expect(smaller).toEqual({ x: 220, y: 48, width: 420, height: 512 })
+    await page.setViewportSize({ width: 1280, height: 720 })
+    const larger = await fillsTheStageWithTheWholeEarth(page, 'in a larger window')
+    expect(larger).toEqual({ x: 220, y: 48, width: 700, height: 672 })
     expect(await noted(page, PICTURES), 'a new picture').toBeGreaterThan(pictures)
 
     pictures = await noted(page, PICTURES)
-    await page.setViewportSize({ width: 1600, height: 900 })
-    const larger = await fillsTheStageWithTheWholeEarth(page, 'in a larger window')
-    expect(larger).toEqual({ x: 220, y: 48, width: 1020, height: 852 })
+    await page.setViewportSize({ width: 1000, height: 560 })
+    const smaller = await fillsTheStageWithTheWholeEarth(page, 'in the smaller window again')
+    expect(smaller).toEqual(small)
     expect(await noted(page, PICTURES), 'a new picture').toBeGreaterThan(pictures)
   })
 

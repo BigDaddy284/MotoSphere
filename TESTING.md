@@ -3591,10 +3591,10 @@ since: the page counts the pictures its 3D pictures are told to draw.
   closed it is 920 wide and begins at the left edge; with both panels
   closed it is 1280 wide; with both open again it is where it was. The
   Earth keeps its size and stays in the middle each time.
-- **The window, on a desktop** (1): made smaller, to 1000 by 560, the
-  stage is 420 wide and 512 high and higher than wide; made larger, to
-  1600 by 900, it is 1020 by 852. The Earth takes four fifths of the
-  shorter side each time.
+- **The window, on a desktop** (1): opened at 1000 by 560, the stage
+  is 420 wide and 512 high and higher than wide; made larger, to 1280
+  by 720, it is 700 by 672; made smaller again, it is as it opened.
+  The Earth takes four fifths of the shorter side each time.
 - **The screen turned on its side and back** (5), at the five sizes of
   the window the layout knows: the width and the height of the window
   change places, and change back. Where the window is narrower than
@@ -3620,17 +3620,25 @@ phone that lies and is turned upright there was sky where Earth was to
 be, a tenth inside the edge (24 of 765): there the longer side became
 the shorter and the Earth shrank.
 
-**Why the picture has thirty seconds to get its pixels (2026-11-28).**
-The first wait of the helper had the five seconds a test gives by
-default. On the planner's Linux machine and on the Linux machine of
-GitHub that was enough in every run. On the Windows machine of GitHub
-one of the seven tests failed with it once, the test of the window, in
-the larger window of 1600 by 900: five seconds after the window had
-its size the picture did not have the pixels of the stage yet. That
-machine is the slowest the tests run on. The wait is now as long as
-the wait for the engine to come to rest, and what it reports when it
-runs out is how many pixels the picture has more or fewer than the
-stage, across and down.
+**What a very large window cost the slowest machine (2026-11-28).**
+The test of the window first made the window smaller, to 1000 by 560,
+and then larger than any other test has it, 1600 by 900, where the
+stage is 1020 by 852. On the planner's Linux machine and on the Linux
+machine of GitHub that test took 12 to 20 seconds, as the others do.
+On the Windows machine of GitHub, the slowest the tests run on, it
+failed in a first run: five seconds after the window had its larger
+size the picture did not have the pixels of the stage yet, and five
+seconds were what that wait had. With thirty seconds for the wait it
+passed there in a second run, and took a full minute of the ninety a
+test of the globe has, where the other six took 11 to 23 seconds. A
+test that needs two thirds of its time on a good day fails on a bad
+one. So the test stays within the largest window of the other tests:
+it opens at 1000 by 560, makes the window larger, to 1280 by 720, and
+smaller again. The wait keeps its thirty seconds, as long as the wait
+for the engine to come to rest, and what it reports when it runs out
+is how many pixels the picture has more or fewer than the stage,
+across and down. No browser test holds a window larger than 1280 by
+720; the test plan of the task has one looked at by hand.
 
 ## The tools a computer needs
 
