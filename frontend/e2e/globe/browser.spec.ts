@@ -99,18 +99,6 @@ test.describe('the globe tests', () => {
     expect(testInfo.project.use.launchOptions).toEqual(GLOBE_BROWSER)
   })
 
-  test('have 90 seconds each, where a test of the other project has 30', ({
-    browserName,
-  }, testInfo) => {
-    expect(browserName).toBe('chromium')
-    // What this very test has, and what the settings give each project.
-    expect(testInfo.timeout).toBe(90_000)
-    expect(testInfo.config.projects.map((project) => [project.name, project.timeout])).toEqual([
-      ['chromium', 30_000],
-      ['globe', 90_000],
-    ])
-  })
-
   test('hold the turn while they run, where every test of the run finds it', ({
     turnFolder,
   }, testInfo) => {

@@ -2640,61 +2640,6 @@ the browser draws in software, with the renderer that comes with it
   `globe`. A globe drawn while other browser tests run beside it was
   not measured.
 
-**A test of the globe has 90 seconds**, where a test has 30 otherwise
-(the project `globe` in `frontend/playwright.config.ts`, GLB-031). The
-browser draws in software, and a test that waits for the Earth or reads
-its picture waits for that drawing. How long that takes is a matter of
-the machine and of how much of the Earth is in view. What was measured
-on 2026-11-28, in the planner's trial of the view the globe is to open
-with (GLB-030), which has the whole Earth in view at every size of the
-screen:
-
-- **For each opening of the page there is one pause.** On a developer's
-  Linux machine with two other runs of tests beside it, at 768 by 1024,
-  the frames of the page were noted in eight openings: about a second
-  after the page was opened it got no new frame for between 2 and 7
-  seconds, while its own script was idle. In thirty more, 64 pictures
-  of one pixel were taken straight after the globe said that the Earth
-  is drawn: half of the pictures of an opening took 34 thousandths of a
-  second or less, and in 22 of the 30 openings one picture took between
-  1.5 and 6 seconds. The globe said that the Earth is drawn between 1
-  and 8 seconds after the page was opened, and where it said so late no
-  picture was slow. So the browser draws the first pictures of the
-  Earth once for each opening, and a picture that is asked for
-  meanwhile arrives when it is done. What takes the time is not the
-  number of pictures a test takes.
-- **With 30 seconds, a test ran out of time once.** On that machine, a
-  test of that trial that opens the page at the size of a tablet and
-  reads 32 points of the picture took between 7 and 11 seconds in ten
-  runs, and in an eleventh more than 30: it was still waiting for a
-  picture of the page.
-- **The whole Earth in view is more to draw.** At 1280 by 720 the page
-  of the trial fetches 20 pictures of the Earth where the page fetches
-  13 with the view the engine opens with by itself, and tells the
-  browser to draw about 220 things for its first complete picture
-  where it tells it about 130 (three openings each). The Earth is 538
-  pixels across there, where it is about 420.
-- **On GitHub's Windows machine the globe tests took up to four times
-  as long with it.** In two runs with the view the engine opens with
-  and two of the trial, the five tests of `earth.spec.ts` took, in the
-  order of the file: 2.4 and 2.6 seconds, then 3.9 and 5.4; 2.9 and
-  2.8, then 7.8 and 11.3; 6.2 and 15.0, then 23.9 and 22.8; 1.8 and
-  1.8, then 2.1 and 4.1; 9.7 and 10.7, then 35.1 and 30.6. The third,
-  which takes two pictures of the stage, came within a quarter of the
-  30 seconds it had. On GitHub's Linux machine the same five took 4.2,
-  3.5, 4.9, 1.1 and 11.6 seconds in one run before and 4.4, 3.9, 5.3,
-  1.0 and 12.0 in one of the trial. Why Windows takes so much longer
-  for the same pictures was not looked into. All tests of the project
-  `globe` together took 33 and 41 seconds on the Windows machine in the
-  two runs before, and 131 and 130 in the two of the trial, which has
-  seven tests more; on the Linux machine 37 in the one before and 61 in
-  the one of the trial.
-
-The limit is one number in the settings and holds for every test of
-the project, those that are written later too. A globe test that takes
-more than 30 seconds on a machine that runs nothing else is still worth
-a look.
-
 **One at a time is held by the tests themselves.** Every globe test
 uses the `test` of `frontend/e2e/globe/fixtures.ts`, which is the `test`
 of all browser tests and also takes a turn for as long as the test
@@ -2706,7 +2651,7 @@ more than one worker, by a change to the settings or by an upgrade of
 Playwright that reads them otherwise, fails its tests and does not
 starve them.
 
-Eleven browser tests (`frontend/e2e/globe/browser.spec.ts`) hold this:
+Ten browser tests (`frontend/e2e/globe/browser.spec.ts`) hold this:
 
 - the browser of the project is started with the list of features to
   turn off that every test's browser has, and with the word;
@@ -2718,8 +2663,6 @@ Eleven browser tests (`frontend/e2e/globe/browser.spec.ts`) hold this:
   warnings are back;
 - the tests are in the project `globe`, the second of two, with these
   options;
-- a globe test has 90 seconds, and the settings give the project
-  `globe` 90 and the project `chromium` 30 (GLB-031);
 - a globe test holds the turn while it runs, and another that asks for
   it is refused with the sentence above;
 - the turn is taken where nobody has it, in a folder that is made for
@@ -3115,11 +3058,11 @@ drawn, for at most twenty seconds.
   3D picture. A browser keeps only so many 3D pictures for a page, and
   takes the oldest away with a warning on the console when a page asks
   for one more, so an engine that kept its picture when it is stopped
-  fails this test. With its twenty-two engines it took 8.9 seconds on
+  fails this test. The test has 90 seconds where a test has 30
+  otherwise: with its twenty-two engines it took 8.9 seconds on
   GitHub's Linux machine and 18.5 on its Windows machine when it was
-  written, of the 30 a test had then, and was given 90 of its own.
-  Since GLB-031 every test of the globe has 90 (see "The browser of
-  the globe tests").
+  written, and it holds what the engine does, not how fast a machine
+  is.
 
 Two tests that were there changed with the page:
 `frontend/e2e/globe/stage.spec.ts` now finds the globe in the stage

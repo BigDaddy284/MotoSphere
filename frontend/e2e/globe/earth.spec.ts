@@ -307,9 +307,10 @@ test.describe('the globe in a browser that draws 3D pictures', () => {
     //
     // Twenty-two engines one after the other take their time where 3D
     // pictures are drawn in software: on GitHub's machines this test took
-    // 8.9 seconds on Linux and 18.5 on Windows when it was written. A test
-    // of the globe has 90 seconds (playwright.config.ts, GLB-031): it holds
-    // what the engine does, not how fast a machine is.
+    // 8.9 seconds on Linux and 18.5 on Windows when it was written, of the
+    // 30 a test has. So it is given 90: it holds what the engine does, not
+    // how fast a machine is.
+    test.setTimeout(90_000)
     const scripts: string[] = []
     page.on('request', (request) => {
       if (ENGINE_SCRIPT.test(new URL(request.url()).pathname)) {
