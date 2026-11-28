@@ -13,8 +13,7 @@ directly from the globe.
 Early development. The data pipeline has a command line with two commands so
 far: one prints the installed version, the other writes the published data
 manifest, which holds no data yet. The frontend shows the application's
-layout and the Earth as a 3D globe, with no data on it yet. The repository
-holds the
+layout, with no globe and no data yet. The repository holds the
 project documentation, the repository checks, the backend Python package with
 its tests and the frontend project.
 
@@ -154,8 +153,7 @@ details panel. The top bar shows when the data was updated and, next to it,
 today's date, both in the language and time zone of your browser; the date
 changes at midnight. The sections panel lists the
 application's sections, and one can be chosen with the mouse or the keyboard;
-the globe area shows the Earth as a 3D globe, a moment after the rest of
-the page, and there is no data on it yet. In a browser that gives a page no 3D graphics,
+there is no globe or data yet. In a browser that gives a page no 3D graphics,
 the globe area says that the 3D globe cannot be shown there, and the rest of
 the page works as before. The Sections and Details buttons in the top bar
 close and open the side panels. On a narrow screen (under 900 pixels wide: a
