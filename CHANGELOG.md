@@ -161,6 +161,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   drawn the first complete picture, once, and only while the globe is
   shown. An engine that is started is handed a listener to say so. The
   component is still not in the page (GLB-029).
+- The globe is in the page. Where the browser gives a 3D picture, the
+  globe stage shows the Earth, drawn by the engine with the pictures of
+  the Earth that come with it, from the site's own files and from no
+  other computer. The engine is fetched after the page is there, so the
+  top bar and the panels appear at once, and the stage marks the globe
+  as busy until the Earth is drawn complete (GLB-002).
 - The data store's first decisions (`DATABASE.md`): what it relies on in
   SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
   gates run on, and where the store is kept between scheduled runs
