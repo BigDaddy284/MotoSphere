@@ -40,10 +40,18 @@ export default defineConfig({
     // workers. Two globes drawn at once in software take each other's
     // processor time, and on GitHub's Windows machine neither is then loaded
     // within forty seconds (FND-058; TESTING.md has what was measured).
+    //
+    // A test of the globe has 90 seconds, where a test has 30 otherwise.
+    // Its browser draws in software, and a test that waits for the Earth or
+    // reads its picture waits for that drawing: how long that takes is a
+    // matter of the machine and of how much of the Earth is in view
+    // (GLB-031; TESTING.md, "The browser of the globe tests"). A globe test
+    // holds what the page shows, not how fast a machine is.
     {
       name: 'globe',
       testDir: './e2e/globe',
       workers: 1,
+      timeout: 90_000,
       use: { ...devices['Desktop Chrome'], launchOptions: GLOBE_BROWSER },
     },
   ],
