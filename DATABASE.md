@@ -6,7 +6,7 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 18 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 19 and
 has seven tables: `source`, that of the information sources (DAT-006),
 each of which can say which country it is of (DAT-057),
 `source_offer`, which says what kinds of information each of them offers
@@ -31,7 +31,8 @@ ISO 3166-1, and the first table of collected records (DAT-011; see
 `countries` loads them (DAT-061; see "The loading of the countries").
 The seventh is `region`, the parts a country is divided into, each of
 one country and by its name (DAT-013; see "The regions"), which can
-say its code of ISO 3166-2 (DAT-064); it has no rows, and nothing
+say its code of ISO 3166-2 (DAT-064), which begins with the code of
+its country (DAT-067); it has no rows, and nothing
 writes to it yet. One function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"), one puts two records that may
@@ -200,8 +201,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 18." or "The data store lacks 15
-migrations: … is at schema version 3, and the newest is version 18." In
+is up to date: … is at schema version 19." or "The data store lacks 16
+migrations: … is at schema version 3, and the newest is version 19." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -222,7 +223,7 @@ where `migrate` puts it right the sentence says so:
 | The store | What is said |
 |---|---|
 | There is no file | "There is no data store: … does not exist. Run `python -m motosphere migrate` first." |
-| It lacks migrations | "The data store lacks 5 migrations: … is at schema version 13, and the newest is version 18. Run `python -m motosphere migrate` first." |
+| It lacks migrations | "The data store lacks 6 migrations: … is at schema version 13, and the newest is version 19. Run `python -m motosphere migrate` first." |
 | `migrate` would refuse it, or it cannot be opened | What `migrate` says of it, word for word |
 
 The file is byte for byte the same afterwards, nothing is made beside it,
@@ -253,6 +254,7 @@ list of them, and nothing else (DAT-006):
 | 16 | `make_the_regions` | Makes the table `region` and the index over the source of its rows | DAT-013 |
 | 17 | `let_a_region_say_its_code` | Builds the table `region` anew with the column `iso_3166_2`, the check of its form and the rule that no two regions have one code, every region with what it had, and makes the index `ix_region_source_id` again | DAT-064 |
 | 18 | `hold_the_key_of_a_review_item_under_every_name` | Makes the second trigger of the keys of `review_item` anew, so that it fires after every change of a row and not only after one that names the column `id` | DAT-068 |
+| 19 | `hold_the_code_of_a_region_to_its_country` | Makes four triggers, two on `region` and two on `country`, by which the code of a region begins with the code of its country; it changes no table, no index and no row | DAT-067 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -2729,7 +2731,10 @@ and the table `region` knows them (DAT-013). Its model is `Region`, in
 `motosphere.db.models.region`, and the sixteenth migration,
 `make_the_regions`, makes the table and its index. The seventeenth,
 `let_a_region_say_its_code`, builds it anew with the column of the
-code (DAT-064). The table has no
+code (DAT-064), and the nineteenth,
+`hold_the_code_of_a_region_to_its_country`, holds that code to the
+country (DAT-067; see "The code of a region is of its country"). The
+table has no
 rows, and no reference rows are loaded into it: a region comes with the
 record that needs it, from the source that names it.
 
@@ -2778,9 +2783,10 @@ in every table.
   was measured on the standard's own list before it was written: all
   5046 codes of the list that comes with release 4.20.1 of iso-codes
   have it, 327 of them with one character after the hyphen, 3099 with
-  two and 1620 with three. The table holds the form only: it does not
-  know the list, and it does not hold yet that the two letters are
-  those of the region's country (see "What is not in the table yet").
+  two and 1620 with three. The check holds the form only and does not
+  know the list. That the two letters are those of the region's
+  country is a rule of its own (see "The code of a region is of its
+  country").
 - **No two regions have one code** (`uq_region_iso_3166_2`), whatever
   their countries, when a region is stored and when it is given a code
   later. A code is free again once the region that had it is deleted,
@@ -2817,10 +2823,7 @@ in every table.
 - **A region is changed with its history**, by `change` (see "Changing
   a record"), like every record. A region can be deleted while nothing
   refers to it; nothing refers to a region yet.
-- **What is not in the table yet.** That the code of a region begins
-  with the code of its country: the country's code is a column of
-  another table, and until the task that holds the two together the
-  table would take `AT-1` for a region of New Zealand (DAT-067). Two
+- **What is not in the table yet.** Two
   regions of one country that share a name: the standard's own list
   has 36 such pairs, as Maputo, the city and the province of
   Mozambique, which differ in their codes, and the rule of the names
@@ -2830,6 +2833,90 @@ in every table.
   every region is a part of its country only. Names in other
   languages, and the other names a region is known by, are not in this
   table.
+
+### The code of a region is of its country
+
+A code of ISO 3166-2 begins with the code of two letters of the
+country: `NZ-CAN` is Canterbury in New Zealand, whose code is `NZ`.
+The store holds a region to that (DAT-067). The letters of a country
+are a column of another table, `country.alpha_2`, which a check of
+`region` cannot read, so four triggers hold the two together. The
+nineteenth migration, `hold_the_code_of_a_region_to_its_country`,
+makes them, and the model `Region` makes the same four wherever the
+tables are made from the models.
+
+| Trigger | Fires | What SQLite says |
+|---|---|---|
+| `tr_region_code_of_its_country` | After a new region whose code does not begin with the letters of its country | "The code of a region (region) begins with the code of its country (country)." |
+| `tr_region_code_stays_of_its_country` | After a change of a region that leaves it with such a code | "The code of a region (region) begins with the code of its country (country)." |
+| `tr_country_code_of_its_regions` | After a new country that has a region whose code does not begin with its letters | "The codes of the regions of a country (region) begin with its code (country)." |
+| `tr_country_code_stays_of_its_regions` | After a change of a country that leaves it with such a region | "The codes of the regions of a country (region) begin with its code (country)." |
+
+- **A region is held** when it is stored, when it is given a code or
+  another, and when it is moved to another country. A region can be
+  moved together with its code, in one statement: what is asked is
+  whether the row agrees with its country once the statement has
+  written it.
+- **A country is held too.** A country whose regions have codes cannot
+  be given other letters, or the codes of its regions would be those
+  of no country, or of another. A new country can have regions
+  already: a statement that says `REPLACE` puts it in the place of the
+  country that had its key, and the regions of the old are then the
+  regions of the new. SQLite fires no trigger for the row it takes
+  out, so the trigger for a new country asks.
+- **A region without a code is asked nothing.** It is a part of any
+  country and can be moved to any, and a country whose regions have no
+  codes can be given any letters. The rule does not make a region
+  have a code.
+- **The two letters, and both of them.** The first two characters of
+  the code are compared with the letters of the country as text: `NZ`
+  and `NA` are two countries, and so are `NZ` and `TZ`. The rule does
+  not know the standard's list. On the list that comes with release
+  4.20.1 of iso-codes, measured before the rule was written, every one
+  of the 5046 codes begins with the letters of a country of the same
+  release.
+- **What the table itself refuses, it refuses first.** The triggers
+  ask after the row is written. A code that is not of the form, a code
+  another region has, and letters another country has are refused by
+  the check and the rules of the tables, in their own words, before a
+  trigger is asked.
+- **A refusal takes the statement back** and nothing else
+  (`RAISE(ABORT)`), whatever the statement says is to happen on a
+  clash (`OR REPLACE`, `OR IGNORE`, `OR FAIL`): of several regions
+  written by one statement, one wrong code stops them all. In a unit
+  of work the refusal is an error, and the unit takes back all it did.
+- **None of the four names a column.** A trigger that fires for the
+  change of one column is not fired by a statement that sets the key
+  of a row by one of SQLite's own names for it (DAT-068; see "A key is
+  1 or more"), and a country that is given another key gets the
+  regions that point to that key. So each fires after every change of
+  a row of its table, and asks of the row as it now is.
+- **The rule stands in the file.** A connection that the store's code
+  did not open is held to it, also one that does not ask SQLite to
+  hold rows to what they point to.
+- **A region whose country is not in the store** has no letters to be
+  held to, and this rule says nothing of it. The store's own
+  connections refuse such a region by the rule that a row points to a
+  row that is there (`fk_region_country_id_country`). Where a
+  connection of another kind has stored one, a country that is given
+  the key it points to is held to its code.
+- **The regions of a country are found for the rule without reading
+  the table**, by the index SQLite keeps for the rule of the names
+  (`sqlite_autoindex_region_1`), which a test holds.
+- **The migration puts nothing right.** It makes the four triggers
+  and reads and changes no row; every table, index and trigger that
+  was there is as it was. A store could hold a region whose code
+  begins with the letters of another country, because nothing refused
+  one until version 19. Which of the two is wrong, the code or the
+  country, the migration cannot know. Such a region stays as it is,
+  and from then on it can be put right or deleted and nothing else:
+  given a code of its country or none, moved to the country of its
+  code, or deleted. Every other change of it is refused, and so is
+  every change of its country, until then. No real store holds a
+  region yet.
+- **The migration fails where a trigger of one of the four names is
+  there already**, with what it made before that taken back and the
+  store left at version 18.
 
 ## The source of the countries
 

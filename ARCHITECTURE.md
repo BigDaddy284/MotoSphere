@@ -486,9 +486,10 @@ pipeline's command line. The settings and logging modules stay.
   and a country that has regions cannot be deleted. The table has no
   reference rows: a region comes with the record that needs it. A
   region can say its code of ISO 3166-2, in the standard's form, and
-  no two regions have one code (DAT-064). That the code agrees with
-  the country, two regions of a country that share a name, and a
-  region inside a region are tasks of their own (DAT-067, DAT-066,
+  no two regions have one code (DAT-064). The code begins with the
+  code of its country, which four triggers hold, on the regions and on
+  the countries (DAT-067). Two regions of a country that share a name,
+  and a region inside a region, are tasks of their own (DAT-066,
   DAT-065; DATABASE.md).
 
 The schema is documented in DATABASE.md as tables are added.
