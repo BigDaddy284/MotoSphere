@@ -15,7 +15,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 |---|---|---|---|
 | 1 | Foundation (FND) | 58 | 58 |
 | 2 | Data store and published data (DAT, PUB) | 76 | 58 |
-| 3 | Interactive 3D Earth (GLB) | 30 | 8 |
+| 3 | Interactive 3D Earth (GLB) | 31 | 8 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-067 – The code of a region agrees with its country.
 
-**Current task, track B (globe):** GLB-030 – The view the globe opens with.
+**Current task, track B (globe):** GLB-031 – A test of the globe has 90 seconds.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -338,6 +338,18 @@ before the globe follows the size of the stage (GLB-028) and before the
 picture is checked (GLB-003), because both go by that view. One task is new;
 Phase 3 has 30 tasks and the plan 307. Order on track B: GLB-002, GLB-030,
 GLB-028, then GLB-003.
+
+**A test of the globe has 90 seconds (PLAN-060):** the planner's trial of
+GLB-030 has the whole Earth in view, and on GitHub's Windows machine the
+globe tests that were there took up to four times as long with it: one
+that takes two pictures of the stage took 23.9 and 22.8 seconds of the 30
+a test has, where it took 6.2 and 15.0 before. The browser of the globe
+tests draws in software, and how long a picture takes is a matter of the
+machine and of how much of the Earth is in view. More time for the tests
+of the globe is a change to the settings of the browser tests and none to
+the application, so it is a task of its own, GLB-031, and comes before the
+view is changed. One task is new; Phase 3 has 31 tasks and the plan 308.
+Order on track B: GLB-031, GLB-030, GLB-028, then GLB-003.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -3209,6 +3221,27 @@ What holds for every task of the phase:
 - **Verification status:** Verified on 2026-11-28: tested twice by the tester thread, whose second report names no number that differs from the test plan; merged and recorded by the planner, who compared both commits of the pull request with the trial and its amendment (the same change), compared the merged tree with the tested change, and read the runs. All sixteen files are the same change as the planner's trial. The tests that were there changed only as the plan names. No package was added. The change was run on both of GitHub's machines before the plan too (trial pull requests #225, #226 and #227, and #231 for the amendment, run 46123798839). The pull request was built on `main` as it was before the other track's DAT-068 was merged, which is why its branch alone counts 3947 tests; with `main` as it was at the merge it counts the 144 backend tests of DAT-068 as well, 4091 in all, and that sum was run by GitHub for the second commit, on both machines, before the merge. The builder reported the full run with 3947 tests, all seventeen prove-it steps with the plan's counts, and, for the amendment, the two prove-it steps of it five times each with two tests failing every time; with the two variables the plan names set for its browser, as the tester set them too.
 - **Commit:** `31a2bb7`
 - **Plan:** `docs/plans/GLB-002.md`, with amendment 1
+
+### GLB-031 – A test of the globe has 90 seconds
+- **Status:** IN PROGRESS
+- **Objective:** Every browser test of the globe has 90 seconds, set once for the project `globe`; a browser test of the other project has 30, as before.
+- **Description:** Added on 2026-11-28 (PLAN-060), from what the planner measured in the trial of GLB-030. The browser of the globe tests draws 3D pictures in software, and a test that waits for the Earth or reads its picture waits for that drawing. With the whole Earth in view, as the trial of GLB-030 has it, the five tests of `frontend/e2e/globe/earth.spec.ts` took up to four times as long on GitHub's Windows machine as with the view the engine opens with by itself: the one that takes two pictures of the stage 23.9 and 22.8 seconds in two runs, of the 30 a test has, where it took 6.2 and 15.0 in the two runs before; and on the planner's machine, with two other runs of tests beside it, a new test of that trial ran out of its 30 seconds once in 21 runs. No picture was wrong; they came late. The project `globe` of `frontend/playwright.config.ts` gets `timeout: 90_000`, the number the one test that stops and starts the engine twenty times was given in GLB-002, and that test loses its own line for it. One new browser test in `frontend/e2e/globe/browser.spec.ts` holds that the very test has 90 seconds and that the settings give the project `chromium` 30 and the project `globe` 90. `TESTING.md` gets what was measured. Nothing under `frontend/src` changes, no assertion of a test that was there changes, and a person who opens the page sees what they saw before. The waits inside a test (twenty seconds for the Earth to be drawn, five for an expectation) and the limit of the Windows job (20 minutes, FND-057) stay. No package is added.
+- **Acceptance criteria:**
+  1. A test of the project `globe` has 90 seconds: the settings give the project `timeout: 90_000`, and a test of the project that asks Playwright what it has is told 90,000 milliseconds.
+  2. A test of the project `chromium` has 30 seconds, as before, and no limit of time is set for the whole run.
+  3. No test of `frontend/e2e/globe` sets a limit of time of its own.
+  4. The 309 browser tests that were there pass, and no assertion of one changed.
+  5. Nothing under `frontend/src` changed, no package was added, and `scripts/check.py` and the workflow are as they were.
+  6. `TESTING.md` says that a test of the globe has 90 seconds, why, and what was measured.
+  7. `python scripts/check.py` reports 19 of 19 gates, with 310 browser tests, and one test more in all than `main` gives at the commit the branch starts from (4092 when that is `af10906`).
+  8. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
+  9. Only the five files under "Scope" of the plan changed.
+- **Tests required:** One new browser test on the built site in the project `globe`: the very test has 90 seconds, and the settings give the project `chromium` 30 and the project `globe` 90. Planted defects in the settings against the eleven tests of the file. The full run of all gates on both machines, with the times of the globe tests read from both.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/GLB-031.md`
 
 ### GLB-030 – The view the globe opens with
 - **Status:** NOT STARTED
