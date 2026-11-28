@@ -6,8 +6,8 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 15 and
-has six tables: `source`, that of the information sources (DAT-006),
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 16 and
+has seven tables: `source`, that of the information sources (DAT-006),
 each of which can say which country it is of (DAT-057),
 `source_offer`, which says what kinds of information each of them offers
 (DAT-040; see "The information sources" for both), `collection_run`,
@@ -29,7 +29,9 @@ or more"). The sixth is `country`, the countries by their two codes of
 ISO 3166-1, and the first table of collected records (DAT-011; see
 "The countries"); a new store has no rows in it, and the command
 `countries` loads them (DAT-061; see "The loading of the countries").
-One function
+The seventh is `region`, the parts a country is divided into, each of
+one country and by its name (DAT-013; see "The regions"); it has no
+rows, and nothing writes to it yet. One function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"), one puts two records that may
 be the same thing to the review queue (DAT-051; see "Opening a possible
@@ -42,7 +44,8 @@ the code, as one set that a model of collected records takes whole
 (DAT-008; see "Where a collected record came from"), and so are the two
 lists that say how far such a record can be trusted (DAT-043; see "How
 far a collected record can be trusted"). The countries are the first
-table that has them. The other five tables hold no collected records,
+table that has them, and the regions the second. The other five tables
+hold no collected records,
 and a list in the code says of each why not. A rule names every table
 that neither has the set nor is on
 that list (DAT-046; see "Every table says where its records came from,
@@ -196,8 +199,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 15." or "The data store lacks 12
-migrations: … is at schema version 3, and the newest is version 15." In
+is up to date: … is at schema version 16." or "The data store lacks 13
+migrations: … is at schema version 3, and the newest is version 16." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -218,7 +221,7 @@ where `migrate` puts it right the sentence says so:
 | The store | What is said |
 |---|---|
 | There is no file | "There is no data store: … does not exist. Run `python -m motosphere migrate` first." |
-| It lacks migrations | "The data store lacks 2 migrations: … is at schema version 13, and the newest is version 15. Run `python -m motosphere migrate` first." |
+| It lacks migrations | "The data store lacks 3 migrations: … is at schema version 13, and the newest is version 16. Run `python -m motosphere migrate` first." |
 | `migrate` would refuse it, or it cannot be opened | What `migrate` says of it, word for word |
 
 The file is byte for byte the same afterwards, nothing is made beside it,
@@ -246,6 +249,7 @@ list of them, and nothing else (DAT-006):
 | 13 | `make_the_countries` | Makes the table `country` and the index over the source of its rows | DAT-011 |
 | 14 | `let_a_source_say_its_country` | Builds the table `source` anew with the column `country_id`, every source with what it had, and makes the index over that column, `ix_source_country_id` | DAT-057 |
 | 15 | `let_a_source_be_a_reference_list` | Builds the table `source` anew with a check of `category` that names one more kind of source, `reference list`, every source with what it had, and makes the index `ix_source_country_id` again | DAT-058 |
+| 16 | `make_the_regions` | Makes the table `region` and the index over the source of its rows | DAT-013 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -1024,12 +1028,13 @@ Where this ends:
   further tables beneath them. The task that adds the first decides how
   the two are held together there.
 
-Today the two have six tables, eight indexes and ten triggers to
+Today the two have seven tables, nine indexes and ten triggers to
 agree on: `source`, `source_offer`, `collection_run`, `record_change`,
-`review_item`, `country`, the index of the runs of one source, the two
-indexes and the four triggers of `record_change`, the three indexes
-and the six triggers of `review_item`, the index of the countries
-of one source, and the index of the sources of one country. For
+`review_item`, `country`, `region`, the index of the runs of one
+source, the two indexes and the four triggers of `record_change`, the
+three indexes and the six triggers of `review_item`, the index of the
+countries of one source, the index of the sources of one country, and
+the index of the regions of one source. For
 `source` the two agree on the table as the fifteenth migration built
 it anew, not as the first made it or as the fourteenth built it. For an
 index that is over some
@@ -2679,11 +2684,77 @@ in every table.
   function, here as elsewhere. A country can be deleted while nothing
   refers to it. The sources are the first to refer to the countries: a
   country that a source is of cannot be deleted (DAT-057; see "A source
-  says which country it is of").
+  says which country it is of"). The regions are the second: a country
+  that has regions cannot be deleted (DAT-013; see "The regions").
 - **What is not in the table.** The number the standard gives each
   country, which nothing in the design asks for. The parts of a
-  country, which are a table of their own (DAT-013). The country of a
-  source is a column of `source` (DAT-057).
+  country, which are a table of their own (DAT-013; see "The regions").
+  The country of a source is a column of `source` (DAT-057).
+
+## The regions
+
+A country can be divided into parts: states, provinces, counties,
+islands. A track says with one of them where in its country it lies,
+and the table `region` knows them (DAT-013). Its model is `Region`, in
+`motosphere.db.models.region`, and the sixteenth migration,
+`make_the_regions`, makes the table and its index. The table has no
+rows, and no reference rows are loaded into it: a region comes with the
+record that needs it, from the source that names it.
+
+| Column | What it holds | May be without a value |
+|---|---|---|
+| `country_id` | The country it is a part of | No |
+| `name` | What it is called, as its source writes it. Text that is not empty (see "Text that must not be empty") | No |
+| the eight columns of a collected record | Where the row came from and how far it can be trusted (see "Where a collected record came from") | Only `published_on` |
+
+The key is before these columns and the two times are after them, as
+in every table.
+
+- **A region is a part of exactly one country**, one that is in the
+  store (`fk_region_country_id_country`). A row without a country is
+  refused, and so is one of a country that is not there, when the
+  region is stored and when it is moved. **A country that has regions
+  cannot be deleted**: its regions are taken away first. Nothing is
+  said of what is to happen to the regions then, so SQLite refuses the
+  deletion; it deletes nothing by itself.
+- **No two regions of one country have one name**
+  (`uq_region_country_id_name`), when a region is stored, when it is
+  given another name and when it is moved to another country. Two
+  countries can each have a region of a name.
+- **Two names are one name only if they are the same text.**
+  "Canterbury" and "canterbury" are two names, and so are "Canterbury"
+  and "Canterbury " with a space after it. The table does not judge
+  whether two names mean one region: whether "Bayern" and "Bavaria" do
+  is a question for a person, and such a pair goes to the review queue
+  (see "Opening a possible duplicate"). A name is stored as its source
+  writes it, with the white space, the capitals and the letters it has.
+- **A region is a collected record.** `Region` is a subclass of
+  `Collected` and names two columns; the eight, their checks, the
+  reference to `source`, the index over `source_id`
+  (`ix_region_source_id`) and the check that holds the two times
+  together come with that. A region comes from a source that is there,
+  and a source that regions came from cannot be deleted. The source of
+  a region need not be the source of its country.
+- **The regions of one country are found without reading the table.**
+  SQLite keeps an index for the rule of the names
+  (`sqlite_autoindex_region_1`, over the country and then the name).
+  Because the country stands first in it, it finds the regions of one
+  country, for whoever asks for them and for SQLite itself when a
+  country is to be deleted and it looks whether the country has
+  regions. So the table has no index of its own over `country_id`; a
+  test holds what SQLite says it uses.
+- **Nothing gives itself a value.** A row cannot be without a country,
+  a name or any of the seven things that are known of every collected
+  record, and neither the model nor the table makes one up.
+- **A region is changed with its history**, by `change` (see "Changing
+  a record"), like every record. A region can be deleted while nothing
+  refers to it; nothing refers to a region yet.
+- **What is not in the table yet.** The code the standard ISO 3166-2
+  gives a region, such as `NZ-CAN` (DAT-064). A region that is a part
+  of another region, as a county is of a state (DAT-065): until then
+  every region is a part of its country only, and the rule of the
+  names is for the whole country. Names in other languages, and the
+  other names a region is known by, are not in this table.
 
 ## The source of the countries
 
