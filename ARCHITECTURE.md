@@ -481,15 +481,22 @@ pipeline's command line. The settings and logging modules stay.
   said to be of one of them afterwards, and a country that a source is
   of cannot be deleted.
 - **The regions are the parts a country is divided into**, `region`
-  (DAT-013): a region is a part of exactly one country and has a name,
-  which no other region of that country has. It is a collected record,
+  (DAT-013): a region is a part of exactly one country and has a
+  name. It is a collected record,
   and a country that has regions cannot be deleted. The table has no
   reference rows: a region comes with the record that needs it. A
   region can say its code of ISO 3166-2, in the standard's form, and
-  no two regions have one code (DAT-064). That the code agrees with
-  the country, two regions of a country that share a name, and a
-  region inside a region are tasks of their own (DAT-067, DAT-066,
-  DAT-065; DATABASE.md).
+  no two regions have one code (DAT-064). The code begins with the
+  code of its country, which four triggers hold, on the regions and on
+  the countries (DAT-067). Two regions of a country can have one name
+  when their codes tell them apart, as the standard's own list has
+  them; of the regions of a country that say no code, no two have one
+  name (DAT-066). A region can be a part of another region, as a
+  county is of a state: of one that is there, of its own country, and
+  not of itself, and a region that has parts cannot be deleted or
+  moved to another country (DAT-065). The names of the parts of a
+  region, and a region that is a part of itself through others, are
+  tasks of their own (DAT-069, DAT-070; DATABASE.md).
 
 The schema is documented in DATABASE.md as tables are added.
 

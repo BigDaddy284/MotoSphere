@@ -428,6 +428,7 @@ def test_the_table_has_the_column_after_the_name(mapped: Engine) -> None:
     assert [str(name) for name, *_ in columns] == [
         "id",
         "country_id",
+        "parent_id",
         "name",
         "iso_3166_2",
         "source_id",
@@ -455,6 +456,9 @@ def test_the_region_of_a_code_is_found_by_the_index(mapped: Engine) -> None:
         ).all()
 
     # The index SQLite keeps for the rule that no two regions have one code.
+    # SQLite keeps one for each rule of that kind that is written into the
+    # table, and numbers them as they are written: this is the second,
+    # after the one of a key and a country together (DAT-065).
     assert [name for _, _, name in index] == ["iso_3166_2"]
     assert [detail for *_, detail in plan] == [
         "SEARCH region USING INDEX sqlite_autoindex_region_2 (iso_3166_2=?)"
