@@ -969,7 +969,14 @@ rows are held to their sources again, a source to a country that is
 there, and a country that a source is of cannot be deleted; and it
 fails, with the store as it was, where a table of the name of either
 copy is there already, and at its last statement, where a table of the
-index's name stands in the index's place (DAT-058); a store
+index's name stands in the index's place (DAT-058); the sixteenth makes
+the table `region` and the index over the source of its rows in the
+same store, where every table and index that was there is written as
+it was and holds what it held, with the ten triggers, a region of the
+country and of the source that were there is then stored, and it
+fails, with the store left at its version, where a table of its name
+is there already, and where an index of its name is, with the table it
+had made before that taken back (DAT-013); a store
 with the newest schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -2011,6 +2018,76 @@ SQLite is given them; the names of the nine checks, the two rules of
 one code and the reference, and the one index; and the whole schema
 with the countries breaks neither the rules every table keeps nor the
 rule of where records came from.
+
+## The regions
+
+`backend/tests/integration/test_region.py` tests the table of the
+regions (DAT-013) the way the table of the countries is tested: in a
+store that the migrations built, on a real SQLite file, here with one
+source and two countries in it; through the model and past it, as
+plain SQL; and with what SQLite said, word for word, where it refuses
+a row.
+
+- **What is stored.** A region is read back with everything said of
+  it; the row is plain text and whole numbers; a region whose source
+  gives no day has none; a row written past the model is read as a
+  region.
+- **What a region cannot be without**: each of the nine columns but
+  the day it was published, written past the model and through it. The
+  model gives none of them a value. Bytes are not a name, and text is
+  not a key.
+- **Its country**: a region of a country that is not there is refused,
+  and a region cannot be moved to one; a country that has regions
+  cannot be deleted, and the country and its region are then as they
+  were; a country without regions can be deleted beside one that has
+  them; a region can be deleted, its country stays and can then be
+  deleted.
+- **One name, one region of a country**: a second region of the name
+  in the country is refused, through the model and past it; a region
+  cannot be given the name of another of its country, nor be moved to
+  a country that has a region of its name. Two countries can each have
+  a region of one name, and one country regions of several names. Six
+  names that differ from a name that is there in their capitals, in a
+  space before or after, in a word more or in one letter with an
+  accent are each stored beside it: two names are one only if they are
+  the same text.
+- **The name**: empty text of four kinds is refused; seven names are
+  stored as they were given, with letters beyond the 26, an
+  apostrophe, hyphens, letters of another script, white space around
+  them and small letters.
+- **Where it came from**: a region of a source that is not there is
+  refused; a source that regions came from cannot be deleted, and can
+  be once they are taken away; the key of a deleted region is not
+  given again. Ten texts that break a rule of the eight columns are
+  refused, each by its check; a region is not last seen before it was
+  collected, to the microsecond; a region can be got in each of the
+  ten ways, be of each of the three levels of confidence and of each
+  of the four statuses.
+- **What finds it**: the regions of one source are found through the
+  index over the source, which SQLite says it uses, also when a source
+  is to be deleted. The regions of one country are found through the
+  index SQLite keeps for the rule of the names, which is over the
+  country and then the name: SQLite says it uses it for the regions of
+  a country, for one region by its name, and when a country is to be
+  deleted.
+- **Its history**: `change` gives a region a new name and a new moment
+  it was last seen, writes one row of history for each of the two and
+  none for the country that stays, and both carry the moment of the
+  change; a change the table refuses leaves the region as it was and
+  no history.
+
+`backend/tests/unit/test_db_models_region.py` reads the model, without
+a store: the table is in the whole schema and the model is named by
+the package; a region is a collected record and its table is not on
+the list of those that hold none; the thirteen columns in their order;
+only the day it was published may be without a value; no column but
+the two times gives itself a value; the two references, to the country
+and to the source, neither of which says what is to happen when what
+it points to is deleted; the rule of the names, with the country
+first; the names of the seven checks, the rule and the two references,
+and the one index; and the whole schema with the regions breaks
+neither the rules every table keeps nor the rule of where records came
+from.
 
 ## The countries file
 
