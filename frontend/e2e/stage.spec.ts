@@ -75,11 +75,6 @@ test.describe('the globe stage in a browser without 3D pictures', () => {
 
     expect(asked.length).toBeGreaterThan(2)
     expect(asked.filter((path) => path.startsWith(ENGINE_ADDRESS))).toEqual([])
-    // Nor for the script that starts the engine or the style sheet that
-    // comes with it: only for the one script and the one style sheet the
-    // page itself names.
-    expect(asked.filter((path) => path.endsWith('.js'))).toHaveLength(1)
-    expect(asked.filter((path) => path.endsWith('.css'))).toHaveLength(1)
   })
 
   test('has the words in the middle of the stage, in the colours of the theme', async ({

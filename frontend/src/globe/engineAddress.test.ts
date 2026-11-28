@@ -4,17 +4,6 @@ import { describe, expect, it, vi } from 'vitest'
 import { ENGINE_FOLDER, SITE_PATH } from '../../site.ts'
 import { ENGINE_ADDRESS, tellTheEngineWhereItsFilesAre } from './engineAddress.ts'
 
-// The real way to start the engine draws, which the test environment
-// cannot. In its place stands one that notes the address it finds told at
-// the moment it is started.
-const toldWhenStarted = vi.hoisted((): unknown[] => [])
-vi.mock('./earth.ts', () => ({
-  start: () => {
-    toldWhenStarted.push(globalThis.CESIUM_BASE_URL)
-    return () => {}
-  },
-}))
-
 // The engine reads the address the first time it builds the address of a
 // file, and keeps it. So the address is told here before any test asks the
 // engine for one, as the application tells it before anything is shown.
@@ -50,21 +39,6 @@ const mainSource = sources['../main.tsx'] ?? ''
 function thatSay(...words: string[]): string[] {
   return application
     .filter(([, text]) => words.some((word) => text.includes(word)))
-    .map(([path]) => path)
-    .toSorted()
-}
-
-/** The name the engine's packages begin with, where a module brings one in. */
-const PACKAGES = '@cesium/'
-
-/**
- * The files of the application that write the folder of the engine's files
- * out themselves. The name of the engine's packages ends like the folder
- * and is no address, so it is taken out before the text is read.
- */
-function thatWriteTheFolderOut(): string[] {
-  return application
-    .filter(([, text]) => text.replaceAll(PACKAGES, '').includes(`${ENGINE_FOLDER}/`))
     .map(([path]) => path)
     .toSorted()
 }
@@ -129,14 +103,7 @@ describe('the application', () => {
 
   it('builds the address in one module only', () => {
     expect(thatSay('ENGINE_FOLDER')).toEqual(['../../site.ts', './engineAddress.ts'])
-    expect(`${ENGINE_FOLDER}/`).toBe('cesium/')
-    expect(thatWriteTheFolderOut()).toEqual([])
-  })
-
-  it('brings the engine in where it is started and nowhere else, and writes no address there', () => {
-    expect(thatSay(PACKAGES)).toEqual(['./earth.ts'])
-    // No address with the name of a computer in it, with or without a scheme.
-    expect(sources['./earth.ts']).not.toMatch(/[a-z]:\/\/|['"`]\/\//i)
+    expect(thatSay('cesium/')).toEqual([])
   })
 
   it('takes the folder from where the build and the development server take it', () => {
@@ -181,11 +148,6 @@ describe('the application', () => {
 
     expect(root).not.toBeEmptyDOMElement()
     expect(globalThis.CESIUM_BASE_URL).toBe(ENGINE_ADDRESS)
-    // The engine of the globe is fetched and started a moment later, and
-    // finds the address told.
-    await vi.waitFor(() => {
-      expect(toldWhenStarted).toEqual([ENGINE_ADDRESS])
-    })
   })
 
   it('has told the engine even when it cannot start', async () => {

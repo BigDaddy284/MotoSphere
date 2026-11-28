@@ -1,11 +1,3 @@
-/* The globe fills the stage: its own element, and in it the surface the
-   engine draws on. */
-.globe,
-.globe > div {
-  position: absolute;
-  inset: 0;
-}
-
 /* What the stage says in the place of the globe: in the middle of the
    stage, in lines short enough to read. Where the stage is too low for the
    words, they start at its top and the stage scrolls: the two margins take
