@@ -15,7 +15,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 |---|---|---|---|
 | 1 | Foundation (FND) | 58 | 58 |
 | 2 | Data store and published data (DAT, PUB) | 73 | 56 |
-| 3 | Interactive 3D Earth (GLB) | 28 | 5 |
+| 3 | Interactive 3D Earth (GLB) | 28 | 6 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-064 – A region says its code of ISO 3166-2.
 
-**Current task, track B (globe):** GLB-027 – The life of the globe over a stand-in engine.
+**Current task, track B (globe):** GLB-002 – The globe shows the Earth.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -3029,7 +3029,7 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-026.md`
 
 ### GLB-027 – The life of the globe over a stand-in engine
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A `Globe` component starts one engine in its drawing surface when it is shown and stops it when it goes, proven by unit tests with a stand-in for the engine.
 - **Description:** Added on 2026-11-27 (PLAN-053), cut out of GLB-002; made exact on 2026-11-28 from the planner's trial. The component (`frontend/src/globe/Globe.tsx`) owns one element for the drawing surface and is handed how the engine is loaded and started, so that the unit tests can stand in for it: the loading gives a way to start an engine in an element, and starting gives the way to stop it. The component brings in `react` and nothing else. The engine is asked for when the component is shown, not while it is only drawn. React shows a component twice in development (`StrictMode`), and a component can go before the loading is over: in neither case is an engine left running or started for a globe that has gone. A loading that fails, a way of loading that breaks at once and an engine that cannot be started are handed to whoever shows the component, once, with the very thing that went wrong, and only while the globe is shown; what a person is told then is GLB-004. Another listener or another way of loading handed in later starts nothing anew (`useEffectEvent`). The component keeps no state, so it asks React for nothing after it is shown. The stand-in of the tests (`frontend/src/test/engine.ts`) lets each loading end when a test says so, remembers what was started where and how often it was stopped, and comes back from a loading only when what waited on it has run. The component is not put into the page yet, so nothing a user sees changes and the task has no browser tests. No package is added.
 - **Acceptance criteria:**
@@ -3046,10 +3046,10 @@ What holds for every task of the phase:
   11. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   12. Only the seven files under "Scope" of the plan changed.
 - **Tests required:** 43 new frontend unit tests. 27 of the component: its element; the engine asked for once, and not while the globe is only drawn; started in its own element in the page; nobody told when all goes well; nothing anew for another listener or another way of loading; stopped once when the globe goes and not before; never started after the globe has gone; each of the three failures told once with the very thing that went wrong, to the newest listener, and not for a globe that has gone; shown again; two globes; seven cases under `StrictMode`; and that the component names nothing of the engine. 16 of the stand-in. Planted defects in the component and in the stand-in. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** By the tester thread, against the planner's test plan (shared folder, `testing/GLB-027/`), in a clean checkout of pull request #219 merged with `main` (Linux, with the two variables for the browser set): the full run, 19 of 19 gates passed, "Tests: 3787 passed, 0 failed, 0 skipped.", exit code 0 (repository 82, script tests 219, backend 2705, frontend unit 477, browser 304), with no "Not implemented" from the unit tests. The planner's planted defects, one at a time, in the code of the pull request, against all 477 unit tests: 58 of 58 detected, with no difference from the planner's list of which tests detect which. The plan's ten prove-it steps: each fails the tests the plan names (6, 7, 4, 4, 6, 2, 1, 1, 11 and 5 unit tests). Reading the component (68 lines, 36 of code), the tester found: the engine is asked for only in the effect, and drawing calls nothing; an engine that arrives late is not started; the engine that was started is stopped; a failure is told only while the globe is shown; the effect runs once for a showing. The component has one import, from `react`; the stand-in is brought in by the two test files and by nothing else; the added code has no type assertion but one `as const`, and no rule switched off. The two new test files alone: 43 of 43 passed. On GitHub, read by the planner and by the tester from the runs and job logs: run 46098324756 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3787 passed, 0 failed, 0 skipped.", with 477 frontend unit tests and 304 browser tests on both machines, the three jobs after the gates skipped; run 46100800248 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3787 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3787 / 0 tests on both machines on GitHub for `main` and for the pull request, and in the tester's run (repository 82, script tests 219, backend 2705, frontend unit 477, browser 304); all 19 gates passed; 58 / 0 planted defects detected.
+- **Verification status:** Verified on 2026-11-28: tested by the tester thread, whose report names no number that differs from the test plan; merged and recorded by the planner, who compared the pull request with the trial and the merged tree with the tested one, and read the runs. All seven files are the same change as the planner's trial. No test that was there changed. No package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #217, run 46096573615). The builder reported the full run with 3787 tests and all ten prove-it steps with the plan's counts. Without the two variables the plan names, two globe tests fail in its environment, as they do there on unchanged `main`: its browser is a wrapper that takes away the word for 3D pictures in software. With them set, as the tester set them too, every run passed.
+- **Commit:** `a36f4b4`
 - **Plan:** `docs/plans/GLB-027.md`
 
 ### GLB-002 – The globe shows the Earth
