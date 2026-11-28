@@ -14,8 +14,8 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 58 | 58 |
-| 2 | Data store and published data (DAT, PUB) | 73 | 56 |
-| 3 | Interactive 3D Earth (GLB) | 28 | 5 |
+| 2 | Data store and published data (DAT, PUB) | 76 | 56 |
+| 3 | Interactive 3D Earth (GLB) | 28 | 6 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-064 – A region says its code of ISO 3166-2.
 
-**Current task, track B (globe):** GLB-027 – The life of the globe over a stand-in engine.
+**Current task, track B (globe):** GLB-002 – The globe shows the Earth.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -303,6 +303,19 @@ to itself and changes what one name means. DAT-013 is now the table. The
 code is DAT-064 and the region inside a region is DAT-065, and they follow
 it. Two tasks are new, and the plan has 302. Order on track A: DAT-013,
 DAT-064, DAT-065, then DAT-014.
+
+**The code of a region, in three steps (PLAN-056):** the planner measured
+the standard's own list of the regions before the code was planned. All 5046
+codes have one form, which DAT-064 holds. 36 pairs of regions share a name
+within one country, so the rule of DAT-013, one name in a country, has to
+give way where the codes tell two regions apart: that is DAT-066, which is
+new. That a code begins with the letters of the region's own country needs
+the code of another table and is DAT-067, which is new too. While trying
+DAT-067 the planner found that the rule of DAT-056, a key of the review
+queue is 1 or more, does not hold when a statement sets the key by the name
+`rowid`: putting that right is DAT-068, the third new task, and comes first.
+The plan has 305 tasks. Order on track A: DAT-064, DAT-068, DAT-067,
+DAT-066, DAT-065, then DAT-014.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -2693,11 +2706,58 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-013.md`
 
 ### DAT-064 – A region says its code of ISO 3166-2
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** A region can say the code the standard ISO 3166-2 gives it, such as `NZ-CAN`, so that a region is known across sources that write its name differently.
-- **Description:** Added on 2026-11-27 (PLAN-054), cut out of DAT-013. One column of `region`, which may be without a value: not every region a source names has a code, and a region is not kept out of the store for lacking one. The migration changes a table that is there. The planner's trial settles the form a code is held to (the standard writes the two letters of the country, a hyphen, and up to three letters or digits), how the table holds that the code of a region begins with the code of its country, which is a column of another table, and whether that is a rule of the table or of the code that writes a region. No codes are loaded: which codes there are is what a source says.
-- **Acceptance criteria:** a region may be without a code, and any number of regions may be; a code is stored in the standard's form and refused in any other; no two regions have one code; the code of a region agrees with the country it is a part of; the regions that were there keep everything they had and have no code; the model and the migration agree.
-- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it that holds countries and regions; planted defects; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-27 (PLAN-054), cut out of DAT-013, and narrowed on 2026-11-28 (PLAN-056): that the code agrees with the country of the region is DAT-067, and what the code means for the rule of the names is DAT-066. The column `iso_3166_2` of `region`, in the model `Region` and by the seventeenth migration, `let_a_region_say_its_code`. Settled in the planner's trial. The column may be without a value: not every region a source names has a code, and a region is not kept out of the store for lacking one. A code is held to the form of the standard by the table itself (`ck_region_iso_3166_2_form`): two capital letters, a hyphen and one, two or three capital letters or digits, and no character with the number 0. The form was measured before it was written: all 5046 codes of the list of ISO 3166-2 that comes with release 4.20.1 of iso-codes have it (327 with one character after the hyphen, 3099 with two, 1620 with three). Nothing is put right: a code in small letters or with a space is refused, not changed. No two regions have one code (`uq_region_iso_3166_2`), whatever their countries; SQLite takes rows without a code for different, so any number of regions can be without one, and it keeps an index for the rule that finds the region of a code, so the column has no index of its own. SQLite puts a column that is added in place after all the others and cannot give it such a rule, so the migration builds the table anew, as the fourteenth did the sources: every region keeps what it had and its key and gets no code, the highest key the table gave is kept, and the index over `source_id` is made again. No table of a store at version 16 points to a region, so the migration does not ask SQLite to wait with its check of what points where. No codes are loaded: which codes there are is what a source says.
+- **Acceptance criteria:**
+  1. The schema is at version 17. The seventeenth migration builds the table `region` anew with the column `iso_3166_2` after the name, the check `ck_region_iso_3166_2_form` and the rule `uq_region_iso_3166_2`, and makes the index `ix_region_source_id` again; of all the tables and indexes of the store only `region` is written otherwise afterwards, and no table of the migration's own is left.
+  2. Every region that was there has all it had, its key too, and no code. The highest key the table gave is kept: the key of a deleted region is not given again, also in a table with no regions left and in one that never had one. Every row a region points to is as it was, and no pointer is broken.
+  3. After the migration the regions are held to their country, their source, the rule of the names and the check of the name as before.
+  4. Where a table of the name of either copy is there, and where the index cannot be made at the migration's end, the migration fails and the store is as it was, at version 16.
+  5. A region is stored and read back with its code. A region may be without one, and any number of regions may be; neither the model nor the table gives one.
+  6. A code is two capital letters, a hyphen and one, two or three capital letters or digits. Every other text is refused by the table, when a region is stored and when it is given a code later, through the model and past it. Nothing is put right.
+  7. No two regions have one code, when a region is stored and when it is given a code later. A code is free again once the region that had it is deleted, has another or has none.
+  8. The region of a code is found through the index SQLite keeps for the rule, and the column has no other index.
+  9. `change` gives a region a code, another and none, and writes its history; a change the table refuses leaves the codes and no history.
+  10. The model and the migration agree: the test of the models and the migrations passes unchanged. The whole schema breaks neither the rules every table keeps nor the rule of where records came from.
+  11. Eight existing tests change, as the plan names them: the list of the migrations' names, and seven tests of the regions that name the columns, the constraints or the indexes of the table. None loses an assertion; no other existing test changes, and all pass. The type check passes with no `ignore` and the lint with no `noqa`.
+  12. `python scripts/check.py` reports 19 of 19 gates, with 2821 backend tests, and 116 tests more in all than `main` gives at the commit the branch starts from (3860 when that is `728105c`); on the pull request both gates jobs are green (Linux and Windows) at the first attempt and the three jobs after the gates are skipped.
+  13. Only the ten files under "Scope" of the plan changed.
+- **Tests required:** 104 new integration tests in 20 functions, in a store the migrations built, with one source and four countries in it, on a real SQLite file, through the model and past it as plain SQL, each refusal with what SQLite said: what is stored; a code of each of the six forms the standard has; thirty-eight texts that are not of the form, when a region is stored and when it is given the text later; bytes and numbers; one code in two regions, when a region is stored and when it is given a code later; regions without a code; a code that is free again; the history; the column in its place; the index, as SQLite says it uses it. 3 new unit tests of the model. 8 new integration tests of the seventeenth migration, in 6 functions, on a store that holds sources, a country and regions with a gap in their keys, and one case more of the test that tries every migration alone. Planted defects in the model and in the migration. The full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/DAT-064.md`
+
+### DAT-068 – The key of a review item stays 1 or more under every name of the key
+- **Status:** NOT STARTED
+- **Objective:** No statement can give a review item a key below 1, whichever of the names SQLite has for the key of a table the statement uses.
+- **Description:** Added on 2026-11-28 (PLAN-056), a defect of DAT-056 that the planner found while trying DAT-067. The trigger `tr_review_item_key_stays_positive` fires after an update of the column `id`. SQLite has three more names for the key of a table, `rowid`, `_rowid_` and `oid`, and a statement that sets the key by one of them does not fire a trigger that names the column: tried on a store at the newest schema, `UPDATE review_item SET rowid = -5 WHERE id = 5` was taken, under each of the three names and in capitals too, where `SET id = -5` was refused. The tests of DAT-056 changed the key by the name of its column only. No store holds a review item, because nothing writes one yet (Phase 10), so no record is wrong. No other trigger of the store names a column in this way: the planner looked through the migrations. The planner's trial settles how the rule is made to hold whatever the statement names (a trigger over every update that asks whether the key is now below 1 and is not the key the item had, so that an item that had such a key before DAT-056 can still be given a note), the migration that puts the new trigger in the place of the old, and what the documents of DAT-056 say.
+- **Acceptance criteria:** an open item cannot be given a key below 1 by `id`, `rowid`, `_rowid_` or `oid`, in any spelling of them, alone or with other columns in the same statement; an item whose key is 1 or more can be given another such key and anything else an open item can be given; an item that had a key below 1 before the triggers keeps it, can be given a note and a key of 1 or more, and cannot be given another key below 1; a new item is held as before; the history, the other triggers and everything stored are as they were; the model and the migration agree.
+- **Tests required:** integration tests against a real SQLite file, through the model and past it as plain SQL under each name of the key; the migration applied to a store at the version before it that holds review items, one of them with a key below 1; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-067 – The code of a region agrees with its country
+- **Status:** NOT STARTED
+- **Objective:** The store itself refuses a region whose code begins with the two letters of another country, so that the code of a region can be trusted to say which country it is in.
+- **Description:** Added on 2026-11-28 (PLAN-056), cut out of DAT-064; follows DAT-068, whose finding it uses: a trigger that names a column does not see the key set by another of its names. A code of ISO 3166-2 begins with the code of two letters of the region's country, and the table holds the form of a code only: after DAT-064 it would take `AT-1` for a region of New Zealand. The code of a country is a column of another table (`country.alpha_2`), which a check of `region` cannot read. The planner's trial settles how the store holds the two together (triggers on `region` for a region that is stored, given a code or moved to another country, and on `country` for a country that is given another code, or another way), what the store says when it refuses, and what is done about a country whose code is changed while its regions have codes. A region without a code is a part of any country, as before.
+- **Acceptance criteria:** a region whose code begins with the two letters of its country is stored; one whose code begins with other letters is refused, when the region is stored, when it is given a code and when it is moved to another country, through the model and past it; a country cannot be given a code that its regions' codes do not begin with; a region without a code is held to nothing new; the regions and countries that were there keep everything they had; the model and the migration agree.
+- **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it that holds countries and regions with codes; planted defects; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
+### DAT-066 – Two regions of a country can share a name when their codes tell them apart
+- **Status:** NOT STARTED
+- **Objective:** The store can hold both of two regions of one country that have one name, as the standard's own list has them, when each says its code.
+- **Description:** Added on 2026-11-28 (PLAN-056). Measured by the planner on the list of ISO 3166-2 that comes with release 4.20.1 of iso-codes (5046 codes of 200 countries): 36 pairs of regions share a name within one country, and 13 of them even under the same parent or both without one, as Maputo, the city and the province of Mozambique. The rule of DAT-013, one name in a country, lets the table hold only one region of each such pair, so it has to change before any region is loaded. The planner's trial settles what the rule becomes: one name among the regions of a country that say no code; what holds between a region with a code and one without that share a name, which may be one region named by two sources ("Use review queues when information conflicts.", CLAUDE.md §11); how SQLite is given a rule over some rows only; and what then finds the regions of a country, which the index of the present rule does today, also when a country is to be deleted.
+- **Acceptance criteria:** two regions of one country that say different codes can have one name; two regions of one country that say no code cannot; the regions of one country are found without reading the whole table, also when a country is to be deleted; the regions that were there keep everything they had; the model and the migration agree.
+- **Tests required:** integration tests against a real SQLite file, with pairs the standard's list has; the migration applied to a store at the version before it that holds countries and regions; what SQLite says it uses to find the regions of a country; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
@@ -2706,8 +2766,8 @@ did not have, that a key is 1 or more, and made that a task of its own
 ### DAT-065 – A region inside a region
 - **Status:** NOT STARTED
 - **Objective:** A region can be a part of another region of its country, as a county is of a state, so that a track can be placed as closely as its source places it.
-- **Description:** Added on 2026-11-27 (PLAN-054), cut out of DAT-013. One column of `region` that refers to the table itself and may be without a value: a region without a parent is a part of its country only. The migration changes a table that is there. With a parent, the rule of the names changes: two regions of one country may have one name when they are parts of different regions (there are counties of one name in many states), so the rule of DAT-013, one name in a country, becomes one name under the same parent, and one name among the regions of a country that have no parent. The planner's trial settles how SQLite is given that rule where the parent may be without a value, how the table holds that a parent is of the same country, and what is done about a region that would be a part of itself, directly or through others.
-- **Acceptance criteria:** a region may be without a parent; a parent is a region that is there, of the same country; a region is not its own parent; two regions under one parent cannot have one name, nor two regions of one country that have no parent, and two under different parents can; a region that other regions are parts of cannot be deleted; the regions that were there keep everything they had and have no parent; the model and the migration agree.
+- **Description:** Added on 2026-11-27 (PLAN-054), cut out of DAT-013; follows DAT-066 since 2026-11-28 (PLAN-056). One column of `region` that refers to the table itself and may be without a value: a region without a parent is a part of its country only. The migration changes a table that is there. Measured by the planner on the list of ISO 3166-2 that comes with release 4.20.1 of iso-codes: 1456 of its 5046 regions have a parent, always a region of the same country, never the region itself, and no region lies more than two deep. With a parent, the rule of the names as DAT-066 leaves it changes once more: two regions of one country that say no code may have one name when they are parts of different regions (there are counties of one name in many states). The planner's trial settles how SQLite is given that rule where the parent may be without a value, how the table holds that a parent is of the same country, and what is done about a region that would be a part of itself, directly or through others.
+- **Acceptance criteria:** a region may be without a parent; a parent is a region that is there, of the same country; a region is not its own parent; two regions without a code under one parent cannot have one name, nor two of one country that have no parent, and two under different parents can; a region that other regions are parts of cannot be deleted; the regions that were there keep everything they had and have no parent; the model and the migration agree.
 - **Tests required:** integration tests against a real SQLite file; the migration applied to a store at the version before it that holds countries and regions; planted defects; the full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
@@ -3029,7 +3089,7 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-026.md`
 
 ### GLB-027 – The life of the globe over a stand-in engine
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** A `Globe` component starts one engine in its drawing surface when it is shown and stops it when it goes, proven by unit tests with a stand-in for the engine.
 - **Description:** Added on 2026-11-27 (PLAN-053), cut out of GLB-002; made exact on 2026-11-28 from the planner's trial. The component (`frontend/src/globe/Globe.tsx`) owns one element for the drawing surface and is handed how the engine is loaded and started, so that the unit tests can stand in for it: the loading gives a way to start an engine in an element, and starting gives the way to stop it. The component brings in `react` and nothing else. The engine is asked for when the component is shown, not while it is only drawn. React shows a component twice in development (`StrictMode`), and a component can go before the loading is over: in neither case is an engine left running or started for a globe that has gone. A loading that fails, a way of loading that breaks at once and an engine that cannot be started are handed to whoever shows the component, once, with the very thing that went wrong, and only while the globe is shown; what a person is told then is GLB-004. Another listener or another way of loading handed in later starts nothing anew (`useEffectEvent`). The component keeps no state, so it asks React for nothing after it is shown. The stand-in of the tests (`frontend/src/test/engine.ts`) lets each loading end when a test says so, remembers what was started where and how often it was stopped, and comes back from a loading only when what waited on it has run. The component is not put into the page yet, so nothing a user sees changes and the task has no browser tests. No package is added.
 - **Acceptance criteria:**
@@ -3046,10 +3106,10 @@ What holds for every task of the phase:
   11. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   12. Only the seven files under "Scope" of the plan changed.
 - **Tests required:** 43 new frontend unit tests. 27 of the component: its element; the engine asked for once, and not while the globe is only drawn; started in its own element in the page; nobody told when all goes well; nothing anew for another listener or another way of loading; stopped once when the globe goes and not before; never started after the globe has gone; each of the three failures told once with the very thing that went wrong, to the newest listener, and not for a globe that has gone; shown again; two globes; seven cases under `StrictMode`; and that the component names nothing of the engine. 16 of the stand-in. Planted defects in the component and in the stand-in. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** By the tester thread, against the planner's test plan (shared folder, `testing/GLB-027/`), in a clean checkout of pull request #219 merged with `main` (Linux, with the two variables for the browser set): the full run, 19 of 19 gates passed, "Tests: 3787 passed, 0 failed, 0 skipped.", exit code 0 (repository 82, script tests 219, backend 2705, frontend unit 477, browser 304), with no "Not implemented" from the unit tests. The planner's planted defects, one at a time, in the code of the pull request, against all 477 unit tests: 58 of 58 detected, with no difference from the planner's list of which tests detect which. The plan's ten prove-it steps: each fails the tests the plan names (6, 7, 4, 4, 6, 2, 1, 1, 11 and 5 unit tests). Reading the component (68 lines, 36 of code), the tester found: the engine is asked for only in the effect, and drawing calls nothing; an engine that arrives late is not started; the engine that was started is stopped; a failure is told only while the globe is shown; the effect runs once for a showing. The component has one import, from `react`; the stand-in is brought in by the two test files and by nothing else; the added code has no type assertion but one `as const`, and no rule switched off. The two new test files alone: 43 of 43 passed. On GitHub, read by the planner and by the tester from the runs and job logs: run 46098324756 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3787 passed, 0 failed, 0 skipped.", with 477 frontend unit tests and 304 browser tests on both machines, the three jobs after the gates skipped; run 46100800248 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3787 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3787 / 0 tests on both machines on GitHub for `main` and for the pull request, and in the tester's run (repository 82, script tests 219, backend 2705, frontend unit 477, browser 304); all 19 gates passed; 58 / 0 planted defects detected.
+- **Verification status:** Verified on 2026-11-28: tested by the tester thread, whose report names no number that differs from the test plan; merged and recorded by the planner, who compared the pull request with the trial and the merged tree with the tested one, and read the runs. All seven files are the same change as the planner's trial. No test that was there changed. No package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #217, run 46096573615). The builder reported the full run with 3787 tests and all ten prove-it steps with the plan's counts. Without the two variables the plan names, two globe tests fail in its environment, as they do there on unchanged `main`: its browser is a wrapper that takes away the word for 3D pictures in software. With them set, as the tester set them too, every run passed.
+- **Commit:** `a36f4b4`
 - **Plan:** `docs/plans/GLB-027.md`
 
 ### GLB-002 – The globe shows the Earth
