@@ -2,18 +2,26 @@
 
 CLAUDE.md sets the rules: one small task at a time, 100% of applicable tests
 passing before the next task starts. This document describes how that rule is
-carried out by two separate roles.
+carried out by three separate roles.
 
 Since 2026-11-27, by the owner's decision, the work runs on two tracks
 side by side: track A is the data store and the published data
 (`backend/`), track B the globe (`frontend/`). The rule holds on each
 track. `TASKS.md` ("Two tracks") says how they are kept apart.
 
+Since 2026-11-28, by the owner's decision, the independent test of a
+finished task is a role of its own. Until then the planner tested every
+pull request itself. The planner still tries every task out before it
+writes the plan, and writes a test plan beside it; a tester thread tests
+the builder's pull request against that test plan and reports; the
+planner merges and records (`PROGRESS.md`, PLAN-055).
+
 ## Roles
 
 | Role | Who | Does |
 |---|---|---|
-| **Planner / tester** | One long-lived planning thread | Owns TASKS.md, PROGRESS.md and `docs/plans/`. Breaks work into tasks, writes one implementation plan per task, independently tests each finished task, merges it, records the result, then hands over the next task. |
+| **Planner** | One long-lived planning thread | Owns TASKS.md, PROGRESS.md and `docs/plans/`. Breaks work into tasks, tries each task out, writes one implementation plan and one test plan per task, merges the tested task, records the result, then hands over the next task. |
+| **Tester** | One long-lived testing thread | Tests each builder's pull request against the planner's test plan, independently of the builder's report, and reports to the planner. Changes nothing: it does not fix, merge, push or record. |
 | **Builder** | A new thread for every task | Implements exactly one task from its plan, with tests, on its own branch, and opens a pull request to `main`. |
 
 Only one task of a track is in progress at any time, and so at most two in all.
@@ -22,16 +30,22 @@ A builder has one task, and does not touch what the other track changes.
 ## The loop
 
 1. **Plan.** The planner writes `docs/plans/<TASK-ID>.md` on `main` and sets
-   the task to `IN PROGRESS` in TASKS.md.
+   the task to `IN PROGRESS` in TASKS.md. It writes the test plan of the
+   task for the tester, with the defects it planted in its own trial and
+   the results it got.
 2. **Build.** A new builder thread reads CLAUDE.md, DESIGN.md, ARCHITECTURE.md,
    this file and the plan, then implements the task and its tests.
 3. **Self-test.** The builder runs every command in the plan's "Verification"
    section until all pass, then opens a pull request to `main` with a test
    report in the description.
-4. **Independent test.** The planner checks out the pull request in a clean
-   environment and re-runs every gate plus the plan's acceptance checks.
+4. **Independent test.** The tester checks out the pull request in a clean
+   environment and works through the test plan: that the change is the
+   one the plan gives, every gate, the planted defects, the plan's
+   prove-it steps, the application itself by hand, and the runs on
+   GitHub. It reports to the planner: pass or fail, the numbers of every
+   step, and every difference from the test plan.
 5. **Fix.** If anything fails, the task becomes `FAILED – FIX REQUIRED` and the
-   findings go back to the builder. Steps 3–5 repeat.
+   planner sends the findings back to the builder. Steps 3–5 repeat.
 6. **Merge and record.** At 100% the planner squash-merges the pull request
    (one commit per task on `main`), sets the task to `PASSED – VERIFIED` with
    the real counts and commit hash, and adds a report to PROGRESS.md.
@@ -66,7 +80,7 @@ A builder has one task, and does not touch what the other track changes.
   result and the pass/fail counts copied from real output, plus any deviation
   from the plan and why.
 
-## Rules for the planner / tester
+## Rules for the tester, and for the planner where it tests
 
 - Test in a clean checkout of the pull request, not in the builder's
   environment.
@@ -75,3 +89,15 @@ A builder has one task, and does not touch what the other track changes.
   acceptance criteria one by one, and exercise the real feature (browser,
   HTTP, database) where the task has one.
 - Record only numbers that came from a real run.
+- The tester changes nothing. What fails is described, not repaired, and
+  the planner decides what follows.
+
+## Where the test plans are
+
+The test plan of a task, the planted defects as the tester's tools run
+them and the planner's own results are kept in the project's shared
+folder, `testing/<TASK-ID>/`, with the tester's standing instructions
+beside them. They are tools of the workshop and not part of the
+application, so they are not in the repository. The work plan in
+`docs/plans/` names the planted defects and the prove-it steps in
+words, and `PROGRESS.md` records what the test gave.
