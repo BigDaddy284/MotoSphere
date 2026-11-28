@@ -2394,9 +2394,13 @@ the clock is replaced, never the store.
 
 ## A unit test that starts the page
 
-Two unit tests start the whole page by bringing in `src/main.tsx`: one in
-`frontend/src/main.test.tsx` and one in
-`frontend/src/globe/engineAddress.test.ts`. React does not show a page at
+Three unit tests start the whole page by bringing in `src/main.tsx`: two
+in `frontend/src/main.test.tsx` and one in
+`frontend/src/globe/engineAddress.test.ts`. In both files the module that
+starts the real engine of the globe (`src/globe/earth.ts`) is replaced
+(`vi.mock`) by one that only notes that it was started: the real engine
+draws, which the test environment cannot (GLB-002). React does not show a
+page at
 once. It puts the work in a queue and does it a moment later, and what
 follows from showing the page a moment after that. A test that ends
 before the queue is empty leaves that work waiting. If the test's file
@@ -2406,7 +2410,7 @@ not defined" and counts as failed, although every test passed. Whether
 that happens is a matter of a few moments either way, so it happens
 rarely: once so far, on GitHub's Linux machine (run 46006701452).
 
-So both tests start the page inside React's `act`:
+So these tests start the page inside React's `act`:
 
 ```ts
 await act(async () => {
@@ -2415,11 +2419,13 @@ await act(async () => {
 ```
 
 `act` comes back only when React has nothing left to do: the page is
-shown in full, with all that follows from showing it. Each of the two
+shown in full, with all that follows from showing it. Each of the
 tests then looks at the page at once, without waiting for it
 (`getByRole` where it was `findByRole`, and a root element that is not
 empty). A start outside `act` therefore fails its test every time, and
-not one run in many.
+not one run in many. Only the engine of the globe comes later, because
+the page fetches it after it is shown: the two tests that are about it
+wait for the note of the module that stands in for it.
 
 A new unit test that brings in `main.tsx`, or that shows something with
 React by any other way than `render` of Testing Library, does the same.
@@ -2758,7 +2764,7 @@ the browser for such a picture (`browserDraws3D` in
 browser gives none, the stage says in the place of the globe "The 3D
 globe cannot be shown in this browser." and under it, in a second
 sentence, why, and what a person can do (GLB-026). Where the browser
-gives one, the stage is empty until the globe is in the page (GLB-002).
+gives one, the stage shows the globe (GLB-002, "The Earth in the page").
 The sentences name no technology and speak of no error.
 
 **Only the newer kind of 3D picture counts.** A browser has two kinds
@@ -2782,7 +2788,8 @@ logged nothing: the browser had cleared the pictures away by itself in
 between. The question as it is, asked forty times in a row, logs
 nothing.
 
-28 unit tests and 13 browser tests hold this.
+37 unit tests and 13 browser tests hold this; nine of the unit tests
+came with the globe (GLB-002).
 
 The unit tests, over the stand-in for the drawing surface:
 
@@ -2795,22 +2802,27 @@ The unit tests, over the stand-in for the drawing surface:
   picture asked for each time, of the newer kind; nothing held
   afterwards; and yes without an error in a browser that takes no
   picture back;
-- `frontend/src/globe/GlobeStage.test.tsx` (8) tests the stage: empty
-  where the browser draws; the two sentences in their order where it
-  does not; the browser asked when the stage is first shown and not
-  again, and its first answer kept; no picture held; and the same where
-  React shows the stage twice, as it does in development;
+- `frontend/src/globe/GlobeStage.test.tsx` (17) tests the stage: the
+  globe where the browser draws ("The Earth in the page"); the two
+  sentences in their order where it does not, with no engine asked for
+  and no globe that could be busy; the browser asked when the stage is
+  first shown and not again, and its first answer kept; no picture
+  held; and the same where React shows the stage twice, as it does in
+  development;
 - one test of the shell (`AppShell.test.tsx`) and three of the
   application (`App.test.tsx`): what the stage shows is in the globe
-  stage and nowhere else, and the sections and both panels work as
-  before where the globe cannot be shown.
+  stage and nowhere else, the engine is not asked for where the globe
+  cannot be shown, and the sections and both panels work as before
+  there.
 
 The browser tests, with the built site:
 
 - `frontend/e2e/stage.spec.ts` (10), in the project `chromium`, whose
   browser gives a page no 3D picture: the question itself, handed to
   the page as it stands, says no; the stage has the two sentences and
-  nothing else; no file of the engine is asked for; the words are in
+  nothing else; no file of the engine is asked for, and no script or
+  style sheet but the one of each that the page itself names; the words
+  are in
   the middle of the stage, in the colours and sizes of the theme, in
   lines no longer than 32 times the size of the text, and stay there
   when the panels are closed; on four narrow screens both sentences are
@@ -2818,9 +2830,9 @@ The browser tests, with the built site:
   not scroll; and in a stage too low for the words they start at its
   top and the stage scrolls to their end;
 - `frontend/e2e/globe/stage.spec.ts` (3), in the project `globe`: the
-  stage is empty; the question, handed to the page, says yes forty
-  times in a row with nothing on the console; and the top bar and both
-  panels work around the empty stage.
+  stage shows the globe and not the sentences; the question, handed to
+  the page, says yes forty times in a row with nothing on the console;
+  and the top bar and both panels work around the globe.
 
 Every other browser test of the project `chromium` now runs with the
 two sentences in the stage, and none of them was changed for it.
@@ -2834,10 +2846,10 @@ an element, which in turn gives the way to stop it) and whom to tell
 when that fails (`onFailed`). An engine that is started is handed a
 listener, to which it says that its first complete picture is drawn
 (`drawn`), and the component can be handed whom to tell of that
-(`onDrawn`, GLB-029). It is not in the page yet: the real
-engine is GLB-002, and what a person is told when it fails is GLB-004.
-So these tasks have unit tests and no browser tests, and they run with
-the stand-in engine (`frontend/src/test/engine.ts`).
+(`onDrawn`, GLB-029). The stage shows it, with the real engine, since
+GLB-002 ("The Earth in the page"); what a person is told when it fails
+is GLB-004. These two tasks have unit tests and no browser tests, and
+they run with the stand-in engine (`frontend/src/test/engine.ts`).
 
 `frontend/src/globe/Globe.test.tsx` (44):
 
@@ -2919,6 +2931,351 @@ it a listener that does nothing.
 No test of the two files ends with work of React's waiting: the set-up
 of the unit tests holds every test to that (FND-056). The component
 itself asks React for nothing after it is shown.
+
+## The Earth in the page
+
+Where the browser gives a 3D picture, the globe stage shows the `Globe`
+component, and the real engine is started in it (GLB-002). Three
+modules do it:
+
+- `frontend/src/globe/earth.ts` is the real way to start the engine,
+  and the only module of the application that brings the engine in. It
+  makes one widget of the engine in the element it is handed, with the
+  pictures of the Earth that come with the engine (Natural Earth II,
+  from the folder of the site that holds the engine's files) and with
+  the engine told to draw only when something has changed. After each
+  picture it draws it asks the engine whether a piece of the Earth is
+  still waiting; when none is, it stops asking and says that the Earth
+  is drawn, once the engine has finished that picture. Stopping takes
+  the widget away and gives the browser its 3D picture back.
+- `frontend/src/main.tsx` hands the application the way to load it:
+  the page fetches that module, and the engine with it, when the globe
+  is shown and not with the page.
+- `frontend/src/globe/GlobeStage.tsx` shows the globe in an element
+  that fills the stage and marks it as busy (`aria-busy`) until the
+  engine has said that the Earth is drawn. What the engine fails with
+  is handed to the browser, as before; what a person is told then is
+  GLB-004.
+
+The engine shows a mark of its own in a corner of the globe and comes
+with its own sky and its own way of being moved by the mouse. This
+task leaves all three as the engine has them: what the globe looks
+like, the credits it owes and how it is moved are later tasks
+(GLB-012, GLB-015, GLB-005).
+
+### Unit tests
+
+The unit tests cannot draw, so none of them starts the real engine:
+they hand the stage the stand-in (`frontend/src/test/engine.ts`).
+
+- `frontend/src/globe/GlobeStage.test.tsx`, where the browser gives a
+  3D picture (10): the stage shows one element and in it the empty
+  surface of the globe, and nothing else; the engine is asked for
+  once, with the way the stage was handed; it is started in the
+  surface when it has arrived; the globe is busy until the engine has
+  said that its first complete picture is drawn, and not after; an
+  engine that says it again changes nothing, and the surface and the
+  engine stay the ones they were; the engine is stopped when the stage
+  goes; an engine that cannot be loaded and one that cannot be started
+  are each handed to the browser once, with the very thing that went
+  wrong, and the globe stays busy; nothing is handed to the browser
+  while all goes well; and the stage holds no 3D picture of its own.
+  Where the browser gives none (3): the two sentences, also where it
+  gives only the older kind of 3D picture; the engine is not asked
+  for, and there is no globe that could be busy. Where React shows the
+  stage twice, as it does in development, there is one globe with one
+  engine and it is said once that it is drawn.
+- `frontend/src/App.test.tsx`: the application hands the stage the way
+  to load the engine that it was handed itself, and where the globe
+  cannot be shown the engine is not asked for.
+- `frontend/src/main.test.tsx`: started as the page starts it, the
+  application fetches the module that starts the engine and starts it
+  in an element of the globe stage. In this file and in
+  `frontend/src/globe/engineAddress.test.ts` that module is replaced
+  by one that only notes that it was started.
+- `frontend/src/globe/engineAddress.test.ts`: the engine is brought in
+  by `earth.ts` and by no other module, and `earth.ts` writes no
+  address with the name of a computer in it; and when the engine is
+  started, it has been told where its files are.
+
+The stage keeps state, whether the globe is drawn, and outside `act`
+React does what it is asked for a moment later, while the stand-in
+waits for a moment of its own before a test goes on: the two come in
+no fixed order. So the three tests of the stage that hold that it
+still says busy after an engine has arrived or failed have that happen
+inside `act` (`andReactIsDone` in `GlobeStage.test.tsx`), and look
+when React is done. Without it a planted defect, a stage that takes a
+failure for a picture that is drawn, was found by the test of an
+engine that cannot be started in one run of six; with it, in ten of
+ten. A test that holds that a part of the page with state did not
+change has to look when React is done.
+
+### Browser tests
+
+`frontend/e2e/globe/earth.spec.ts` (5), in the project `globe`, on the
+site as it was built, with the real engine. The fixture of every
+browser test fails each of them for a warning or an error on the
+console, for a request that fails and for an answer that says a file
+is not there. Each test waits until the globe says that the Earth is
+drawn, for at most twenty seconds.
+
+- **One surface that fills the stage.** The stage is 700 by 672 pixels
+  at its place in a page of 1280 by 720, there is one drawing surface,
+  it has the same place and size, it has 700 by 672 pixels of its own,
+  and the page does not scroll.
+- **The page is not held back.** With the script of the engine held
+  back by the test, the heading, the data status and the sections are
+  there and work, the globe is busy and has no drawing surface; the
+  script is asked for once; when it is let through, the Earth is
+  drawn.
+- **Drawn means that the pictures have arrived.** A test sees the
+  moment the globe says so late, by as much as a second, and an engine
+  can do much in a second. So the page itself notes, at that moment,
+  which files have arrived and how many pictures its 3D pictures were
+  told to draw. At the moment the list of the pictures and at least
+  two pictures of the Earth have arrived and the engine has drawn; no
+  request is under way when the test sees it. A second and a half
+  later no file has arrived that had not at the moment, no request is
+  under way, the picture of the stage is the same pixel for pixel, and
+  the engine has drawn at most one picture since the moment. One it
+  does draw: with its last piece arrived the engine draws the complete
+  picture, which is when the globe says so, and then that same picture
+  once more, of its own accord (9 of 9 times when the planner measured
+  it).
+- **Nothing is asked of another computer.** Every request of the page
+  goes to the site, under the site's own folder; the script of the
+  engine is asked for once; more than five files come from the folder
+  of the engine's files; and no address names a service of the engine
+  that needs an account, but for the picture of the engine's own mark.
+- **Stopped and started again.** The page starts the engine in an
+  element of its own and stops it at once, twenty times in a row: each
+  time one drawing surface while it runs and nothing left when it is
+  stopped. Then an engine is left running: it says once that the Earth
+  is drawn, is given another size, which makes it draw again, and has
+  still said it once when it is stopped a second later. And one is
+  stopped by whoever is told that the Earth is drawn, there and then,
+  and says it once. After all this the globe of the page still has its
+  3D picture. A browser keeps only so many 3D pictures for a page, and
+  takes the oldest away with a warning on the console when a page asks
+  for one more, so an engine that kept its picture when it is stopped
+  fails this test. The test has 90 seconds where a test has 30
+  otherwise: with its twenty-two engines it took 8.9 seconds on
+  GitHub's Linux machine and 18.5 on its Windows machine when it was
+  written, and it holds what the engine does, not how fast a machine
+  is.
+
+Two tests that were there changed with the page:
+`frontend/e2e/globe/stage.spec.ts` now finds the globe in the stage
+where it found the stage empty, and `frontend/e2e/stage.spec.ts`, in
+the browser without 3D pictures, also holds that the page asks for one
+script and one style sheet and no more, so that the engine is not
+fetched there.
+
+### What the planted defects showed
+
+Each line was tried as a planted defect, alone, against the browser
+tests of the three files above:
+
+- An engine that says that the Earth is drawn with its first picture,
+  or as soon as it knows which pictures there are, is found by the
+  test of the pictures that have arrived.
+- An engine that says it in the middle of drawing a picture, where the
+  test stops it there and then, is found by the test that stops and
+  starts: the engine was not finished with that picture.
+- An engine that goes on asking after it has said it says it a second
+  time when it is given another size, and is found by the same test.
+- An engine that keeps its 3D picture when it is stopped, one whose
+  widget is left where it was, and one that is not stopped at all are
+  each found by that test.
+- An engine that draws all the time is found by the count of the
+  pictures it draws after it has said that the Earth is drawn.
+- An engine that is not told which pictures to use asks another
+  computer for them, and one that is told a folder that is not there
+  gets an answer that says so: both are found. An engine that draws
+  the Earth without pictures is found too.
+- Without the rules of the engine's style sheet, and with a stage that
+  does not give the globe its room, the drawing surface does not fill
+  the stage.
+- An engine that comes with the page and not after it, and one that
+  never arrives, are found by the test that holds the script back.
+
+At the time of the task a planted defect that left out the question
+whether the pictures themselves are ready was found by no test: the
+engine does not count a piece as arrived while its picture is still a
+placeholder, so the one question, whether a piece is still waiting,
+is enough, and the other was taken out of the code.
+
+## The view the globe opens with
+
+The globe opens with the whole Earth in view, at every size of the
+screen (GLB-030): the camera is straight above the middle of the North
+Atlantic, 30 degrees north and 40 degrees west, north up, as far away
+as it takes for the Earth to take four fifths of the shorter side of
+the globe stage. From there Europe and North Africa are in view on one
+side and the Americas on the other.
+
+Why it takes arithmetic: the engine holds its field of view, an angle
+of 60 degrees, across the longer side of its drawing surface. Seen
+from one fixed distance the Earth takes the same share of the longer
+side whatever the shape of the surface, and with the view the engine
+opens with by itself that was about six tenths of it: on a phone held
+upright, where the stage is 390 pixels wide and 745 high, the Earth
+was cut off at both sides, and on a phone lying above and below.
+
+Two modules do it:
+
+- `frontend/src/globe/homeView.ts` names the place (`HOME`) and the
+  share (`SHARE_OF_THE_SHORTER_SIDE`), and works out the distance
+  (`distanceOfTheWholeEarth`) from the width and height of a surface,
+  the field of view and the share, in radii of the Earth from its
+  middle. It is arithmetic only and brings in nothing, so it is tested
+  where nothing is drawn. A surface that has no size yet is taken for a
+  square one.
+- `frontend/src/globe/earth.ts` sets the camera with it when the engine
+  is started, before the first picture: from the size of the drawing
+  surface as it is then and the field of view the engine has. Were the
+  engine ever to start without a view in perspective, its own view
+  would be left as it is.
+
+What the view does when the stage changes its size afterwards is
+GLB-028. How a person moves the globe is GLB-005 and the tasks after
+it.
+
+### Unit tests
+
+`frontend/src/globe/homeView.test.ts` (20):
+
+- The place is 30 north and 40 west, and the share is four fifths (2).
+  The browser tests take the share from the module, so these two tests
+  are what holds the numbers themselves.
+- Three cases that can be worked out by hand (3): two radii where the
+  Earth is to fill a square surface seen under 60 degrees; the root of
+  five where the surface is twice as wide as high and seen under 90
+  degrees; and the same root of five where the Earth is to take half
+  of a square surface seen under 90 degrees.
+- The stage at six screen sizes, as the browser tests measure it (6):
+  from the distance the module gives, a ball of radius 1 takes four
+  fifths of the shorter side. The test works that out its own way,
+  from the angle the ball is seen under.
+- A surface held upright and the same surface lying give the same
+  distance; the shape counts and not the size; the distance is greater
+  the narrower the surface, the smaller the share and the narrower the
+  field of view; and it is outside the Earth whatever share is asked
+  for (6).
+- A surface without width, without height or without both is taken for
+  a square one, and the distance is a number (3).
+
+The test that the engine is brought in by one module only
+(`engineAddress.test.ts`, GLB-002) reads this module too: it names no
+package of the engine.
+
+### Browser tests
+
+`frontend/e2e/globe/home.spec.ts` (7), in the project `globe`, on the
+site as it was built, with the real engine. They read the picture
+itself, from outside the page (see "Reading what the page shows"),
+once the globe says that the Earth is drawn.
+
+Around the Earth the engine draws the stars, the sun and the moon
+where they stand at the time of the page. Every test gives the page
+one fixed time (noon on 21 June 2026, by the clock of Greenwich), so
+that the sky of the test is the same sky on every day.
+
+- **The whole Earth, in the middle, with the sky around it** (5), at
+  the sizes of the window the layout knows: a desktop (1280 by 720), a
+  phone held upright (390 by 844) and lying (844 by 390), a tablet held
+  upright (768 by 1024) and the smallest phone (320 by 568). The radius
+  the Earth is to have is four fifths of half the shorter side of the
+  stage, as the test measures the stage. In the eight directions of a
+  compass, from the middle of the stage: a tenth of that radius inside
+  the edge there is Earth (red, green and blue together above 300 of
+  765), and a tenth outside it there is sky (below 150). The sky is
+  black but for its stars, and a star is a point or two wide, so the
+  sky at a place is read at three points two pixels apart and the
+  darkest of them is taken. A view from too near, from too far, or off
+  the middle fails one of the sixteen readings.
+- **The place, and north up** (2), on the desktop and on the phone held
+  upright. The test works out where a place of the Earth is in the
+  picture, seen from straight above 30 north and 40 west with north up
+  from the distance of that stage, and reads the colour there. It
+  writes the place a second time and does not take it from the
+  application, so it holds the place itself. Below the middle is the
+  sea (more blue than red by more than 50). On the line of 40 west,
+  72 north is the ice of Greenland (each of red, green and blue above
+  180) and 62 north is sea. On the line of 23 north, 11 west is the
+  Sahara (together above 550, and less than 30 more blue than red) and
+  23 west is sea. And 5 south, 62 west, is the forest of the Amazon:
+  more green than red and more green than blue. The two coasts hold how
+  far north and how far west the camera is, and the four places
+  together hold that north is up.
+
+**What was measured for these numbers (2026-11-28)**, in the browser of
+the globe tests on a developer's Linux machine, in pictures of the
+page at six sizes of the window:
+
+- The edge of the Earth's disc was between 0.99 and 1.03 of the radius
+  aimed at, in all eight directions, at all six sizes. The readings a
+  tenth inside and a tenth outside leave room on both sides of that.
+- On the line of 40 west, read every two degrees, the picture was sea
+  up to 64 north and ice from 68 north. On the line of 23 north it was
+  sea up to 18 west and desert from 16 west. The places the test reads
+  lie four to six degrees on either side of each coast.
+- The colours at the places the test reads, on the desktop and on the
+  phone: the ice (199, 212, 224) and (202, 213, 222); the desert about
+  (212, 206, 184) and (209, 211, 200); the sea more blue than red by
+  more than 80; the forest about (118, 165, 119) and (140, 183, 150).
+
+### What the planted defects showed
+
+Each line was tried as a planted defect, alone.
+
+Against the unit tests (28):
+
+- Another place (east for west, south for north, the two numbers in
+  each other's place, one degree further west or north) and another
+  share (the whole shorter side, three quarters) are each found by the
+  test of that number.
+- A distance that takes the longer side for the shorter or the other
+  way round, the width or the height where the shorter or the longer
+  side is meant, the two sides divided the wrong way round, the shape
+  not counted, the whole field of view for half of it, a sine or the
+  angle itself for the tangent, the share not counted or divided by,
+  the edge of a flat disc for the edge of a ball, the height above the
+  ground for the distance to the middle, and a surface without size
+  not provided for: each is found by the tests of the distance.
+- A module that brings the engine in is found by the test that the
+  engine is brought in by one module only.
+
+Against the browser tests (23), in `earth.ts` where nothing else is
+said:
+
+- A view that is never set, so that the engine's own stays, fails six
+  of the seven tests. The seventh is the whole Earth on the tablet held
+  upright: at that shape of the stage the sixteen readings pass for
+  the engine's own view too. A view that is set only on a stage higher
+  than wide, or only on one wider than high, is found by the tests of
+  the other screens.
+- East for west, south for north, longitude and latitude in each
+  other's place, and a view seven degrees too far east, west, north or
+  south are each found by both tests of the place. Smaller distances
+  were not tried: seven degrees is what the two coasts are known to
+  tell.
+- South up, and a turn of nine degrees to the right, are found by both
+  tests of the place; east up by those and by two of the others; a
+  camera that looks past the Earth and not straight down by all seven.
+- The Earth filling the shorter side, a tenth of the shorter side too
+  much or too little, half the field of view, and the distance to the
+  middle taken for the height above the ground fail all seven.
+- The surface taken for a square, the window measured and not the
+  surface, and, in `homeView.ts`, the shape not counted and the two
+  sides divided the wrong way round are each found by the tests of
+  the screens that are not nearly square: five or six of the seven.
+
+What the browser tests do not hold: the numbers of the place and of
+the share themselves. They hold that the picture is the view from 30
+north and 40 west to about seven degrees, and they take the share from
+the module. The two numbers are held by the unit tests, and that the
+camera is set with them and with nothing else is read in `earth.ts`.
 
 ## The tools a computer needs
 
@@ -3160,12 +3517,17 @@ table, of a picture of the Earth and of the description of those pictures
 beneath the folder, on the computer of the page. The rest is read from
 the text of the application's code, of the page and of the settings of
 the build: the engine's own word for the address is in one module only;
-the address is built in one module only and written out nowhere; the
-folder's name is taken from where the build and the development server
-take it; and the application tells the engine in one place, where it
-starts, before it shows anything, with nothing before it but what it
-brings in. Started for the test, the application has told the engine,
-also when it cannot start. On the built site
+the address is built in one module only and written out nowhere (the
+name of the engine's packages, `@cesium/`, ends like the folder and is
+taken out before the text is read); the engine is brought in by one
+module only, the one that starts it, and that module writes no address
+with the name of a computer in it (GLB-002); the folder's name is taken
+from where the build and the development server take it; and the
+application tells the engine in one place, where it starts, before it
+shows anything, with nothing before it but what it brings in. Started
+for the test, the application has told the engine, also when it cannot
+start, and the engine of the globe, fetched a moment later, finds the
+address told at the moment it is started. On the built site
 (`frontend/e2e/engine.spec.ts`, two browser tests): the page as it was
 built has told the address; and the browser, asked from the page for a
 file of each of the eight kinds beneath the address it was told, gets
