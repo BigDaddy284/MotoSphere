@@ -15,7 +15,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 |---|---|---|---|
 | 1 | Foundation (FND) | 58 | 58 |
 | 2 | Data store and published data (DAT, PUB) | 76 | 58 |
-| 3 | Interactive 3D Earth (GLB) | 29 | 7 |
+| 3 | Interactive 3D Earth (GLB) | 30 | 7 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -325,6 +325,19 @@ component passes it on is a task of its own, GLB-029, with unit tests and
 the stand-in, as GLB-027 was: GLB-002 then has the real engine say it. One
 task is new; Phase 3 has 29 tasks and the plan 306. Order on track B:
 GLB-029, GLB-002, GLB-028, then GLB-003.
+
+**The view the globe opens with (PLAN-058):** with the real engine in the
+page (the trial of GLB-002) the planner looked at the page at the screen
+sizes the layout knows. The engine opens with a view of its own, from one
+fixed distance, and it holds its field of view across the longer side of its
+drawing surface: the Earth then takes about six tenths of the longer side
+whatever the shape of the stage, and is cut off wherever the shorter side is
+smaller than that, on a phone held upright and on a phone lying. Which view
+the globe opens with was no task of its own; it is now GLB-030, which comes
+before the globe follows the size of the stage (GLB-028) and before the
+picture is checked (GLB-003), because both go by that view. One task is new;
+Phase 3 has 30 tasks and the plan 307. Order on track B: GLB-002, GLB-030,
+GLB-028, then GLB-003.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -3182,6 +3195,17 @@ What holds for every task of the phase:
 - **Commit:** –
 - **Plan:** `docs/plans/GLB-002.md`
 
+### GLB-030 – The view the globe opens with
+- **Status:** NOT STARTED
+- **Objective:** When the page opens, the whole Earth is in the globe stage with space around it, at every screen size the layout knows, seen from above one place that the project has chosen.
+- **Description:** Added on 2026-11-28 (PLAN-058), from what the planner saw in the trial of GLB-002. The engine opens with a view of its own, from one fixed distance. It holds its field of view, an angle, across the longer side of its drawing surface, so from one distance the Earth takes the same share of the longer side whatever the shape of the stage: on a stage much higher than wide, a phone held upright, and on one much wider than high, a phone lying, the Earth is cut off at both sides. The globe is to open with the camera straight above a place the project names, north up, at the distance from which the Earth takes a named share of the shorter side of the stage as it is then. The distance is arithmetic of the width, the height, the field of view and the share, in a module of its own that knows nothing of the engine and is tested where nothing is drawn; the module that starts the engine sets the camera with it before the first picture. The planner's trial settles the place and the share, and how the browser tests hold both from the picture itself. What the view does when the stage changes its size afterwards is GLB-028; how a person moves the globe is GLB-005 and the tasks after it; a way back to this view is GLB-010.
+- **Acceptance criteria:** at every screen size the layout knows, the Earth is whole in the stage when the globe says that it is drawn: there is Earth just inside the edge the view aims at and sky just outside it, in every direction; the middle of the Earth is the middle of the stage; the place the globe is above and north being up are held from the picture, by known coasts; the arithmetic of the distance is held by unit tests, for surfaces of every shape and for a surface that has no size yet; the engine is still brought in by one module only, and nothing is on the console.
+- **Tests required:** frontend unit tests of the arithmetic; browser tests in the project `globe` that read the picture at the screen sizes the layout knows, with the time of the page fixed so that the sky is the same sky on every day; planted defects in the arithmetic and in how the camera is set; the full run of all gates on both machines.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+
 ### GLB-028 – The globe follows the size of the stage
 - **Status:** NOT STARTED
 - **Objective:** The drawing surface keeps the size of the stage when a panel opens or closes and when the window changes, and the Earth is drawn anew at that size.
@@ -3196,7 +3220,7 @@ What holds for every task of the phase:
 ### GLB-003 – The picture of the Earth is checked
 - **Status:** NOT STARTED
 - **Objective:** Browser tests prove from the pixels that what is drawn is the Earth, in the right place and the right way up.
-- **Description:** A successful build and a drawing surface are no proof that anything is drawn (CLAUDE.md §18). The tests read the picture: the disc of the Earth stands in the middle of the stage with space around it, the middle is not one flat colour, known places are land or sea as they are on Earth at the home view, and north is up. The checks are written to hold in software drawing on both machines, with tolerances that the trial measures and records, and they fail for an empty, black, upside-down or mirrored picture.
+- **Description:** A successful build and a drawing surface are no proof that anything is drawn (CLAUDE.md §18). That the Earth is whole in the stage at the view the globe opens with, above the place the project names and north up, is held from the picture by GLB-030 (PLAN-058); what is left to this task is settled when it is planned. The tests read the picture: the disc of the Earth stands in the middle of the stage with space around it, the middle is not one flat colour, known places are land or sea as they are on Earth at the home view, and north is up. The checks are written to hold in software drawing on both machines, with tolerances that the trial measures and records, and they fail for an empty, black, upside-down or mirrored picture.
 - **Acceptance criteria:** the checks pass on Linux and on Windows in ten runs out of ten; each of these defects is detected: nothing drawn, the imagery missing, the globe off centre, east and west exchanged, north and south exchanged, the surface not following the stage's size; the tolerances and how they were measured are in TESTING.md.
 - **Tests required:** browser tests that read pixels of the real globe; planted defects in the globe and in the imagery; repeated runs on both machines; the full run of all gates on both machines.
 - **Tests executed:** –
