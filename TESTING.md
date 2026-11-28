@@ -2352,9 +2352,13 @@ the clock is replaced, never the store.
 
 ## A unit test that starts the page
 
-Two unit tests start the whole page by bringing in `src/main.tsx`: one in
-`frontend/src/main.test.tsx` and one in
-`frontend/src/globe/engineAddress.test.ts`. React does not show a page at
+Three unit tests start the whole page by bringing in `src/main.tsx`: two
+in `frontend/src/main.test.tsx` and one in
+`frontend/src/globe/engineAddress.test.ts`. In both files the module that
+starts the real engine of the globe (`src/globe/earth.ts`) is replaced
+(`vi.mock`) by one that only notes that it was started: the real engine
+draws, which the test environment cannot (GLB-002). React does not show a
+page at
 once. It puts the work in a queue and does it a moment later, and what
 follows from showing the page a moment after that. A test that ends
 before the queue is empty leaves that work waiting. If the test's file
@@ -2364,7 +2368,7 @@ not defined" and counts as failed, although every test passed. Whether
 that happens is a matter of a few moments either way, so it happens
 rarely: once so far, on GitHub's Linux machine (run 46006701452).
 
-So both tests start the page inside React's `act`:
+So these tests start the page inside React's `act`:
 
 ```ts
 await act(async () => {
@@ -2373,11 +2377,13 @@ await act(async () => {
 ```
 
 `act` comes back only when React has nothing left to do: the page is
-shown in full, with all that follows from showing it. Each of the two
+shown in full, with all that follows from showing it. Each of the
 tests then looks at the page at once, without waiting for it
 (`getByRole` where it was `findByRole`, and a root element that is not
 empty). A start outside `act` therefore fails its test every time, and
-not one run in many.
+not one run in many. Only the engine of the globe comes later, because
+the page fetches it after it is shown: the two tests that are about it
+wait for the note of the module that stands in for it.
 
 A new unit test that brings in `main.tsx`, or that shows something with
 React by any other way than `render` of Testing Library, does the same.
@@ -2716,7 +2722,7 @@ the browser for such a picture (`browserDraws3D` in
 browser gives none, the stage says in the place of the globe "The 3D
 globe cannot be shown in this browser." and under it, in a second
 sentence, why, and what a person can do (GLB-026). Where the browser
-gives one, the stage is empty until the globe is in the page (GLB-002).
+gives one, the stage shows the globe (GLB-002, "The Earth in the page").
 The sentences name no technology and speak of no error.
 
 **Only the newer kind of 3D picture counts.** A browser has two kinds
@@ -2740,7 +2746,8 @@ logged nothing: the browser had cleared the pictures away by itself in
 between. The question as it is, asked forty times in a row, logs
 nothing.
 
-28 unit tests and 13 browser tests hold this.
+37 unit tests and 13 browser tests hold this; nine of the unit tests
+came with the globe (GLB-002).
 
 The unit tests, over the stand-in for the drawing surface:
 
@@ -2753,22 +2760,27 @@ The unit tests, over the stand-in for the drawing surface:
   picture asked for each time, of the newer kind; nothing held
   afterwards; and yes without an error in a browser that takes no
   picture back;
-- `frontend/src/globe/GlobeStage.test.tsx` (8) tests the stage: empty
-  where the browser draws; the two sentences in their order where it
-  does not; the browser asked when the stage is first shown and not
-  again, and its first answer kept; no picture held; and the same where
-  React shows the stage twice, as it does in development;
+- `frontend/src/globe/GlobeStage.test.tsx` (17) tests the stage: the
+  globe where the browser draws ("The Earth in the page"); the two
+  sentences in their order where it does not, with no engine asked for
+  and no globe that could be busy; the browser asked when the stage is
+  first shown and not again, and its first answer kept; no picture
+  held; and the same where React shows the stage twice, as it does in
+  development;
 - one test of the shell (`AppShell.test.tsx`) and three of the
   application (`App.test.tsx`): what the stage shows is in the globe
-  stage and nowhere else, and the sections and both panels work as
-  before where the globe cannot be shown.
+  stage and nowhere else, the engine is not asked for where the globe
+  cannot be shown, and the sections and both panels work as before
+  there.
 
 The browser tests, with the built site:
 
 - `frontend/e2e/stage.spec.ts` (10), in the project `chromium`, whose
   browser gives a page no 3D picture: the question itself, handed to
   the page as it stands, says no; the stage has the two sentences and
-  nothing else; no file of the engine is asked for; the words are in
+  nothing else; no file of the engine is asked for, and no script or
+  style sheet but the one of each that the page itself names; the words
+  are in
   the middle of the stage, in the colours and sizes of the theme, in
   lines no longer than 32 times the size of the text, and stay there
   when the panels are closed; on four narrow screens both sentences are
@@ -2776,9 +2788,9 @@ The browser tests, with the built site:
   not scroll; and in a stage too low for the words they start at its
   top and the stage scrolls to their end;
 - `frontend/e2e/globe/stage.spec.ts` (3), in the project `globe`: the
-  stage is empty; the question, handed to the page, says yes forty
-  times in a row with nothing on the console; and the top bar and both
-  panels work around the empty stage.
+  stage shows the globe and not the sentences; the question, handed to
+  the page, says yes forty times in a row with nothing on the console;
+  and the top bar and both panels work around the globe.
 
 Every other browser test of the project `chromium` now runs with the
 two sentences in the stage, and none of them was changed for it.
@@ -2792,10 +2804,10 @@ an element, which in turn gives the way to stop it) and whom to tell
 when that fails (`onFailed`). An engine that is started is handed a
 listener, to which it says that its first complete picture is drawn
 (`drawn`), and the component can be handed whom to tell of that
-(`onDrawn`, GLB-029). It is not in the page yet: the real
-engine is GLB-002, and what a person is told when it fails is GLB-004.
-So these tasks have unit tests and no browser tests, and they run with
-the stand-in engine (`frontend/src/test/engine.ts`).
+(`onDrawn`, GLB-029). The stage shows it, with the real engine, since
+GLB-002 ("The Earth in the page"); what a person is told when it fails
+is GLB-004. These two tasks have unit tests and no browser tests, and
+they run with the stand-in engine (`frontend/src/test/engine.ts`).
 
 `frontend/src/globe/Globe.test.tsx` (44):
 
@@ -2877,6 +2889,155 @@ it a listener that does nothing.
 No test of the two files ends with work of React's waiting: the set-up
 of the unit tests holds every test to that (FND-056). The component
 itself asks React for nothing after it is shown.
+
+## The Earth in the page
+
+Where the browser gives a 3D picture, the globe stage shows the `Globe`
+component, and the real engine is started in it (GLB-002). Three
+modules do it:
+
+- `frontend/src/globe/earth.ts` is the real way to start the engine,
+  and the only module of the application that brings the engine in. It
+  makes one widget of the engine in the element it is handed, with the
+  pictures of the Earth that come with the engine (Natural Earth II,
+  from the folder of the site that holds the engine's files) and with
+  the engine told to draw only when something has changed. After each
+  picture it draws it asks the engine whether a piece of the Earth is
+  still waiting; when none is, it stops asking and says that the Earth
+  is drawn, once the engine has finished that picture. Stopping takes
+  the widget away and gives the browser its 3D picture back.
+- `frontend/src/main.tsx` hands the application the way to load it:
+  the page fetches that module, and the engine with it, when the globe
+  is shown and not with the page.
+- `frontend/src/globe/GlobeStage.tsx` shows the globe in an element
+  that fills the stage and marks it as busy (`aria-busy`) until the
+  engine has said that the Earth is drawn. What the engine fails with
+  is handed to the browser, as before; what a person is told then is
+  GLB-004.
+
+The engine shows a mark of its own in a corner of the globe and comes
+with its own sky and its own way of being moved by the mouse. This
+task leaves all three as the engine has them: what the globe looks
+like, the credits it owes and how it is moved are later tasks
+(GLB-012, GLB-015, GLB-005).
+
+### Unit tests
+
+The unit tests cannot draw, so none of them starts the real engine:
+they hand the stage the stand-in (`frontend/src/test/engine.ts`).
+
+- `frontend/src/globe/GlobeStage.test.tsx`, where the browser gives a
+  3D picture (10): the stage shows one element and in it the empty
+  surface of the globe, and nothing else; the engine is asked for
+  once, with the way the stage was handed; it is started in the
+  surface when it has arrived; the globe is busy until the engine has
+  said that its first complete picture is drawn, and not after; an
+  engine that says it again changes nothing, and the surface and the
+  engine stay the ones they were; the engine is stopped when the stage
+  goes; an engine that cannot be loaded and one that cannot be started
+  are each handed to the browser once, with the very thing that went
+  wrong, and the globe stays busy; nothing is handed to the browser
+  while all goes well; and the stage holds no 3D picture of its own.
+  Where the browser gives none (3): the two sentences, also where it
+  gives only the older kind of 3D picture; the engine is not asked
+  for, and there is no globe that could be busy. Where React shows the
+  stage twice, as it does in development, there is one globe with one
+  engine and it is said once that it is drawn.
+- `frontend/src/App.test.tsx`: the application hands the stage the way
+  to load the engine that it was handed itself, and where the globe
+  cannot be shown the engine is not asked for.
+- `frontend/src/main.test.tsx`: started as the page starts it, the
+  application fetches the module that starts the engine and starts it
+  in an element of the globe stage. In this file and in
+  `frontend/src/globe/engineAddress.test.ts` that module is replaced
+  by one that only notes that it was started.
+- `frontend/src/globe/engineAddress.test.ts`: the engine is brought in
+  by `earth.ts` and by no other module, and `earth.ts` writes no
+  address with the name of a computer in it; and when the engine is
+  started, it has been told where its files are.
+
+### Browser tests
+
+`frontend/e2e/globe/earth.spec.ts` (5), in the project `globe`, on the
+site as it was built, with the real engine. The fixture of every
+browser test fails each of them for a warning or an error on the
+console, for a request that fails and for an answer that says a file
+is not there. Each test waits until the globe says that the Earth is
+drawn, for at most twenty seconds.
+
+- **One surface that fills the stage.** The stage is 700 by 672 pixels
+  at its place in a page of 1280 by 720, there is one drawing surface,
+  it has the same place and size, it has 700 by 672 pixels of its own,
+  and the page does not scroll.
+- **The page is not held back.** With the script of the engine held
+  back by the test, the heading, the data status and the sections are
+  there and work, the globe is busy and has no drawing surface; the
+  script is asked for once; when it is let through, the Earth is
+  drawn.
+- **Drawn means that the pictures have arrived.** When the globe says
+  so, the list of the pictures and at least two pictures of the Earth
+  have arrived, no request is under way, and the engine has drawn. A
+  second and a half later no request was made, the picture of the
+  stage is the same pixel for pixel, and the engine has drawn nothing
+  more: the test counts every call that tells a 3D picture to draw.
+- **Nothing is asked of another computer.** Every request of the page
+  goes to the site, under the site's own folder; the script of the
+  engine is asked for once; more than five files come from the folder
+  of the engine's files; and no address names a service of the engine
+  that needs an account, but for the picture of the engine's own mark.
+- **Stopped and started again.** The page starts the engine in an
+  element of its own and stops it at once, twenty times in a row: each
+  time one drawing surface while it runs and nothing left when it is
+  stopped. Then an engine is left running: it says once that the Earth
+  is drawn, is given another size, which makes it draw again, and has
+  still said it once when it is stopped a second later. And one is
+  stopped by whoever is told that the Earth is drawn, there and then,
+  and says it once. After all this the globe of the page still has its
+  3D picture. A browser keeps only so many 3D pictures for a page, and
+  takes the oldest away with a warning on the console when a page asks
+  for one more, so an engine that kept its picture when it is stopped
+  fails this test.
+
+Two tests that were there changed with the page:
+`frontend/e2e/globe/stage.spec.ts` now finds the globe in the stage
+where it found the stage empty, and `frontend/e2e/stage.spec.ts`, in
+the browser without 3D pictures, also holds that the page asks for one
+script and one style sheet and no more, so that the engine is not
+fetched there.
+
+### What the planted defects showed
+
+Each line was tried as a planted defect, alone, against the browser
+tests of the three files above:
+
+- An engine that says that the Earth is drawn with its first picture,
+  or as soon as it knows which pictures there are, is found by the
+  test of the pictures that have arrived.
+- An engine that says it in the middle of drawing a picture, where the
+  test stops it there and then, is found by the test that stops and
+  starts: the engine was not finished with that picture.
+- An engine that goes on asking after it has said it says it a second
+  time when it is given another size, and is found by the same test.
+- An engine that keeps its 3D picture when it is stopped, one whose
+  widget is left where it was, and one that is not stopped at all are
+  each found by that test.
+- An engine that draws all the time is found by the count of the
+  drawings.
+- An engine that is not told which pictures to use asks another
+  computer for them, and one that is told a folder that is not there
+  gets an answer that says so: both are found. An engine that draws
+  the Earth without pictures is found too.
+- Without the rules of the engine's style sheet, and with a stage that
+  does not give the globe its room, the drawing surface does not fill
+  the stage.
+- An engine that comes with the page and not after it, and one that
+  never arrives, are found by the test that holds the script back.
+
+At the time of the task a planted defect that left out the question
+whether the pictures themselves are ready was found by no test: the
+engine does not count a piece as arrived while its picture is still a
+placeholder, so the one question, whether a piece is still waiting,
+is enough, and the other was taken out of the code.
 
 ## The tools a computer needs
 
@@ -3118,12 +3279,17 @@ table, of a picture of the Earth and of the description of those pictures
 beneath the folder, on the computer of the page. The rest is read from
 the text of the application's code, of the page and of the settings of
 the build: the engine's own word for the address is in one module only;
-the address is built in one module only and written out nowhere; the
-folder's name is taken from where the build and the development server
-take it; and the application tells the engine in one place, where it
-starts, before it shows anything, with nothing before it but what it
-brings in. Started for the test, the application has told the engine,
-also when it cannot start. On the built site
+the address is built in one module only and written out nowhere (the
+name of the engine's packages, `@cesium/`, ends like the folder and is
+taken out before the text is read); the engine is brought in by one
+module only, the one that starts it, and that module writes no address
+with the name of a computer in it (GLB-002); the folder's name is taken
+from where the build and the development server take it; and the
+application tells the engine in one place, where it starts, before it
+shows anything, with nothing before it but what it brings in. Started
+for the test, the application has told the engine, also when it cannot
+start, and the engine of the globe, fetched a moment later, finds the
+address told at the moment it is started. On the built site
 (`frontend/e2e/engine.spec.ts`, two browser tests): the page as it was
 built has told the address; and the browser, asked from the page for a
 file of each of the eight kinds beneath the address it was told, gets
