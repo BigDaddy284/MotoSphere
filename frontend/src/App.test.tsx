@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { APP_NAME, APP_TAGLINE, App } from './App.tsx'
 import { NO_GLOBE, NO_GLOBE_HELP } from './globe/GlobeStage.tsx'
 import { browserGives } from './test/drawing.ts'
+import { standInEngine, type StandIn } from './test/engine.ts'
 
 /** The labels of the sections marked as current. */
 function currentSections() {
@@ -15,7 +16,12 @@ function currentSections() {
 }
 
 describe('App', () => {
+  // The engine of the globe, which the application is handed the way to
+  // load: a stand-in that arrives when a test says so.
+  let engine: StandIn
+
   beforeEach(() => {
+    engine = standInEngine()
     // The page asks for the published data as soon as it is shown. These
     // tests are not about the data, so the answer never comes.
     vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise(() => {}))
@@ -26,45 +32,52 @@ describe('App', () => {
   })
 
   it('shows the application name as the main heading', () => {
-    render(<App />)
+    render(<App loadTheEngine={engine.load} />)
 
     expect(screen.getByRole('heading', { level: 1, name: APP_NAME })).toBeVisible()
   })
 
   it('shows the tagline', () => {
-    render(<App />)
+    render(<App loadTheEngine={engine.load} />)
 
     expect(screen.getByText(APP_TAGLINE)).toBeVisible()
   })
 
   it('has exactly one main landmark', () => {
-    render(<App />)
+    render(<App loadTheEngine={engine.load} />)
 
     expect(screen.getAllByRole('main')).toHaveLength(1)
   })
 
-  it('has an empty globe stage where the browser gives a 3D picture', () => {
-    render(<App />)
+  it('shows the globe in the globe stage where the browser gives a 3D picture, with the engine it was handed', async () => {
+    render(<App loadTheEngine={engine.load} />)
+    const stage = screen.getByRole('main', { name: 'Globe' })
+    expect(stage.children).toHaveLength(1)
+    expect(stage.firstElementChild).toHaveAttribute('aria-busy', 'true')
+    expect(engine.loadings()).toBe(1)
 
-    expect(screen.getByRole('main', { name: 'Globe' })).toBeEmptyDOMElement()
+    await engine.arrives()
+
+    expect(engine.running()).toEqual([stage.firstElementChild?.firstElementChild])
     expect(screen.queryByText(NO_GLOBE)).not.toBeInTheDocument()
   })
 
   it('says in the globe stage, and nowhere else, that the globe cannot be shown where the browser gives none', () => {
     browserGives([])
 
-    render(<App />)
+    render(<App loadTheEngine={engine.load} />)
 
     const stage = screen.getByRole('main', { name: 'Globe' })
     expect(within(stage).getByText(NO_GLOBE)).toBeVisible()
     expect(within(stage).getByText(NO_GLOBE_HELP)).toBeVisible()
     expect(screen.getAllByText(NO_GLOBE)).toHaveLength(1)
+    expect(engine.loadings()).toBe(0)
   })
 
   it('works as before where the globe cannot be shown: the sections and both panels', async () => {
     browserGives([])
     const user = userEvent.setup()
-    render(<App />)
+    render(<App loadTheEngine={engine.load} />)
 
     await user.click(screen.getByRole('button', { name: 'Championships' }))
     expect(currentSections()).toEqual(['Championships'])
@@ -79,14 +92,14 @@ describe('App', () => {
   })
 
   it('starts in the Explore section', () => {
-    render(<App />)
+    render(<App loadTheEngine={engine.load} />)
 
     expect(currentSections()).toEqual(['Explore'])
   })
 
   it('moves to the section the user clicks', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    render(<App loadTheEngine={engine.load} />)
 
     await user.click(screen.getByRole('button', { name: 'Championships' }))
 
@@ -95,7 +108,7 @@ describe('App', () => {
 
   it('moves to the section the user chooses with the keyboard', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    render(<App loadTheEngine={engine.load} />)
 
     screen.getByRole('button', { name: 'Explore' }).focus()
     await user.tab()
@@ -111,7 +124,7 @@ describe('App', () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date(2026, 10, 17, 9, 30))
 
-    render(<App />)
+    render(<App loadTheEngine={engine.load} />)
 
     const date = screen.getByRole('banner').querySelector('time:not(output time)')
     expect(date).not.toBeNull()
@@ -129,7 +142,7 @@ describe('App', () => {
     }
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(manifest)))
 
-    render(<App />)
+    render(<App loadTheEngine={engine.load} />)
 
     const topBar = screen.getByRole('banner')
     const status = within(topBar).getByRole('status')
