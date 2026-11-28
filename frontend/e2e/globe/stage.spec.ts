@@ -3,17 +3,19 @@ import { expect, test } from './fixtures'
 
 /**
  * These tests run in the browser of the globe tests, which draws 3D
- * pictures. There the globe stage has nothing to say. The fixture of every
- * browser test fails each of them for any warning or error on the console.
+ * pictures. There the globe stage shows the globe and has nothing to say.
+ * The fixture of every browser test fails each of them for any warning or
+ * error on the console.
  */
 
 test.describe('the globe stage in a browser that draws 3D pictures', () => {
-  test('does not say that the globe cannot be shown: it is empty', async ({ page }) => {
+  test('does not say that the globe cannot be shown: it shows the globe', async ({ page }) => {
     await page.goto('./')
     await expect(page.getByRole('banner').getByRole('status')).toHaveText(/^Data updated /)
 
     const stage = page.getByRole('main', { name: 'Globe' })
-    await expect(stage).toBeEmpty()
+    await expect(stage.locator('[aria-busy]')).toHaveCount(1)
+    await expect(stage.locator('p')).toHaveCount(0)
     await expect(page.getByText('cannot be shown')).toHaveCount(0)
   })
 
@@ -57,6 +59,6 @@ test.describe('the globe stage in a browser that draws 3D pictures', () => {
     await page.getByRole('button', { name: 'Details' }).click()
     await expect(sections).toBeVisible()
     await expect(details).toBeVisible()
-    await expect(stage).toBeEmpty()
+    await expect(stage.locator('[aria-busy]')).toHaveCount(1)
   })
 })
