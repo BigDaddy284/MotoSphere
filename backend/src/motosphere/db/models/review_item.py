@@ -29,8 +29,7 @@ decided, and can be deleted.
 
 A key is 1 or more. The store gives keys from 1 up, and it refuses a key
 below 1 that is written by hand, for a new item and for one that is
-there, under whichever of its names the statement sets the key. That too
-stands in the file, as triggers.
+there. That too stands in the file, as triggers.
 """
 
 from datetime import datetime
@@ -193,21 +192,13 @@ _A_DECISION_IS_KEPT = (
 # is written, when SQLite has given a new item that names no key its key,
 # and SQLite takes the row back with the statement. Before the row is
 # written a new item that names no key has none, and SQLite shows -1.
-#
-# The second fires after every change of an item, whatever the statement
-# names, and asks whether the key is another than it was. SQLite has
-# three more names for the key of a table, "rowid", "_rowid_" and "oid",
-# and a trigger that fires for a change of the column "id" is not fired
-# by a statement that sets the key by one of them. An item that keeps its
-# key is not asked about: one that had a key below 1 before the rule was
-# there can still be given a note.
 _A_KEY_IS_1_OR_MORE = (
     "CREATE TRIGGER tr_review_item_key_positive AFTER INSERT ON review_item "
     "WHEN NEW.id < 1 "
     "BEGIN SELECT RAISE(ABORT, "
     "'A key of the review queue (review_item) is 1 or more.'); END",
-    "CREATE TRIGGER tr_review_item_key_stays_positive AFTER UPDATE ON review_item "
-    "WHEN NEW.id < 1 AND NEW.id != OLD.id "
+    "CREATE TRIGGER tr_review_item_key_stays_positive AFTER UPDATE OF id ON review_item "
+    "WHEN NEW.id < 1 "
     "BEGIN SELECT RAISE(ABORT, "
     "'A key of the review queue (review_item) is 1 or more.'); END",
 )

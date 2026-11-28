@@ -28,7 +28,6 @@ __all__ = [
     "MIGRATIONS",
     "hold_one_doubt_to_one_review_item",
     "hold_the_key_of_a_review_item_to_1_or_more",
-    "hold_the_key_of_a_review_item_under_every_name",
     "index_the_record_changes",
     "index_the_runs_of_a_source",
     "keep_a_decided_review_item_from_being_replaced",
@@ -874,27 +873,6 @@ def let_a_region_say_its_code(connection: Connection) -> None:
     connection.exec_driver_sql("CREATE INDEX ix_region_source_id ON region (source_id)")
 
 
-def hold_the_key_of_a_review_item_under_every_name(connection: Connection) -> None:
-    """18: the second trigger of the keys of the review queue, made anew (DAT-068).
-
-    The eleventh migration made it fire for a change of the column
-    ``id``. SQLite has three more names for the key of a table,
-    ``rowid``, ``_rowid_`` and ``oid``, and a statement that sets the key
-    by one of them did not fire it. The trigger now fires after every
-    change of an item and asks whether the key is another than it was.
-    """
-    connection.exec_driver_sql("DROP TRIGGER tr_review_item_key_stays_positive")
-    connection.exec_driver_sql(
-        """
-        CREATE TRIGGER tr_review_item_key_stays_positive AFTER UPDATE ON review_item
-        WHEN NEW.id < 1 AND NEW.id != OLD.id
-        BEGIN
-            SELECT RAISE(ABORT, 'A key of the review queue (review_item) is 1 or more.');
-        END
-        """
-    )
-
-
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
@@ -913,5 +891,4 @@ MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     let_a_source_be_a_reference_list,
     make_the_regions,
     let_a_region_say_its_code,
-    hold_the_key_of_a_review_item_under_every_name,
 )

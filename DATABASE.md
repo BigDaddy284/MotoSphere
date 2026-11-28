@@ -6,7 +6,7 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 18 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 17 and
 has seven tables: `source`, that of the information sources (DAT-006),
 each of which can say which country it is of (DAT-057),
 `source_offer`, which says what kinds of information each of them offers
@@ -24,8 +24,8 @@ see "The review queue"), where the store itself refuses the same doubt
 a second time (DAT-050) and keeps a decision: an item that was decided
 is neither edited nor deleted (DAT-054; see "A decision is kept"), and
 no row takes its place (DAT-055; see "A decided item is never
-replaced"). A key of the queue is 1 or more, under every name SQLite
-has for the key (DAT-056, DAT-068; see "A key is 1 or more"). The sixth is `country`, the countries by their two codes of
+replaced"). A key of the queue is 1 or more (DAT-056; see "A key is 1
+or more"). The sixth is `country`, the countries by their two codes of
 ISO 3166-1, and the first table of collected records (DAT-011; see
 "The countries"); a new store has no rows in it, and the command
 `countries` loads them (DAT-061; see "The loading of the countries").
@@ -200,8 +200,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 18." or "The data store lacks 15
-migrations: … is at schema version 3, and the newest is version 18." In
+is up to date: … is at schema version 17." or "The data store lacks 14
+migrations: … is at schema version 3, and the newest is version 17." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -222,7 +222,7 @@ where `migrate` puts it right the sentence says so:
 | The store | What is said |
 |---|---|
 | There is no file | "There is no data store: … does not exist. Run `python -m motosphere migrate` first." |
-| It lacks migrations | "The data store lacks 5 migrations: … is at schema version 13, and the newest is version 18. Run `python -m motosphere migrate` first." |
+| It lacks migrations | "The data store lacks 4 migrations: … is at schema version 13, and the newest is version 17. Run `python -m motosphere migrate` first." |
 | `migrate` would refuse it, or it cannot be opened | What `migrate` says of it, word for word |
 
 The file is byte for byte the same afterwards, nothing is made beside it,
@@ -252,7 +252,6 @@ list of them, and nothing else (DAT-006):
 | 15 | `let_a_source_be_a_reference_list` | Builds the table `source` anew with a check of `category` that names one more kind of source, `reference list`, every source with what it had, and makes the index `ix_source_country_id` again | DAT-058 |
 | 16 | `make_the_regions` | Makes the table `region` and the index over the source of its rows | DAT-013 |
 | 17 | `let_a_region_say_its_code` | Builds the table `region` anew with the column `iso_3166_2`, the check of its form and the rule that no two regions have one code, every region with what it had, and makes the index `ix_region_source_id` again | DAT-064 |
-| 18 | `hold_the_key_of_a_review_item_under_every_name` | Makes the second trigger of the keys of `review_item` anew, so that it fires after every change of a row and not only after one that names the column `id` | DAT-068 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -2511,14 +2510,12 @@ The store gives the items of the queue their keys, from 1 up. The
 eleventh migration (`hold_the_key_of_a_review_item_to_1_or_more`,
 DAT-056) makes two triggers on `review_item` that refuse a key below 1
 written by hand, and the model makes the same two wherever the table is
-made from it. The eighteenth
-(`hold_the_key_of_a_review_item_under_every_name`, DAT-068) makes the
-second of them anew, as it is said here:
+made from it:
 
 | Trigger | Fires | What SQLite says |
 |---|---|---|
 | `tr_review_item_key_positive` | After a new row whose key is below 1 | "A key of the review queue (review_item) is 1 or more." |
-| `tr_review_item_key_stays_positive` | After a row was given another key than it had, one below 1 | "A key of the review queue (review_item) is 1 or more." |
+| `tr_review_item_key_stays_positive` | After a row was given a key below 1 | "A key of the review queue (review_item) is 1 or more." |
 
 - **Why.** A new item that names no key has none until its row is
   written, and SQLite shows -1 for it until then. The task that keeps
@@ -2535,29 +2532,9 @@ second of them anew, as it is said here:
   it is refused, open or decided, of either shape, and also where the
   statement says `OR REPLACE` or `OR IGNORE`.
 - **A changed key**: an open item may be given another key of 1 or
-  more, as before, and none below 1. The second trigger fires after
-  every change of an item and asks two things of the row as it now
-  is: whether its key is below 1, and whether that is another key
-  than it had (`NEW.id < 1 AND NEW.id != OLD.id`). An item that is
-  given the key it has is given no other, and is not refused.
-- **Every name of the key.** SQLite has four names for the key of this
-  table: that of its column, `id`, and three of its own, `rowid`,
-  `_rowid_` and `oid`, each in any capitals and in the marks SQLite
-  takes around a name. The rule holds under all of them, in a
-  statement that changes an item and in one that stores a new one,
-  also where a new item that clashes with one that is there is told
-  to change that one (`ON CONFLICT … DO UPDATE`). Where a statement
-  names the key twice, SQLite takes the last, and the trigger sees
-  the key the item got.
-- **Until version 17 it did not** (DAT-068). The eleventh migration
-  made the second trigger fire for a change of the column
-  (`AFTER UPDATE OF id`), and SQLite does not fire such a trigger for
-  a statement that sets the key by one of its own names:
-  `UPDATE review_item SET rowid = -5 WHERE id = 5` was taken. The
-  eighteenth migration takes that trigger out and makes it anew
-  under the same name. It reads and changes no row. It is refused,
-  and the store left as it was, where the trigger is not there to be
-  taken out: such a store is not one the migrations built.
+  more, as before, and none below 1. The second trigger fires only
+  for a statement that names the key (`UPDATE OF id`), so every other
+  change costs nothing more.
 - **A decided item** is not given any other key: the triggers of a
   kept decision ask before the row is changed, these after it, so
   SQLite says "A decided review item (review_item) is never edited."
@@ -2565,11 +2542,10 @@ second of them anew, as it is said here:
   decision: what the statement had done to other rows is taken back
   with it, what the work did before stays, and in a unit of work the
   unit fails as a whole.
-- **An item that has a key below 1 already** is left as it is:
-  neither migration reads or changes a row. Such an item can still be
-  changed, and given a key of 1 or more; it cannot be given another
-  key below 1. No real store has items yet, and the store itself
-  never gave such a key.
+- **An item that has a key below 1 already** is left as it is: the
+  migration reads and changes no row. Such an item can still be
+  changed, and given a key of 1 or more. No real store has items yet,
+  and the store itself never gave such a key.
 
 ### A decided item is never replaced
 
