@@ -152,11 +152,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and what a person can do. The top bar and both panels work as before.
   The stage asks the browser when it is first shown and gives the 3D
   picture it was given back at once (GLB-026).
-- The `Globe` component: one element of the page, and one engine that
-  is loaded when the globe is shown, started in that element when it
-  has arrived, and stopped when the globe goes. How the engine is
-  loaded and started is handed to the component. It is not in the page
-  yet, so nothing a user sees changes (GLB-027).
 - The data store's first decisions (`DATABASE.md`): what it relies on in
   SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
   gates run on, and where the store is kept between scheduled runs
