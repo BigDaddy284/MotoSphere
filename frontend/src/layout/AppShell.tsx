@@ -14,6 +14,8 @@ interface AppShellProps {
   info: ReactNode
   /** What the sections panel shows. */
   sections: ReactNode
+  /** What the globe stage shows. */
+  stage: ReactNode
 }
 
 /**
@@ -23,7 +25,7 @@ interface AppShellProps {
  * panel that the user closes with its button in the top bar. On a narrow
  * screen the stage has the whole width, and an open panel lies over it.
  */
-export function AppShell({ name, tagline, info, sections }: AppShellProps) {
+export function AppShell({ name, tagline, info, sections, stage }: AppShellProps) {
   const { sections: sectionsPanel, details: detailsPanel } = useSidePanels()
 
   return (
@@ -59,7 +61,9 @@ export function AppShell({ name, tagline, info, sections }: AppShellProps) {
       >
         {sections}
       </nav>
-      <main className={styles.stage} aria-label="Globe" />
+      <main className={styles.stage} aria-label="Globe">
+        {stage}
+      </main>
       <aside
         id={DETAILS_PANEL_ID}
         className={styles.details}
