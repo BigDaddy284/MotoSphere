@@ -14,7 +14,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | Phase | Scope | Tasks | Verified |
 |---|---|---|---|
 | 1 | Foundation (FND) | 58 | 58 |
-| 2 | Data store and published data (DAT, PUB) | 73 | 55 |
+| 2 | Data store and published data (DAT, PUB) | 73 | 56 |
 | 3 | Interactive 3D Earth (GLB) | 28 | 4 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
@@ -27,7 +27,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 | 12 | News and historical expansion (NWS, HIS) | 10 | 0 |
 | 13 | Performance and deployment (PRF, DEP) | 10 | 0 |
 
-**Current task, track A (data store):** DAT-013 – Regions table.
+**Current task, track A (data store):** DAT-064 – A region says its code of ISO 3166-2.
 
 **Current task, track B (globe):** GLB-026 – The stage says when the browser cannot show the globe.
 
@@ -2668,7 +2668,7 @@ did not have, that a key is 1 or more, and made that a task of its own
 - **Plan:** `docs/plans/DAT-061.md`
 
 ### DAT-013 – Regions table
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** The store holds the regions of a country (a state, a county, a province), each of one country and by its name, so that a track can say where in its country it is.
 - **Description:** Narrowed on 2026-11-27 (PLAN-054): the code of ISO 3166-2 is DAT-064, and a region inside a region is DAT-065. The table `region`, its model `Region` in `motosphere.db.models.region`, and the sixteenth migration, `make_the_regions`. Settled in the planner's trial. The columns: `country_id`, the country the region is a part of, which cannot be without a value and refers to `country`; and `name`, text that is not empty, stored as its source writes it. A region is a collected record (`Collected`), the second real table of them, so the eight columns that say where a row came from, their checks, the reference to `source`, the index `ix_region_source_id` and the check of the two times come with that, and `NOT_COLLECTED` is unchanged. No two regions of one country have one name (`uq_region_country_id_name`, over the country and then the name); two countries can each have a region of a name; two names are one name only if they are the same text, and the table does not judge whether two names mean one region. A country that has regions cannot be deleted: the reference says nothing of deleting, and SQLite deletes nothing by itself. SQLite keeps an index for the rule of the names, with the country first, and uses it to find the regions of one country, also when a country is to be deleted, so the table has no index of its own over the country; a test holds what SQLite says it uses. The table has no rows and no reference rows: a region comes with the record that needs it.
 - **Acceptance criteria:**
@@ -2686,10 +2686,10 @@ did not have, that a key is 1 or more, and made that a task of its own
   12. `python scripts/check.py` reports 19 of 19 gates, with 2705 backend tests, and 117 tests more in all than `main` gives at the commit the branch starts from (3685 when that is `a8b30bb`); on the pull request both gates jobs are green (Linux and Windows) at the first attempt and the three jobs after the gates are skipped.
   13. Only the eleven files under "Scope" of the plan changed.
 - **Tests required:** 104 new integration tests in 32 functions, in a store the migrations built, with one source and two countries in it, on a real SQLite file, through the model and past it as plain SQL, each refusal with what SQLite said: what is stored; what a region cannot be without; the country that must be there, when a region is stored and when it is moved; a country with regions, without them and after they were taken away; one name in one country and in two, when a region is stored, renamed and moved; names that differ in a capital, a space or an accent; names that are empty; the source; the key of a deleted region; the rules of the eight columns; the two indexes, as SQLite says it uses them; the history. 9 new unit tests of the model. 3 new integration tests of the sixteenth migration, on a store that holds sources, countries and what points to them, and one case more of the test that tries every migration alone. Planted defects in the model and in the migration. The full run of all gates on both machines.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** By the tester thread, against the planner's test plan (shared folder, `testing/DAT-013/`), in a clean checkout of pull request #214 merged with `main` (Linux, with the two variables for the browser set): the full run, 19 of 19 gates passed, "Tests: 3703 passed, 0 failed, 0 skipped.", exit code 0 (repository 82, script tests 219, backend 2705, frontend unit 406, browser 291). The planner's 45 planted defects, one at a time, in the model and the migration of the pull request, each against the 413 tests of eight files (baseline 413 passed): 45 of 45 detected, each by the same tests as in the planner's trial. The plan's 13 prove-it steps: each fails the tests the plan names (8, 9, 6, 2, 3, 5, 95, 110, 1, 7, 2, 2 and 3 tests). By hand, in a store of the tester's own: `countries` without a store says that there is none and to run `migrate` first, with the exit code 1; `migrate` makes a store at schema version 16, and `schema` says it is up to date at version 16; `countries` adds 249 of 249; the table `region` is there, `STRICT` and without rows; with foreign keys on, a region of a country that is not there is refused, a second Canterbury in New Zealand is refused by the rule of the names, Canterbury in New Zealand and in Australia are both taken, and New Zealand cannot be deleted while it has a region. On GitHub, read by the planner and by the tester from the runs and job logs: run 46086551623 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 3703 passed, 0 failed, 0 skipped.", with 2705 backend tests on both machines, the three jobs after the gates skipped; run 46091724702 for `main` after the merge, all five jobs green at the first attempt, both gates jobs ending "Tests: 3703 passed, 0 failed, 0 skipped.", the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 283 of 283 files."
+- **Passed / Failed:** 3703 / 0 tests on both machines on GitHub for `main` and for the pull request, and in the tester's run (repository 82, script tests 219, backend 2705, frontend unit 406, browser 291); all 19 gates passed; 45 / 0 planted defects detected.
+- **Verification status:** Verified on 2026-11-28: tested by the tester thread, whose report names no number that differs from the test plan; merged and recorded by the planner, who compared the pull request with the trial and the merged tree with the tested one, and read the runs. All 11 files are the same change as the planner's trial. One existing test changed, as the plan names it: the list of the migrations' names got a sixteenth, and no assertion was dropped. No package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #213, run 46082696795). The builder reported 2705 backend tests, the store at version 16, 249 of 249 countries, the full run with 3703 tests and all 13 prove-it steps with the plan's counts. Its first full run failed in two globe tests, as unchanged `main` does in its environment, whose browser is a wrapper that takes away the word for 3D pictures in software; its final run set the two variables the plan names. The tester set them too and had Chromium 153.0.8010.12 with them.
+- **Commit:** `955ae15`
 - **Plan:** `docs/plans/DAT-013.md`
 
 ### DAT-064 – A region says its code of ISO 3166-2

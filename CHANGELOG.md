@@ -452,6 +452,12 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   waits in the review queue. A store that is not ready, a damaged file
   and a source that is described otherwise are refused in one sentence
   with the exit code 1, and the store is left as it was (DAT-061).
+- The table of the regions, `region`: the parts a country is divided
+  into. A region is a part of exactly one country and has a name that
+  no other region of that country has; it says where it came from like
+  every collected record; a country that has regions cannot be
+  deleted. The sixteenth migration makes the table, and the schema is
+  at version 16 (DAT-013).
 
 ### Removed
 
