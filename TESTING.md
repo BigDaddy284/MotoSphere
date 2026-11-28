@@ -984,22 +984,7 @@ it was and holds what it held, with the ten triggers, a region of the
 country and of the source that were there is then stored, and it
 fails, with the store left at its version, where a table of its name
 is there already, and where an index of its name is, with the table it
-had made before that taken back (DAT-013); the seventeenth builds the
-table of the regions anew in that store with two regions in it, one
-with only what a region cannot be without and one with everything, and
-two more that were deleted, so that the keys have a gap: after it the
-table has the column of the code after the name, every region has all
-it had and its key and no code, every row of the tables a region
-points to and the highest key of each table is as it was, no pointer
-is broken, and of all the tables and indexes, as SQLite holds them,
-only `region` is written otherwise; the key of a deleted region is not
-given again, in a table without regions too; the regions are held to
-their country, their source and the rule of the names again, a source
-that a region came from and a country that has a region cannot be
-deleted, and a code is held to its form and to one region; and it
-fails, with the store as it was, where a table of the name of either
-copy is there already, and at its last statement, where a table of the
-index's name stands in the index's place (DAT-064); a store
+had made before that taken back (DAT-013); a store
 with the newest schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -2102,54 +2087,15 @@ a row.
 `backend/tests/unit/test_db_models_region.py` reads the model, without
 a store: the table is in the whole schema and the model is named by
 the package; a region is a collected record and its table is not on
-the list of those that hold none; the fourteen columns in their order;
-only the code and the day it was published may be without a value; no
-column but the two times gives itself a value; the two references, to
-the country and to the source, neither of which says what is to happen
-when what it points to is deleted; the rule of the names, with the
-country first, and the rule of the codes; the code is plain text that
-points nowhere and has no index but the one of its rule; what the
-check of the code says, word for word; a region is made without a code
-and with one; the names of the eight checks, the two rules and the two
-references, and the one index; and the whole schema with the regions
-breaks neither the rules every table keeps nor the rule of where
-records came from.
-
-`backend/tests/integration/test_region_code.py` tests the code a
-region says (DAT-064), in a store that the migrations built, with one
-source and four countries in it, through the model and past it. Every
-code of the tests is a code of the standard, and the code of the
-region it is given to.
-
-- **What is stored.** A region is read back with its code; a region of
-  which no code is said has none; a row written past the model is read
-  with its code or without one; what the table holds of a code is its
-  text, six characters for `NZ-CAN`; the column stands after the name,
-  is text and may be without a value, and the table is strict.
-- **The form**: a code of each of the six forms the standard has is
-  taken, through the model and past it. Thirty-eight texts that are
-  not of the form are each refused by the check, through the model and
-  past it, and again when a region with a code and one without are to
-  be given the text later: small letters, another sign for the hyphen
-  or none, too many or too few characters on either side, white space
-  of four kinds, an accent, letters of full width, a Greek capital,
-  digits of another script, the signs a pattern is written with, and a
-  character with the number 0 in four places. Bytes are not a code,
-  and neither is a number.
-- **One code, one region**: a second region of a code is refused,
-  through the model and past it, and a region cannot be given the code
-  of another later, whether it had one or not. Any number of regions
-  can be without a code. A code can be given again once the region
-  that had it has none, has another or is deleted.
-- **Its history**: `change` gives a region a code, another and none,
-  and writes one row of history for each; a code that is said again is
-  no change; a change the table refuses, for the code of another
-  region or for text that is not of the form, leaves the codes as they
-  were and no history.
-- **What finds it**: the region of a code is found through the index
-  SQLite keeps for the rule of the codes, which SQLite says it uses; a
-  region is asked for by its code through the model, and so are the
-  regions without one.
+the list of those that hold none; the thirteen columns in their order;
+only the day it was published may be without a value; no column but
+the two times gives itself a value; the two references, to the country
+and to the source, neither of which says what is to happen when what
+it points to is deleted; the rule of the names, with the country
+first; the names of the seven checks, the rule and the two references,
+and the one index; and the whole schema with the regions breaks
+neither the rules every table keeps nor the rule of where records came
+from.
 
 ## The countries file
 

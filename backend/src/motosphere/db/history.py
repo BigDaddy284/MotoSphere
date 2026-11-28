@@ -32,7 +32,6 @@ __all__ = [
     "index_the_runs_of_a_source",
     "keep_a_decided_review_item_from_being_replaced",
     "keep_the_decision_of_a_review_item",
-    "let_a_region_say_its_code",
     "let_a_source_be_a_reference_list",
     "let_a_source_say_its_country",
     "let_the_record_changes_only_be_added_to",
@@ -770,109 +769,6 @@ def make_the_regions(connection: Connection) -> None:
     connection.exec_driver_sql("CREATE INDEX ix_region_source_id ON region (source_id)")
 
 
-def let_a_region_say_its_code(connection: Connection) -> None:
-    """17: the column ``iso_3166_2`` of ``region``, its form, and one region to a code (DAT-064).
-
-    SQLite puts a new column of a table that is there after all the
-    others, and cannot give it the rule that no two rows have one value.
-    So the table is built anew, as the fourteenth migration built the
-    sources: its rows are copied aside, the table is dropped, made again
-    with the column and filled from the copy, every row with all it had
-    and its key. No region gets a code: none is known. The highest key
-    the table has given is kept: without it the key of a region that was
-    deleted would be given a second time. The index over the sources of
-    the regions, which went with the table, is made again. No table of
-    a store at this version points to a region, so no check of what
-    points where has to wait for the end of the migration.
-    """
-    white_space = (
-        "char(9, 10, 11, 12, 13, 28, 29, 30, 31, 32, 133, 160, 5760, 8192, 8193, 8194, 8195, "
-        "8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288)"
-    )
-    connection.exec_driver_sql("CREATE TABLE region_before AS SELECT * FROM region")
-    connection.exec_driver_sql(
-        "CREATE TABLE region_key_before AS SELECT seq FROM sqlite_sequence WHERE name = 'region'"
-    )
-    connection.exec_driver_sql("DROP TABLE region")
-    connection.exec_driver_sql(
-        f"""
-        CREATE TABLE region (
-            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-            country_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            iso_3166_2 TEXT,
-            source_id INTEGER NOT NULL,
-            source_address TEXT NOT NULL,
-            collected_at TEXT NOT NULL,
-            published_on TEXT,
-            last_verified_at TEXT NOT NULL,
-            extraction_method TEXT NOT NULL,
-            confidence TEXT NOT NULL,
-            verification_status TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL,
-            CONSTRAINT uq_region_country_id_name UNIQUE (country_id, name),
-            CONSTRAINT ck_region_iso_3166_2_form CHECK (
-                ((iso_3166_2 GLOB '[A-Z][A-Z]-[A-Z0-9]')
-                 OR (iso_3166_2 GLOB '[A-Z][A-Z]-[A-Z0-9][A-Z0-9]')
-                 OR (iso_3166_2 GLOB '[A-Z][A-Z]-[A-Z0-9][A-Z0-9][A-Z0-9]'))
-                AND instr(iso_3166_2, char(0)) = 0),
-            CONSTRAINT fk_region_country_id_country
-                FOREIGN KEY(country_id) REFERENCES country (id),
-            CONSTRAINT uq_region_iso_3166_2 UNIQUE (iso_3166_2),
-            CONSTRAINT fk_region_source_id_source
-                FOREIGN KEY(source_id) REFERENCES source (id),
-            CONSTRAINT ck_region_name_not_empty CHECK (trim(name, {white_space}) != ''),
-            CONSTRAINT ck_region_source_address_web_address CHECK (
-                ((source_address GLOB '[Hh][Tt][Tt][Pp][Ss]://[^/?#]*')
-                 OR (source_address GLOB '[Hh][Tt][Tt][Pp]://[^/?#]*'))
-                AND NOT (source_address GLOB '*[' || {white_space} || ']*')
-                AND instr(source_address, char(0)) = 0),
-            CONSTRAINT ck_region_published_on_calendar_day CHECK (
-                (published_on GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]')
-                AND date(published_on) IS published_on AND published_on >= '0001-01-01'),
-            CONSTRAINT ck_region_extraction_method_one_of CHECK (extraction_method IN (
-                'official api', 'structured feed', 'rss feed', 'public dataset',
-                'html extraction', 'structured document', 'json endpoint', 'sitemap discovery',
-                'search engine discovery', 'human submission'
-            )),
-            CONSTRAINT ck_region_confidence_one_of
-                CHECK (confidence IN ('high', 'medium', 'low')),
-            CONSTRAINT ck_region_verification_status_one_of CHECK (verification_status IN (
-                'official', 'independent', 'reconstructed', 'unverified'
-            )),
-            CONSTRAINT ck_region_last_verified_at_not_before_collected_at
-                CHECK (last_verified_at >= collected_at)
-        ) STRICT
-        """
-    )
-    # Every region gets what it had before, its key too. The new column
-    # gets no value.
-    connection.exec_driver_sql(
-        """
-        INSERT INTO region (
-            id, country_id, name, source_id, source_address, collected_at, published_on,
-            last_verified_at, extraction_method, confidence, verification_status, created_at,
-            updated_at
-        )
-        SELECT
-            id, country_id, name, source_id, source_address, collected_at, published_on,
-            last_verified_at, extraction_method, confidence, verification_status, created_at,
-            updated_at
-        FROM region_before ORDER BY id
-        """
-    )
-    # Filling the table set its highest key to that of the rows that are
-    # there. The one it had before is put back.
-    connection.exec_driver_sql("DELETE FROM sqlite_sequence WHERE name = 'region'")
-    connection.exec_driver_sql(
-        "INSERT INTO sqlite_sequence (name, seq) SELECT 'region', seq FROM region_key_before"
-    )
-    connection.exec_driver_sql("DROP TABLE region_key_before")
-    connection.exec_driver_sql("DROP TABLE region_before")
-    connection.exec_driver_sql("CREATE INDEX ix_region_source_id ON region (source_id)")
-
-
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
@@ -890,5 +786,4 @@ MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     let_a_source_say_its_country,
     let_a_source_be_a_reference_list,
     make_the_regions,
-    let_a_region_say_its_code,
 )

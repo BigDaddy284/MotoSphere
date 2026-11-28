@@ -463,13 +463,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   every collected record; a country that has regions cannot be
   deleted. The sixteenth migration makes the table, and the schema is
   at version 16 (DAT-013).
-- A region can say its code of ISO 3166-2, as `NZ-CAN`, in the column
-  `iso_3166_2` of `region`. A region may be without one; a code is
-  held to the standard's form, two capital letters, a hyphen and one
-  to three capital letters or digits; no two regions have one code.
-  The seventeenth migration builds the table anew with the column,
-  every region with what it had, and the schema is at version 17
-  (DAT-064).
 
 ### Removed
 

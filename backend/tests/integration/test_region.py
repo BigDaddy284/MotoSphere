@@ -201,7 +201,6 @@ def test_what_the_table_holds_is_plain_text_and_whole_numbers(
             1,
             1,
             "Canterbury",
-            None,
             1,
             ADDRESS,
             "2026-11-27T09:00:00.000000+00:00",
@@ -222,7 +221,7 @@ def test_a_region_whose_source_gives_no_day_has_no_day(mapped: Engine) -> None:
     key = keep(mapped, a_region())
 
     assert the_region(mapped, key).published_on is None
-    assert held(mapped)[0][7] is None
+    assert held(mapped)[0][6] is None
 
 
 def test_a_row_written_past_the_model_is_read_as_a_region(mapped: Engine) -> None:
@@ -578,13 +577,11 @@ def test_the_regions_of_one_country_are_found_by_the_index_of_their_names(
             "EXPLAIN QUERY PLAN DELETE FROM country WHERE id = 1"
         ).all()
 
-    # The index SQLite keeps for the rule of the names is the first of the
-    # two that hold no two rows alike, and it begins with the country. The
-    # second is the one of the codes.
+    # The index SQLite keeps for the rule of the names: it is the only one
+    # that holds no two rows alike, and it begins with the country.
     assert sorted((str(name), int(unique)) for _, name, unique, *_ in indexes) == [
         ("ix_region_source_id", 0),
         ("sqlite_autoindex_region_1", 1),
-        ("sqlite_autoindex_region_2", 1),
     ]
     assert [name for _, _, name in index] == ["country_id", "name"]
     assert [detail for *_, detail in of_a_country] == [

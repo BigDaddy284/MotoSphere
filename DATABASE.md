@@ -6,7 +6,7 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 17 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 16 and
 has seven tables: `source`, that of the information sources (DAT-006),
 each of which can say which country it is of (DAT-057),
 `source_offer`, which says what kinds of information each of them offers
@@ -30,9 +30,8 @@ ISO 3166-1, and the first table of collected records (DAT-011; see
 "The countries"); a new store has no rows in it, and the command
 `countries` loads them (DAT-061; see "The loading of the countries").
 The seventh is `region`, the parts a country is divided into, each of
-one country and by its name (DAT-013; see "The regions"), which can
-say its code of ISO 3166-2 (DAT-064); it has no rows, and nothing
-writes to it yet. One function
+one country and by its name (DAT-013; see "The regions"); it has no
+rows, and nothing writes to it yet. One function
 changes a record and writes its history in the same unit of work
 (DAT-047; see "Changing a record"), one puts two records that may
 be the same thing to the review queue (DAT-051; see "Opening a possible
@@ -200,8 +199,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 17." or "The data store lacks 14
-migrations: … is at schema version 3, and the newest is version 17." In
+is up to date: … is at schema version 16." or "The data store lacks 13
+migrations: … is at schema version 3, and the newest is version 16." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -222,7 +221,7 @@ where `migrate` puts it right the sentence says so:
 | The store | What is said |
 |---|---|
 | There is no file | "There is no data store: … does not exist. Run `python -m motosphere migrate` first." |
-| It lacks migrations | "The data store lacks 4 migrations: … is at schema version 13, and the newest is version 17. Run `python -m motosphere migrate` first." |
+| It lacks migrations | "The data store lacks 3 migrations: … is at schema version 13, and the newest is version 16. Run `python -m motosphere migrate` first." |
 | `migrate` would refuse it, or it cannot be opened | What `migrate` says of it, word for word |
 
 The file is byte for byte the same afterwards, nothing is made beside it,
@@ -251,7 +250,6 @@ list of them, and nothing else (DAT-006):
 | 14 | `let_a_source_say_its_country` | Builds the table `source` anew with the column `country_id`, every source with what it had, and makes the index over that column, `ix_source_country_id` | DAT-057 |
 | 15 | `let_a_source_be_a_reference_list` | Builds the table `source` anew with a check of `category` that names one more kind of source, `reference list`, every source with what it had, and makes the index `ix_source_country_id` again | DAT-058 |
 | 16 | `make_the_regions` | Makes the table `region` and the index over the source of its rows | DAT-013 |
-| 17 | `let_a_region_say_its_code` | Builds the table `region` anew with the column `iso_3166_2`, the check of its form and the rule that no two regions have one code, every region with what it had, and makes the index `ix_region_source_id` again | DAT-064 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -280,8 +278,6 @@ this on every machine the gates run on. The fourteenth migration is the
 first that does it to a table of the store (DAT-057; see "A source says
 which country it is of"). The fifteenth does it a second time, to the
 same table (DAT-058; see "A kind of source that is not of the sport").
-The seventeenth does it to the table of the regions, which no table
-points to yet (DAT-064; see "The regions").
 
 The mark was chosen on 2026-11-19 (DAT-023). SQLite's own list of the
 marks it knows (`magic.txt` in its source, read that day) names Fossil,
@@ -1040,9 +1036,7 @@ three indexes and the six triggers of `review_item`, the index of the
 countries of one source, the index of the sources of one country, and
 the index of the regions of one source. For
 `source` the two agree on the table as the fifteenth migration built
-it anew, not as the first made it or as the fourteenth built it, and for
-`region` on the table as the seventeenth built it anew, not as the
-sixteenth made it. For an
+it anew, not as the first made it or as the fourteenth built it. For an
 index that is over some
 rows only, which rows is part of the statement, and so of what must
 agree.
@@ -2703,9 +2697,7 @@ A country can be divided into parts: states, provinces, counties,
 islands. A track says with one of them where in its country it lies,
 and the table `region` knows them (DAT-013). Its model is `Region`, in
 `motosphere.db.models.region`, and the sixteenth migration,
-`make_the_regions`, makes the table and its index. The seventeenth,
-`let_a_region_say_its_code`, builds it anew with the column of the
-code (DAT-064). The table has no
+`make_the_regions`, makes the table and its index. The table has no
 rows, and no reference rows are loaded into it: a region comes with the
 record that needs it, from the source that names it.
 
@@ -2713,7 +2705,6 @@ record that needs it, from the source that names it.
 |---|---|---|
 | `country_id` | The country it is a part of | No |
 | `name` | What it is called, as its source writes it. Text that is not empty (see "Text that must not be empty") | No |
-| `iso_3166_2` | Its code of ISO 3166-2, the international standard for the parts of countries, as `NZ-CAN` for Canterbury | Yes |
 | the eight columns of a collected record | Where the row came from and how far it can be trusted (see "Where a collected record came from") | Only `published_on` |
 
 The key is before these columns and the two times are after them, as
@@ -2737,42 +2728,8 @@ in every table.
   is a question for a person, and such a pair goes to the review queue
   (see "Opening a possible duplicate"). A name is stored as its source
   writes it, with the white space, the capitals and the letters it has.
-- **A region can say its code of ISO 3166-2**, in the column
-  `iso_3166_2` (DAT-064). **A region may be without one, and any number
-  of regions may be:** not every region a source names has a code, and
-  a region is not kept out of the store for lacking one. Nothing gives
-  a region a code that its source did not say.
-- **A code has the form of the standard**
-  (`ck_region_iso_3166_2_form`): two capital letters, a hyphen, and
-  one, two or three capital letters or digits, as `AT-1`, `AU-WA` and
-  `FR-75C`. The letters are the 26 of the English alphabet and the
-  digits the ten from 0 to 9. Everything else is refused, when a
-  region is stored and when it is given a code later: small letters,
-  white space before, after or within, another sign for the hyphen, a
-  letter with an accent or of another script, more or fewer characters
-  on either side, and a character with the number 0 anywhere. The form
-  was measured on the standard's own list before it was written: all
-  5046 codes of the list that comes with release 4.20.1 of iso-codes
-  have it, 327 of them with one character after the hyphen, 3099 with
-  two and 1620 with three. The table holds the form only: it does not
-  know the list, and it does not hold yet that the two letters are
-  those of the region's country (see "What is not in the table yet").
-- **No two regions have one code** (`uq_region_iso_3166_2`), whatever
-  their countries, when a region is stored and when it is given a code
-  later. A code is free again once the region that had it is deleted,
-  has another code or has none. SQLite keeps an index for the rule
-  (`sqlite_autoindex_region_2`), and it finds the region of a code
-  without reading the table; a test holds what SQLite says it uses.
-- **The seventeenth migration builds the table anew** (see "How the
-  schema changes"): SQLite puts a column that is added in place after
-  all the others and cannot give it the rule of one code. Every region
-  keeps what it had and its key, none gets a code, the highest key the
-  table gave is kept, so that the key of a deleted region is not given
-  again, and the index over `source_id` is made again. No table points
-  to a region yet. If the migration fails, at its last statement too,
-  the store is as it was.
 - **A region is a collected record.** `Region` is a subclass of
-  `Collected` and names three columns; the eight, their checks, the
+  `Collected` and names two columns; the eight, their checks, the
   reference to `source`, the index over `source_id`
   (`ix_region_source_id`) and the check that holds the two times
   together come with that. A region comes from a source that is there,
@@ -2788,24 +2745,16 @@ in every table.
   test holds what SQLite says it uses.
 - **Nothing gives itself a value.** A row cannot be without a country,
   a name or any of the seven things that are known of every collected
-  record, and neither the model nor the table makes one up. A region
-  of which no code is said has none.
+  record, and neither the model nor the table makes one up.
 - **A region is changed with its history**, by `change` (see "Changing
   a record"), like every record. A region can be deleted while nothing
   refers to it; nothing refers to a region yet.
-- **What is not in the table yet.** That the code of a region begins
-  with the code of its country: the country's code is a column of
-  another table, and until the task that holds the two together the
-  table would take `AT-1` for a region of New Zealand (DAT-067). Two
-  regions of one country that share a name: the standard's own list
-  has 36 such pairs, as Maputo, the city and the province of
-  Mozambique, which differ in their codes, and the rule of the names
-  lets the table hold only one of each pair until the task that lets
-  their codes tell them apart (DAT-066). A region that is a part of
-  another region, as a county is of a state (DAT-065): until then
-  every region is a part of its country only. Names in other
-  languages, and the other names a region is known by, are not in this
-  table.
+- **What is not in the table yet.** The code the standard ISO 3166-2
+  gives a region, such as `NZ-CAN` (DAT-064). A region that is a part
+  of another region, as a county is of a state (DAT-065): until then
+  every region is a part of its country only, and the rule of the
+  names is for the whole country. Names in other languages, and the
+  other names a region is known by, are not in this table.
 
 ## The source of the countries
 
