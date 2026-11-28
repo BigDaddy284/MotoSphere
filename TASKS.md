@@ -15,7 +15,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 |---|---|---|---|
 | 1 | Foundation (FND) | 58 | 58 |
 | 2 | Data store and published data (DAT, PUB) | 76 | 58 |
-| 3 | Interactive 3D Earth (GLB) | 31 | 8 |
+| 3 | Interactive 3D Earth (GLB) | 31 | 9 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-067 – The code of a region agrees with its country.
 
-**Current task, track B (globe):** GLB-031 – A test of the globe has 90 seconds.
+**Current task, track B (globe):** GLB-030 – The view the globe opens with.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -3223,7 +3223,7 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-002.md`, with amendment 1
 
 ### GLB-031 – A test of the globe has 90 seconds
-- **Status:** IN PROGRESS
+- **Status:** PASSED – VERIFIED
 - **Objective:** Every browser test of the globe has 90 seconds, set once for the project `globe`; a browser test of the other project has 30, as before.
 - **Description:** Added on 2026-11-28 (PLAN-060), from what the planner measured in the trial of GLB-030. The browser of the globe tests draws 3D pictures in software, and a test that waits for the Earth or reads its picture waits for that drawing. With the whole Earth in view, as the trial of GLB-030 has it, the five tests of `frontend/e2e/globe/earth.spec.ts` took up to four times as long on GitHub's Windows machine as with the view the engine opens with by itself: the one that takes two pictures of the stage 23.9 and 22.8 seconds in two runs, of the 30 a test has, where it took 6.2 and 15.0 in the two runs before; and on the planner's machine, with two other runs of tests beside it, a new test of that trial ran out of its 30 seconds once in 21 runs. No picture was wrong; they came late. The project `globe` of `frontend/playwright.config.ts` gets `timeout: 90_000`, the number the one test that stops and starts the engine twenty times was given in GLB-002, and that test loses its own line for it. One new browser test in `frontend/e2e/globe/browser.spec.ts` holds that the very test has 90 seconds and that the settings give the project `chromium` 30 and the project `globe` 90. `TESTING.md` gets what was measured. Nothing under `frontend/src` changes, no assertion of a test that was there changes, and a person who opens the page sees what they saw before. The waits inside a test (twenty seconds for the Earth to be drawn, five for an expectation) and the limit of the Windows job (20 minutes, FND-057) stay. No package is added.
 - **Acceptance criteria:**
@@ -3237,10 +3237,10 @@ What holds for every task of the phase:
   8. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
   9. Only the five files under "Scope" of the plan changed.
 - **Tests required:** One new browser test on the built site in the project `globe`: the very test has 90 seconds, and the settings give the project `chromium` 30 and the project `globe` 90. Planted defects in the settings against the eleven tests of the file. The full run of all gates on both machines, with the times of the globe tests read from both.
-- **Tests executed:** –
-- **Passed / Failed:** – / –
-- **Verification status:** Not verified
-- **Commit:** –
+- **Tests executed:** By the tester thread, against the planner's test plan (shared folder, `testing/GLB-031/`), in a clean checkout of pull request #236 at `6fd6f4f` (Linux, with the two variables for the browser set). The full run, in a clean checkout of the pull request, which started from `main` as it was then (`3a412d9`): 19 of 19 gates passed, exit code 0, with the line "Tests: 4092 passed, 0 failed, 0 skipped.": repository 82, script tests 219, backend 2965, frontend unit 516, browser 310, the browser tests in 87.2 seconds. In that run the tests of the globe that took more than 5 seconds were the one that takes two pictures of the stage (7.9 s) and the one that stops and starts the engine twenty times (9.6 s); the slowest test of the other project took 2.8 seconds. Read by the tester in the change: no expectation of a browser test that was there is removed or changed and one test is added; in `earth.spec.ts` only the line that gave the one test its 90 seconds is gone and the comment above it is written anew; no test of `frontend/e2e/globe` sets a time of its own. The new test asks Playwright for the time the very test has, which comes from its project, and reads the two numbers of the projects from the settings as Playwright has them; with 90 seconds for every test of every project it would read 90,000 for `chromium` and fail, as three of the planted defects show. The Windows times `TESTING.md` gives are those of the two runs it names (46127305851 and 46128187928). Planted defects in the settings against the eleven tests of `browser.spec.ts`: 9 of 9 detected, none not run, each failing the new test and no other. The two prove-it steps: 2 of 2, one failing test each. No line differs from the planner's lists. By hand, with a test of the tester's own that waits 40 seconds: on the pull request it passed after 40.1 seconds; with the settings of `main` as it was before, it failed after 30.1 seconds with "Test timeout of 30000ms exceeded." The file was deleted and the checkout was clean afterwards. On GitHub, read by the planner and by the tester from the runs and job logs: run 46131404113 on the pull request's commit, both gates jobs green at the first attempt, each log ending "19 of 19 gates passed." and "Tests: 4092 passed, 0 failed, 0 skipped.", with 310 browser tests on both machines (Linux 3 min 47 s, browser tests 65.6 s, the five tests of the Earth 1.1, 4.1, 4.7, 1.0 and 8.7 s; Windows 8 min 7 s, browser tests 79.1 s, the five tests of the Earth 3.3, 1.8, 7.7, 3.0 and 8.9 s), the three jobs after the gates skipped; run 46133056279 for `main` after the merge, green at the first attempt, both gates jobs ending "Tests: 4092 passed, 0 failed, 0 skipped.", with 310 browser tests, the site republished, and the check of the published site ending "https://bigdaddy284.github.io/MotoSphere/ is the site that was built: 285 of 285 files." In that run the Linux job took 4 min 37 s, with the browser tests in 87.8 s and the five tests of the Earth in 4.3, 2.1, 8.9, 4.2 and 10.2 s; the Windows job took 9 min 52 s, with the browser tests in 131.0 s and the five tests of the Earth in 7.6, 8.0, 19.0, 3.7 and 17.0 s.
+- **Passed / Failed:** 4092 / 0 tests on both machines on GitHub for `main` and for the pull request (repository 82, script tests 219, backend 2965, frontend unit 516, browser 310); all 19 gates passed; 9 / 0 planted defects detected.
+- **Verification status:** Verified on 2026-11-28: tested by the tester thread, whose report names no number that differs from the test plan; merged and recorded by the planner, who compared the pull request with the trial (the same change), compared the merged tree with the tested change, and read the runs. All five files are the same change as the planner's trial. No expectation of a test that was there changed. Nothing under `frontend/src` changed and no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #234, closed without merging, run 46129904184: both gates jobs green at the first attempt with 4092 tests). The builder reported the full run with 4092 tests and both prove-it steps with the plan's counts, with the two variables the plan names set for its browser, as the tester set them too.
+- **Commit:** `fb224bf`
 - **Plan:** `docs/plans/GLB-031.md`
 
 ### GLB-030 – The view the globe opens with
