@@ -492,6 +492,14 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- A key of the review queue could be set below 1 by another name of
+  the key. SQLite has three names of its own for the key of a table,
+  `rowid`, `_rowid_` and `oid`, and the trigger that holds a changed
+  key to 1 or more fired only for a statement that names the column
+  `id`. The eighteenth migration makes the trigger anew, so that it
+  fires after every change of an item and asks whether the key is
+  another than it was. The schema is at version 18. No store holds a
+  review item yet, so no record was affected (DAT-068).
 - A browser test that could fail by chance. The test of "Loading data…"
   expected the request for the data to have arrived as soon as the page
   said so, and the page says so before it asks. The test now waits for the
