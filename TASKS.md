@@ -3029,15 +3029,28 @@ What holds for every task of the phase:
 - **Plan:** `docs/plans/GLB-026.md`
 
 ### GLB-027 – The life of the globe over a stand-in engine
-- **Status:** NOT STARTED
+- **Status:** IN PROGRESS
 - **Objective:** A `Globe` component starts one engine in its drawing surface when it is shown and stops it when it goes, proven by unit tests with a stand-in for the engine.
-- **Description:** Added on 2026-11-27 (PLAN-053), cut out of GLB-002. The component owns one element for the drawing surface and is handed how the engine is loaded and started, so that the unit tests can stand in for it: the loading gives a way to start an engine in an element, and starting gives the way to stop it. The engine is loaded when the component is shown and not before. React shows a component twice in development (`StrictMode`), and a component can go before the loading is over: in neither case may an engine be left running or be started in an element that is gone. A loading that fails is handed to whoever shows the component; what a person is told then is GLB-004. The component is not put into the page yet, so nothing a user sees changes. Its tests end with no work of React's waiting (FND-056), which a component that loads something a moment after it is shown has to hold in its own tests.
-- **Acceptance criteria:** shown once, the component loads the engine once and starts it once, in its own element; when it goes, the engine is stopped once; an engine is never started after the component has gone, and one whose loading ends afterwards is not started; under `StrictMode` exactly one engine is running once the component is shown; a loading that fails is reported once and nothing is started; no engine module is loaded by the unit tests.
-- **Tests required:** frontend unit tests of the life of the component with a stand-in engine, in and out of `StrictMode`, with a loading that is slow, that fails, and that ends after the component has gone; planted defects; the full run of all gates on both machines.
+- **Description:** Added on 2026-11-27 (PLAN-053), cut out of GLB-002; made exact on 2026-11-28 from the planner's trial. The component (`frontend/src/globe/Globe.tsx`) owns one element for the drawing surface and is handed how the engine is loaded and started, so that the unit tests can stand in for it: the loading gives a way to start an engine in an element, and starting gives the way to stop it. The component brings in `react` and nothing else. The engine is asked for when the component is shown, not while it is only drawn. React shows a component twice in development (`StrictMode`), and a component can go before the loading is over: in neither case is an engine left running or started for a globe that has gone. A loading that fails, a way of loading that breaks at once and an engine that cannot be started are handed to whoever shows the component, once, with the very thing that went wrong, and only while the globe is shown; what a person is told then is GLB-004. Another listener or another way of loading handed in later starts nothing anew (`useEffectEvent`). The component keeps no state, so it asks React for nothing after it is shown. The stand-in of the tests (`frontend/src/test/engine.ts`) lets each loading end when a test says so, remembers what was started where and how often it was stopped, and comes back from a loading only when what waited on it has run. The component is not put into the page yet, so nothing a user sees changes and the task has no browser tests. No package is added.
+- **Acceptance criteria:**
+  1. Shown once, the component asks for the engine once and, when it has arrived, starts it once, in its own element, which is in the page then. A globe that is drawn and not shown asks for nothing.
+  2. When the globe goes, its engine is stopped once, and not before.
+  3. An engine is never started after the globe has gone, and one whose loading ends afterwards is not started.
+  4. Under `StrictMode` exactly one engine is running once both loadings have ended, in either order, and it is stopped once when the globe goes.
+  5. A loading that fails, a way of loading that breaks at once, and an engine that cannot be started are each told once to the listener the globe has then, with what went wrong, and nothing is running. A globe that has gone tells nothing.
+  6. Another listener or another way of loading handed in later neither loads nor starts nor stops anything.
+  7. The component brings in `react` and nothing else, and no unit test loads the engine by way of it.
+  8. The stand-in does what its tests say, and comes back from a loading only when what waited on it has run.
+  9. No existing test changes, and all tests pass. The type check, the lint and the format check pass.
+  10. `python scripts/check.py` reports 19 of 19 gates, with 477 frontend unit tests and 304 browser tests, and 43 tests more in all than `main` gives at the commit the branch starts from (3787 when that is `7d38a50`).
+  11. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
+  12. Only the seven files under "Scope" of the plan changed.
+- **Tests required:** 43 new frontend unit tests. 27 of the component: its element; the engine asked for once, and not while the globe is only drawn; started in its own element in the page; nobody told when all goes well; nothing anew for another listener or another way of loading; stopped once when the globe goes and not before; never started after the globe has gone; each of the three failures told once with the very thing that went wrong, to the newest listener, and not for a globe that has gone; shown again; two globes; seven cases under `StrictMode`; and that the component names nothing of the engine. 16 of the stand-in. Planted defects in the component and in the stand-in. The full run of all gates on both machines.
 - **Tests executed:** –
 - **Passed / Failed:** – / –
 - **Verification status:** Not verified
 - **Commit:** –
+- **Plan:** `docs/plans/GLB-027.md`
 
 ### GLB-002 – The globe shows the Earth
 - **Status:** NOT STARTED
