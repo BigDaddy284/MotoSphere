@@ -11,6 +11,7 @@ function renderShell() {
       tagline="Test tagline"
       info={<p>Test info</p>}
       sections={<p>Test sections</p>}
+      stage={<p>Test stage</p>}
     />,
   )
 }
@@ -46,6 +47,15 @@ describe('AppShell', () => {
     renderShell()
 
     expect(screen.getByRole('main', { name: 'Globe' })).toBeInTheDocument()
+  })
+
+  it('shows the stage content inside the globe stage, and nowhere else', () => {
+    renderShell()
+
+    const stage = screen.getByRole('main', { name: 'Globe' })
+    expect(within(stage).getByText('Test stage')).toBeVisible()
+    expect(screen.getAllByText('Test stage')).toHaveLength(1)
+    expect(stage).toHaveTextContent(/^Test stage$/)
   })
 
   it('has a details panel that says how to fill it', () => {
