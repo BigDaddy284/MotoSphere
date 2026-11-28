@@ -32,12 +32,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   otherwise: its browser draws in software, and with the whole Earth in
   view the tests that were there took up to four times as long on
   GitHub's Windows machine, one of them 24 of its 30 seconds (GLB-031).
-- The browser tests of the Earth wait up to sixty seconds for the
-  globe to say that the Earth is drawn, where they waited twenty; and
-  the test of what the engine does after that moment holds that the
-  engine comes to rest, where it allowed one more picture. On GitHub's
-  Windows machine each of the two had failed once with nothing wrong
-  in the page (GLB-032).
 - A browser test can read the colour of a point of the page as the
   browser shows it, a 3D picture too, from outside the page: Playwright
   takes a picture of the one pixel and the colour is read from the PNG

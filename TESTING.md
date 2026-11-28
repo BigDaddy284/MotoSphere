@@ -3074,8 +3074,7 @@ site as it was built, with the real engine. The fixture of every
 browser test fails each of them for a warning or an error on the
 console, for a request that fails and for an answer that says a file
 is not there. Each test waits until the globe says that the Earth is
-drawn, for at most sixty seconds (twenty until GLB-032; see "What a
-slow machine does to the tests of the Earth").
+drawn, for at most twenty seconds.
 
 - **One surface that fills the stage.** The stage is 700 by 672 pixels
   at its place in a page of 1280 by 720, there is one drawing surface,
@@ -3092,17 +3091,14 @@ slow machine does to the tests of the Earth").
   which files have arrived and how many pictures its 3D pictures were
   told to draw. At the moment the list of the pictures and at least
   two pictures of the Earth have arrived and the engine has drawn; no
-  request is under way when the test sees it. Then the test waits
-  until the engine has drawn nothing for a second and a half, for at
-  most thirty seconds: the page notes when its last picture was drawn.
-  After that no file has arrived that had not at the moment, no
-  request is under way, and the picture of the stage is the same pixel
-  for pixel. An engine that draws all the time never lets a second and
-  a half pass without a picture. The engine does draw after the
-  moment: the same complete picture once more, and on a slow machine
-  up to four times (see "What a slow machine does to the tests of the
-  Earth"). Until GLB-032 the test waited a second and a half and
-  allowed one picture.
+  request is under way when the test sees it. A second and a half
+  later no file has arrived that had not at the moment, no request is
+  under way, the picture of the stage is the same pixel for pixel, and
+  the engine has drawn at most one picture since the moment. One it
+  does draw: with its last piece arrived the engine draws the complete
+  picture, which is when the globe says so, and then that same picture
+  once more, of its own accord (9 of 9 times when the planner measured
+  it).
 - **Nothing is asked of another computer.** Every request of the page
   goes to the site, under the site's own folder; the script of the
   engine is asked for once; more than five files come from the folder
@@ -3132,63 +3128,6 @@ the browser without 3D pictures, also holds that the page asks for one
 script and one style sheet and no more, so that the engine is not
 fetched there.
 
-### What a slow machine does to the tests of the Earth
-
-Two of the five tests failed on GitHub's Windows machine on
-2026-11-28, each once, with nothing wrong in the page (GLB-032):
-
-- **The Earth was not drawn within twenty seconds.** In run
-  46131565305, of a pull request that changed nothing of the globe,
-  the test that stops and starts the engine failed at its first step,
-  27.6 seconds after it began: it had waited twenty seconds, and the
-  globe of the page had not said that the Earth is drawn. The other
-  four tests of the file had taken 2.0,
-  8.0, 14.0 and 4.5 seconds in that run, and the job passed when it
-  was run again.
-- **Three pictures after the moment, where the test allowed one.** In
-  two runs of trials of the view the globe is to open with (GLB-030),
-  46130916825 and 46133108330, the test that counts the pictures
-  after the globe has said that the Earth is drawn saw three and two.
-  The picture of the stage was the same each time.
-
-What was measured after that, in run 46133108330, on both of GitHub's
-machines: 22 openings of the page each, 14 at 1280 by 720 and 8 at
-768 by 1024, with the view of that trial, which has the whole Earth
-in it. The page noted every picture it drew and the moment its globe
-said that the Earth is drawn.
-
-| | Linux | Windows |
-|---|---|---|
-| The globe said that the Earth is drawn, after the page was opened | 0.6 to 0.7 s | 1.5 to 14.9 s |
-| The test saw it | 0.9 s after the page was opened, every time | 1.7 to 15.1 s after |
-| Pictures drawn after that moment | one, 22 of 22 times | one 8 times, two 9 times, three 4 times, four once |
-| The last of them, after that moment | 0.01 to 0.02 s | 0.02 to 3.7 s |
-| The longest time without a picture before the last one | 0.02 s | 3.7 s; more than 1.5 s in 6 of the 22 |
-
-- **How long the Earth takes is a matter of the machine.** On the
-  Windows machine the page went without a new frame for up to 4.8
-  seconds at a time, and the test saw the moment up to ten seconds
-  after the page had noted it. A test that waits twenty seconds for
-  the Earth holds how fast a machine is. Each test now waits sixty,
-  two thirds of the 90 seconds a globe test has (GLB-031).
-- **The engine does not stop at the moment.** It asks the browser for
-  work in the background while it draws the Earth, and each piece of
-  that work that ends has it draw the picture again. With the whole
-  Earth in view, two or three such pieces ended after the moment in 14
-  of the 22 openings on the Windows machine and in none on the Linux
-  machine. With the view the engine opens with by itself, in 28
-  openings on a developer's machine whose processor was slowed four
-  and eight times, the engine asked for no work of that kind and drew
-  one picture after the moment each time. The picture is the
-  same each time. So "at most one picture after the moment" was a rule
-  about the machine. What the test holds now is what it was written
-  for: an engine that draws when something has changed comes to rest,
-  and one that draws all the time does not.
-- **What the test does not hold.** That the engine draws nothing at
-  all once it has rested for a second and a half: in 6 of the 22
-  openings on the Windows machine one more picture came later than
-  that. And how many pictures an engine may draw before it rests.
-
 ### What the planted defects showed
 
 Each line was tried as a planted defect, alone, against the browser
@@ -3205,10 +3144,8 @@ tests of the three files above:
 - An engine that keeps its 3D picture when it is stopped, one whose
   widget is left where it was, and one that is not stopped at all are
   each found by that test.
-- An engine that draws all the time is found because it never comes
-  to rest after it has said that the Earth is drawn (since GLB-032;
-  before, by the count of the pictures it drew in a second and a
-  half).
+- An engine that draws all the time is found by the count of the
+  pictures it draws after it has said that the Earth is drawn.
 - An engine that is not told which pictures to use asks another
   computer for them, and one that is told a folder that is not there
   gets an answer that says so: both are found. An engine that draws
