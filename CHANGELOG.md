@@ -496,6 +496,13 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of another. A region without a code is asked nothing. The nineteenth
   migration makes the triggers and changes no row, and the schema is
   at version 19 (DAT-067).
+- Two regions of one country can have one name when their codes tell
+  them apart, as the list of ISO 3166-2 itself has them: Maputo, the
+  city and the province of Mozambique. No two regions of one country
+  that say no code have one name. The twentieth migration builds the
+  table `region` anew without the old rule, every region with what it
+  had, and makes an index for the new rule and one over the country;
+  the schema is at version 20 (DAT-066).
 
 ### Removed
 
