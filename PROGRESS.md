@@ -8,8 +8,8 @@ references are copied from real output, never estimated.
 
 - **Phases:** 2 – Data store and published data (track A) and 3 – Interactive 3D Earth (track B), side by side since 2026-11-27 (PLAN-033); Phase 1 – Foundation is complete again, with the tasks that were added to it later (FND-060 was the last of them)
 - **Current task, track A (data store):** DAT-066 – Two regions of a country can share a name when their codes tell them apart (`IN PROGRESS`, with a builder)
-- **Current task, track B (globe):** GLB-032 – The tests of the Earth do not depend on the speed of the machine (`IN PROGRESS`, with a builder)
-- **Tasks verified:** 126 of 309
+- **Current task, track B (globe):** GLB-030 – The view the globe opens with (`IN PROGRESS`, with a builder)
+- **Tasks verified:** 127 of 309
 - **Application state:** there is no server: the site is static files on GitHub Pages, at <https://bigdaddy284.github.io/MotoSphere/>. The data pipeline has a command line, `uv run python -m motosphere <command>`, with five commands so far: `version`; `export --out <directory>`, which writes the published data manifest (`manifest.json`; it holds no record counts yet because nothing is published); `migrate`, which brings the data store the settings name to the newest schema, makes it if it is not there, and says in one sentence what it did; `schema`, which says in one sentence which schema that store has, whether it lacks migrations or that there is none, and changes nothing; and `countries`, which loads the countries of the world into a store that is there and at the newest schema, from a file that comes with the pipeline, says how many it added and how many were there already, changes no country, and names the countries the store says something else of, which then wait in the review queue. The frontend starts with `npm run dev` and shows the application's layout (top bar with the data status and today's date, sections panel with the nine sections to choose from, globe area and details panel; the side panels can be closed to give the globe area the whole width, and on a screen under 900 pixels wide an open panel lies over the globe area instead of beside it, the top bar has the data status and the date under its first line, on two lines below 640 pixels and on one from there on, so that it is as tall while the data loads as afterwards, and the page opens with both panels closed; on a touch screen the buttons and the sections are tall enough for a finger, and on a phone the layout is as tall as the part of the screen the browser really shows; no globe or data yet), and has its own unit tests (`npm test`) and browser tests (`npm run e2e`). The page uses the owner's Graphite theme and carries the MotoSphere icon. `npm run data` exports the published data into the frontend for local use, and the browser tests run against freshly exported data, read by the frontend's own manifest reader. The top bar shows when the published data was updated, or that it is unavailable: the first thing from the pipeline that reaches the user's screen. One command, `python scripts/check.py`, runs every check of the project, counts the tests (4347 today) and fails if any test was skipped. Its last gate checks the frontend's dependencies against published security advisories; an advisory can be accepted for at most 31 days in `frontend/audit-exceptions.json`, and none is today. GitHub runs the same command on Linux and on Windows for every pull request and every change to `main`, and publishes the site for every change to `main` that passes every gate (first published on 2026-11-17). One more command, `python scripts/live.py <site.tar> <address>`, says whether an address serves exactly the site that was built, and after every deployment a job runs it against the published site, so a broken or stale site turns the run red. `python scripts/tools.py` says whether a computer has the tools the project needs. There is no offline version (the owner's decision, 2026-11-19): MotoSphere is the published site. The data store has its first four tables, and no rows yet: the pipeline names what it needs from SQLite (version 3.45.0 or newer and six features) and its tests check that on every machine; the pipeline knows where the store's file is from the setting `MOTOSPHERE_STORE_PATH`, and Git ignores that file; one function, `open_store`, opens it through SQLAlchemy with foreign keys enforced on every connection and failed work taken back as a whole, and one function, `unit_of_work`, gives a session whose work is kept as a whole or not at all; every backend test that needs a store gets a real one of its own from the fixture `store`; the store's schema changes only by numbered migrations, which `migrate` applies, each kept as a whole with the store's new version or not at all (there are nineteen so far, which make the tables of the information sources, of what they offer, of the collection runs and of the changes to records, an index that takes SQLite straight to the runs of one source, the triggers by which the history of the records is only added to, two indexes that take SQLite straight to the changes of one record and to the changes one run caused, the table of the review queue, where what is in doubt waits for a person's decision, the two indexes by which the store refuses the same doubt a second time, the two triggers by which the store itself refuses to edit or delete an item of that queue once it is decided, the two triggers by which it refuses a key below 1 for an item of that queue, the two by which it refuses a row that would take the place of a decided item, and the table of the countries, the first table of collected records, with the index that takes SQLite straight to the countries of one source, the column by which a source says which country it is of, with its index, a thirteenth kind of source, the keeper of a reference list, and the table of the regions of a country, the second table of collected records, each region a part of one country and with a name no other region of that country has, with the index that takes SQLite straight to the regions of one source, and no rows yet, and the column in which a region can say its code of ISO 3166-2, in the form of the standard and a code for one region only; one function puts two records that may be the same thing to that queue, another what a source says of a field of a record, and a third puts down a person's decision on an item, and nothing calls them yet; one function gives the row of the source of the countries, the project iso-codes, and stores it first when the store does not have it, switched off and with its terms read by no person yet; another adds to the store every country of the reference file that the store does not have, each naming that source, the release it is from and the moment it was loaded, changes no country, names what the store says otherwise of and puts what the file says of it to the review queue, where it waits for a person; the command `countries` calls it in one unit of work); only a store of MotoSphere's is migrated: the first migration marks the file, and a file that has anything in it and not that mark is refused and left as it is; one function, `pending`, says which migrations a store lacks without writing anything, and refuses the same stores in the same words; `migrate`, `schema` and `countries` are the only commands that use the store, and only `migrate` and `countries` write to it; one function, `store_to_work_on`, gives a command the store only when it is there and at the newest schema, makes no file and gives the store no migration, and says in one sentence what is wrong, and `countries` is the first command that calls it; there is a base for all models, which makes every table strict and names its constraints and indexes by one rule, and a test that holds every table to that; a time is stored as text in one form, in UTC with its offset written out, a time without an offset is refused, and a model's `datetime` column gets that type from the base; every model gets its key from the base, a whole number `id` that SQLite never gives twice, and the two times `created_at` and `updated_at`, which the store's code sets from the store's one clock; the test that holds every table to the rules names a table without that key or without those two times, and a name that more than one constraint or index of a table has; a model can say of a column that its text must not be empty, and SQLite itself then refuses empty text in it, also text of nothing but white space, and the test that holds every table to the rules names such a column whose table is without the check for it; any column type can bring the check for its column in that way; a model can say of a column that it is yes or no, and SQLite itself then refuses every number but 1 and 0 in it; a model can say that a column's value is one of a list the code knows, and SQLite itself then refuses any text that is not on that list; a model can say that a column is a web address, and SQLite itself then refuses text that does not begin as one or has white space in it; the store has its first table, that of the information sources, each described by one of twelve kinds of source and one of ten ways of collecting, and switched off until a person has read its terms; a second table says which of nine kinds of information each source offers, and a source that has offers cannot be deleted; a third table records every collection run, with its source, its start and end, how it ended and what it counted, and one function, `mark_interrupted`, marks the runs a dead job left running as interrupted; another, `standing_of`, says how a source is doing (its last attempt, its last success, its last error and its health) by reading its runs, and stores none of it; the code has the two lists that say how far a collected record can be trusted, three levels of confidence and four verification statuses from official to unverified, and no table has a column of them yet; a model can say that a column is a calendar day, which is kept as text such as `2026-11-24` with no time made up for it and which the store refuses when no calendar has it, and no table has such a column yet either; the columns by which every collected record says where it came from are one set in the code, which a model of collected records takes whole, and with them an index that takes SQLite straight to the records of one source, and no table has them yet; a rule names every table that neither has those columns nor is on the list of the tables that hold no collected records, where each stands with its reason, and a test holds the real schema to it; one table is there to keep, for one field of one record, what it held before it was changed and what it holds now, with the collection run or the person that caused the change, and one function changes a stored record and writes that history in the same unit of work, so that neither is kept without the other, which nothing calls yet because no table holds records; that history is only added to, because the store itself refuses to edit, delete or replace a row of it, whoever writes to the file; the migrations are written in a module of their own, as plain SQL that names nothing of the code; one test holds the models and the migrations together, and fails with a sentence for each table or index that is not the same in both (`DATABASE.md`). The countries of the world come with the pipeline as a file: the list of ISO 3166-1 from the project iso-codes, unchanged and with its licence beside it, and a reader that gives its 249 countries or refuses a damaged file whole; none of them is in a store yet, because no command loads them (`DATA_SOURCES.md`). No globe yet: its engine, `@cesium/engine` with `@cesium/core`, is installed and tested as installed, and nothing of the application uses it so far. The page asks the browser, when the globe area is first shown, whether it gives a page a 3D picture of the kind the engine draws with; where it gives none, the area says in two plain sentences that the 3D globe cannot be shown in this browser and what a person can do, and the rest of the application works as before; where it gives one, the area shows the globe: the Earth, drawn by the engine with the pictures that come with it (Natural Earth II), fetched from the site itself after the page is there, and the area is marked as busy until the Earth is drawn. The view is the engine's own for now, which cuts the Earth off at both sides on a phone (GLB-030); the globe does not yet follow the size of its area when that changes (GLB-028), and a person is not yet told that it is loading or that it failed (GLB-004). The component for the globe starts one engine in its drawing surface when it is shown and stops it when it goes, and tells whoever shows it, once, when the engine says that its first complete picture is drawn; its unit tests run with a stand-in for the engine. The browser tests of the globe have a project of their own, in a browser that is told to draw 3D pictures in software and with one test at a time; five tests of the Earth in the page run in it, with the real engine, and a test of it has 90 seconds where a test of the other has 30. Every other browser test runs in a browser that gives a page no 3D picture. A browser test can read the colour of a point of the page as the browser shows it, a 3D picture too, from a picture Playwright takes of that one pixel. The published site carries the licences of the packages it is built with, in one file, `licences.txt`, which the build writes from the packages as they are installed, with every licence file a package brings, at any depth of its folder. A repository check holds the licence of each of those packages to a list of the licences the project has read and accepted.
 
 ## Reports
@@ -13420,3 +13420,124 @@ merge.
 Commit: `f2fde15` (squash merge of pull request #237).
 
 Next task on track A: DAT-066 – Two regions of a country can share a name when their codes tell them apart.
+
+### GLB-032 – The tests of the Earth do not depend on the speed of the machine (2026-11-28)
+
+TASK: GLB-032 – The tests of the Earth do not depend on the speed of the machine
+
+Implementation: Complete (builder thread, pull request #241).
+The five browser tests of the Earth in `frontend/e2e/globe/earth.spec.ts`
+wait up to sixty seconds for the globe to say that the Earth is drawn,
+where they waited twenty. The test that looks at what the engine does
+after that moment waits until the engine has drawn nothing for a second
+and a half, for at most thirty seconds, where it waited a second and a
+half and allowed one picture; then it holds what it held: no request
+under way, no file arrived since the moment, the picture of the stage
+the same pixel for pixel. `TESTING.md` says what was measured on both
+of GitHub's machines. Nothing under `frontend/src` changed; a person
+who opens the page sees what they saw before. Exactly the three planned
+files; all are the same change as the planner's trial. No test was
+added or taken away, and no package.
+
+The numbers below are the tester's, from its report, where they are
+named as the tester's; the planner compared the pull request with its
+trial (the same change), compared the merged tree with the tree that
+the pull request and `main` give together (the same), and read the
+runs on GitHub.
+
+Independent test run (tester thread, against the planner's test plan,
+in a clean checkout of the pull request; Linux):
+
+- Scope: exactly the three files, one commit. The plan applied to the
+  trial's base gives the same change as the pull request.
+- The full run, in a clean checkout of the pull request, which started from
+  `main` as it was then (`2f1b398`): 19 of 19 gates passed, exit code 0,
+  with the line "Tests: 4092 passed, 0 failed, 0 skipped.": repository 82,
+  script tests 219, backend 2965, frontend unit 516, browser 310. In that
+  run the five tests of the Earth took 3.7, 2.3, 6.4, 4.0 and 10.3 seconds.
+- Read by the tester in the change: the lines taken away are exactly those
+  the plan lists, and no other expectation; nothing is added with `as`,
+  `console.` or `eslint-disable`; the four other tests of the file are
+  untouched but for the wait. The page notes the time of the first thing
+  drawn in each turn; the test asks the page how long ago that was, waits up
+  to thirty seconds for it to be a second and a half, and then holds that
+  nothing is under way, that no file has arrived since the globe said that
+  the Earth is drawn, and that the picture of the stage is the same pixel
+  for pixel; everything above the wait is unchanged. The tester ran the
+  planner's script over the logs of the measuring run and got the table of
+  `TESTING.md` and every number of the plan.
+- Planted defects against the 18 browser tests of three files: 24 of 24
+  detected, none not run. The first 22 are those of GLB-002, and each fails
+  the same tests as when GLB-002 was tested, line for line; the two new
+  ones, an engine that draws a picture every second and one that draws four
+  a second, for ever, each fail the changed test and no other. The first two
+  prove-it steps: 2 of 2, the one test failing in each. The third and
+  fourth: a globe that says 25 seconds late that the Earth is drawn passes
+  all five tests, and fails all five with the twenty seconds the tests
+  waited before. No line differs from the planner's lists.
+- By hand: the five tests as they are, 5 passed in 30.6 seconds; with an
+  engine that draws all the time the changed test failed after 44.7 seconds,
+  "Expected: >= 1500", "Received: 56.4"; with the globe 25 seconds late the
+  five tests took 26.5, 27.1, 26.7, 26.1 and 32.5 seconds and passed; the
+  five tests five times over, "25 passed (2.3m)", the longest 11.8 seconds.
+  The checkout was clean afterwards.
+
+On GitHub, read from the runs and job logs:
+
+- The planner's trials ( pull requests #238 and #239, closed without
+  merging, runs 46134417276 and 46135317949: both gates jobs green at the
+  first attempt in each.
+- Run 46140891875, the pull request's commit (`9170cf1`): both gates jobs
+  green at the first attempt, each log ending "19 of 19 gates passed." and
+  "Tests: 4092 passed, 0 failed, 0 skipped.", with 2965 backend tests, 516
+  frontend unit tests and 310 browser tests on both machines (Linux 3 min 43
+  s, browser tests 62.0 s, the five tests of the Earth 3.0, 2.9, 2.7, 0.97
+  and 8.5 s; Windows 9 min 45 s, browser tests 130.9 s, the five tests of
+  the Earth 4.8, 8.4, 13.7, 3.4 and 18.0 s); "Build the site", "Publish the
+  site" and "Check the published site" skipped. Read by the planner and by
+  the tester.
+- Run 46151765723, for `main` after the merge (`0079f8c`), read by the
+  planner: all five jobs green at the first attempt, both gates jobs ending
+  "19 of 19 gates passed." and "Tests: 4347 passed, 0 failed, 0 skipped.",
+  with 3220 backend tests (DAT-067 was merged in between) and 310 browser
+  tests on both machines. In that run the Linux job took 3 min 51 s, with
+  the browser tests in 66.8 s and the five tests of the Earth in 1.1, 5.1,
+  3.2, 1.0 and 8.8 s; the Windows job took 9 min 45 s, with the browser
+  tests in 94.1 s and the five tests of the Earth in 2.5, 4.0, 6.9, 2.0 and
+  14.8 s. The site was republished, and the log of "Check the published
+  site" ends "https://bigdaddy284.github.io/MotoSphere/ is the site that was
+  built: 285 of 285 files."
+
+Unit and integration tests: 4037/4037 passed (repository 82, script tests
+219, backend 3220, frontend 516). Browser tests: 310/310 passed.
+Type checking: passed. Lint and format: passed. Build: passed.
+Browser or integration verification: passed. The five tests of the
+Earth run on the built site with the real engine in the browser of the
+globe tests on both of GitHub's machines; the tester ran them five
+times over and with an engine that never rests, which the changed test
+found; the deployment succeeded and the published site is the site
+that was built. The task changes nothing a user of the site sees.
+
+Overall applicable tests: 4347/4347 passed (100%), all 19 gates passed, on
+both machines.
+
+Status: PASSED – VERIFIED.
+
+Known limitations: The task makes five tests wait for the engine where they
+waited for a time; it makes no picture come sooner, and it changes nothing a
+person sees. The test no longer counts the pictures the engine draws after
+the Earth is drawn: the plan and `TESTING.md` say so, and why (the number is
+the engine's affair and differed from machine to machine). Named by the
+tester and not counted as a finding: an engine that drew for ever with more
+than a second and a half between two pictures would come to rest in the eyes
+of the test; the comparison of the two pictures of the stage would still
+find a picture that changes. The tests passed in one run on each of GitHub's
+machines for the pull request and one for `main`; the failures this task is
+about came once in several runs, so that shows that the tests pass there,
+not that they always will. The builder reported the full run with 4092 tests
+and the four prove-it steps with the plan's results, with the two variables
+the plan names set for its browser.
+
+Commit: `0079f8c` (squash merge of pull request #241).
+
+Next task on track B: GLB-030 – The view the globe opens with.
