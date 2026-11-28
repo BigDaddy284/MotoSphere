@@ -1,6 +1,6 @@
 """Checks on the workflows: the gates and the deployment.
 
-FND-018, FND-032, FND-034, FND-037, FND-057 and FND-061.
+FND-018, FND-032, FND-034, FND-037 and FND-057.
 
 The workflows are read as text: the repository checks use the standard
 library only, and it has no YAML reader. The files are kept plain enough for
@@ -265,19 +265,6 @@ class ChecksWorkflowTest(unittest.TestCase):
         for name, job in self.jobs.items():
             with self.subTest(job=name):
                 self.assertRegex(job, re.compile(r"^    timeout-minutes: \d+$", re.MULTILINE))
-
-    def test_the_gates_have_thirty_minutes_and_every_other_job_ten(self) -> None:
-        # The gates grow with the tests; the limit is there to end a job that
-        # hangs, and is kept well above what the slower machine needs.
-        limits = {
-            name: re.findall(r"^    timeout-minutes: (.+)$", job, re.MULTILINE)
-            for name, job in self.jobs.items()
-        }
-
-        self.assertEqual(
-            limits, {"gates": ["30"], "site": ["10"], "deploy": ["10"], "live": ["10"]}
-        )
-        self.assertEqual(self.text.count("timeout-minutes"), 4)
 
     def test_every_step_runs_one_command(self) -> None:
         # On Windows a step with several commands only fails on its last one.

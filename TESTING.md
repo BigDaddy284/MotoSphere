@@ -294,19 +294,8 @@ On the system disk single tests waited 20 to 70 seconds for their store, and
 the time differed much from run to run: 2237 tests took 814 s in one run for
 `main` and 2277 tests 423 s in a later one. As the tests of the pipeline
 grew in number, the Windows job came to its limit of 20 minutes and was cut
-off there, four times on that day, with no test failed. The limit was left as
-it was then.
-
-Since FND-061 the gates job has 30 minutes. The limit is there to end a job
-that hangs, and it is to stay well above what the slower machine needs. With
-the browser tests of the globe, which draw in software, the Windows job has
-grown: it took 9 minutes 51 seconds for `main` on 2026-11-28 (run
-46146782926, 4347 tests), and 14 minutes 8 seconds on the same day in a trial
-of the planner's with the tests of two tasks of the globe that were not
-merged yet (run 46148448305, 4405 tests; the browser tests took 342.8 s of
-it and the tests of the pipeline 188.9 s). More tests of the globe are
-planned. The three jobs after the gates keep their 10 minutes. A repository
-check holds the four limits (`tests/repo/test_ci_workflow.py`).
+off there, four times on that day, with no test failed. The limit is left as
+it is.
 
 On Linux, Python and Node.js look at `TMPDIR` first and at these two names
 when it is not set, and it makes no difference there which folder it is. A
