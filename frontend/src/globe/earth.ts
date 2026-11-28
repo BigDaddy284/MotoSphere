@@ -1,16 +1,13 @@
-import { Cartesian3, PerspectiveFrustum } from '@cesium/core'
 import {
   buildModuleUrl,
   CesiumWidget,
   ImageryLayer,
-  type Scene,
   TileMapServiceImageryProvider,
 } from '@cesium/engine'
 // The engine's own rules for its widget: the size of the drawing surface,
 // and the look of what the engine itself puts over it.
 import '@cesium/engine/Source/Widget/CesiumWidget.css'
 import type { Start } from './Globe.tsx'
-import { distanceOfTheWholeEarth, HOME, SHARE_OF_THE_SHORTER_SIDE } from './homeView.ts'
 
 /**
  * The pictures of the Earth that come with the engine (Natural Earth II),
@@ -20,38 +17,8 @@ import { distanceOfTheWholeEarth, HOME, SHARE_OF_THE_SHORTER_SIDE } from './home
 const PICTURES_OF_THE_EARTH = 'Assets/Textures/NaturalEarthII/'
 
 /**
- * Puts the camera above the place the globe opens above, looking straight
- * down, north up, and as far away as it takes for the whole Earth to be in
- * view on the surface as it is now.
- *
- * The engine sees in perspective when it starts, with a field of view of
- * its own, and the distance is worked out from that. Were it ever to start
- * otherwise, its own view would be left as it is.
- */
-function lookAtTheWholeEarth(scene: Scene): void {
-  const { camera, canvas, ellipsoid } = scene
-  const { frustum } = camera
-  if (frustum instanceof PerspectiveFrustum && frustum.fov !== undefined) {
-    const distance = distanceOfTheWholeEarth(
-      canvas.clientWidth,
-      canvas.clientHeight,
-      frustum.fov,
-      SHARE_OF_THE_SHORTER_SIDE,
-    )
-    camera.setView({
-      destination: Cartesian3.fromDegrees(
-        HOME.longitude,
-        HOME.latitude,
-        (distance - 1) * ellipsoid.maximumRadius,
-      ),
-    })
-  }
-}
-
-/**
  * Starts the engine of the globe in an element of the page: one widget of
  * the engine, which draws the Earth with the pictures that come with it.
- * The globe opens with the whole Earth in view (see `homeView.ts`).
  *
  * The engine draws when something has changed and not all the time. It
  * draws the Earth in pieces and fetches the picture of each. When no piece
@@ -70,7 +37,6 @@ export const start: Start = (surface, listener) => {
   )
   const widget = new CesiumWidget(surface, { baseLayer: pictures, requestRenderMode: true })
   const { scene } = widget
-  lookAtTheWholeEarth(scene)
 
   const askNoMore = scene.postRender.addEventListener(() => {
     if (scene.globe.tilesLoaded) {
