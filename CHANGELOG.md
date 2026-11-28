@@ -485,6 +485,13 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The seventeenth migration builds the table anew with the column,
   every region with what it had, and the schema is at version 17
   (DAT-064).
+- The code of a region begins with the code of its country: the store
+  refuses `AT-1` for a region of New Zealand. Four triggers hold it,
+  on the regions, when one is stored, given a code or moved, and on
+  the countries, when one is given other letters or takes the place
+  of another. A region without a code is asked nothing. The nineteenth
+  migration makes the triggers and changes no row, and the schema is
+  at version 19 (DAT-067).
 
 ### Removed
 
