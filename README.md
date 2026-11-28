@@ -153,9 +153,7 @@ details panel. The top bar shows when the data was updated and, next to it,
 today's date, both in the language and time zone of your browser; the date
 changes at midnight. The sections panel lists the
 application's sections, and one can be chosen with the mouse or the keyboard;
-there is no globe or data yet. In a browser that gives a page no 3D graphics,
-the globe area says that the 3D globe cannot be shown there, and the rest of
-the page works as before. The Sections and Details buttons in the top bar
+there is no globe or data yet. The Sections and Details buttons in the top bar
 close and open the side panels. On a narrow screen (under 900 pixels wide: a
 phone, or a tablet held upright) an open side panel lies over the globe area
 instead of standing beside it, and the top bar takes the lines it needs: the

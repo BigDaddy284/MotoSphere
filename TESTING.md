@@ -208,14 +208,6 @@ The test environment of the unit tests has no screen, so
 knows how wide the screen is. Every unit test starts with a wide screen; a
 test changes the width with `showScreen(pixels)`.
 
-The test environment gives a page no picture to draw on either, so
-`frontend/src/test/drawing.ts` stands in for that part of the browser
-(GLB-026). Every unit test starts in a browser that gives both kinds of 3D
-picture; a test makes it another browser with `browserGives(kinds)`. What
-the stand-in gives can be given back and nothing more: no unit test draws.
-It says which kinds the page asked for (`picturesAskedFor()`) and how many
-pictures the page holds that it has not given back (`picturesHeld()`).
-
 The browser tests also run with a touch screen
 (`frontend/e2e/touch.spec.ts`), at phone and at desktop size: every button
 in the top bar and every section must be 44 pixels tall and at least as
@@ -2499,7 +2491,7 @@ Two browser tests (`frontend/e2e/browser.spec.ts`) hold it:
   the word:** a page would be given a 3D picture again.
 
 What a page of the site shows a person whose browser gives no 3D
-picture is under "The stage without a globe".
+picture is GLB-026.
 
 ## Reading what the page shows
 
@@ -2557,83 +2549,6 @@ the page. One test in the project of the globe
 its upper half in one colour and its lower half in another, and reads
 both colours exactly at ten points, the four corners among them, with
 nothing on the console.
-
-## The stage without a globe
-
-The engine of the globe draws the Earth as a 3D picture. Started in a
-browser that gives a page none, it puts up a panel of its own and logs
-an error. So before anything of the globe is started, the stage asks
-the browser for such a picture (`browserDraws3D` in
-`frontend/src/globe/drawing.ts`) and gives it back at once. Where the
-browser gives none, the stage says in the place of the globe "The 3D
-globe cannot be shown in this browser." and under it, in a second
-sentence, why, and what a person can do (GLB-026). Where the browser
-gives one, the stage is empty until the globe is in the page (GLB-002).
-The sentences name no technology and speak of no error.
-
-**Only the newer kind of 3D picture counts.** A browser has two kinds
-(`webgl2` and the older `webgl`). The engine as it is installed
-(`@cesium/engine` 26.5.0, `Source/Renderer/Context.js`) asks a browser
-that knows the newer kind for that kind and for no other; it takes the
-older kind only in a browser that does not know the newer at all, or
-when it is told to, which nothing of MotoSphere does. No browser of the
-tests is such a browser, so the globe has not been seen drawn with the
-older kind, and the stage does not try it: it asks for the newer kind,
-and a browser with only the older is told that the globe cannot be
-shown.
-
-**The picture is given back.** A browser keeps only so many 3D pictures
-for a page and warns on the console when it takes the oldest away. In
-the planner's trial, in the browser of the globe tests, a question that
-kept its picture, asked forty times in a row, made the browser log
-"WARNING: Too many active WebGL contexts. Oldest context will be lost."
-25 times. Asked forty times with a pause after each, the same question
-logged nothing: the browser had cleared the pictures away by itself in
-between. The question as it is, asked forty times in a row, logs
-nothing.
-
-28 unit tests and 13 browser tests hold this.
-
-The unit tests, over the stand-in for the drawing surface:
-
-- `frontend/src/test/drawing.test.ts` (9) tests the stand-in itself:
-  the browser a test starts in, the kinds it gives and does not give,
-  what it says it was asked for, when a picture counts as held, and
-  that it is as new once it is put in place again;
-- `frontend/src/globe/drawing.test.ts` (7) tests the question: yes with
-  the newer kind, no without any and no with the older kind alone; one
-  picture asked for each time, of the newer kind; nothing held
-  afterwards; and yes without an error in a browser that takes no
-  picture back;
-- `frontend/src/globe/GlobeStage.test.tsx` (8) tests the stage: empty
-  where the browser draws; the two sentences in their order where it
-  does not; the browser asked when the stage is first shown and not
-  again, and its first answer kept; no picture held; and the same where
-  React shows the stage twice, as it does in development;
-- one test of the shell (`AppShell.test.tsx`) and three of the
-  application (`App.test.tsx`): what the stage shows is in the globe
-  stage and nowhere else, and the sections and both panels work as
-  before where the globe cannot be shown.
-
-The browser tests, with the built site:
-
-- `frontend/e2e/stage.spec.ts` (10), in the project `chromium`, whose
-  browser gives a page no 3D picture: the question itself, handed to
-  the page as it stands, says no; the stage has the two sentences and
-  nothing else; no file of the engine is asked for; the words are in
-  the middle of the stage, in the colours and sizes of the theme, in
-  lines no longer than 32 times the size of the text, and stay there
-  when the panels are closed; on four narrow screens both sentences are
-  whole inside the stage, 24 pixels from its edge, and the page does
-  not scroll; and in a stage too low for the words they start at its
-  top and the stage scrolls to their end;
-- `frontend/e2e/globe/stage.spec.ts` (3), in the project `globe`: the
-  stage is empty; the question, handed to the page, says yes forty
-  times in a row with nothing on the console; and the top bar and both
-  panels work around the empty stage.
-
-Every other browser test of the project `chromium` now runs with the
-two sentences in the stage, and none of them was changed for it.
 
 ## The tools a computer needs
 

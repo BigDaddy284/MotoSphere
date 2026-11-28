@@ -147,11 +147,6 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   folder of this site that holds them. It does so where it starts,
   before anything is shown, and the address names no other computer
   (GLB-025).
-- In a browser that gives a page no 3D graphics, the globe stage says
-  so: "The 3D globe cannot be shown in this browser.", and under it why
-  and what a person can do. The top bar and both panels work as before.
-  The stage asks the browser when it is first shown and gives the 3D
-  picture it was given back at once (GLB-026).
 - The data store's first decisions (`DATABASE.md`): what it relies on in
   SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
   gates run on, and where the store is kept between scheduled runs

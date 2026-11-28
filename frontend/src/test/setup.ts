@@ -3,14 +3,11 @@ import { endEveryTestSettled, reactsWork } from './reactsWork.ts'
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterAll, afterEach, beforeEach } from 'vitest'
-import { installDrawing } from './drawing.ts'
 import { installScreen } from './screen.ts'
 
-// The test environment has no screen and gives no picture to draw on. Every
-// test starts with a wide screen, in a browser that draws 3D pictures.
+// The test environment has no screen. Every test starts with a wide one.
 beforeEach(() => {
   installScreen()
-  installDrawing()
 })
 
 // After each test: unmount everything it rendered and forget what it
