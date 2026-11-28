@@ -216,6 +216,18 @@ the stand-in gives can be given back and nothing more: no unit test draws.
 It says which kinds the page asked for (`picturesAskedFor()`) and how many
 pictures the page holds that it has not given back (`picturesHeld()`).
 
+The real engine of the globe draws, which the test environment cannot, and
+takes its time to load. So `frontend/src/test/engine.ts` stands in for it
+in the unit tests of what shows a globe (GLB-027; see "The life of the
+globe"). `standInEngine()` gives a way to load the engine that a test hands
+to a globe. A loading ends when the test says so, well (`arrives()`) or
+badly (`fails(why)`), and both come back only when everything that waited
+on the loading has run. The stand-in says how often it was asked for
+(`loadings()`), in which elements engines were started, whether each was in
+the page then and how often each was stopped (`engines()`), and where an
+engine is running now (`running()`). A test can make it one that cannot be
+started (`breaksAtTheStart(why)`). Nothing of the real engine is in it.
+
 The browser tests also run with a touch screen
 (`frontend/e2e/touch.spec.ts`), at phone and at desktop size: every button
 in the top bar and every section must be 44 pixels tall and at least as
@@ -2711,6 +2723,69 @@ The browser tests, with the built site:
 
 Every other browser test of the project `chromium` now runs with the
 two sentences in the stage, and none of them was changed for it.
+
+## The life of the globe
+
+The `Globe` component (`frontend/src/globe/Globe.tsx`, GLB-027) is one
+element of the page and one engine that draws in it. It is handed how
+the engine is loaded (`load`, which gives the way to start an engine in
+an element, which in turn gives the way to stop it) and whom to tell
+when that fails (`onFailed`). It is not in the page yet: the real
+engine is GLB-002, and what a person is told when it fails is GLB-004.
+So this task has unit tests and no browser tests, and they run with the
+stand-in engine (`frontend/src/test/engine.ts`).
+
+`frontend/src/globe/Globe.test.tsx` (27):
+
+- **The element**: one empty `div` and nothing else, which stays the
+  same element when the globe is drawn again.
+- **Loading**: the engine is asked for once when the globe is shown,
+  and nothing is started while it loads. A globe that React draws but
+  does not show, because something beside it is not ready, asks for
+  nothing. The way of loading that was handed in when the globe was
+  shown is the one used: a later one is not asked, and neither it nor
+  another listener makes the globe load or start anything anew.
+- **Starting**: when the engine has arrived one engine is started, in
+  the globe's own element, which is in the page then; nobody is told
+  anything.
+- **Going**: the engine is stopped once when the globe goes and not
+  before. An engine that arrives after the globe has gone is never
+  started. A globe that is shown again after it has gone loads and
+  starts anew, in its new element. Of two globes side by side each has
+  its own engine, and only its own is stopped with it.
+- **Failing**: whoever shows the globe is told once, with the very
+  thing that went wrong, when the engine cannot be loaded, when the way
+  of loading breaks before it gives anything, and when the engine has
+  arrived and cannot be started; nothing is running then, and going
+  says nothing more. The listener the globe has now is the one told.
+  Nobody is told of an engine that cannot be loaded for a globe that
+  has gone.
+- **In development** React shows a component, takes it away and shows
+  it again (`StrictMode`). Then the engine is asked for twice; once
+  both loadings have ended, in either order, exactly one engine is
+  running, in the globe's element; nothing is started for the loading
+  of the globe that was taken away; that one engine is stopped once
+  when the globe goes; a failure is told once though both loadings
+  fail; and nothing is started when the globe goes while both loadings
+  are under way.
+- **The engine itself**: the component as it is written brings in
+  `react` and nothing else, and names nothing of the engine.
+
+`frontend/src/test/engine.test.ts` (16) tests the stand-in: it has done
+nothing at first; it counts every asking and does not arrive by itself;
+it arrives and fails when the test says so, for the loading asked for
+first or the one named, with what the test says went wrong; both come
+back only when a chain of twenty things that waited on the loading has
+run; a loading that was not asked for is named in a sentence; it
+remembers where each engine was started and whether that was in the
+page, counts the stops of each, and runs only what was never stopped;
+every loading gives the same way to start; once broken it cannot be
+started and remembers nothing more; what it hands out is a copy; and
+two stand-ins share nothing.
+
+No test of the two files ends with work of React's waiting: the set-up
+of the unit tests holds every test to that (FND-056). The component
+itself asks React for nothing after it is shown.
 
 ## The tools a computer needs
 
