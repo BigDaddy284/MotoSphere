@@ -6,7 +6,7 @@ tables are added, its schema and entity relationships.
 ## Current state
 
 The store is an SQLite file used by the data pipeline
-([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 23 and
+([ARCHITECTURE.md](ARCHITECTURE.md) §5). Its schema is at version 19 and
 has seven tables: `source`, that of the information sources (DAT-006),
 each of which can say which country it is of (DAT-057),
 `source_offer`, which says what kinds of information each of them offers
@@ -201,8 +201,8 @@ schema the store has, and never writes (DAT-025). Where
 does not exist." and makes none: it does not call `open_store`, which
 would. Otherwise it opens the store, asks `pending`, and writes one
 sentence to standard output, with the file's whole path: "The data store
-is up to date: … is at schema version 23." or "The data store lacks 20
-migrations: … is at schema version 3, and the newest is version 23." In
+is up to date: … is at schema version 19." or "The data store lacks 16
+migrations: … is at schema version 3, and the newest is version 19." In
 all three cases the exit code is 0. A store that cannot be opened, or that
 `migrate` would refuse, gives the same sentence as there on standard
 error, and the same exit code 1: the two commands ask the same function,
@@ -223,7 +223,7 @@ where `migrate` puts it right the sentence says so:
 | The store | What is said |
 |---|---|
 | There is no file | "There is no data store: … does not exist. Run `python -m motosphere migrate` first." |
-| It lacks migrations | "The data store lacks 10 migrations: … is at schema version 13, and the newest is version 23. Run `python -m motosphere migrate` first." |
+| It lacks migrations | "The data store lacks 6 migrations: … is at schema version 13, and the newest is version 19. Run `python -m motosphere migrate` first." |
 | `migrate` would refuse it, or it cannot be opened | What `migrate` says of it, word for word |
 
 The file is byte for byte the same afterwards, nothing is made beside it,
@@ -255,10 +255,6 @@ list of them, and nothing else (DAT-006):
 | 17 | `let_a_region_say_its_code` | Builds the table `region` anew with the column `iso_3166_2`, the check of its form and the rule that no two regions have one code, every region with what it had, and makes the index `ix_region_source_id` again | DAT-064 |
 | 18 | `hold_the_key_of_a_review_item_under_every_name` | Makes the second trigger of the keys of `review_item` anew, so that it fires after every change of a row and not only after one that names the column `id` | DAT-068 |
 | 19 | `hold_the_code_of_a_region_to_its_country` | Makes four triggers, two on `region` and two on `country`, by which the code of a region begins with the code of its country; it changes no table, no index and no row | DAT-067 |
-| 20 | `let_regions_with_codes_share_a_name` | Builds the table `region` anew without the rule that no two regions of one country have one name, every region with what it had, and makes the index `ix_region_source_id` and the two triggers on `region` again, an index over the country, `ix_region_country_id`, and the index that holds one name among the regions of a country that say no code, `ix_region_country_id_name` | DAT-066 |
-| 21 | `let_a_region_be_a_part_of_another` | Builds the table `region` anew with the column `parent_id`, the rule that a key and a country together are there once, the reference of a region to the region it is a part of and the check that it is not itself, every region with what it had and a part of none, and makes the three indexes and the two triggers on `region` again and an index over the new column, `ix_region_parent_id` | DAT-065 |
-| 22 | `let_parts_of_different_regions_share_a_name` | Takes the index of the rule of the names, `ix_region_country_id_name`, away and makes it again over the regions without a code that are parts of none, and makes a second index, `ix_region_parent_id_name`, over the region a region is a part of and its name, for the regions without a code that are parts of one; no row is changed | DAT-069 |
-| 23 | `keep_a_region_out_of_its_own_parts` | Makes two triggers on `region` by which no region is a part of itself through other regions; it changes no table, no index and no row, and leaves a ring that is there as it is | DAT-070 |
 
 - **A migration is plain SQL, written out in its function.** It names no
   model, no list and no type of the store's code, and the module imports
@@ -2738,19 +2734,13 @@ and the table `region` knows them (DAT-013). Its model is `Region`, in
 code (DAT-064), and the nineteenth,
 `hold_the_code_of_a_region_to_its_country`, holds that code to the
 country (DAT-067; see "The code of a region is of its country"). The
-twentieth, `let_regions_with_codes_share_a_name`, builds it anew once
-more, so that two regions of a country can have one name when their
-codes tell them apart (DAT-066), and the twenty-first,
-`let_a_region_be_a_part_of_another`, a third time, with the column
-that says which region a region is a part of (DAT-065; see "A region
-inside a region"). The table has no
+table has no
 rows, and no reference rows are loaded into it: a region comes with the
 record that needs it, from the source that names it.
 
 | Column | What it holds | May be without a value |
 |---|---|---|
 | `country_id` | The country it is a part of | No |
-| `parent_id` | The region it is a part of, as a county is of a state, where it is a part of one | Yes |
 | `name` | What it is called, as its source writes it. Text that is not empty (see "Text that must not be empty") | No |
 | `iso_3166_2` | Its code of ISO 3166-2, the international standard for the parts of countries, as `NZ-CAN` for Canterbury | Yes |
 | the eight columns of a collected record | Where the row came from and how far it can be trusted (see "Where a collected record came from") | Only `published_on` |
@@ -2765,43 +2755,10 @@ in every table.
   cannot be deleted**: its regions are taken away first. Nothing is
   said of what is to happen to the regions then, so SQLite refuses the
   deletion; it deletes nothing by itself.
-- **Two regions of one country can have one name when their codes
-  tell them apart** (DAT-066). The standard's own list has such
-  regions: on the list that comes with release 4.20.1 of iso-codes, 36
-  pairs of regions share a name within one country, as Maputo, the
-  city (`MZ-MPM`) and the province (`MZ-L`) of Mozambique. A region
-  that says its code can have any name, also one that another region
-  of its country has, and can be given one later.
-- **No two regions that say no code have one name in one place**:
-  nothing would tell them apart. The place of a region is the region
-  it is a part of, or its country where it is a part of none (DAT-069;
-  see "The names of the parts of a region"). Of the regions of a
-  country that are parts of none (`ix_region_country_id_name`), the
-  second is refused when it is stored, when a region is given the name
-  of the other, when it is moved to the country of the other, and when
-  a region loses its code beside one of its name that says none. Two
-  countries can each have a region of a name. The rule is an index
-  over the country and the name that holds the regions without a code
-  that are parts of none and no others (`WHERE iso_3166_2 IS NULL AND
-  parent_id IS NULL`); a rule that is written into the table is over
-  every row of it. SQLite says of a refusal "UNIQUE constraint failed:
-  region.country_id, region.name", as it did of the rule before.
-- **A region that says its code and one that says none can have one
-  name** in a country. Whether the two are one region, named by two
-  sources of which one gives the code, or two parts of the country,
-  the table cannot know, and it does not make them one. That is a
-  question for a person (see "Opening a possible duplicate"), to be
-  asked by the task that first stores regions; none does yet.
-- **A statement that stores a region or does nothing where one of its
-  name is there** has to say which regions the rule is over: `ON
-  CONFLICT (country_id, name) WHERE iso_3166_2 IS NULL AND parent_id
-  IS NULL DO NOTHING` for a region that is a part of none, and `ON
-  CONFLICT (parent_id, name) WHERE iso_3166_2 IS NULL AND parent_id IS
-  NOT NULL DO NOTHING` for a part of a region. Without the condition,
-  and with the condition as it was before DAT-069 (`WHERE iso_3166_2
-  IS NULL`), SQLite refuses the statement ("ON CONFLICT clause does
-  not match any PRIMARY KEY or UNIQUE constraint"). A statement that
-  did nothing has used up a key all the same.
+- **No two regions of one country have one name**
+  (`uq_region_country_id_name`), when a region is stored, when it is
+  given another name and when it is moved to another country. Two
+  countries can each have a region of a name.
 - **Two names are one name only if they are the same text.**
   "Canterbury" and "canterbury" are two names, and so are "Canterbury"
   and "Canterbury " with a space after it. The table does not judge
@@ -2844,234 +2801,38 @@ in every table.
   again, and the index over `source_id` is made again. No table points
   to a region yet. If the migration fails, at its last statement too,
   the store is as it was.
-- **The twentieth migration builds the table anew once more**: the
-  rule of the names as it was (`uq_region_country_id_name`, over every
-  region of a country) was written into the table, and SQLite cannot
-  take a rule out of a table that is there. Every region keeps what it
-  had, its code and its key, and the highest key the table gave is
-  kept. The index over `source_id` and the two triggers of the
-  nineteenth migration that are on the regions go with the table and
-  are made again, the triggers after the table is filled: a region
-  whose code is not of its country, which the nineteenth migration
-  left as it was, is left as it is. The two triggers on the countries
-  stay. No region can be
-  in the way of the new rule, because every store kept the old one,
-  which asked for more. If the migration fails, at its last statement
-  too, the store is as it was.
-- **The twenty-first migration builds the table anew a third time**:
-  SQLite puts a column that is added in place after all the others and
-  cannot give it a rule that names two columns. Every region keeps
-  what it had, its code and its key, and is a part of no region; the
-  highest key the table gave is kept. The three indexes that went with
-  the table are made again, over `source_id`, over `country_id` and
-  the one of the rule of the names, and so are the two triggers on the
-  regions, after the table is filled, so that a region whose code is
-  not of its country is left as it is. If the migration fails, at its
-  last statement too, the store is as it was.
-- **The twenty-second migration builds no table**: the rule of the
-  names is an index, and an index can be taken away and made anew. It
-  takes `ix_region_country_id_name` away, makes it again over the
-  regions without a code that are parts of none, and makes
-  `ix_region_parent_id_name`. No row is changed. No region can be in
-  the way of the two rules, because every store kept the old one,
-  which asked for more than the two together. If the migration fails,
-  at its last statement too, the store is as it was.
 - **A region is a collected record.** `Region` is a subclass of
-  `Collected` and names four columns; the eight, their checks, the
+  `Collected` and names three columns; the eight, their checks, the
   reference to `source`, the index over `source_id`
   (`ix_region_source_id`) and the check that holds the two times
   together come with that. A region comes from a source that is there,
   and a source that regions came from cannot be deleted. The source of
   a region need not be the source of its country.
-- **The regions of one country are found without reading the table**,
-  by an index over the country (`ix_region_country_id`), for whoever
-  asks for them and for SQLite itself when a country is to be deleted
-  and it looks whether the country has regions. Until DAT-066 the
-  index SQLite kept for the rule of the names did that. The index of
-  the rule as it is now holds the regions without a code only, so it
-  cannot find the regions of a country, and the table has an index
-  over `country_id` of its own. The regions of one name in a country
-  are looked for among the regions of that country; a region without a
-  code that is a part of none is found by its country and name through
-  the index of the rule, by whoever says all of that: a question that
-  does not say `parent_id IS NULL` is not answered from that index
-  since DAT-069.
-  Tests hold what SQLite says it uses for each.
+- **The regions of one country are found without reading the table.**
+  SQLite keeps an index for the rule of the names
+  (`sqlite_autoindex_region_1`, over the country and then the name).
+  Because the country stands first in it, it finds the regions of one
+  country, for whoever asks for them and for SQLite itself when a
+  country is to be deleted and it looks whether the country has
+  regions. So the table has no index of its own over `country_id`; a
+  test holds what SQLite says it uses.
 - **Nothing gives itself a value.** A row cannot be without a country,
   a name or any of the seven things that are known of every collected
   record, and neither the model nor the table makes one up. A region
   of which no code is said has none.
 - **A region is changed with its history**, by `change` (see "Changing
   a record"), like every record. A region can be deleted while nothing
-  refers to it; the regions that are parts of it do, and no other
-  table refers to a region yet.
-- **What is not in the table yet.** Names in other languages, and the
-  other names a region is known by, are not in this table.
-
-### A region inside a region
-
-Some parts of a country are divided again: a department of France is a
-part of a region of France, a county a part of a state. A region can
-say which region it is a part of, in the column `parent_id` (DAT-065),
-and may say none: a region without one is a part of its country only.
-On the list of ISO 3166-2 that comes with release 4.20.1 of iso-codes,
-1456 of the 5046 regions are a part of another, always of one of the
-same country. Two of them lie two deep, Bas-Rhin and Haut-Rhin: each
-is a part of Alsace, which is a part of Grand-Est.
-
-- **The region it names is one that is there, of its own country**
-  (`fk_region_parent_id_country_id_region`). The two columns
-  `parent_id` and `country_id` together point to the key and the
-  country of one region, so a region of France cannot be a part of a
-  region of Spain. A region is refused when it is stored as a part of
-  a region that is not there or of another country, and when it is
-  made one later. SQLite says "FOREIGN KEY constraint failed", as it
-  does of a country or a source that is not there.
-- **For that the table says that a key and a country together are
-  there once** (`uq_region_id_country_id`). That is so of every row,
-  since a key is there once. SQLite asks for it before it lets two
-  columns point there, and keeps an index for it
-  (`sqlite_autoindex_region_1`; the index of the codes is the second
-  since).
-- **A region is not a part of itself**
-  (`ck_region_parent_id_not_itself`): when it is stored, with its key
-  named or with the key it is about to be given, when it is changed,
-  and when it would take the key of the region it is a part of. SQLite
-  says "CHECK constraint failed: ck_region_parent_id_not_itself".
-- **A region that has parts stays.** It cannot be deleted, given
-  another key or moved to another country while regions are parts of
-  it, and a part cannot be moved to another country while it is one.
-  Nothing is said of what is to happen to the parts then, so SQLite
-  refuses; it deletes and moves nothing by itself. A region can be
-  deleted once its parts are deleted, are parts of another region or
-  of none.
-- **SQLite asks where the rows point when a statement has ended.** One
-  statement can delete a region and all its parts, or move them all to
-  another country, and one statement can move a part to another
-  country and another region at once. A statement that leaves one row
-  pointing nowhere is taken back whole. Within one unit of work a
-  region cannot be deleted first and its parts after it, nor a part
-  stored first and its region after it.
-- **A statement that says REPLACE** puts a region in the place of the
-  one that had its key. The parts of that region are parts of the new
-  one if it is of the same country, and the statement is refused if it
-  is not. The new region is held to every rule of a part itself.
-- **The parts of a region are found without reading the table**, by
-  an index over the column (`ix_region_parent_id`), for whoever asks
-  and for SQLite itself when a region is to be deleted and it looks
-  whether the region has parts. The regions that are parts of no
-  region are found by it too. Tests hold what SQLite says it uses.
-- **A part has a code of its country, a name and a source like any
-  region.** A region and a part of it can have one name when their
-  codes tell them apart, as Cantabria the community (`ES-CB`) and
-  Cantabria the province in it (`ES-S`). Two parts that say no code
-  can have one name when they are parts of different regions, as
-  counties of one name in two states (DAT-069; see "The names of the
-  parts of a region").
-- **A region is made a part of another with its history**, by
-  `change`: the history holds the key of the region it was a part of
-  and of the one it is a part of now, as text. Its own parts stay its
-  parts.
-- **What the table does not ask**: whether a region is a part of
-  itself through others, as two regions that are each a part of the
-  other. Each of the two names a region that is there, of its own
-  country, and not itself. Two triggers ask it (DAT-070; see "No
-  region is a part of itself through others"). No code stores a region
-  yet.
-
-### The names of the parts of a region
-
-There are counties of one name in many states: Ohio and Pennsylvania
-each have a Washington County and a Greene County. Since a region can
-be a part of another (DAT-065), the rule of the names goes by where a
-region is (DAT-069). It is over the regions that say no code, as
-before: a region that says its code can have any name.
-
-- **No two parts of one region that say no code have one name**
-  (`ix_region_parent_id_name`). The second is refused when it is
-  stored, when a part is given the name of another part of its region,
-  when a region is made a part of a region that has a part of its
-  name, and when a part loses its code beside one of its name that
-  says none. SQLite says "UNIQUE constraint failed: region.parent_id,
-  region.name".
-- **No two regions of one country that are parts of none and say no
-  code have one name** (`ix_region_country_id_name`), as before. A
-  part cannot be made a part of none beside such a region of its name.
-  SQLite says "UNIQUE constraint failed: region.country_id,
-  region.name".
-- **Parts of different regions can have one name**, in one country
-  and in two. So can a region and a part of it, as New York the state
-  and New York the city, and a part and a part of that part.
-- **The rule is two indexes, each over some of the regions.** The one
-  is over the country and the name `WHERE iso_3166_2 IS NULL AND
-  parent_id IS NULL`, the other over the region a region is a part of
-  and the name `WHERE iso_3166_2 IS NULL AND parent_id IS NOT NULL`.
-  One index over the region and the name would not do for the regions
-  that are parts of none: to SQLite two rows that both say no region
-  are never alike. A region that is a part of a region is of the
-  country of that region, so the second index needs no country.
-- **The name of a part is free again in its region** when the part is
-  deleted, is given another name, is given its code, or is made a part
-  of another region or of none.
-- **A part without a code is found by its region and its name through
-  the index of its rule**, by whoever says that it has no code. Tests
-  hold what SQLite says it uses.
-- **What the table does not judge**: whether a part without a code
-  and a part of the same region and name that says its code are one
-  region. That is a question for a person, as it is among the regions
-  of a country (see "Opening a possible duplicate").
-
-### No region is a part of itself through others
-
-A region is not a part of itself: the table checks that. Two regions
-that are each a part of the other, or three in a ring, pass that
-check, and a check reads one row only. Two triggers refuse them
-(DAT-070). The twenty-third migration,
-`keep_a_region_out_of_its_own_parts`, makes them, and the model
-`Region` makes the same two wherever the tables are made from the
-models.
-
-| Trigger | Fires | What SQLite says |
-|---|---|---|
-| `tr_region_parent_id_not_below_itself` | After a new region that is a part of a region below it | "A region (region) is not a part of itself through other regions." |
-| `tr_region_parent_id_stays_not_below_itself` | After a change of a region that gives it another key or makes it a part of another region, and leaves it a part of a region below it | "A region (region) is not a part of itself through other regions." |
-
-- **How they ask.** Each goes from the region the row names upwards,
-  from part to region, and refuses where it comes to the row itself.
-  It gathers every region once, so it ends in a store that holds a
-  ring already. It goes from key to key and reads no region that is
-  not above the one it asks about.
-- **A ring cannot come about in another way.** A region that is
-  changed is asked when the region it is a part of is another than
-  before, or its key is. Every other change is free: nothing is asked.
-  A new region is asked too: a statement that says REPLACE puts it in
-  the place of a region that others are parts of. So a part cannot
-  take the key of a region above its own region (`UPDATE OR REPLACE
-  region SET id = …`), under any of the names SQLite has for the key,
-  and a region cannot be put in the place of another as a part of a
-  region below that place.
-- **What the table refuses, it refuses first**: a region that names
-  itself is refused by the check, in its words.
-- **SQLite asks after each row, not when the statement has ended.**
-  That is how triggers differ from what a row points to. One statement
-  that would close a ring with one of its rows is taken back whole.
-  One statement that turns two regions around, the part made the
-  region and the region its part, is refused where SQLite comes to the
-  upper one first, though no ring would be left at its end; two
-  statements do it, the lower region made a part of none first.
-- **Everything else is as it was**: a region is moved up and down
-  among the regions above it, a part is stored at every depth, and a
-  region that has parts and is a part is changed in every other way.
-- **The rule stands in the file.** It holds on a connection that the
-  store's code did not open, also one that does not ask SQLite to hold
-  rows to what they point to.
-- **The migration puts nothing right.** A store could hold a ring
-  before it: nothing refused one. Which of its regions names the wrong
-  one the migration cannot know, so the ring stays. Its regions can be
-  changed in other ways, regions below it can be stored and moved, and
-  it is undone by making one of its regions a part of a region outside
-  it or of none; after that it cannot be closed again. No store holds
-  a region yet.
+  refers to it; nothing refers to a region yet.
+- **What is not in the table yet.** Two
+  regions of one country that share a name: the standard's own list
+  has 36 such pairs, as Maputo, the city and the province of
+  Mozambique, which differ in their codes, and the rule of the names
+  lets the table hold only one of each pair until the task that lets
+  their codes tell them apart (DAT-066). A region that is a part of
+  another region, as a county is of a state (DAT-065): until then
+  every region is a part of its country only. Names in other
+  languages, and the other names a region is known by, are not in this
+  table.
 
 ### The code of a region is of its country
 
@@ -3140,8 +2901,8 @@ tables are made from the models.
   connection of another kind has stored one, a country that is given
   the key it points to is held to its code.
 - **The regions of a country are found for the rule without reading
-  the table**, by the index over the country (`ix_region_country_id`,
-  since DAT-066), which a test holds.
+  the table**, by the index SQLite keeps for the rule of the names
+  (`sqlite_autoindex_region_1`), which a test holds.
 - **The migration puts nothing right.** It makes the four triggers
   and reads and changes no row; every table, index and trigger that
   was there is as it was. A store could hold a region whose code
