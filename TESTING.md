@@ -226,11 +226,7 @@ on the loading has run. The stand-in says how often it was asked for
 (`loadings()`), in which elements engines were started, whether each was in
 the page then and how often each was stopped (`engines()`), and where an
 engine is running now (`running()`). A test can make it one that cannot be
-started (`breaksAtTheStart(why)`). An engine that was started says that its
-first complete picture is drawn when the test says so (`draws()`, for the
-engine started first or the one named), at once, stopped or not, and as
-often as the test has it say so (GLB-029). Nothing of the real engine is in
-it.
+started (`breaksAtTheStart(why)`). Nothing of the real engine is in it.
 
 The browser tests also run with a touch screen
 (`frontend/e2e/touch.spec.ts`), at phone and at desktop size: every button
@@ -2734,15 +2730,12 @@ The `Globe` component (`frontend/src/globe/Globe.tsx`, GLB-027) is one
 element of the page and one engine that draws in it. It is handed how
 the engine is loaded (`load`, which gives the way to start an engine in
 an element, which in turn gives the way to stop it) and whom to tell
-when that fails (`onFailed`). An engine that is started is handed a
-listener, to which it says that its first complete picture is drawn
-(`drawn`), and the component can be handed whom to tell of that
-(`onDrawn`, GLB-029). It is not in the page yet: the real
+when that fails (`onFailed`). It is not in the page yet: the real
 engine is GLB-002, and what a person is told when it fails is GLB-004.
-So these tasks have unit tests and no browser tests, and they run with
-the stand-in engine (`frontend/src/test/engine.ts`).
+So this task has unit tests and no browser tests, and they run with the
+stand-in engine (`frontend/src/test/engine.ts`).
 
-`frontend/src/globe/Globe.test.tsx` (44):
+`frontend/src/globe/Globe.test.tsx` (27):
 
 - **The element**: one empty `div` and nothing else, which stays the
   same element when the globe is drawn again.
@@ -2775,31 +2768,10 @@ the stand-in engine (`frontend/src/test/engine.ts`).
   when the globe goes; a failure is told once though both loadings
   fail; and nothing is started when the globe goes while both loadings
   are under way.
-- **The first complete picture** (GLB-029, 17 tests): nobody is told
-  while the engine loads, nor when it has only been started. When the
-  engine says that its picture is drawn, whoever shows the globe is
-  told once, with nothing else, and the engine goes on running; told
-  once though the engine says it again and again. Nobody is told what
-  an engine says after its globe has gone. The listener the globe has
-  now is the one told, also one that was handed in only after the
-  engine was started; another listener makes the globe load or start
-  nothing anew. A globe can be shown by someone who does not ask.
-  Each of two globes is told of its own engine and of no other, and a
-  globe that is shown again after it has gone is told of its new
-  engine only. A globe that React put aside and shows again later
-  (`Activity`) is stopped for that time, tells nobody what its old
-  engine says, starts a new engine in the same element when it is
-  shown again, and is then told a second time. Nobody is told that a picture is drawn when the engine
-  cannot be loaded or cannot be started. A listener that fails is not
-  taken for a failure of the engine: what it fails with goes back to
-  the engine that said it, the engine goes on running, and the listener
-  is not told a second time. Under `StrictMode` it is told once, of the
-  one engine that runs, in whichever order the two loadings ended, and
-  nobody is told once the globe has gone.
 - **The engine itself**: the component as it is written brings in
   `react` and nothing else, and names nothing of the engine.
 
-`frontend/src/test/engine.test.ts` (27) tests the stand-in: it has done
+`frontend/src/test/engine.test.ts` (16) tests the stand-in: it has done
 nothing at first; it counts every asking and does not arrive by itself;
 it arrives and fails when the test says so, for the loading asked for
 first or the one named, with what the test says went wrong; both come
@@ -2809,15 +2781,7 @@ remembers where each engine was started and whether that was in the
 page, counts the stops of each, and runs only what was never stopped;
 every loading gives the same way to start; once broken it cannot be
 started and remembers nothing more; what it hands out is a copy; and
-two stand-ins share nothing. Since GLB-029 (11 tests): it says nothing
-by itself to whom an engine was handed; an engine says that its picture
-is drawn when the test says so, the one started first or the one named,
-at once, as often as the test says so and stopped or not; what the
-listener fails with comes back to the test; an engine that was not
-started is named in a sentence, and an engine that could not be started
-has no number; and two stand-ins do not share whom their engines say
-it to. Where the tests that were there start an engine, they now hand
-it a listener that does nothing.
+two stand-ins share nothing.
 
 No test of the two files ends with work of React's waiting: the set-up
 of the unit tests holds every test to that (FND-056). The component
