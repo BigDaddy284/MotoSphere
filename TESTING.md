@@ -1015,8 +1015,19 @@ that a region came from and a country that has a region cannot be
 deleted, and a code is held to its form and to one region; and it
 fails, with the store as it was, where a table of the name of either
 copy is there already, and at its last statement, where an index of
-its name over another table stands in the index's place (DAT-064); a
-store
+its name over another table stands in the index's place (DAT-064); the
+eighteenth makes the second trigger of the keys of the review queue
+anew in a store that has three open items, one of them
+with a key below 1 from before the eleventh: every table, index and
+trigger is there by the name it had, the tables and indexes are
+written as they were, the trigger is written anew, and the items are
+as they were; a statement that sets the key of an item below 1 by one
+of SQLite's own three names for the key is taken before the migration,
+which is the defect, and refused after it, with what was taken before
+left as it is; the column is held as before, an item with a key below
+1 is still given a note and a key of 1 or more, and an item another
+key of 1 or more; and it fails, with the store left at its version,
+where the trigger it takes out is not there (DAT-068); a store
 with the newest schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -1869,7 +1880,8 @@ asked.
 triggers by which a key of the review queue is 1 or more (DAT-056), in
 a store that the migrations built, on a real SQLite file, with two
 open items and a decided one written past the model. After every
-refusal every column of every item is read back with plain SQL.
+refusal every column of every item is read back with plain SQL. The
+last eight points are about the names of the key (DAT-068).
 
 - **The table has these triggers and no other**: the two of a kept
   decision, the two against replacing and the two of the keys. This
@@ -1904,6 +1916,36 @@ refusal every column of every item is read back with plain SQL.
   before it, and what is written after it, is kept.
 - **A store made from the models** has the same six triggers and
   refuses the same.
+- **Under any name of the key an open item is not given a key below
+  1**: thirteen ways to name it, which are the column and SQLite's own
+  three names (`rowid`, `_rowid_`, `oid`), each also in other capitals
+  or in the marks SQLite takes around a name, with the keys 0, -1, -7
+  and the least whole number SQLite holds; and under each of them it
+  is given the key 30. Before DAT-068 the store took a key below 1
+  under ten of the thirteen.
+- **No statement gets past by one of SQLite's own names**: after
+  another column, in one list with another column, with `OR REPLACE`
+  or `OR IGNORE`, counted from the key the item has, from a query,
+  and beside the column in the same statement, whichever of the two
+  says the key below 1 that the item would get.
+- **Where a statement names the key twice** and the last says 30, the
+  item gets 30 and is not refused: the store asks about the key the
+  item got. **An item that is given the key it has** is not refused.
+- **A new item whose key is named by one of SQLite's own names** is
+  refused with the key 0 or -1 and stored with the key 30.
+- **An item that is stored again** and told to give the item that is
+  there a key below 1 (`ON CONFLICT (id) DO UPDATE`) is refused, under
+  each of the thirteen ways to name the key.
+- **Of a decided item** the store says that it is never edited, under
+  these names too. **In a unit of work** a key below 1 by another name
+  takes the work before it back. **On a connection the store's code
+  did not open**, and **in a store made from the models**, the three
+  names are refused in the same sentence.
+- **An item that had a key below 1 before the rule** (written by the
+  first ten migrations, then brought to the newest schema) keeps it
+  and is given a note; it is not given another key below 1, by the
+  column or by one of the three names; and it is given the key 3,
+  after which it cannot be given the key -3 again.
 
 ### A decided item is never replaced
 
