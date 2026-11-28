@@ -3159,7 +3159,8 @@ site as it was built, with the real engine. The fixture of every
 browser test fails each of them for a warning or an error on the
 console, for a request that fails and for an answer that says a file
 is not there. Each test waits until the globe says that the Earth is
-drawn, for at most twenty seconds.
+drawn, for at most sixty seconds (twenty until GLB-032; see "What a
+slow machine does to the tests of the Earth").
 
 - **One surface that fills the stage.** The stage is 700 by 672 pixels
   at its place in a page of 1280 by 720, there is one drawing surface,
@@ -3176,14 +3177,17 @@ drawn, for at most twenty seconds.
   which files have arrived and how many pictures its 3D pictures were
   told to draw. At the moment the list of the pictures and at least
   two pictures of the Earth have arrived and the engine has drawn; no
-  request is under way when the test sees it. A second and a half
-  later no file has arrived that had not at the moment, no request is
-  under way, the picture of the stage is the same pixel for pixel, and
-  the engine has drawn at most one picture since the moment. One it
-  does draw: with its last piece arrived the engine draws the complete
-  picture, which is when the globe says so, and then that same picture
-  once more, of its own accord (9 of 9 times when the planner measured
-  it).
+  request is under way when the test sees it. Then the test waits
+  until the engine has drawn nothing for a second and a half, for at
+  most thirty seconds: the page notes when its last picture was drawn.
+  After that no file has arrived that had not at the moment, no
+  request is under way, and the picture of the stage is the same pixel
+  for pixel. An engine that draws all the time never lets a second and
+  a half pass without a picture. The engine does draw after the
+  moment: the same complete picture once more, and on a slow machine
+  up to four times (see "What a slow machine does to the tests of the
+  Earth"). Until GLB-032 the test waited a second and a half and
+  allowed one picture.
 - **Nothing is asked of another computer.** Every request of the page
   goes to the site, under the site's own folder; the script of the
   engine is asked for once; more than five files come from the folder
@@ -3213,6 +3217,63 @@ the browser without 3D pictures, also holds that the page asks for one
 script and one style sheet and no more, so that the engine is not
 fetched there.
 
+### What a slow machine does to the tests of the Earth
+
+Two of the five tests failed on GitHub's Windows machine on
+2026-11-28, each once, with nothing wrong in the page (GLB-032):
+
+- **The Earth was not drawn within twenty seconds.** In run
+  46131565305, of a pull request that changed nothing of the globe,
+  the test that stops and starts the engine failed at its first step,
+  27.6 seconds after it began: it had waited twenty seconds, and the
+  globe of the page had not said that the Earth is drawn. The other
+  four tests of the file had taken 2.0,
+  8.0, 14.0 and 4.5 seconds in that run, and the job passed when it
+  was run again.
+- **Three pictures after the moment, where the test allowed one.** In
+  two runs of trials of the view the globe is to open with (GLB-030),
+  46130916825 and 46133108330, the test that counts the pictures
+  after the globe has said that the Earth is drawn saw three and two.
+  The picture of the stage was the same each time.
+
+What was measured after that, in run 46133108330, on both of GitHub's
+machines: 22 openings of the page each, 14 at 1280 by 720 and 8 at
+768 by 1024, with the view of that trial, which has the whole Earth
+in it. The page noted every picture it drew and the moment its globe
+said that the Earth is drawn.
+
+| | Linux | Windows |
+|---|---|---|
+| The globe said that the Earth is drawn, after the page was opened | 0.6 to 0.7 s | 1.5 to 14.9 s |
+| The test saw it | 0.9 s after the page was opened, every time | 1.7 to 15.1 s after |
+| Pictures drawn after that moment | one, 22 of 22 times | one 8 times, two 9 times, three 4 times, four once |
+| The last of them, after that moment | 0.01 to 0.02 s | 0.02 to 3.7 s |
+| The longest time without a picture before the last one | 0.02 s | 3.7 s; more than 1.5 s in 6 of the 22 |
+
+- **How long the Earth takes is a matter of the machine.** On the
+  Windows machine the page went without a new frame for up to 4.8
+  seconds at a time, and the test saw the moment up to ten seconds
+  after the page had noted it. A test that waits twenty seconds for
+  the Earth holds how fast a machine is. Each test now waits sixty,
+  two thirds of the 90 seconds a globe test has (GLB-031).
+- **The engine does not stop at the moment.** It asks the browser for
+  work in the background while it draws the Earth, and each piece of
+  that work that ends has it draw the picture again. With the whole
+  Earth in view, two or three such pieces ended after the moment in 14
+  of the 22 openings on the Windows machine and in none on the Linux
+  machine. With the view the engine opens with by itself, in 28
+  openings on a developer's machine whose processor was slowed four
+  and eight times, the engine asked for no work of that kind and drew
+  one picture after the moment each time. The picture is the
+  same each time. So "at most one picture after the moment" was a rule
+  about the machine. What the test holds now is what it was written
+  for: an engine that draws when something has changed comes to rest,
+  and one that draws all the time does not.
+- **What the test does not hold.** That the engine draws nothing at
+  all once it has rested for a second and a half: in 6 of the 22
+  openings on the Windows machine one more picture came later than
+  that. And how many pictures an engine may draw before it rests.
+
 ### What the planted defects showed
 
 Each line was tried as a planted defect, alone, against the browser
@@ -3229,8 +3290,10 @@ tests of the three files above:
 - An engine that keeps its 3D picture when it is stopped, one whose
   widget is left where it was, and one that is not stopped at all are
   each found by that test.
-- An engine that draws all the time is found by the count of the
-  pictures it draws after it has said that the Earth is drawn.
+- An engine that draws all the time is found because it never comes
+  to rest after it has said that the Earth is drawn (since GLB-032;
+  before, by the count of the pictures it drew in a second and a
+  half).
 - An engine that is not told which pictures to use asks another
   computer for them, and one that is told a folder that is not there
   gets an answer that says so: both are found. An engine that draws
@@ -3246,6 +3309,328 @@ whether the pictures themselves are ready was found by no test: the
 engine does not count a piece as arrived while its picture is still a
 placeholder, so the one question, whether a piece is still waiting,
 is enough, and the other was taken out of the code.
+
+## The view the globe opens with
+
+The globe opens with the whole Earth in view, at every size of the
+screen (GLB-030): the camera is straight above the middle of the North
+Atlantic, 30 degrees north and 40 degrees west, north up, as far away
+as it takes for the Earth to take four fifths of the shorter side of
+the globe stage. From there Europe and North Africa are in view on one
+side and the Americas on the other.
+
+Why it takes arithmetic: the engine holds its field of view, an angle
+of 60 degrees, across the longer side of its drawing surface. Seen
+from one fixed distance the Earth takes the same share of the longer
+side whatever the shape of the surface, and with the view the engine
+opens with by itself that was about six tenths of it: on a phone held
+upright, where the stage is 390 pixels wide and 745 high, the Earth
+was cut off at both sides, and on a phone lying above and below.
+
+Two modules do it:
+
+- `frontend/src/globe/homeView.ts` names the place (`HOME`) and the
+  share (`SHARE_OF_THE_SHORTER_SIDE`), and works out the distance
+  (`distanceOfTheWholeEarth`) from the width and height of a surface,
+  the field of view and the share, in radii of the Earth from its
+  middle. It is arithmetic only and brings in nothing, so it is tested
+  where nothing is drawn. A surface that has no size yet is taken for a
+  square one.
+- `frontend/src/globe/earth.ts` sets the camera with it when the engine
+  is started, before the first picture: from the size of the drawing
+  surface as it is then and the field of view the engine has. Were the
+  engine ever to start without a view in perspective, its own view
+  would be left as it is.
+
+Since GLB-028 the field of view the engine has is the one the globe
+gives it, from the shape of the stage, and with it the distance is the
+same on every stage (see "The globe follows the size of its stage").
+How a person moves the globe is GLB-005 and the tasks after it.
+
+### Unit tests
+
+`frontend/src/globe/homeView.test.ts` (20):
+
+- The place is 30 north and 40 west, and the share is four fifths (2).
+  The browser tests take the share from the module, so these two tests
+  are what holds the numbers themselves.
+- Three cases that can be worked out by hand (3): two radii where the
+  Earth is to fill a square surface seen under 60 degrees; the root of
+  five where the surface is twice as wide as high and seen under 90
+  degrees; and the same root of five where the Earth is to take half
+  of a square surface seen under 90 degrees.
+- The stage at six screen sizes, as the browser tests measure it (6):
+  from the distance the module gives, a ball of radius 1 takes four
+  fifths of the shorter side. The test works that out its own way,
+  from the angle the ball is seen under.
+- A surface held upright and the same surface lying give the same
+  distance; the shape counts and not the size; the distance is greater
+  the narrower the surface, the smaller the share and the narrower the
+  field of view; and it is outside the Earth whatever share is asked
+  for (6).
+- A surface without width, without height or without both is taken for
+  a square one, and the distance is a number (3).
+
+The test that the engine is brought in by one module only
+(`engineAddress.test.ts`, GLB-002) reads this module too: it names no
+package of the engine.
+
+### Browser tests
+
+`frontend/e2e/globe/home.spec.ts` (7), in the project `globe`, on the
+site as it was built, with the real engine. They read the picture
+itself, from outside the page (see "Reading what the page shows"),
+once the globe says that the Earth is drawn.
+
+Around the Earth the engine draws the stars, the sun and the moon
+where they stand at the time of the page. Every test gives the page
+one fixed time (noon on 21 June 2026, by the clock of Greenwich), so
+that the sky of the test is the same sky on every day.
+
+- **The whole Earth, in the middle, with the sky around it** (5), at
+  the sizes of the window the layout knows: a desktop (1280 by 720), a
+  phone held upright (390 by 844) and lying (844 by 390), a tablet held
+  upright (768 by 1024) and the smallest phone (320 by 568). The radius
+  the Earth is to have is four fifths of half the shorter side of the
+  stage, as the test measures the stage. In the eight directions of a
+  compass, from the middle of the stage: a tenth of that radius inside
+  the edge there is Earth (red, green and blue together above 300 of
+  765), and a tenth outside it there is sky (below 150). The sky is
+  black but for its stars, and a star is a point or two wide, so the
+  sky at a place is read at three points two pixels apart and the
+  darkest of them is taken. A view from too near, from too far, or off
+  the middle fails one of the sixteen readings.
+- **The place, and north up** (2), on the desktop and on the phone held
+  upright. The test works out where a place of the Earth is in the
+  picture, seen from straight above 30 north and 40 west with north up
+  from the distance of that stage, and reads the colour there. It
+  writes the place a second time and does not take it from the
+  application, so it holds the place itself. Below the middle is the
+  sea (more blue than red by more than 50). On the line of 40 west,
+  72 north is the ice of Greenland (each of red, green and blue above
+  180) and 62 north is sea. On the line of 23 north, 11 west is the
+  Sahara (together above 550, and less than 30 more blue than red) and
+  23 west is sea. And 5 south, 62 west, is the forest of the Amazon:
+  more green than red and more green than blue. The two coasts hold how
+  far north and how far west the camera is, and the four places
+  together hold that north is up.
+
+**How long these tests take.** Each opens the page once and waits for
+the Earth, for at most sixty seconds, as the tests of GLB-002 do
+(GLB-032), and a test of the globe has 90 seconds (GLB-031; "The
+browser of the globe tests" has what was measured, most of it with
+these tests). In the planner's trials on GitHub's machines the seven
+took between 2.1 and 5.4 seconds on Linux, in one run, and between 2.7
+and 13.6 on Windows, in two; the slowest there was the test of the
+tablet in one run and that of the desktop in the other.
+
+**What was measured for these numbers (2026-11-28)**, in the browser of
+the globe tests on a developer's Linux machine, in pictures of the
+page at six sizes of the window:
+
+- The edge of the Earth's disc was between 0.99 and 1.03 of the radius
+  aimed at, in all eight directions, at all six sizes. The readings a
+  tenth inside and a tenth outside leave room on both sides of that.
+- On the line of 40 west, read every two degrees, the picture was sea
+  up to 64 north and ice from 68 north. On the line of 23 north it was
+  sea up to 18 west and desert from 16 west. The places the test reads
+  lie four to six degrees on either side of each coast.
+- The colours at the places the test reads, on the desktop and on the
+  phone: the ice (199, 212, 224) and (202, 213, 222); the desert about
+  (212, 206, 184) and (209, 211, 200); the sea more blue than red by
+  more than 80; the forest about (118, 165, 119) and (140, 183, 150).
+
+### What the planted defects showed
+
+Each line was tried as a planted defect, alone.
+
+Against the unit tests (28):
+
+- Another place (east for west, south for north, the two numbers in
+  each other's place, one degree further west or north) and another
+  share (the whole shorter side, three quarters) are each found by the
+  test of that number.
+- A distance that takes the longer side for the shorter or the other
+  way round, the width or the height where the shorter or the longer
+  side is meant, the two sides divided the wrong way round, the shape
+  not counted, the whole field of view for half of it, a sine or the
+  angle itself for the tangent, the share not counted or divided by,
+  the edge of a flat disc for the edge of a ball, the height above the
+  ground for the distance to the middle, and a surface without size
+  not provided for: each is found by the tests of the distance.
+- A module that brings the engine in is found by the test that the
+  engine is brought in by one module only.
+
+Against the browser tests (23), in `earth.ts` where nothing else is
+said:
+
+- A view that is never set, so that the engine's own stays, fails six
+  of the seven tests. The seventh is the whole Earth on the tablet held
+  upright: at that shape of the stage the sixteen readings pass for
+  the engine's own view too. A view that is set only on a stage higher
+  than wide, or only on one wider than high, is found by the tests of
+  the other screens.
+- East for west, south for north, longitude and latitude in each
+  other's place, and a view seven degrees too far east, west, north or
+  south are each found by both tests of the place. Smaller distances
+  were not tried: seven degrees is what the two coasts are known to
+  tell.
+- South up, and a turn of nine degrees to the right, are found by both
+  tests of the place; east up by those and by two of the others; a
+  camera that looks past the Earth and not straight down by all seven.
+- The Earth filling the shorter side, a tenth of the shorter side too
+  much or too little, half the field of view, and the distance to the
+  middle taken for the height above the ground fail all seven.
+- The surface taken for a square, the window measured and not the
+  surface, and, in `homeView.ts`, the shape not counted and the two
+  sides divided the wrong way round are each found by the tests of
+  the screens that are not nearly square: five or six of the seven.
+
+What the browser tests do not hold: the numbers of the place and of
+the share themselves. They hold that the picture is the view from 30
+north and 40 west to about seven degrees, and they take the share from
+the module. The two numbers are held by the unit tests, and that the
+camera is set with them and with nothing else is read in `earth.ts`.
+
+## The globe follows the size of its stage
+
+The stage changes its size after the globe has opened: when a panel
+beside it is closed or opened on a wide screen, when the window is made
+smaller or larger, and when a phone is turned on its side. The globe
+then fills the stage as it is, draws anew, and shows what it showed, at
+the same size across the shorter side of the stage (GLB-028).
+
+What the engine does by itself, as read in `@cesium/engine` 26.5.0 and
+as the browser tests see it: in every turn of its work it compares the
+size of its element with the size it knew, and where they differ it
+gives its drawing surface a pixel for each pixel of the element and
+draws a new picture, although it otherwise draws only when
+something has changed. Nothing in the application watches the size.
+
+What the engine does not do: it holds one angle, across the longer
+side of its surface, and leaves it as it is when the surface changes
+its shape. What is drawn then grows and shrinks with the longer side.
+With that alone, the Earth of the view the globe opens with would grow
+when a panel closes, and outgrow the stage when both are closed.
+
+So the globe gives the engine its lens:
+
+- `frontend/src/globe/lens.ts` names the angle the globe sees across
+  the shorter side of its surface, 36 degrees
+  (`ANGLE_ACROSS_THE_SHORTER_SIDE`), and works out the angle across the
+  longer side that goes with it for a surface of a width and a height
+  (`angleAcrossTheLongerSide`). On a surface 16 wide and 9 high that is
+  the 60 degrees the engine takes by itself. It is arithmetic only and
+  brings in nothing. A surface that has no size yet is taken for a
+  square one.
+- `frontend/src/globe/earth.ts` gives the engine that angle when it is
+  started, before the camera is set, and again before every turn of the
+  engine's work, from the size of the surface as it then is. The camera
+  is left where it is.
+
+With the shorter side always seen under the same angle, the distance
+from which the Earth takes four fifths of it is the same on every
+stage, 3.9749 radii of the Earth from its middle, and the Earth as the
+globe opens keeps its place and its share of the shorter side through
+every change of the stage.
+
+The engine draws one pixel for each pixel of the page. How sharp the
+picture is on a screen that has more pixels than the page counts is
+not this task's.
+
+### Unit tests
+
+`frontend/src/globe/lens.test.ts` (24):
+
+- The angle across the shorter side is 36 degrees (1). The browser
+  tests write the angle a second time, so this test and those hold the
+  number itself.
+- Two cases that can be worked out by hand (2): the same angle on a
+  square surface, and 90 degrees where the surface is twice as wide as
+  high and its height is seen under the angle whose half has the
+  tangent a half.
+- On a surface 16 by 9 the angle is the engine's own 60 degrees, to a
+  twentieth of a degree (1).
+- It does not matter which side is the longer one; the angle is wider
+  the longer the surface is for its shorter side; and it stays under a
+  half turn however long the surface is (3).
+- A surface without width, without height or without both is taken for
+  a square one (1).
+- The stage at eight sizes, as the browser tests measure it, with the
+  panels beside it open and closed (16): with the angle the module
+  gives, the engine sees the shorter side under 36 degrees, which the
+  test works out the way the engine does for the side its angle is not
+  across; and the distance of the whole Earth is the same as on any
+  other stage, 3.9749 radii.
+
+The test that the engine is brought in by one module only
+(`engineAddress.test.ts`, GLB-002) reads this module too.
+
+### Browser tests
+
+`frontend/e2e/globe/size.spec.ts` (7), in the project `globe`, on the
+site as it was built, with the real engine, at the fixed time of the
+tests of the view the globe opens with. Each opens the page, waits for
+the Earth, and then changes the size of the stage as a person does.
+
+After the page has opened and after each change, one helper holds the
+same things: the picture of the drawing surface comes to have a pixel
+for each pixel of the stage as the test measures it then, within
+thirty seconds; the engine comes to rest, which is taken to be a
+second and a half without a new picture, within thirty seconds more;
+the surface is where the stage is and as large; and in the eight
+directions of a compass, from the middle
+of the stage, there is Earth a tenth inside the edge the Earth is to
+have, at four fifths of half the shorter side, and sky a tenth
+outside it, read as the tests of the opening view read them. After
+each change the test also holds that the engine has drawn a picture
+since: the page counts the pictures its 3D pictures are told to draw.
+
+- **The panels beside the globe, on a desktop** (1), at 1280 by 720:
+  as it opens the stage is 700 wide and 672 high; with the sections
+  closed it is 920 wide and begins at the left edge; with both panels
+  closed it is 1280 wide; with both open again it is where it was. The
+  Earth keeps its size and stays in the middle each time.
+- **The window, on a desktop** (1): made smaller, to 1000 by 560, the
+  stage is 420 wide and 512 high and higher than wide; made larger, to
+  1600 by 900, it is 1020 by 852. The Earth takes four fifths of the
+  shorter side each time.
+- **The screen turned on its side and back** (5), at the five sizes of
+  the window the layout knows: the width and the height of the window
+  change places, and change back. Where the window is narrower than
+  900 pixels a panel is opened first and closed again: it lies over
+  the stage there, and the stage and the picture keep their size under
+  it.
+
+`frontend/e2e/globe/home.spec.ts` changes with the task: the distance
+its two tests of the place work out is the distance for the angle of
+36 degrees across the shorter side, which the test writes a second
+time, where it was the distance for the engine's own 60 degrees across
+the longer side.
+
+**What was seen without the lens (2026-11-28)**, in the browser of the
+globe tests on a developer's Linux machine, with the angle given to
+the engine when it is started and not again: all seven tests fail, and
+each at a reading of the picture, after the surface had the size of
+the stage with a pixel for each of its pixels. With the sections
+closed on the desktop there was Earth where sky was to be, a tenth
+outside the edge to the east (633 of 765); so there was in the smaller
+window, and on four of the five screens turned on their side. On the
+phone that lies and is turned upright there was sky where Earth was to
+be, a tenth inside the edge (24 of 765): there the longer side became
+the shorter and the Earth shrank.
+
+**Why the picture has thirty seconds to get its pixels (2026-11-28).**
+The first wait of the helper had the five seconds a test gives by
+default. On the planner's Linux machine and on the Linux machine of
+GitHub that was enough in every run. On the Windows machine of GitHub
+one of the seven tests failed with it once, the test of the window, in
+the larger window of 1600 by 900: five seconds after the window had
+its size the picture did not have the pixels of the stage yet. That
+machine is the slowest the tests run on. The wait is now as long as
+the wait for the engine to come to rest, and what it reports when it
+runs out is how many pixels the picture has more or fewer than the
+stage, across and down.
 
 ## The tools a computer needs
 
