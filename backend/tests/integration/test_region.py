@@ -562,12 +562,12 @@ def test_the_regions_of_one_source_are_found_by_the_index(mapped: Engine) -> Non
     ]
 
 
-def test_the_regions_of_one_country_are_found_by_the_index_of_their_country(
+def test_the_regions_of_one_country_are_found_by_the_index_of_their_names(
     mapped: Engine,
 ) -> None:
     with mapped.connect() as connection:
         indexes = connection.exec_driver_sql("PRAGMA index_list(region)").all()
-        index = connection.exec_driver_sql("PRAGMA index_info(ix_region_country_id)").all()
+        index = connection.exec_driver_sql("PRAGMA index_info(sqlite_autoindex_region_1)").all()
         of_a_country = connection.exec_driver_sql(
             "EXPLAIN QUERY PLAN SELECT * FROM region WHERE country_id = 1"
         ).all()
@@ -578,30 +578,25 @@ def test_the_regions_of_one_country_are_found_by_the_index_of_their_country(
             "EXPLAIN QUERY PLAN DELETE FROM country WHERE id = 1"
         ).all()
 
-    # Two indexes begin with the country. The one over the country alone is
-    # over every region. The one of the rule of the names is over the
-    # regions without a code only, so it cannot find the regions of a
-    # country. The index SQLite keeps is the one of the codes.
-    assert sorted(
-        (str(name), int(unique), int(partial)) for _, name, unique, _, partial in indexes
-    ) == [
-        ("ix_region_country_id", 0, 0),
-        ("ix_region_country_id_name", 1, 1),
-        ("ix_region_source_id", 0, 0),
-        ("sqlite_autoindex_region_1", 1, 0),
+    # The index SQLite keeps for the rule of the names is the first of the
+    # two that hold no two rows alike, and it begins with the country. The
+    # second is the one of the codes.
+    assert sorted((str(name), int(unique)) for _, name, unique, *_ in indexes) == [
+        ("ix_region_source_id", 0),
+        ("sqlite_autoindex_region_1", 1),
+        ("sqlite_autoindex_region_2", 1),
     ]
-    assert [name for _, _, name in index] == ["country_id"]
+    assert [name for _, _, name in index] == ["country_id", "name"]
     assert [detail for *_, detail in of_a_country] == [
-        "SEARCH region USING INDEX ix_region_country_id (country_id=?)"
+        "SEARCH region USING INDEX sqlite_autoindex_region_1 (country_id=?)"
     ]
-    # The regions of one name are looked for among those of their country.
     assert [detail for *_, detail in by_name] == [
-        "SEARCH region USING INDEX ix_region_country_id (country_id=?)"
+        "SEARCH region USING INDEX sqlite_autoindex_region_1 (country_id=? AND name=?)"
     ]
     # Before a country is deleted SQLite looks whether it has regions, and
     # the index alone answers that.
     assert [detail for *_, detail in to_delete_a_country if "region" in str(detail)] == [
-        "SEARCH region USING COVERING INDEX ix_region_country_id (country_id=?)"
+        "SEARCH region USING COVERING INDEX sqlite_autoindex_region_1 (country_id=?)"
     ]
 
 
