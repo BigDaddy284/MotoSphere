@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react'
-import { StrictMode, Suspense, use } from 'react'
+import { Activity, StrictMode, Suspense, use } from 'react'
 import { describe, expect, it } from 'vitest'
 import { standInEngine, type StandIn } from '../test/engine.ts'
 import { Globe } from './Globe.tsx'
@@ -11,6 +11,17 @@ function listener() {
     told,
     onFailed: (why: unknown) => {
       told.push(why)
+    },
+  }
+}
+
+/** What a test hands a globe to be told that the picture is drawn, and each time it was told. */
+function watcher() {
+  const told: unknown[][] = []
+  return {
+    told,
+    onDrawn: (...given: unknown[]) => {
+      told.push(given)
     },
   }
 }
@@ -409,6 +420,319 @@ describe('Globe', () => {
 
       expect(engine.engines()).toEqual([])
       expect(told).toEqual([])
+    })
+  })
+
+  describe('when the engine has drawn its first complete picture', () => {
+    it('tells nobody while the engine loads, nor when it has only been started', async () => {
+      const engine = standInEngine()
+      const { told, onDrawn } = watcher()
+      render(<Globe load={engine.load} onDrawn={onDrawn} onFailed={listener().onFailed} />)
+      await aMoment()
+
+      expect(told).toEqual([])
+
+      await engine.arrives()
+      await aMoment()
+
+      expect(engine.running()).toHaveLength(1)
+      expect(told).toEqual([])
+    })
+
+    it('tells whoever shows it, once and with nothing else, when the engine says so', async () => {
+      const engine = standInEngine()
+      const { told, onDrawn } = watcher()
+      const failure = listener()
+      render(<Globe load={engine.load} onDrawn={onDrawn} onFailed={failure.onFailed} />)
+      await engine.arrives()
+
+      engine.draws()
+
+      expect(told).toEqual([[]])
+      expect(failure.told).toEqual([])
+      expect(engine.engines().map(({ stops }) => stops)).toEqual([0])
+    })
+
+    it('tells it once, though the engine says it again and again', async () => {
+      const engine = standInEngine()
+      const { told, onDrawn } = watcher()
+      render(<Globe load={engine.load} onDrawn={onDrawn} onFailed={listener().onFailed} />)
+      await engine.arrives()
+
+      engine.draws()
+      engine.draws()
+      engine.draws()
+      await aMoment()
+
+      expect(told).toHaveLength(1)
+    })
+
+    it('tells nobody what the engine says after the globe has gone', async () => {
+      const engine = standInEngine()
+      const { told, onDrawn } = watcher()
+      const { unmount } = render(
+        <Globe load={engine.load} onDrawn={onDrawn} onFailed={listener().onFailed} />,
+      )
+      await engine.arrives()
+
+      unmount()
+      engine.draws()
+      await aMoment()
+
+      expect(engine.engines().map(({ stops }) => stops)).toEqual([1])
+      expect(told).toEqual([])
+    })
+
+    it('tells the listener it has now, not the one it was first shown with', async () => {
+      const engine = standInEngine()
+      const first = watcher()
+      const now = watcher()
+      const { onFailed } = listener()
+      const { rerender } = render(
+        <Globe load={engine.load} onDrawn={first.onDrawn} onFailed={onFailed} />,
+      )
+      await engine.arrives()
+
+      rerender(<Globe load={engine.load} onDrawn={now.onDrawn} onFailed={onFailed} />)
+      engine.draws()
+
+      expect(first.told).toEqual([])
+      expect(now.told).toEqual([[]])
+    })
+
+    it('keeps its engine when whoever shows it hands it another listener for the picture', async () => {
+      const engine = standInEngine()
+      const { onFailed } = listener()
+      const { container, rerender } = render(
+        <Globe load={engine.load} onDrawn={watcher().onDrawn} onFailed={onFailed} />,
+      )
+      await engine.arrives()
+
+      rerender(<Globe load={engine.load} onDrawn={watcher().onDrawn} onFailed={onFailed} />)
+      rerender(<Globe load={engine.load} onFailed={onFailed} />)
+      await aMoment()
+
+      expect(engine.loadings()).toBe(1)
+      expect(engine.engines()).toEqual([
+        { surface: container.firstElementChild, inThePage: true, stops: 0 },
+      ])
+    })
+
+    it('can be shown by someone who does not ask: the engine says it, and nothing happens', async () => {
+      const engine = standInEngine()
+      const { told, onFailed } = listener()
+      render(<Globe load={engine.load} onFailed={onFailed} />)
+      await engine.arrives()
+
+      expect(() => {
+        engine.draws()
+      }).not.toThrow()
+      await aMoment()
+
+      expect(told).toEqual([])
+      expect(engine.running()).toHaveLength(1)
+    })
+
+    it('tells someone who asks only later, if the engine has not said it yet', async () => {
+      const engine = standInEngine()
+      const { told, onDrawn } = watcher()
+      const { onFailed } = listener()
+      const { rerender } = render(<Globe load={engine.load} onFailed={onFailed} />)
+      await engine.arrives()
+
+      rerender(<Globe load={engine.load} onDrawn={onDrawn} onFailed={onFailed} />)
+      engine.draws()
+
+      expect(told).toEqual([[]])
+    })
+
+    it('tells each of two globes of its own engine, and of no other', async () => {
+      const engine = standInEngine()
+      const one = watcher()
+      const other = watcher()
+      render(<Globe load={engine.load} onDrawn={one.onDrawn} onFailed={listener().onFailed} />)
+      render(<Globe load={engine.load} onDrawn={other.onDrawn} onFailed={listener().onFailed} />)
+      await engine.arrives(0)
+      await engine.arrives(1)
+
+      engine.draws(1)
+
+      expect(one.told).toEqual([])
+      expect(other.told).toEqual([[]])
+
+      engine.draws(0)
+
+      expect(one.told).toEqual([[]])
+      expect(other.told).toEqual([[]])
+    })
+
+    it('tells a globe that is shown again after it has gone of its new engine only', async () => {
+      const engine = standInEngine()
+      const { onFailed } = listener()
+      const before = watcher()
+      const again = watcher()
+      const first = render(
+        <Globe load={engine.load} onDrawn={before.onDrawn} onFailed={onFailed} />,
+      )
+      await engine.arrives(0)
+      first.unmount()
+      render(<Globe load={engine.load} onDrawn={again.onDrawn} onFailed={onFailed} />)
+      await engine.arrives(1)
+
+      engine.draws(0)
+
+      expect(before.told).toEqual([])
+      expect(again.told).toEqual([])
+
+      engine.draws(1)
+
+      expect(before.told).toEqual([])
+      expect(again.told).toEqual([[]])
+    })
+
+    it('tells a globe that React put aside and shows again of its new engine, a second time', async () => {
+      const engine = standInEngine()
+      const { told, onDrawn } = watcher()
+      const { onFailed } = listener()
+      // React keeps what it puts aside, the element too, and takes it out
+      // of sight: for as long as that lasts the globe has gone.
+      const shown = (mode: 'visible' | 'hidden') => (
+        <Activity mode={mode}>
+          <Globe load={engine.load} onDrawn={onDrawn} onFailed={onFailed} />
+        </Activity>
+      )
+      const { container, rerender } = render(shown('visible'))
+      const element = container.firstElementChild
+      await engine.arrives(0)
+      engine.draws(0)
+
+      expect(told).toEqual([[]])
+
+      rerender(shown('hidden'))
+      engine.draws(0)
+
+      expect(engine.running()).toEqual([])
+      expect(told).toEqual([[]])
+
+      rerender(shown('visible'))
+      await engine.arrives(1)
+
+      expect(container.firstElementChild).toBe(element)
+      expect(engine.engines()).toEqual([
+        { surface: element, inThePage: true, stops: 1 },
+        { surface: element, inThePage: true, stops: 0 },
+      ])
+      expect(told).toEqual([[]])
+
+      engine.draws(0)
+
+      expect(told).toEqual([[]])
+
+      engine.draws(1)
+      engine.draws(1)
+
+      expect(told).toEqual([[], []])
+    })
+
+    it.each([
+      {
+        what: 'cannot be loaded',
+        goesWrong: (engine: StandIn) => engine.fails(new Error('The file could not be fetched.')),
+      },
+      {
+        what: 'cannot be started',
+        goesWrong: (engine: StandIn) => {
+          engine.breaksAtTheStart(new Error('The browser gave no picture.'))
+          return engine.arrives()
+        },
+      },
+    ])('tells nobody that a picture is drawn when the engine $what', async ({ goesWrong }) => {
+      const engine = standInEngine()
+      const { told, onDrawn } = watcher()
+      const failure = listener()
+      render(<Globe load={engine.load} onDrawn={onDrawn} onFailed={failure.onFailed} />)
+
+      await goesWrong(engine)
+      await aMoment()
+
+      expect(failure.told).toHaveLength(1)
+      expect(told).toEqual([])
+    })
+
+    it('does not take a listener that fails for a failure of the engine', async () => {
+      const engine = standInEngine()
+      const why = new Error('Whoever shows the globe could not take it.')
+      const failure = listener()
+      let asked = 0
+      render(
+        <Globe
+          load={engine.load}
+          onDrawn={() => {
+            asked += 1
+            throw why
+          }}
+          onFailed={failure.onFailed}
+        />,
+      )
+      await engine.arrives()
+
+      // What the listener fails with goes back to the engine that said it.
+      expect(() => {
+        engine.draws()
+      }).toThrow(why)
+      await aMoment()
+
+      expect(failure.told).toEqual([])
+      expect(engine.engines().map(({ stops }) => stops)).toEqual([0])
+
+      // And it was told: it is not told a second time.
+      engine.draws()
+
+      expect(asked).toBe(1)
+    })
+
+    describe('where React shows the globe, takes it away and shows it again (StrictMode)', () => {
+      it.each([
+        { order: 'in the order they were asked for', sequence: [0, 1] },
+        { order: 'the later one first', sequence: [1, 0] },
+      ])(
+        'tells once, of the one engine that runs, when the loadings ended $order',
+        async ({ sequence }) => {
+          const engine = standInEngine()
+          const { told, onDrawn } = watcher()
+          render(
+            <StrictMode>
+              <Globe load={engine.load} onDrawn={onDrawn} onFailed={listener().onFailed} />
+            </StrictMode>,
+          )
+          for (const which of sequence) {
+            await engine.arrives(which)
+          }
+
+          expect(engine.engines()).toHaveLength(1)
+          engine.draws()
+          engine.draws()
+
+          expect(told).toEqual([[]])
+        },
+      )
+
+      it('tells nobody once it has gone', async () => {
+        const engine = standInEngine()
+        const { told, onDrawn } = watcher()
+        const { unmount } = render(
+          <StrictMode>
+            <Globe load={engine.load} onDrawn={onDrawn} onFailed={listener().onFailed} />
+          </StrictMode>,
+        )
+        await engine.arrives(0)
+        await engine.arrives(1)
+
+        unmount()
+        engine.draws()
+
+        expect(told).toEqual([])
+      })
     })
   })
 

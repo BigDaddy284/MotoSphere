@@ -157,6 +157,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   has arrived, and stopped when the globe goes. How the engine is
   loaded and started is handed to the component. It is not in the page
   yet, so nothing a user sees changes (GLB-027).
+- The `Globe` component tells whoever shows it when its engine has
+  drawn the first complete picture, once, and only while the globe is
+  shown. An engine that is started is handed a listener to say so. The
+  component is still not in the page (GLB-029).
 - The data store's first decisions (`DATABASE.md`): what it relies on in
   SQLite, held by `motosphere.db.sqlite` and its tests on every machine the
   gates run on, and where the store is kept between scheduled runs
