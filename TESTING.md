@@ -3212,18 +3212,24 @@ that the sky of the test is the same sky on every day.
 **A test of this file has 90 seconds**, not the 30 of every browser
 test. The browser of the globe tests draws in software, and a test
 that reads the picture waits until the picture has reached the screen.
-Measured on 2026-11-28 on a developer's Linux machine with other runs
-of tests beside it, in 38 openings of the page at 768 by 1024: about a
-second after the page was opened the page got no new frame for between
-2 and 7 seconds, while its own script was idle; the globe said that
-the Earth is drawn either before that pause, after about a second, or
-after it, up to 8 seconds after the page was opened; and a picture of
-the page that was asked for during the pause arrived when it was over,
-after up to 6 seconds, where every other took less than a tenth of a
-second. A test of this file took between 3 and 11 seconds there, and
-once, in 36 runs, the test of the tablet ran out of its 30 seconds
-while it waited for a picture. On GitHub's machines the seven tests
-took between 2 and 6 seconds on Linux and between 3 and 10 on Windows.
+Measured on 2026-11-28 on a developer's Linux machine with two other
+runs of tests beside it, at 768 by 1024. In eight openings of the page
+the frames of the page were noted: about a second after the page was
+opened it got no new frame for between 2 and 7 seconds, while its own
+script was idle. In thirty more, 64 pictures of one pixel were taken
+straight after the globe said that the Earth is drawn: half of the
+pictures of an opening took 34 thousandths of a second or less, and in
+22 of the 30 openings one picture took between 1.5 and 6 seconds. The
+globe said that the Earth is drawn between 1 and 8 seconds after the
+page was opened, and where it said so late no picture was slow. So
+there is one pause for each opening of the page, while the browser
+draws the first pictures of the Earth, and a picture that is asked
+for during it arrives when it is over. With 30 seconds for a test,
+the test of the tablet ran out of time once in 36 runs of a test of
+this file on that machine; the others took between 3 and 11 seconds.
+On GitHub's machines, which run nothing beside the tests, the seven
+tests took between 2 and 6 seconds on Linux and between 3 and 10 on
+Windows.
 
 **What was measured for these numbers (2026-11-28)**, in the browser of
 the globe tests on a developer's Linux machine, in pictures of the
