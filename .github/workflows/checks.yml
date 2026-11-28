@@ -28,7 +28,7 @@ jobs:
   gates:
     name: All gates (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       # Each system gives its own result: one failing does not stop the other.
       fail-fast: false

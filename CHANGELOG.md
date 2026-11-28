@@ -12,6 +12,10 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   files (owner decision, 2026-11-17).
 - Visual identity: the owner's Graphite theme and Sky Classic icon style are
   the design references (`docs/design/`).
+- The checks on GitHub have 30 minutes for all gates on a machine, where
+  they had 20. The job on the Windows machine took close to 10 minutes on
+  2026-11-28 and 14 in a trial with the next tests of the globe; the limit
+  is there to end a job that hangs, not to fail one that is slow (FND-061).
 - The application is served under `/MotoSphere/`, the path it has on GitHub
   Pages, in development and in the browser tests too; the development
   address is now <http://localhost:5173/MotoSphere/> (FND-022).
