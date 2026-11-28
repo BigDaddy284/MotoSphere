@@ -12,24 +12,11 @@ import { expect, test } from './fixtures'
  */
 
 /**
- * How long the globe may take to say that the Earth is drawn. Mostly that
- * is a few seconds. On GitHub's Windows machine it was up to fifteen in 22
- * openings that were measured, and more than twenty once, in a test that
- * waited for twenty and failed (TESTING.md, "What a slow machine does to
- * the tests of the Earth"). A test holds what the engine does, not how fast
- * a machine is: it waits for two thirds of the 90 seconds it has.
+ * How long the globe may take to say that the Earth is drawn. Alone, a
+ * globe was complete within eight seconds on every machine it was measured
+ * on (TESTING.md, "The browser of the globe tests").
  */
-const DRAWN_WITHIN = 60_000
-
-/**
- * For how long an engine has to have drawn nothing to be taken as at rest,
- * and how long it may take to come to that once the Earth is drawn. The
- * last picture came up to 3.7 seconds after that moment where it was
- * measured (TESTING.md, "What a slow machine does to the tests of the
- * Earth").
- */
-const AT_REST = 1_500
-const AT_REST_WITHIN = 30_000
+const DRAWN_WITHIN = 20_000
 
 /** Where the pictures of the Earth are that come with the engine. */
 const PICTURES = `${ENGINE_ADDRESS}Assets/Textures/NaturalEarthII/`
@@ -60,15 +47,12 @@ async function untilTheEarthIsDrawn(page: Page): Promise<void> {
  * is counted with the first thing a 3D picture is told to draw in one turn
  * of the page, because an engine draws a picture in one turn. The page
  * notes both again at the moment the globe says that it is no longer busy.
- * And it notes when the last picture was drawn, so that a test can ask how
- * long the engine has drawn nothing. The notes are kept beside the page's
- * own things: NOW gives them as they are, WHEN_SAID as they were at that
- * moment.
+ * The notes are kept beside the page's own things: NOW gives them as they
+ * are, WHEN_SAID as they were at that moment.
  */
 const NOTE_WHAT_THE_ENGINE_DOES = `(() => {
   let pictures = 0
   let drawing = false
-  let lastPicture = performance.now()
   const context = WebGL2RenderingContext.prototype
   for (const way of ['drawArrays', 'drawElements', 'drawArraysInstanced', 'drawElementsInstanced', 'drawRangeElements']) {
     const draw = context[way]
@@ -76,7 +60,6 @@ const NOTE_WHAT_THE_ENGINE_DOES = `(() => {
       if (!drawing) {
         drawing = true
         pictures += 1
-        lastPicture = performance.now()
         queueMicrotask(() => {
           drawing = false
         })
@@ -86,7 +69,6 @@ const NOTE_WHAT_THE_ENGINE_DOES = `(() => {
   }
   const now = () => ({
     pictures,
-    still: performance.now() - lastPicture,
     arrived: performance.getEntriesByType('resource').map((entry) => new URL(entry.name).pathname),
   })
   let whenSaid
@@ -107,11 +89,8 @@ const NOTE_WHAT_THE_ENGINE_DOES = `(() => {
 const NOW = 'globalThis.notesOfTheEngine.now'
 const WHEN_SAID = 'globalThis.notesOfTheEngine.whenSaid'
 
-/**
- * What the page noted: the pictures drawn, for how many milliseconds none
- * has been drawn, and the paths of the files that arrived.
- */
-type Notes = { pictures: number; still: number; arrived: string[] }
+/** What the page noted: the pictures drawn and the paths of the files that arrived. */
+type Notes = { pictures: number; arrived: string[] }
 
 /** Reads what the page noted, and fails for anything else. */
 function notes(noted: unknown): Notes {
@@ -120,12 +99,10 @@ function notes(noted: unknown): Notes {
     noted !== null &&
     'pictures' in noted &&
     typeof noted.pictures === 'number' &&
-    'still' in noted &&
-    typeof noted.still === 'number' &&
     'arrived' in noted &&
     Array.isArray(noted.arrived)
   ) {
-    return { pictures: noted.pictures, still: noted.still, arrived: noted.arrived.map(String) }
+    return { pictures: noted.pictures, arrived: noted.arrived.map(String) }
   }
   throw new Error(`The page noted nothing of the engine: ${JSON.stringify(noted)}`)
 }
@@ -275,23 +252,18 @@ test.describe('the globe in a browser that draws 3D pictures', () => {
     expect(pictures).toContain(`${PICTURES}tilemapresource.xml`)
     expect(pictures.filter((path) => path.endsWith('.jpg')).length).toBeGreaterThanOrEqual(2)
     expect([...under]).toEqual([])
-    // The engine draws when something has changed and not all the time, so
-    // once the Earth is drawn it comes to rest. Not at that very moment:
-    // it draws the complete picture a few times more, of its own accord,
-    // for work it had under way when the last piece arrived. How many
-    // times is the engine's affair and differs from machine to machine.
-    // What is held is that it stops: an engine that goes on drawing never
-    // lets this long pass without a picture.
-    await expect
-      .poll(async () => notes(await page.evaluate(NOW)).still, {
-        message: 'milliseconds since the engine last drew a picture',
-        timeout: AT_REST_WITHIN,
-      })
-      .toBeGreaterThanOrEqual(AT_REST)
+    // Long enough for an engine that had more to fetch or to draw to do so.
+    await page.waitForTimeout(1_500)
     const later = notes(await page.evaluate(NOW))
     expect([...under]).toEqual([])
     expect(later.arrived).toEqual(said.arrived)
     expect((await stage.screenshot()).equals(picture)).toBe(true)
+    // The engine draws when something has changed and not all the time.
+    // With its last piece arrived it draws the complete picture, which is
+    // when the globe says so, and then that same picture once more, of its
+    // own accord. One picture after the moment is the engine's way; two
+    // would be an engine that goes on drawing.
+    expect(later.pictures - said.pictures).toBeLessThanOrEqual(1)
   })
 
   test('asks nothing of another computer: every file comes from the site, the engine files from their folder', async ({
