@@ -1,11 +1,33 @@
 import { describe, expect, it } from 'vitest'
-import type { Start } from '../globe/Globe.tsx'
-import { noSuchLoading, standInEngine } from './engine.ts'
+import type { Listener, Start } from '../globe/Globe.tsx'
+import { noSuchEngine, noSuchLoading, standInEngine } from './engine.ts'
 
 function inThePage(): HTMLElement {
   const element = document.createElement('div')
   document.body.append(element)
   return element
+}
+
+/** Somebody for an engine to say things to, where a test does not care what it says. */
+const NOBODY: Listener = { drawn: () => undefined }
+
+/** Somebody for an engine to say things to, and how often it was told the picture is drawn. */
+function somebody() {
+  const heard = { drawn: 0 }
+  const listener: Listener = {
+    drawn: () => {
+      heard.drawn += 1
+    },
+  }
+  return { heard, listener }
+}
+
+/** A stand-in that has arrived, and its way to start an engine. */
+async function hasArrived() {
+  const engine = standInEngine()
+  const loaded = engine.load()
+  await engine.arrives()
+  return { engine, start: await loaded }
 }
 
 describe('the stand-in for the engine of the globe', () => {
@@ -122,8 +144,8 @@ describe('the stand-in for the engine of the globe', () => {
     await engine.arrives()
     const start = await loaded
 
-    start(here)
-    start(nowhere)
+    start(here, NOBODY)
+    start(nowhere, NOBODY)
 
     expect(engine.engines()).toEqual([
       { surface: here, inThePage: true, stops: 0 },
@@ -140,8 +162,8 @@ describe('the stand-in for the engine of the globe', () => {
     const loaded = engine.load()
     await engine.arrives()
     const start = await loaded
-    const stopTheFirst = start(first)
-    const stopTheSecond = start(second)
+    const stopTheFirst = start(first, NOBODY)
+    const stopTheSecond = start(second, NOBODY)
 
     stopTheFirst()
 
@@ -163,8 +185,8 @@ describe('the stand-in for the engine of the globe', () => {
     await engine.arrives(0)
     await engine.arrives(1)
 
-    ways[0]?.(inThePage())
-    ways[1]?.(inThePage())
+    ways[0]?.(inThePage(), NOBODY)
+    ways[1]?.(inThePage(), NOBODY)
 
     expect(ways).toHaveLength(2)
     expect(engine.engines()).toHaveLength(2)
@@ -176,11 +198,11 @@ describe('the stand-in for the engine of the globe', () => {
     const loaded = engine.load()
     await engine.arrives()
     const start = await loaded
-    start(inThePage())
+    start(inThePage(), NOBODY)
 
     engine.breaksAtTheStart(why)
 
-    expect(() => start(inThePage())).toThrow(why)
+    expect(() => start(inThePage(), NOBODY)).toThrow(why)
     expect(engine.engines()).toHaveLength(1)
     expect(engine.running()).toHaveLength(1)
   })
@@ -189,7 +211,7 @@ describe('the stand-in for the engine of the globe', () => {
     const engine = standInEngine()
     const loaded = engine.load()
     await engine.arrives()
-    ;(await loaded)(inThePage())
+    ;(await loaded)(inThePage(), NOBODY)
 
     const [seen] = engine.engines()
     if (seen !== undefined) {
@@ -205,9 +227,128 @@ describe('the stand-in for the engine of the globe', () => {
     const other = standInEngine()
     const loaded = one.load()
     await one.arrives()
-    ;(await loaded)(inThePage())
+    ;(await loaded)(inThePage(), NOBODY)
 
     expect(other.loadings()).toBe(0)
     expect(other.engines()).toEqual([])
+  })
+
+  it('says nothing by itself to whom an engine was handed', async () => {
+    const { start } = await hasArrived()
+    const { heard, listener } = somebody()
+
+    start(inThePage(), listener)
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(heard.drawn).toBe(0)
+  })
+
+  it('has an engine say that its picture is drawn when the test says so: the one started first, or the one named', async () => {
+    const { engine, start } = await hasArrived()
+    const first = somebody()
+    const second = somebody()
+    const third = somebody()
+    start(inThePage(), first.listener)
+    start(inThePage(), second.listener)
+    start(inThePage(), third.listener)
+
+    engine.draws(1)
+    expect([first.heard.drawn, second.heard.drawn, third.heard.drawn]).toEqual([0, 1, 0])
+
+    engine.draws()
+    expect([first.heard.drawn, second.heard.drawn, third.heard.drawn]).toEqual([1, 1, 0])
+
+    engine.draws(2)
+    expect([first.heard.drawn, second.heard.drawn, third.heard.drawn]).toEqual([1, 1, 1])
+  })
+
+  it('has an engine say it as often as the test says so, stopped or not', async () => {
+    const { engine, start } = await hasArrived()
+    const { heard, listener } = somebody()
+    const stop = start(inThePage(), listener)
+
+    engine.draws()
+    engine.draws()
+    expect(heard.drawn).toBe(2)
+
+    stop()
+    engine.draws()
+
+    expect(heard.drawn).toBe(3)
+    expect(engine.engines().map(({ stops }) => stops)).toEqual([1])
+  })
+
+  it('says it at once, before it comes back to the test', async () => {
+    const { engine, start } = await hasArrived()
+    const { heard, listener } = somebody()
+    start(inThePage(), listener)
+
+    engine.draws()
+
+    expect(heard.drawn).toBe(1)
+  })
+
+  it('lets what the listener fails with come back to the test', async () => {
+    const { engine, start } = await hasArrived()
+    const why = new Error('The listener could not take it.')
+    start(inThePage(), {
+      drawn: () => {
+        throw why
+      },
+    })
+
+    expect(() => {
+      engine.draws()
+    }).toThrow(why)
+  })
+
+  it.each([
+    { started: 0, which: undefined, named: 0 },
+    { started: 0, which: 0, named: 0 },
+    { started: 2, which: 2, named: 2 },
+    { started: 1, which: -1, named: -1 },
+  ])(
+    'tells a test that names engine $which after $started starts that there is none',
+    async ({ started, which, named }) => {
+      const { engine, start } = await hasArrived()
+      const { heard, listener } = somebody()
+      for (let count = 0; count < started; count += 1) {
+        start(inThePage(), listener)
+      }
+
+      expect(() => {
+        engine.draws(which)
+      }).toThrow(noSuchEngine(started, named))
+      expect(heard.drawn).toBe(0)
+      expect(noSuchEngine(2, 2)).toBe('2 engines were started, so there is no engine number 2.')
+    },
+  )
+
+  it('gives an engine that could not be started no number', async () => {
+    const { engine, start } = await hasArrived()
+    const first = somebody()
+    const never = somebody()
+    start(inThePage(), first.listener)
+    engine.breaksAtTheStart(new Error('The browser gave no picture.'))
+    expect(() => start(inThePage(), never.listener)).toThrow('The browser gave no picture.')
+
+    expect(() => {
+      engine.draws(1)
+    }).toThrow(noSuchEngine(1, 1))
+    engine.draws(0)
+
+    expect([first.heard.drawn, never.heard.drawn]).toEqual([1, 0])
+  })
+
+  it('keeps to itself whom its engines say things to: two stand-ins share nothing', async () => {
+    const one = await hasArrived()
+    const other = await hasArrived()
+    const { heard, listener } = somebody()
+    one.start(inThePage(), listener)
+
+    expect(() => {
+      other.engine.draws()
+    }).toThrow(noSuchEngine(0, 0))
+    expect(heard.drawn).toBe(0)
   })
 })
