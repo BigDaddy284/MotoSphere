@@ -62,6 +62,7 @@ def test_the_history_is_these_migrations_in_this_order() -> None:
         "make_the_regions",
         "let_a_region_say_its_code",
         "hold_the_key_of_a_review_item_under_every_name",
+        "hold_the_code_of_a_region_to_its_country",
     ]
 
 
@@ -2163,3 +2164,149 @@ def test_the_eighteenth_migration_is_refused_where_the_trigger_it_makes_anew_is_
     assert len(before) == 9
     assert triggers(store) == before
     assert review_items(store) == items
+
+
+THE_CODE_IS_OF_THE_COUNTRY = [
+    ("tr_country_code_of_its_regions", "country"),
+    ("tr_country_code_stays_of_its_regions", "country"),
+    ("tr_region_code_of_its_country", "region"),
+    ("tr_region_code_stays_of_its_country", "region"),
+]
+A_CODE_BEGINS_WITH_ITS_COUNTRY = (
+    "The code of a region (region) begins with the code of its country (country)."
+)
+THE_CODES_BEGIN_WITH_THEIR_COUNTRY = (
+    "The codes of the regions of a country (region) begin with its code (country)."
+)
+
+
+def regions_with_codes_at_version_18(store: Engine) -> None:
+    """Bring a store to version 18 with its two regions given codes, one of them wrong.
+
+    The country of both is New Zealand, "NZ". Canterbury, with the key 1,
+    is given "NZ-CAN". Otago, with the key 3, is given "AU-OTA", which
+    nothing refuses until the nineteenth migration.
+    """
+    migrate(store, MIGRATIONS[:16])
+    regions_and_what_they_point_to(store)
+    migrate(store, MIGRATIONS[:18])
+    with store.begin() as connection:
+        connection.exec_driver_sql("UPDATE region SET iso_3166_2 = 'NZ-CAN' WHERE id = 1")
+        connection.exec_driver_sql("UPDATE region SET iso_3166_2 = 'AU-OTA' WHERE id = 3")
+
+
+def held_at_version_18(store: Engine) -> dict[str, list[tuple[object, ...]]]:
+    """Every row of the regions with every column, and of the tables they point to."""
+    with store.connect() as connection:
+        return {
+            what: [tuple(row) for row in connection.exec_driver_sql(asked)]
+            for what, asked in {
+                **HELD_AT_VERSION_14,
+                "region": "SELECT * FROM region ORDER BY id",
+            }.items()
+        }
+
+
+def as_the_triggers_are_written(store: Engine) -> dict[str, str]:
+    """How SQLite holds each trigger of the store: its name and its statement."""
+    with store.connect() as connection:
+        found = connection.exec_driver_sql(
+            "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' ORDER BY name"
+        )
+        return {str(name): str(statement) for name, statement in found}
+
+
+def test_the_nineteenth_migration_makes_four_triggers_and_keeps_what_there_was(
+    store: Engine,
+) -> None:
+    regions_with_codes_at_version_18(store)
+    held = held_at_version_18(store)
+    before = (tables(store), indexes(store), triggers(store), as_written(store))
+    written = as_the_triggers_are_written(store)
+
+    migrate(store, MIGRATIONS[:19])
+
+    assert schema_version(store) == 19
+    # The same tables and indexes, written as they were, and every trigger
+    # that was there, written as it was.
+    assert (tables(store), indexes(store), as_written(store)) == (before[0], before[1], before[3])
+    assert len(before[2]) == 10
+    assert triggers(store) == sorted([*before[2], *THE_CODE_IS_OF_THE_COUNTRY])
+    now = as_the_triggers_are_written(store)
+    assert {name: now[name] for name in written} == written
+    # The migration asks nothing of the regions that are there and changes
+    # no row: the region whose code is of another country keeps it.
+    with store.connect() as connection:
+        assert connection.exec_driver_sql("SELECT id, alpha_2 FROM country").all() == [(1, "NZ")]
+        codes = connection.exec_driver_sql("SELECT id, iso_3166_2 FROM region ORDER BY id").all()
+    assert [tuple(row) for row in codes] == [(1, "NZ-CAN"), (3, "AU-OTA")]
+    assert held_at_version_18(store) == held
+
+
+SOUTHLAND_WITH_A_CODE_OF_AUSTRALIA = (
+    "INSERT INTO region (country_id, name, iso_3166_2, source_id, source_address, collected_at, "
+    "last_verified_at, extraction_method, confidence, verification_status, created_at, "
+    "updated_at) VALUES (1, 'Southland', 'AU-STL', 1, 'https://standards.example/regions.csv', "
+    "'2026-11-27T09:00:00.000000+00:00', '2026-11-27T09:00:00.000000+00:00', 'public dataset', "
+    "'high', 'official', '2026-11-27T09:00:05.000000+00:00', '2026-11-27T09:00:05.000000+00:00')"
+)
+
+
+@pytest.mark.parametrize(
+    ("statement", "why"),
+    [
+        (SOUTHLAND_WITH_A_CODE_OF_AUSTRALIA, A_CODE_BEGINS_WITH_ITS_COUNTRY),
+        ("UPDATE region SET iso_3166_2 = 'AT-CAN' WHERE id = 1", A_CODE_BEGINS_WITH_ITS_COUNTRY),
+        ("UPDATE region SET name = 'Otakou' WHERE id = 3", A_CODE_BEGINS_WITH_ITS_COUNTRY),
+        ("UPDATE country SET alpha_2 = 'NX' WHERE id = 1", THE_CODES_BEGIN_WITH_THEIR_COUNTRY),
+    ],
+    ids=[
+        "a new region",
+        "a region that is given a code",
+        "a region whose code was wrong, another name",
+        "a country that is given other letters",
+    ],
+)
+def test_the_nineteenth_migration_holds_what_the_store_took_before(
+    store: Engine, statement: str, why: str
+) -> None:
+    # Before the migration the statement is taken: it is tried and taken
+    # back, so the store is as it was. After it the same statement is
+    # refused.
+    regions_with_codes_at_version_18(store)
+    held = held_at_version_18(store)
+    with store.connect() as connection:
+        assert connection.exec_driver_sql(statement).rowcount == 1
+        connection.rollback()
+    assert held_at_version_18(store) == held
+
+    migrate(store, MIGRATIONS[:19])
+
+    with pytest.raises(IntegrityError) as refusal, store.begin() as connection:
+        connection.exec_driver_sql(statement)
+    assert str(refusal.value.orig) == why
+    assert held_at_version_18(store) == held
+
+
+@pytest.mark.parametrize("trigger", [name for name, _ in THE_CODE_IS_OF_THE_COUNTRY])
+def test_the_nineteenth_migration_does_not_pass_over_a_trigger_of_its_name_that_is_there(
+    store: Engine, trigger: str
+) -> None:
+    # Whichever of the four is there already, the triggers made before it
+    # are taken back with the migration.
+    regions_with_codes_at_version_18(store)
+    with store.begin() as connection:
+        connection.exec_driver_sql(
+            f"CREATE TRIGGER {trigger} AFTER DELETE ON region BEGIN SELECT 1; END"
+        )
+    before = triggers(store)
+    held = held_at_version_18(store)
+
+    with pytest.raises(OperationalError) as refusal:
+        migrate(store, MIGRATIONS[:19])
+
+    assert str(refusal.value.orig) == f"trigger {trigger} already exists"
+    assert schema_version(store) == 18
+    assert len(before) == 11
+    assert triggers(store) == before
+    assert held_at_version_18(store) == held
