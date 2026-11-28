@@ -15,23 +15,15 @@ A region can say the code that ISO 3166-2 gives it, the international
 standard for the parts of countries: the two letters of its country, a
 hyphen, and one to three capital letters or digits, as "NZ-CAN" for
 Canterbury. Not every region a source names has one.
-
-The code of a region begins with the code of its country. The letters of
-a country are a column of another table, which a check of this one
-cannot read, so the rule stands in the file as triggers: on the regions,
-for a region that is stored or changed, and on the countries, for a
-country that is stored in the place of another or changed.
 """
 
 from sqlalchemy import (
     CheckConstraint,
     ColumnClause,
-    Connection,
     ForeignKey,
     UniqueConstraint,
     and_,
     column,
-    event,
     func,
     or_,
 )
@@ -93,54 +85,3 @@ class Region(Collected):
     # Its code of ISO 3166-2, as "NZ-CAN", where it has one and its
     # source says it.
     iso_3166_2: Mapped[str | None] = mapped_column(unique=True)
-
-
-# The four triggers by which the code of a region begins with the code of
-# its country: two on the regions, for a new region and for one that is
-# changed, and two on the countries, for a new country and for one that
-# is changed. A new country can have regions already: a statement that
-# says REPLACE puts it in the place of the country that had its key.
-#
-# Each fires after the row is written and SQLite takes the row back with
-# the statement. None names a column: a trigger that fires for a change
-# of one column is not fired by a statement that sets the key by another
-# of its names (DAT-068). So each fires for every change, and a region
-# whose code was wrong before the rule was there can be put right or
-# deleted and nothing else. A region without a code is asked nothing:
-# nothing compares with what is not there.
-_THE_CODE_IS_OF_THE_COUNTRY = (
-    "CREATE TRIGGER tr_region_code_of_its_country AFTER INSERT ON region "
-    "WHEN substr(NEW.iso_3166_2, 1, 2) != "
-    "(SELECT alpha_2 FROM country WHERE id = NEW.country_id) "
-    "BEGIN SELECT RAISE(ABORT, "
-    "'The code of a region (region) begins with the code of its country (country).'); END",
-    "CREATE TRIGGER tr_region_code_stays_of_its_country AFTER UPDATE ON region "
-    "WHEN substr(NEW.iso_3166_2, 1, 2) != "
-    "(SELECT alpha_2 FROM country WHERE id = NEW.country_id) "
-    "BEGIN SELECT RAISE(ABORT, "
-    "'The code of a region (region) begins with the code of its country (country).'); END",
-    "CREATE TRIGGER tr_country_code_of_its_regions AFTER INSERT ON country "
-    "WHEN EXISTS (SELECT 1 FROM region WHERE country_id = NEW.id "
-    "AND substr(iso_3166_2, 1, 2) != NEW.alpha_2) "
-    "BEGIN SELECT RAISE(ABORT, "
-    "'The codes of the regions of a country (region) begin with its code (country).'); END",
-    "CREATE TRIGGER tr_country_code_stays_of_its_regions AFTER UPDATE ON country "
-    "WHEN EXISTS (SELECT 1 FROM region WHERE country_id = NEW.id "
-    "AND substr(iso_3166_2, 1, 2) != NEW.alpha_2) "
-    "BEGIN SELECT RAISE(ABORT, "
-    "'The codes of the regions of a country (region) begin with its code (country).'); END",
-)
-
-
-def _make_its_triggers(table: object, connection: Connection, **said: object) -> None:
-    """Make the four triggers, with the connection that has just made the table.
-
-    The table of the countries is there by then: a region points to its
-    country, so the countries are made first.
-    """
-    for trigger in _THE_CODE_IS_OF_THE_COUNTRY:
-        connection.exec_driver_sql(trigger)
-
-
-# Wherever the table is made from the model, the triggers are made with it.
-event.listen(Region.__table__, "after_create", _make_its_triggers)

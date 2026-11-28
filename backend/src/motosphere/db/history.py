@@ -27,7 +27,6 @@ from sqlalchemy import Connection
 __all__ = [
     "MIGRATIONS",
     "hold_one_doubt_to_one_review_item",
-    "hold_the_code_of_a_region_to_its_country",
     "hold_the_key_of_a_review_item_to_1_or_more",
     "hold_the_key_of_a_review_item_under_every_name",
     "index_the_record_changes",
@@ -896,64 +895,6 @@ def hold_the_key_of_a_review_item_under_every_name(connection: Connection) -> No
     )
 
 
-def hold_the_code_of_a_region_to_its_country(connection: Connection) -> None:
-    """19: the code of a region begins with the code of its country (DAT-067).
-
-    Four triggers: two on the regions, for a new region and for one that
-    is changed, and two on the countries, for a new country and for one
-    that is changed. They change no table, no index and no row.
-
-    A store can hold a region whose code begins with the letters of
-    another country: until this migration nothing refused one. Which of
-    the two is wrong, the code or the country, the migration cannot
-    know, so it puts nothing right and such a region stays as it is.
-    From then on it can be put right or deleted and nothing else: every
-    other change of it is refused, and so is every change of its country.
-    """
-    connection.exec_driver_sql(
-        """
-        CREATE TRIGGER tr_region_code_of_its_country AFTER INSERT ON region
-        WHEN substr(NEW.iso_3166_2, 1, 2) != (SELECT alpha_2 FROM country WHERE id = NEW.country_id)
-        BEGIN
-            SELECT RAISE(ABORT,
-                'The code of a region (region) begins with the code of its country (country).');
-        END
-        """
-    )
-    connection.exec_driver_sql(
-        """
-        CREATE TRIGGER tr_region_code_stays_of_its_country AFTER UPDATE ON region
-        WHEN substr(NEW.iso_3166_2, 1, 2) != (SELECT alpha_2 FROM country WHERE id = NEW.country_id)
-        BEGIN
-            SELECT RAISE(ABORT,
-                'The code of a region (region) begins with the code of its country (country).');
-        END
-        """
-    )
-    connection.exec_driver_sql(
-        """
-        CREATE TRIGGER tr_country_code_of_its_regions AFTER INSERT ON country
-        WHEN EXISTS (SELECT 1 FROM region WHERE country_id = NEW.id
-            AND substr(iso_3166_2, 1, 2) != NEW.alpha_2)
-        BEGIN
-            SELECT RAISE(ABORT,
-                'The codes of the regions of a country (region) begin with its code (country).');
-        END
-        """
-    )
-    connection.exec_driver_sql(
-        """
-        CREATE TRIGGER tr_country_code_stays_of_its_regions AFTER UPDATE ON country
-        WHEN EXISTS (SELECT 1 FROM region WHERE country_id = NEW.id
-            AND substr(iso_3166_2, 1, 2) != NEW.alpha_2)
-        BEGIN
-            SELECT RAISE(ABORT,
-                'The codes of the regions of a country (region) begin with its code (country).');
-        END
-        """
-    )
-
-
 MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_sources,
     make_the_source_offers,
@@ -973,5 +914,4 @@ MIGRATIONS: tuple[Callable[[Connection], None], ...] = (
     make_the_regions,
     let_a_region_say_its_code,
     hold_the_key_of_a_review_item_under_every_name,
-    hold_the_code_of_a_region_to_its_country,
 )

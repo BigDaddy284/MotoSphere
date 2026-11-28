@@ -1027,16 +1027,7 @@ which is the defect, and refused after it, with what was taken before
 left as it is; the column is held as before, an item with a key below
 1 is still given a note and a key of 1 or more, and an item another
 key of 1 or more; and it fails, with the store left at its version,
-where the trigger it takes out is not there (DAT-068); the nineteenth
-makes four triggers in a store that has two regions with codes, one of
-them the code of another country: the ten triggers that were there
-are written as they were, every table and index too, and every row is
-as it was, the wrong region with its code; a new region with a code
-of another country, a region given one, another name for the region
-that is wrong, and other letters for the country are each taken
-before the migration and refused after it; and it fails, with the
-store left at version 18 and no trigger more than before, where a
-trigger of one of the four names is there already (DAT-067); a store
+where the trigger it takes out is not there (DAT-068); a store
 with the newest schema lacks no migration; and the module
 names nothing of MotoSphere's own code, which the test reads from the
 module as it is written, imports inside a function included.
@@ -2218,82 +2209,6 @@ region it is given to.
   SQLite keeps for the rule of the codes, which SQLite says it uses; a
   region is asked for by its code through the model, and so are the
   regions without one.
-
-`backend/tests/integration/test_region_code_country.py` tests that
-the code of a region begins with the code of its country (DAT-067),
-in a store that the migrations built, with one source and four
-countries in it: New Zealand, Australia, Austria and France. Every
-refusal is held to the sentence SQLite gives, and after it every row
-of the regions and of the countries is read back.
-
-- **A new region**: a region of each of the four countries with its
-  own code of the standard is stored. Eight regions with the code of
-  another country are refused, through the model: of a country of the
-  store, of a country that is not in it, with the first letter alone
-  as the country's, and with the second alone. Past the model the same
-  is refused whatever the statement says of a clash (plainly, `OR
-  REPLACE`, `OR IGNORE`, `OR FAIL`), and a region of its country is
-  stored by each of them; a region that takes the place of another is
-  held too. A region without a code is a part of any of the four. Of
-  three regions written by one statement, one wrong code stops all
-  three.
-- **What the table refuses, it refuses first**: a code that is not of
-  the form and a code another region has are refused in the table's
-  own words, also where the code is of another country.
-- **A region that is given a code**: by seven statements (plainly,
-  with each word for a clash, with another column, from a query), a
-  region that had a code and one that had none are refused four codes:
-  two of other countries of the store, one with the first letter alone
-  as its country's and one with the second alone; and are given a code
-  of their country, or none. Of several regions
-  changed by one statement one wrong code stops them all. Through
-  `change`, a wrong code leaves the region and no history, and a code
-  of its country is given with its history.
-- **A region that is moved**: a region with a code is not moved to
-  another country, by five statements and to each of three countries;
-  one without a code is; a region is moved together with its code,
-  whichever the statement names first, or with its code taken away;
-  it is not moved with a code of a third country or of the old one.
-  All the regions of one country are not moved by one statement.
-  Every other change of a region is taken: another name, the day it
-  was seen again, another key, the same code and country, and its
-  deletion.
-- **A country that is changed**: a country whose regions have codes is
-  not given other letters, by five statements and four pairs of
-  letters, among them one that keeps the first letter and one that
-  keeps the second. A country without regions, and one whose regions
-  have no codes, is given them. One region with a code among five
-  without holds the letters, until it has no code. Every other change
-  of a country is taken. Through the model the same.
-- **A country that takes the place of another** (`INSERT OR REPLACE`)
-  is held to the regions it gets, with three pairs of letters, and is
-  stored with the letters its regions have; where its regions have no
-  codes, or it has none, it has any letters. A new country is stored
-  whatever its letters. Two countries do not change letters with each
-  other while their regions have codes.
-- **What a refusal does**: it stops the statement and not the work
-  before it in the same transaction; in a unit of work it takes the
-  work back; it holds on a connection of `sqlite3` that the store's
-  code did not open and that does not hold rows to what they point
-  to; and it holds in a store made from the models.
-- **A region of no country** is refused by the rule of what a row
-  points to on the store's connections. Stored by a connection of
-  another kind, it holds a country that is given its key to its code,
-  whether the country is new or is given the key, by `id` or by
-  `rowid`.
-- **How the rule stands**: the four triggers by name and table, each
-  after a new row or after a change, and none for the change of one
-  column; and SQLite says that it finds the regions of a country for
-  the rule by the index of the names.
-- **A store that had regions before the rule**: the migration puts no
-  region right and changes no row. The region that was wrong is then
-  given a code of its country, or none, or moved to the country of its
-  code, or deleted, and after each its country is changed like any
-  other. Until then every other change of it, and every change of its
-  country, is refused. Its country can be given the letters of its
-  code only where no other country has them and no other region of it
-  has a code. What the store took before the migration, it refuses
-  after.
 
 ## The countries file
 
