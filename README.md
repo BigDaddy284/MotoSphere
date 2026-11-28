@@ -155,7 +155,8 @@ today's date, both in the language and time zone of your browser; the date
 changes at midnight. The sections panel lists the
 application's sections, and one can be chosen with the mouse or the keyboard;
 the globe area shows the Earth as a 3D globe, a moment after the rest of
-the page, and there is no data on it yet. In a browser that gives a page no 3D graphics,
+the page: the whole Earth, seen from above the North Atlantic, at every size
+of the screen. There is no data on it yet. In a browser that gives a page no 3D graphics,
 the globe area says that the 3D globe cannot be shown there, and the rest of
 the page works as before. The Sections and Details buttons in the top bar
 close and open the side panels. On a narrow screen (under 900 pixels wide: a
