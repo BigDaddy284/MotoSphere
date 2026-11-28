@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CurrentDate } from './clock/CurrentDate.tsx'
 import { DataStatus } from './data/DataStatus.tsx'
+import { GlobeStage } from './globe/GlobeStage.tsx'
 import { AppShell } from './layout/AppShell.tsx'
 import { SectionList } from './navigation/SectionList.tsx'
 import { DEFAULT_SECTION, type SectionId } from './navigation/sections.ts'
@@ -22,6 +23,7 @@ export function App() {
         </>
       }
       sections={<SectionList current={section} onSelect={setSection} />}
+      stage={<GlobeStage />}
     />
   )
 }
