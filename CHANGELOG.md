@@ -502,6 +502,33 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   of another. A region without a code is asked nothing. The nineteenth
   migration makes the triggers and changes no row, and the schema is
   at version 19 (DAT-067).
+- Two regions of one country can have one name when their codes tell
+  them apart, as the list of ISO 3166-2 itself has them: Maputo, the
+  city and the province of Mozambique. No two regions of one country
+  that say no code have one name. The twentieth migration builds the
+  table `region` anew without the old rule, every region with what it
+  had, and makes an index for the new rule and one over the country;
+  the schema is at version 20 (DAT-066).
+- A region can be a part of another region of its country, as a county
+  is of a state. The region it names is one that is there, of its own
+  country, and not itself, and a region that has parts cannot be
+  deleted or moved to another country. The twenty-first migration
+  builds the table `region` anew with the column `parent_id` and its
+  rules, every region with what it had and a part of none; the schema
+  is at version 21 (DAT-065).
+- Two regions that say no code can have one name when they are parts
+  of different regions, as counties of one name in two states, and so
+  can a region and a part of it. A name is there once among the parts
+  of one region, and once among the regions of a country that are
+  parts of none. The twenty-second migration makes the index of the
+  rule of the names anew for the regions that are parts of none and a
+  second one for the parts of a region, and changes no row; the schema
+  is at version 22 (DAT-069).
+- No region is a part of itself through other regions, as two that
+  are each a part of the other: the store refuses the change that
+  would close such a ring, also where a region takes the key or the
+  place of another. The twenty-third migration makes two triggers for
+  it and changes no row; the schema is at version 23 (DAT-070).
 
 ### Removed
 

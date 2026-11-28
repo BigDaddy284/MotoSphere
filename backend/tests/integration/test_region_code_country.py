@@ -962,7 +962,13 @@ def test_the_rule_is_four_triggers_two_on_the_regions_and_two_on_the_countries(
             "AND tbl_name IN ('region', 'country') ORDER BY name"
         ).all()
 
-    assert [(str(name), str(table)) for name, table, _ in found] == THE_FOUR
+    # The two tables have these four and the two by which no region is a
+    # part of itself through others (DAT-070; test_region_ring.py).
+    assert [(str(name), str(table)) for name, table, _ in found] == [
+        *THE_FOUR,
+        ("tr_region_parent_id_not_below_itself", "region"),
+        ("tr_region_parent_id_stays_not_below_itself", "region"),
+    ]
     written = {str(name): " ".join(str(statement).split()) for name, _, statement in found}
     assert "AFTER INSERT ON country WHEN" in written["tr_country_code_of_its_regions"]
     assert "AFTER UPDATE ON country WHEN" in written["tr_country_code_stays_of_its_regions"]
@@ -972,7 +978,7 @@ def test_the_rule_is_four_triggers_two_on_the_regions_and_two_on_the_countries(
     assert [name for name, statement in written.items() if "UPDATE OF" in statement.upper()] == []
 
 
-def test_the_regions_of_a_country_are_found_for_the_rule_by_the_index_of_the_names(
+def test_the_regions_of_a_country_are_found_for_the_rule_by_the_index_of_the_country(
     mapped: Engine,
 ) -> None:
     # What the triggers of the countries ask, as a query of its own.
@@ -983,7 +989,7 @@ def test_the_regions_of_a_country_are_found_for_the_rule_by_the_index_of_the_nam
     with mapped.connect() as connection:
         plan = [str(row[3]) for row in connection.exec_driver_sql(asked)]
 
-    assert plan == ["SEARCH region USING INDEX sqlite_autoindex_region_1 (country_id=?)"]
+    assert plan == ["SEARCH region USING INDEX ix_region_country_id (country_id=?)"]
 
 
 # ----------------------------------------- a store that had regions before the rule
@@ -1005,7 +1011,7 @@ def test_the_nineteenth_migration_puts_no_region_right_and_changes_no_row(store:
     a_store_at_version_18_with_a_region_of_another_country(store)
     before = everything(store)
 
-    assert migrate(store) == [19]
+    assert migrate(store, MIGRATIONS[:19]) == [19]
 
     assert schema_version(store) == 19
     assert everything(store) == before
@@ -1113,7 +1119,13 @@ def test_before_the_nineteenth_migration_the_store_took_what_it_refuses_after(
     ]:
         with refused(why):
             write(store, statement, *given)
-    assert everything(store) == before
+    # Every row has what it had. A region has one column more since: the
+    # region it is a part of, after its country, and every region that
+    # was there is a part of none (DAT-065).
+    assert everything(store) == {
+        "region": [(*region[:2], None, *region[2:]) for region in before["region"]],
+        "country": before["country"],
+    }
 
 
 def test_a_region_is_deleted_whatever_its_code_and_a_country_without_regions_too(

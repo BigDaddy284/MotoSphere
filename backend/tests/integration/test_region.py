@@ -200,6 +200,7 @@ def test_what_the_table_holds_is_plain_text_and_whole_numbers(
         (
             1,
             1,
+            None,
             "Canterbury",
             None,
             1,
@@ -222,7 +223,7 @@ def test_a_region_whose_source_gives_no_day_has_no_day(mapped: Engine) -> None:
     key = keep(mapped, a_region())
 
     assert the_region(mapped, key).published_on is None
-    assert held(mapped)[0][7] is None
+    assert held(mapped)[0][8] is None
 
 
 def test_a_row_written_past_the_model_is_read_as_a_region(mapped: Engine) -> None:
@@ -562,12 +563,12 @@ def test_the_regions_of_one_source_are_found_by_the_index(mapped: Engine) -> Non
     ]
 
 
-def test_the_regions_of_one_country_are_found_by_the_index_of_their_names(
+def test_the_regions_of_one_country_are_found_by_the_index_of_their_country(
     mapped: Engine,
 ) -> None:
     with mapped.connect() as connection:
         indexes = connection.exec_driver_sql("PRAGMA index_list(region)").all()
-        index = connection.exec_driver_sql("PRAGMA index_info(sqlite_autoindex_region_1)").all()
+        index = connection.exec_driver_sql("PRAGMA index_info(ix_region_country_id)").all()
         of_a_country = connection.exec_driver_sql(
             "EXPLAIN QUERY PLAN SELECT * FROM region WHERE country_id = 1"
         ).all()
@@ -578,25 +579,37 @@ def test_the_regions_of_one_country_are_found_by_the_index_of_their_names(
             "EXPLAIN QUERY PLAN DELETE FROM country WHERE id = 1"
         ).all()
 
-    # The index SQLite keeps for the rule of the names is the first of the
-    # two that hold no two rows alike, and it begins with the country. The
-    # second is the one of the codes.
-    assert sorted((str(name), int(unique)) for _, name, unique, *_ in indexes) == [
-        ("ix_region_source_id", 0),
-        ("sqlite_autoindex_region_1", 1),
-        ("sqlite_autoindex_region_2", 1),
+    # Two indexes begin with the country. The one over the country alone is
+    # over every region. The one of the rule of the names is over the
+    # regions without a code that are parts of none only, so it cannot
+    # find the regions of a country; the rule has a second index, over the
+    # regions without a code that are parts of one region. The two indexes
+    # SQLite keeps are those of the rules that are written into the table:
+    # a key and a country together once, for the region a region is a part
+    # of, and the codes.
+    assert sorted(
+        (str(name), int(unique), int(partial)) for _, name, unique, _, partial in indexes
+    ) == [
+        ("ix_region_country_id", 0, 0),
+        ("ix_region_country_id_name", 1, 1),
+        ("ix_region_parent_id", 0, 0),
+        ("ix_region_parent_id_name", 1, 1),
+        ("ix_region_source_id", 0, 0),
+        ("sqlite_autoindex_region_1", 1, 0),
+        ("sqlite_autoindex_region_2", 1, 0),
     ]
-    assert [name for _, _, name in index] == ["country_id", "name"]
+    assert [name for _, _, name in index] == ["country_id"]
     assert [detail for *_, detail in of_a_country] == [
-        "SEARCH region USING INDEX sqlite_autoindex_region_1 (country_id=?)"
+        "SEARCH region USING INDEX ix_region_country_id (country_id=?)"
     ]
+    # The regions of one name are looked for among those of their country.
     assert [detail for *_, detail in by_name] == [
-        "SEARCH region USING INDEX sqlite_autoindex_region_1 (country_id=? AND name=?)"
+        "SEARCH region USING INDEX ix_region_country_id (country_id=?)"
     ]
     # Before a country is deleted SQLite looks whether it has regions, and
     # the index alone answers that.
     assert [detail for *_, detail in to_delete_a_country if "region" in str(detail)] == [
-        "SEARCH region USING COVERING INDEX sqlite_autoindex_region_1 (country_id=?)"
+        "SEARCH region USING COVERING INDEX ix_region_country_id (country_id=?)"
     ]
 
 
