@@ -2956,6 +2956,18 @@ they hand the stage the stand-in (`frontend/src/test/engine.ts`).
   address with the name of a computer in it; and when the engine is
   started, it has been told where its files are.
 
+The stage keeps state, whether the globe is drawn, and outside `act`
+React does what it is asked for a moment later, while the stand-in
+waits for a moment of its own before a test goes on: the two come in
+no fixed order. So the three tests of the stage that hold that it
+still says busy after an engine has arrived or failed have that happen
+inside `act` (`andReactIsDone` in `GlobeStage.test.tsx`), and look
+when React is done. Without it a planted defect, a stage that takes a
+failure for a picture that is drawn, was found by the test of an
+engine that cannot be started in one run of six; with it, in ten of
+ten. A test that holds that a part of the page with state did not
+change has to look when React is done.
+
 ### Browser tests
 
 `frontend/e2e/globe/earth.spec.ts` (5), in the project `globe`, on the

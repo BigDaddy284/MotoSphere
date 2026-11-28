@@ -15,6 +15,21 @@ function globe(container: HTMLElement): Element {
 }
 
 /**
+ * Has something happen to the engine, and comes back when React has done
+ * what it was asked for meanwhile.
+ *
+ * The stage keeps state: whether the globe is drawn. Outside `act` React
+ * does what it is asked for a moment later, and that moment and the moment
+ * the stand-in waits for come in no fixed order. A test that holds that the
+ * stage still shows what it showed, after an engine has arrived or failed,
+ * has to look when React is done: else it would pass, in most runs, for a
+ * stage that wrongly changes what it shows.
+ */
+async function andReactIsDone(happens: () => Promise<void>): Promise<void> {
+  await act(happens)
+}
+
+/**
  * Listens, until the test is over, for what the page hands the browser as a
  * failure that nobody caught, and takes each as dealt with.
  */
@@ -73,7 +88,7 @@ describe('GlobeStage', () => {
       const { container } = render(<GlobeStage loadTheEngine={engine.load} />)
       expect(globe(container)).toHaveAttribute('aria-busy', 'true')
 
-      await engine.arrives()
+      await andReactIsDone(() => engine.arrives())
       expect(globe(container)).toHaveAttribute('aria-busy', 'true')
 
       act(() => {
@@ -118,7 +133,7 @@ describe('GlobeStage', () => {
       const why = new Error('the engine did not arrive')
       const { container } = render(<GlobeStage loadTheEngine={engine.load} />)
 
-      await engine.fails(why)
+      await andReactIsDone(() => engine.fails(why))
 
       expect(handed).toEqual([why])
       expect(handed[0]).toBe(why)
@@ -133,7 +148,7 @@ describe('GlobeStage', () => {
       engine.breaksAtTheStart(why)
       const { container } = render(<GlobeStage loadTheEngine={engine.load} />)
 
-      await engine.arrives()
+      await andReactIsDone(() => engine.arrives())
 
       expect(handed).toEqual([why])
       expect(handed[0]).toBe(why)
