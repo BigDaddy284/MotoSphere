@@ -15,7 +15,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 |---|---|---|---|
 | 1 | Foundation (FND) | 58 | 58 |
 | 2 | Data store and published data (DAT, PUB) | 76 | 58 |
-| 3 | Interactive 3D Earth (GLB) | 31 | 9 |
+| 3 | Interactive 3D Earth (GLB) | 32 | 9 |
 | 4 | Geographic marker system (MRK) | 12 | 0 |
 | 5 | Track directory (TRK) | 20 | 0 |
 | 6 | Event collection (EVT) | 14 | 0 |
@@ -29,7 +29,7 @@ Statuses (CLAUDE.md §4): `NOT STARTED`, `IN PROGRESS`, `TESTING`,
 
 **Current task, track A (data store):** DAT-067 – The code of a region agrees with its country.
 
-**Current task, track B (globe):** GLB-030 – The view the globe opens with.
+**Current task, track B (globe):** GLB-032 – The tests of the Earth do not depend on the speed of the machine.
 
 **Two tracks (owner, 2026-11-27):** the owner asked for two tasks to run
 side by side where they cannot clash, until told otherwise. Track A is
@@ -350,6 +350,22 @@ of the globe is a change to the settings of the browser tests and none to
 the application, so it is a task of its own, GLB-031, and comes before the
 view is changed. One task is new; Phase 3 has 31 tasks and the plan 308.
 Order on track B: GLB-031, GLB-030, GLB-028, then GLB-003.
+
+**The tests of the Earth do not depend on the speed of the machine
+(PLAN-061):** on 2026-11-28 two of the five browser tests of GLB-002
+failed on GitHub's Windows machine, each once, with nothing wrong in the
+page. One had waited twenty seconds for the Earth to be drawn, in a pull
+request that changes nothing of the globe. The other allows the engine one
+picture after it has said that the Earth is drawn and saw three, in the
+planner's trial of GLB-030: with the whole Earth in view the engine has
+work under way in the background whose end makes it draw the same picture
+again, and on a slow machine that work ends after the moment. The planner
+measured both on GitHub's two machines, 22 openings of the page each. The
+tests are put right in a task of their own, GLB-032, which changes one test
+file and nothing of the application, before the view is changed: the
+planner's trial of GLB-030 failed on the Windows machine in its last two
+runs without it. One task is new; Phase 3 has 32 tasks and the plan 309.
+Order on track B: GLB-032, GLB-030, GLB-028, then GLB-003.
 
 **Hosting decision (owner, 2026-11-17):** GitHub Pages only, with no server.
 Scheduled jobs collect the data and publish it as files that the globe reads
@@ -3242,6 +3258,27 @@ What holds for every task of the phase:
 - **Verification status:** Verified on 2026-11-28: tested by the tester thread, whose report names no number that differs from the test plan; merged and recorded by the planner, who compared the pull request with the trial (the same change), compared the merged tree with the tested change, and read the runs. All five files are the same change as the planner's trial. No expectation of a test that was there changed. Nothing under `frontend/src` changed and no package was added. The change was run on both of GitHub's machines before the plan too (trial pull request #234, closed without merging, run 46129904184: both gates jobs green at the first attempt with 4092 tests). The builder reported the full run with 4092 tests and both prove-it steps with the plan's counts, with the two variables the plan names set for its browser, as the tester set them too.
 - **Commit:** `fb224bf`
 - **Plan:** `docs/plans/GLB-031.md`
+
+### GLB-032 – The tests of the Earth do not depend on the speed of the machine
+- **Status:** IN PROGRESS
+- **Objective:** The five browser tests of the Earth pass on a machine that is slow and still fail for an engine that is wrong: they wait up to sixty seconds for the Earth to be drawn, and the one that looks at what the engine does afterwards holds that the engine comes to rest.
+- **Description:** Added on 2026-11-28 (PLAN-061), from two failures on GitHub's Windows machine on that day, each once and with nothing wrong in the page, and from what the planner then measured on both of GitHub's machines (run 46133108330, 22 openings of the page on each). In run 46131565305 the test that stops and starts the engine had waited twenty seconds for the globe to say that the Earth is drawn, and it had not; in the measurement it said so after 1.5 to 14.9 seconds on the Windows machine and after 0.6 to 0.7 on the Linux machine. In runs 46130916825 and 46133108330, of the planner's trial of GLB-030, the test that allows the engine one picture after that moment saw three and two; in the measurement the engine drew one picture after the moment in 22 of 22 openings on the Linux machine, and one to four on the Windows machine, the last up to 3.7 seconds after the moment, the same picture each time: work the engine has under way in the background makes it draw again when it ends. One test file changes, `frontend/e2e/globe/earth.spec.ts`: the wait for the Earth is sixty seconds where it was twenty, two thirds of the 90 a test of the globe has (GLB-031); the page notes when its last picture was drawn; and the test `says that the Earth is drawn when its pictures have arrived, and asks for nothing and draws nothing new after that` waits until the engine has drawn nothing for a second and a half, for at most thirty seconds, where it waited a second and a half and allowed one picture, and then holds what it held: no request under way, no file arrived since the moment, the picture of the stage the same pixel for pixel. An engine that draws all the time fails it as before. `TESTING.md` gets what was measured. Nothing under `frontend/src` changes, no test is added or taken away, and a person who opens the page sees what they saw before. No package is added.
+- **Acceptance criteria:**
+  1. Each of the five tests of `frontend/e2e/globe/earth.spec.ts` waits up to sixty seconds for the globe to say that the Earth is drawn.
+  2. The test `says that the Earth is drawn when its pictures have arrived, and asks for nothing and draws nothing new after that` waits until the engine has drawn no picture for a second and a half, for at most thirty seconds, and then holds that no request is under way, that no file has arrived since the moment, and that the picture of the stage is the same pixel for pixel.
+  3. That test fails for an engine that draws all the time and for one that draws a picture every second, and every planted defect of GLB-002 against the browser tests is found by the tests that found it before.
+  4. The 310 browser tests that were there pass; none is added and none is taken away.
+  5. Nothing under `frontend/src` changed, no package was added, and the settings of the browser tests, `scripts/check.py` and the workflow are as they were.
+  6. `TESTING.md` says what the tests wait for and why, and what was measured.
+  7. `python scripts/check.py` reports 19 of 19 gates, with 310 browser tests, and as many tests in all as `main` gives at the commit the branch starts from (4092 when that is `fb224bf`).
+  8. On the pull request both gates jobs are green (Linux and Windows) at the first attempt, and the three jobs after the gates are skipped.
+  9. Only the three files under "Scope" of the plan changed.
+- **Tests required:** No new test. The five browser tests of the file on the built site in the project `globe`, with the real engine. The 22 planted defects of GLB-002 against the 18 browser tests of its three files, found by the tests that found them before, and two new ones, an engine that draws a picture every second and one that draws four a second, for ever. Four prove-it steps: an engine that draws all the time and one that draws every second fail the one test; a globe that says 25 seconds late that the Earth is drawn passes all five, and fails all five with the twenty seconds the tests waited before. The full run of all gates on both machines, with the times of the globe tests read from both.
+- **Tests executed:** –
+- **Passed / Failed:** – / –
+- **Verification status:** Not verified
+- **Commit:** –
+- **Plan:** `docs/plans/GLB-032.md`
 
 ### GLB-030 – The view the globe opens with
 - **Status:** NOT STARTED
